@@ -1,0 +1,442 @@
+{
+  "schemaVersion": "2.0",
+  "planId": "momentum-week-example",
+  "planName": "نمونه برنامه منعطف Momentum",
+  "planVersion": "2.0.0",
+  "generatedAt": "2026-07-29T08:00:00Z",
+  "validFrom": "2026-08-01",
+  "validTo": "2026-08-02",
+  "locale": "fa-IR",
+  "direction": "rtl",
+  "unitSystem": "metric",
+  "author": "Momentum",
+  "description": "نمونه عمومی برای نمایش تعداد داینامیک وعده‌ها و انتخاب آزاد بین گزینه‌های هر وعده.",
+  "defaultTargets": {
+    "calories": 2000,
+    "protein": 140,
+    "fiber": 28,
+    "waterMl": 2500,
+    "steps": 8000
+  },
+  "days": [
+    {
+      "date": "2026-08-01",
+      "label": "روز با سه وعده",
+      "trainingType": "rest",
+      "targets": {
+        "calories": 1900,
+        "protein": 130,
+        "fiber": 28,
+        "waterMl": 2500,
+        "steps": 8000
+      },
+      "meals": [
+        {
+          "id": "day-1-breakfast",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduledTime": "08:00",
+          "xp": 10,
+          "required": true,
+          "defaultOptionId": "breakfast-eggs",
+          "options": [
+            {
+              "id": "breakfast-eggs",
+              "title": "تخم‌مرغ و نان سبوس‌دار",
+              "ingredients": [
+                { "name": "تخم‌مرغ", "amount": 2, "unit": "piece" },
+                { "name": "نان سبوس‌دار", "amount": 2, "unit": "slice" },
+                { "name": "سبزیجات", "amount": 150, "unit": "g" }
+              ],
+              "nutrition": {
+                "calories": 390,
+                "protein": 25,
+                "carbs": 38,
+                "fat": 15,
+                "fiber": 6
+              },
+              "preparation": ["تخم‌مرغ را آماده و همراه نان و سبزیجات سرو کنید."],
+              "prepTimeMinutes": 12,
+              "satietyScore": 4
+            },
+            {
+              "id": "breakfast-yogurt",
+              "title": "ماست، جو دوسر و میوه",
+              "ingredients": [
+                { "name": "ماست یونانی", "amount": 250, "unit": "g" },
+                { "name": "جو دوسر", "amount": 45, "unit": "g" },
+                { "name": "میوه فصل", "amount": 1, "unit": "piece" }
+              ],
+              "nutrition": {
+                "calories": 410,
+                "protein": 29,
+                "carbs": 58,
+                "fat": 8,
+                "fiber": 7
+              },
+              "preparation": ["مواد را مخلوط و سرد سرو کنید."],
+              "prepTimeMinutes": 5,
+              "portable": true,
+              "satietyScore": 4
+            }
+          ]
+        },
+        {
+          "id": "day-1-lunch",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduledTime": "13:30",
+          "xp": 15,
+          "required": true,
+          "defaultOptionId": "lunch-chicken",
+          "options": [
+            {
+              "id": "lunch-chicken",
+              "title": "مرغ، برنج و سالاد",
+              "ingredients": [
+                { "name": "مرغ پخته", "amount": 180, "unit": "g" },
+                { "name": "برنج پخته", "amount": 180, "unit": "g" },
+                { "name": "سالاد", "amount": 250, "unit": "g" }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein": 58,
+                "carbs": 72,
+                "fat": 14,
+                "fiber": 8
+              },
+              "prepTimeMinutes": 30,
+              "portable": true,
+              "satietyScore": 5
+            },
+            {
+              "id": "lunch-legumes",
+              "title": "خوراک حبوبات و نان",
+              "ingredients": [
+                { "name": "خوراک حبوبات", "amount": 350, "unit": "g" },
+                { "name": "نان سبوس‌دار", "amount": 2, "unit": "slice" },
+                { "name": "ماست", "amount": 150, "unit": "g" }
+              ],
+              "nutrition": {
+                "calories": 620,
+                "protein": 34,
+                "carbs": 92,
+                "fat": 12,
+                "fiber": 18
+              },
+              "prepTimeMinutes": 20,
+              "portable": true,
+              "satietyScore": 5
+            }
+          ]
+        },
+        {
+          "id": "day-1-dinner",
+          "type": "dinner",
+          "title": "شام",
+          "scheduledTime": "20:00",
+          "xp": 15,
+          "required": true,
+          "defaultOptionId": "dinner-fish",
+          "options": [
+            {
+              "id": "dinner-fish",
+              "title": "ماهی و سبزیجات",
+              "ingredients": [
+                { "name": "ماهی پخته", "amount": 180, "unit": "g" },
+                { "name": "سبزیجات بخارپز", "amount": 300, "unit": "g" },
+                { "name": "سیب‌زمینی", "amount": 200, "unit": "g" }
+              ],
+              "nutrition": {
+                "calories": 560,
+                "protein": 48,
+                "carbs": 52,
+                "fat": 18,
+                "fiber": 10
+              },
+              "prepTimeMinutes": 25,
+              "satietyScore": 4
+            },
+            {
+              "id": "dinner-omelet",
+              "title": "املت سبزیجات و نان",
+              "ingredients": [
+                { "name": "تخم‌مرغ", "amount": 3, "unit": "piece" },
+                { "name": "سبزیجات", "amount": 250, "unit": "g" },
+                { "name": "نان سبوس‌دار", "amount": 2, "unit": "slice" }
+              ],
+              "nutrition": {
+                "calories": 520,
+                "protein": 31,
+                "carbs": 47,
+                "fat": 22,
+                "fiber": 8
+              },
+              "prepTimeMinutes": 15,
+              "satietyScore": 4
+            }
+          ]
+        }
+      ],
+      "notes": ["تعداد وعده‌های این روز از فایل ورودی خوانده می‌شود."]
+    },
+    {
+      "date": "2026-08-02",
+      "label": "روز با پنج وعده",
+      "trainingType": "full_body",
+      "targets": {
+        "calories": 2150,
+        "protein": 150,
+        "fiber": 30,
+        "waterMl": 2800,
+        "steps": 9000,
+        "treadmillMinutes": 20
+      },
+      "meals": [
+        {
+          "id": "day-2-breakfast",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduledTime": "07:30",
+          "xp": 10,
+          "required": true,
+          "defaultOptionId": "day-2-breakfast-a",
+          "options": [
+            {
+              "id": "day-2-breakfast-a",
+              "title": "پنیر، گردو و نان",
+              "ingredients": [
+                { "name": "پنیر", "amount": 50, "unit": "g" },
+                { "name": "گردو", "amount": 15, "unit": "g" },
+                { "name": "نان", "amount": 2, "unit": "slice" }
+              ],
+              "nutrition": { "calories": 420, "protein": 22, "carbs": 42, "fat": 19, "fiber": 5 },
+              "prepTimeMinutes": 5,
+              "portable": true,
+              "satietyScore": 4
+            },
+            {
+              "id": "day-2-breakfast-b",
+              "title": "اسموتی پروتئینی",
+              "ingredients": [
+                { "name": "شیر", "amount": 300, "unit": "ml" },
+                { "name": "پودر پروتئین", "amount": 1, "unit": "serving" },
+                { "name": "موز", "amount": 1, "unit": "piece" }
+              ],
+              "nutrition": { "calories": 400, "protein": 38, "carbs": 50, "fat": 7, "fiber": 5 },
+              "prepTimeMinutes": 4,
+              "portable": true,
+              "satietyScore": 3
+            }
+          ]
+        },
+        {
+          "id": "day-2-morning-snack",
+          "type": "morning_snack",
+          "title": "میان‌وعده صبح",
+          "scheduledTime": "10:30",
+          "xp": 8,
+          "required": false,
+          "defaultOptionId": "day-2-morning-fruit",
+          "options": [
+            {
+              "id": "day-2-morning-fruit",
+              "title": "میوه و مغزها",
+              "ingredients": [
+                { "name": "میوه فصل", "amount": 1, "unit": "piece" },
+                { "name": "مغزها", "amount": 20, "unit": "g" }
+              ],
+              "nutrition": { "calories": 210, "protein": 5, "carbs": 28, "fat": 10, "fiber": 5 },
+              "prepTimeMinutes": 2,
+              "portable": true,
+              "satietyScore": 3
+            },
+            {
+              "id": "day-2-morning-yogurt",
+              "title": "ماست پروتئینی",
+              "ingredients": [{ "name": "ماست پروتئینی", "amount": 200, "unit": "g" }],
+              "nutrition": { "calories": 170, "protein": 20, "carbs": 14, "fat": 3, "fiber": 0 },
+              "prepTimeMinutes": 1,
+              "portable": true,
+              "satietyScore": 3
+            }
+          ]
+        },
+        {
+          "id": "day-2-lunch",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduledTime": "13:30",
+          "xp": 15,
+          "required": true,
+          "defaultOptionId": "day-2-lunch-a",
+          "options": [
+            {
+              "id": "day-2-lunch-a",
+              "title": "گوشت، سیب‌زمینی و سالاد",
+              "ingredients": [
+                { "name": "گوشت پخته", "amount": 160, "unit": "g" },
+                { "name": "سیب‌زمینی", "amount": 250, "unit": "g" },
+                { "name": "سالاد", "amount": 250, "unit": "g" }
+              ],
+              "nutrition": { "calories": 690, "protein": 52, "carbs": 65, "fat": 23, "fiber": 10 },
+              "prepTimeMinutes": 30,
+              "portable": true,
+              "satietyScore": 5
+            },
+            {
+              "id": "day-2-lunch-b",
+              "title": "پاستا و مرغ",
+              "ingredients": [
+                { "name": "پاستای پخته", "amount": 220, "unit": "g" },
+                { "name": "مرغ پخته", "amount": 160, "unit": "g" },
+                { "name": "سبزیجات", "amount": 200, "unit": "g" }
+              ],
+              "nutrition": { "calories": 680, "protein": 57, "carbs": 78, "fat": 14, "fiber": 9 },
+              "prepTimeMinutes": 25,
+              "portable": true,
+              "satietyScore": 5
+            }
+          ]
+        },
+        {
+          "id": "day-2-afternoon-snack",
+          "type": "afternoon_snack",
+          "title": "میان‌وعده عصر",
+          "scheduledTime": "17:00",
+          "xp": 10,
+          "required": true,
+          "defaultOptionId": "day-2-afternoon-a",
+          "options": [
+            {
+              "id": "day-2-afternoon-a",
+              "title": "ماست و میوه",
+              "ingredients": [
+                { "name": "ماست یونانی", "amount": 200, "unit": "g" },
+                { "name": "میوه", "amount": 1, "unit": "piece" }
+              ],
+              "nutrition": { "calories": 250, "protein": 22, "carbs": 34, "fat": 4, "fiber": 4 },
+              "prepTimeMinutes": 3,
+              "portable": true,
+              "satietyScore": 4
+            },
+            {
+              "id": "day-2-afternoon-b",
+              "title": "ساندویچ کوچک پنیر",
+              "ingredients": [
+                { "name": "نان", "amount": 2, "unit": "slice" },
+                { "name": "پنیر", "amount": 40, "unit": "g" },
+                { "name": "سبزیجات", "amount": 100, "unit": "g" }
+              ],
+              "nutrition": { "calories": 280, "protein": 17, "carbs": 38, "fat": 8, "fiber": 5 },
+              "prepTimeMinutes": 5,
+              "portable": true,
+              "satietyScore": 4
+            }
+          ]
+        },
+        {
+          "id": "day-2-dinner",
+          "type": "dinner",
+          "title": "شام",
+          "scheduledTime": "21:00",
+          "xp": 15,
+          "required": true,
+          "defaultOptionId": "day-2-dinner-a",
+          "options": [
+            {
+              "id": "day-2-dinner-a",
+              "title": "سوپ و ساندویچ مرغ",
+              "ingredients": [
+                { "name": "سوپ سبزیجات", "amount": 300, "unit": "ml" },
+                { "name": "ساندویچ مرغ", "amount": 1, "unit": "serving" }
+              ],
+              "nutrition": { "calories": 540, "protein": 43, "carbs": 62, "fat": 14, "fiber": 9 },
+              "prepTimeMinutes": 20,
+              "satietyScore": 4
+            },
+            {
+              "id": "day-2-dinner-b",
+              "title": "سالاد پروتئینی",
+              "ingredients": [
+                { "name": "سالاد مخلوط", "amount": 350, "unit": "g" },
+                { "name": "منبع پروتئین", "amount": 160, "unit": "g" },
+                { "name": "نان", "amount": 1, "unit": "slice" }
+              ],
+              "nutrition": { "calories": 500, "protein": 46, "carbs": 42, "fat": 16, "fiber": 12 },
+              "prepTimeMinutes": 15,
+              "portable": true,
+              "satietyScore": 5
+            }
+          ]
+        }
+      ],
+      "notes": ["این روز پنج وعده دارد؛ روزهای دیگر می‌توانند تعداد متفاوتی داشته باشند."]
+    }
+  ],
+  "emergencyOptions": [
+    {
+      "id": "emergency-yogurt",
+      "title": "ماست پروتئینی",
+      "ingredients": [{ "name": "ماست پروتئینی", "amount": 200, "unit": "g" }],
+      "nutrition": { "calories": 170, "protein": 20, "carbs": 14, "fat": 3, "fiber": 0 },
+      "prepTimeMinutes": 1,
+      "portable": true,
+      "satietyScore": 4,
+      "suitableForHungerLevels": [2, 3, 4],
+      "minimumMinutesBeforeDinner": 60
+    },
+    {
+      "id": "emergency-vegetables",
+      "title": "سبزیجات و دیپ ماست",
+      "ingredients": [
+        { "name": "سبزیجات خام", "amount": 250, "unit": "g" },
+        { "name": "دیپ ماست", "amount": 100, "unit": "g" }
+      ],
+      "nutrition": { "calories": 160, "protein": 10, "carbs": 23, "fat": 4, "fiber": 7 },
+      "prepTimeMinutes": 5,
+      "portable": true,
+      "satietyScore": 4,
+      "suitableForHungerLevels": [1, 2, 3, 4, 5],
+      "maximumMinutesBeforeDinner": 120
+    }
+  ],
+  "restaurantGuide": [
+    {
+      "id": "restaurant-balanced-plate",
+      "category": "غذای روزمره",
+      "title": "بشقاب متعادل",
+      "orderInstructions": [
+        "یک منبع پروتئین انتخاب کنید.",
+        "سبزیجات یا سالاد را کنار غذا سفارش دهید.",
+        "اندازه سس و روغن را جداگانه کنترل کنید."
+      ],
+      "estimatedNutrition": {
+        "calories": 650,
+        "protein": 45,
+        "carbs": 70,
+        "fat": 20,
+        "fiber": 8
+      },
+      "rating": 4,
+      "notes": ["مقادیر تغذیه‌ای تخمینی هستند."]
+    }
+  ],
+  "groceryList": [
+    {
+      "category": "پروتئین",
+      "items": [
+        { "name": "تخم‌مرغ", "amount": 8, "unit": "عدد" },
+        { "name": "مرغ", "amount": 700, "unit": "گرم" },
+        { "name": "ماست یونانی", "amount": 1000, "unit": "گرم" }
+      ]
+    },
+    {
+      "category": "سبزیجات و میوه",
+      "items": [
+        { "name": "سبزیجات متنوع", "amount": 2500, "unit": "گرم" },
+        { "name": "میوه فصل", "amount": 8, "unit": "عدد" }
+      ]
+    }
+  ]
+}

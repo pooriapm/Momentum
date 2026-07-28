@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Variable.woff2") format("woff2-variations");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Vazirmatn", Tahoma, "Segoe UI", Arial, sans-serif;
+  --breakpoint-desktop: 64rem;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background: var(--page-background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --page-background: #07110e;
+  --surface: rgba(17, 34, 27, 0.86);
+  --surface-strong: #12251d;
+  --surface-soft: rgba(35, 59, 48, 0.56);
+  --surface-hover: rgba(48, 78, 64, 0.68);
+  --text-primary: #f4f6ef;
+  --text-secondary: #b4c5bc;
+  --text-muted: #758b80;
+  --border: rgba(224, 244, 233, 0.11);
+  --border-strong: rgba(224, 244, 233, 0.18);
+  --emerald: #4bd69a;
+  --emerald-strong: #25ad73;
+  --emerald-soft: rgba(75, 214, 154, 0.14);
+  --gold: #d8b66a;
+  --gold-soft: rgba(216, 182, 106, 0.13);
+  --danger: #ff8f7d;
+  color-scheme: dark;
+}
+
+:root.light {
+  --page-background: #f2f5ef;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-strong: #ffffff;
+  --surface-soft: rgba(226, 234, 229, 0.65);
+  --surface-hover: rgba(213, 227, 219, 0.8);
+  --text-primary: #10241b;
+  --text-secondary: #4e675a;
+  --text-muted: #7a8e83;
+  --border: rgba(30, 65, 49, 0.11);
+  --border-strong: rgba(30, 65, 49, 0.18);
+  --emerald: #117b4f;
+  --emerald-strong: #0b6740;
+  --emerald-soft: rgba(17, 123, 79, 0.11);
+  --gold: #926b20;
+  --gold-soft: rgba(146, 107, 32, 0.11);
+  --danger: #bb4435;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--page-background);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 88% -10%, rgba(37, 173, 115, 0.18), transparent 34rem),
+    radial-gradient(circle at -10% 70%, rgba(216, 182, 106, 0.08), transparent 28rem),
+    var(--page-background);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--emerald);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: #07100c;
+  background: #72e5af;
+}
+
+.glass-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.17);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.fine-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, black, transparent 80%);
+}
+
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  :root,
+  :root.light {
+    --page-background: #ffffff;
+    --surface: #ffffff;
+    --surface-strong: #ffffff;
+    --text-primary: #111111;
+    --text-secondary: #333333;
+    --text-muted: #555555;
+    --border: #d3d3d3;
+    color-scheme: light;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  [data-print-hidden="true"] {
+    display: none !important;
+  }
+
+  .glass-panel {
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+}
