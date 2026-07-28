@@ -67,7 +67,9 @@ export function PlanImportPanel({
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black text-[var(--text-primary)]">{stagedPlan.planName}</p>
             <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
-              فایل معتبر است و همراه پروفایل ذخیره می‌شود.
+              {stagedPlan.profile
+                ? `فایل معتبر است و اطلاعات ${stagedPlan.profile.name} از آن خوانده شد.`
+                : 'فایل معتبر است؛ اطلاعات پایه در مرحله بعد دستی تکمیل می‌شود.'}
             </p>
           </div>
           {onClearStagedPlan && (
@@ -203,6 +205,7 @@ export function PlanImportPanel({
                 ['بازه میلادی', `${plan.validFrom} تا ${plan.validTo}`],
                 ['تعداد روز', toPersianDigits(plan.days.length)],
                 ['گزینه وعده', toPersianDigits(countMealOptions(plan))],
+                ['پروفایل', plan.profile ? `موجود · ${plan.profile.name}` : 'در فایل نیست'],
                 [
                   'هدف پیش‌فرض',
                   `${toPersianDigits(plan.defaultTargets.calories)} کالری · ${toPersianDigits(plan.defaultTargets.protein)} گرم پروتئین`,

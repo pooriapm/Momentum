@@ -88,6 +88,15 @@ export interface RestaurantChoice {
   notes?: string[]
 }
 
+export interface ImportedProfile {
+  name: string
+  heightCm: number
+  currentWeightKg: number
+  targetWeightKg: number
+  startWeightKg?: number
+  goalDate?: ISODate
+}
+
 export interface WeeklyMealPlan {
   schemaVersion: `2.${number}`
   planId: string
@@ -99,6 +108,7 @@ export interface WeeklyMealPlan {
   locale: 'fa-IR'
   direction: 'rtl'
   unitSystem: 'metric'
+  profile?: ImportedProfile
   author?: string
   description?: string
   defaultTargets: DayTargets

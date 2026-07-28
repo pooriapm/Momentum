@@ -188,6 +188,28 @@ const groceryItemSchema = z
   })
   .strict()
 
+const profileWeightSchema = (label: string) =>
+  z
+    .number({ error: `${label} باید عدد باشد.` })
+    .finite(`${label} باید عدد محدود باشد.`)
+    .min(35, `${label} باید حداقل ۳۵ کیلوگرم باشد.`)
+    .max(350, `${label} نمی‌تواند بیشتر از ۳۵۰ کیلوگرم باشد.`)
+
+const importedProfileSchema = z
+  .object({
+    name: requiredText('نام کاربر', 120),
+    heightCm: z
+      .number({ error: 'قد باید عدد باشد.' })
+      .finite('قد باید عدد محدود باشد.')
+      .min(100, 'قد باید حداقل ۱۰۰ سانتی‌متر باشد.')
+      .max(250, 'قد نمی‌تواند بیشتر از ۲۵۰ سانتی‌متر باشد.'),
+    currentWeightKg: profileWeightSchema('وزن فعلی'),
+    targetWeightKg: profileWeightSchema('وزن هدف'),
+    startWeightKg: profileWeightSchema('وزن شروع').optional(),
+    goalDate: isoDateSchema.optional(),
+  })
+  .strict()
+
 export const weeklyMealPlanSchema = z
   .object({
     schemaVersion: z
@@ -205,6 +227,7 @@ export const weeklyMealPlanSchema = z
     locale: z.literal('fa-IR', { error: 'locale باید fa-IR باشد.' }),
     direction: z.literal('rtl', { error: 'direction باید rtl باشد.' }),
     unitSystem: z.literal('metric', { error: 'unitSystem باید metric باشد.' }),
+    profile: importedProfileSchema.optional(),
     author: requiredText('نام نویسنده', 200).optional(),
     description: requiredText('توضیحات برنامه', 1000).optional(),
     defaultTargets: dayTargetsSchema,

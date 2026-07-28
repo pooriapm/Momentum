@@ -1,7 +1,28 @@
+import { lazy, Suspense } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
-import { AppShell } from '../components/layout/AppShell'
 import { Onboarding } from '../features/onboarding/Onboarding'
 import { useAppState } from './useAppState'
+
+const AppShell = lazy(() =>
+  import('../components/layout/AppShell').then((module) => ({
+    default: module.AppShell,
+  })),
+)
+
+function AppLoading() {
+  return (
+    <main
+      aria-label="در حال بارگذاری Momentum"
+      className="grid min-h-screen place-items-center"
+      role="status"
+    >
+      <div className="text-center">
+        <div className="mx-auto size-10 animate-pulse rounded-2xl bg-[var(--emerald-soft)] ring-1 ring-[var(--border-strong)]" />
+        <p className="mt-3 text-xs font-bold text-[var(--text-muted)]">Momentum</p>
+      </div>
+    </main>
+  )
+}
 
 export function AppContent() {
   const {
@@ -36,7 +57,13 @@ export function AppContent() {
           </button>
         </div>
       )}
-      {appState ? <AppShell /> : <Onboarding onComplete={completeOnboarding} />}
+      {appState ? (
+        <Suspense fallback={<AppLoading />}>
+          <AppShell />
+        </Suspense>
+      ) : (
+        <Onboarding onComplete={completeOnboarding} />
+      )}
     </>
   )
 }

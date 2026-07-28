@@ -20,6 +20,44 @@ describe('weekly meal plan validation', () => {
     expect(result.warnings).toEqual([])
   })
 
+  it('accepts optional onboarding profile data from the imported file', () => {
+    const plan = {
+      ...loadSample(),
+      schemaVersion: '2.1' as const,
+      profile: {
+        name: 'کاربر فایل',
+        heightCm: 170,
+        currentWeightKg: 80,
+        targetWeightKg: 74,
+        startWeightKg: 82,
+        goalDate: '2026-12-01' as const,
+      },
+    }
+
+    const result = validateWeeklyMealPlan(plan)
+
+    expect(result.success).toBe(true)
+    expect(result.data?.profile?.name).toBe('کاربر فایل')
+    expect(result.data?.profile?.goalDate).toBe('2026-12-01')
+  })
+
+  it('rejects invalid profile measurements with an exact path', () => {
+    const plan = {
+      ...loadSample(),
+      profile: {
+        name: 'کاربر فایل',
+        heightCm: 20,
+        currentWeightKg: 80,
+        targetWeightKg: 74,
+      },
+    }
+
+    const result = validateWeeklyMealPlan(plan)
+
+    expect(result.success).toBe(false)
+    expect(result.errors.some((error) => error.path === 'profile.heightCm')).toBe(true)
+  })
+
   it('maps negative nutrition errors to the exact JSON path', () => {
     const plan = structuredClone(loadSample())
     plan.days[0].meals[0].options[0].nutrition.calories = -1

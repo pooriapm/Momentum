@@ -48,7 +48,12 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,json,md,png,ico,woff2}'],
+        globPatterns: [
+          '**/*.{js,css,html,woff2}',
+          'favicon-32.png',
+          'apple-touch-icon.png',
+          'pwa-192.png',
+        ],
         cleanupOutdatedCaches: true,
       },
       devOptions: {

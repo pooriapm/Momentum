@@ -1,27 +1,35 @@
-import { useId, useState, type FormEvent } from 'react'
+import {
+  lazy,
+  Suspense,
+  useId,
+  useState,
+  type FormEvent,
+} from 'react'
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   ChevronLeft,
+  Download,
   FileJson,
   LockKeyhole,
-  Scale,
   Sparkles,
   Target,
   UserRound,
 } from 'lucide-react'
-import { JalaliDatePicker } from '../../components/forms/JalaliDatePicker'
+import { Brand } from '../../components/layout/Brand'
 import {
   formatJalaliDate,
   getTodayIso,
-  toJalali,
   toPersianDigits,
 } from '../../lib/dates/jalali'
-import type { ISODate, UserProfile } from '../../types/domain'
-import { Brand } from '../../components/layout/Brand'
-import type { WeeklyMealPlan } from '../../types/domain'
-import { PlanImportPanel } from '../plans/import/PlanImportPanel'
+import type { ISODate, UserProfile, WeeklyMealPlan } from '../../types/domain'
+
+const PlanImportPanel = lazy(() =>
+  import('../plans/import/PlanImportPanel').then((module) => ({
+    default: module.PlanImportPanel,
+  })),
+)
 
 interface OnboardingProps {
   onComplete: (profile: UserProfile, plan?: WeeklyMealPlan) => void
@@ -42,13 +50,15 @@ function getDefaultGoalDate(): ISODate {
   return date.toISOString().slice(0, 10) as ISODate
 }
 
-const initialForm: OnboardingForm = {
-  name: '',
-  heightCm: '',
-  startWeightKg: '',
-  currentWeightKg: '',
-  targetWeightKg: '',
-  goalDate: getDefaultGoalDate(),
+function createInitialForm(): OnboardingForm {
+  return {
+    name: '',
+    heightCm: '',
+    startWeightKg: '',
+    currentWeightKg: '',
+    targetWeightKg: '',
+    goalDate: getDefaultGoalDate(),
+  }
 }
 
 function NumberField({
@@ -65,7 +75,7 @@ function NumberField({
   const inputId = useId()
 
   return (
-    <div className="block">
+    <div>
       <label
         className="mb-2 block text-xs font-bold text-[var(--text-secondary)]"
         htmlFor={inputId}
@@ -78,6 +88,8 @@ function NumberField({
           dir="ltr"
           id={inputId}
           inputMode="decimal"
+          max="350"
+          min="35"
           onChange={(event) => onChange(event.target.value)}
           required
           type="number"
@@ -91,51 +103,101 @@ function NumberField({
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0)
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState<OnboardingForm>(createInitialForm)
   const [error, setError] = useState<string>()
   const [stagedPlan, setStagedPlan] = useState<WeeklyMealPlan>()
-  const currentJalaliYear = toJalali(getTodayIso()).jy
+  const progress = ((step + 1) / 4) * 100
 
-  const progress = ((step + 1) / 6) * 100
+  const stagePlan = (plan: WeeklyMealPlan) => {
+    setStagedPlan(plan)
 
-  const validateStep = () => {
-    if (step === 1 && (!form.name.trim() || Number(form.heightCm) < 100)) {
-      return 'نام و قد معتبر را وارد کنید.'
+    if (plan.profile) {
+      setForm({
+        name: plan.profile.name,
+        heightCm: String(plan.profile.heightCm),
+        startWeightKg: String(
+          plan.profile.startWeightKg ?? plan.profile.currentWeightKg,
+        ),
+        currentWeightKg: String(plan.profile.currentWeightKg),
+        targetWeightKg: String(plan.profile.targetWeightKg),
+        goalDate: plan.profile.goalDate ?? getDefaultGoalDate(),
+      })
+    }
+  }
+
+  const clearPlan = () => {
+    setStagedPlan(undefined)
+    setForm(createInitialForm())
+  }
+
+  const validateManualProfile = () => {
+    const height = Number(form.heightCm)
+    const current = Number(form.currentWeightKg)
+    const target = Number(form.targetWeightKg)
+
+    if (!form.name.trim()) {
+      return 'نام را وارد کنید.'
     }
 
-    if (step === 2) {
-      const start = Number(form.startWeightKg)
-      const current = Number(form.currentWeightKg)
-      const target = Number(form.targetWeightKg)
+    if (!height || height < 100 || height > 250) {
+      return 'قد را به‌صورت عددی و در بازه معتبر وارد کنید.'
+    }
 
-      if ([start, current, target].some((value) => !value || value < 35 || value > 350)) {
-        return 'وزن‌ها را به‌صورت عددی و در بازه معتبر وارد کنید.'
-      }
-
+    if ([current, target].some((value) => !value || value < 35 || value > 350)) {
+      return 'وزن فعلی و وزن هدف را در بازه معتبر وارد کنید.'
     }
 
     return undefined
   }
 
   const goNext = () => {
-    const validationError = validateStep()
+    if (step === 1) {
+      setError(undefined)
+      setStep(stagedPlan?.profile ? 3 : 2)
+      return
+    }
 
-    if (validationError) {
-      setError(validationError)
+    if (step === 2) {
+      const validationError = validateManualProfile()
+
+      if (validationError) {
+        setError(validationError)
+        return
+      }
+
+      setForm((current) => ({
+        ...current,
+        startWeightKg: current.startWeightKg || current.currentWeightKg,
+      }))
+      setError(undefined)
+      setStep(3)
       return
     }
 
     setError(undefined)
-    setStep((current) => Math.min(current + 1, 5))
+    setStep(1)
+  }
+
+  const goBack = () => {
+    setError(undefined)
+
+    if (step === 3) {
+      setStep(stagedPlan?.profile ? 1 : 2)
+      return
+    }
+
+    setStep((current) => Math.max(current - 1, 0))
   }
 
   const finish = (event: FormEvent) => {
     event.preventDefault()
+    const currentWeightKg = Number(form.currentWeightKg)
+
     onComplete(
       {
         name: form.name.trim(),
-        startWeightKg: Number(form.startWeightKg),
-        currentWeightKg: Number(form.currentWeightKg),
+        startWeightKg: Number(form.startWeightKg) || currentWeightKg,
+        currentWeightKg,
         targetWeightKg: Number(form.targetWeightKg),
         heightCm: Number(form.heightCm),
         journeyStartDate: getTodayIso(),
@@ -144,6 +206,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       stagedPlan,
     )
   }
+
+  const nextLabel =
+    step === 0
+      ? 'شروع مسیر'
+      : step === 1
+        ? stagedPlan?.profile
+          ? 'استفاده از این فایل'
+          : stagedPlan
+            ? 'تکمیل اطلاعات'
+            : 'رد کردن و ورود دستی'
+        : 'مرور اطلاعات'
 
   return (
     <main className="relative min-h-screen overflow-hidden px-4 py-5 desktop:grid desktop:place-items-center desktop:py-10">
@@ -163,6 +236,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               style={{ width: `${progress}%` }}
             />
           </div>
+
           <div className="min-h-[520px] p-6 desktop:p-10">
             {step === 0 && (
               <div className="mx-auto flex min-h-[440px] max-w-lg flex-col justify-center text-center">
@@ -177,23 +251,94 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   </span>
                 </h1>
                 <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-[var(--text-secondary)]">
-                  چند اطلاعات کوتاه برای شخصی‌سازی مسیر وارد می‌کنیم. تمام اطلاعات فقط در
-                  مرورگر همین دستگاه باقی می‌ماند.
+                  فایل برنامه می‌تواند همه اطلاعات لازم را یک‌جا وارد کند. اگر فایل نداری،
+                  راه‌اندازی دستی فقط یک مرحله کوتاه است.
                 </p>
               </div>
             )}
 
             {step === 1 && (
-              <div className="mx-auto max-w-lg">
+              <div className="mx-auto max-w-xl">
+                <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
+                  <FileJson aria-hidden="true" size={25} />
+                </div>
+                <div className="mt-6 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold text-[var(--emerald)]">
+                      شروع سریع با فایل
+                    </p>
+                    <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
+                      برنامه آماده داری؟
+                    </h1>
+                  </div>
+                  <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1.5 text-[10px] font-bold text-[var(--text-muted)]">
+                    اختیاری
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
+                  فایل جدید Momentum علاوه بر وعده‌ها، نام، قد، وزن فعلی، وزن هدف و تاریخ
+                  هدف را هم وارد می‌کند. فایل‌های قدیمی همچنان پذیرفته می‌شوند و فقط
+                  اطلاعات پایه را دستی می‌پرسند.
+                </p>
+
+                <a
+                  className="mt-5 flex min-h-13 items-center justify-between gap-4 rounded-2xl border border-[var(--gold)] bg-[var(--gold-soft)] px-4 text-right transition hover:bg-[color-mix(in_srgb,var(--gold)_18%,transparent)]"
+                  download
+                  href="/templates/momentum-weekly-plan-prompt.md"
+                >
+                  <span>
+                    <span className="block text-xs font-black text-[var(--text-primary)]">
+                      هنوز فایل نداری؟
+                    </span>
+                    <span className="mt-1 block text-[10px] text-[var(--text-secondary)]">
+                      تمپلیت کامل را دانلود و برای ChatGPT ارسال کن
+                    </span>
+                  </span>
+                  <Download aria-hidden="true" className="shrink-0 text-[var(--gold)]" size={20} />
+                </a>
+
+                <div className="mt-5">
+                  <Suspense
+                    fallback={
+                      <div
+                        className="grid min-h-44 place-items-center rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)]"
+                        role="status"
+                      >
+                        <p className="animate-pulse text-xs font-bold text-[var(--text-muted)]">
+                          در حال آماده‌سازی آپلود…
+                        </p>
+                      </div>
+                    }
+                  >
+                    <PlanImportPanel
+                      confirmLabel="انتخاب این فایل"
+                      onClearStagedPlan={clearPlan}
+                      onConfirm={stagePlan}
+                      stagedPlan={stagedPlan}
+                    />
+                  </Suspense>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="mx-auto max-w-xl">
                 <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <UserRound aria-hidden="true" size={25} />
                 </div>
-                <p className="mt-6 text-xs font-bold text-[var(--emerald)]">اطلاعات پایه</p>
+                <p className="mt-6 text-xs font-bold text-[var(--emerald)]">
+                  ورود دستی
+                </p>
                 <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
-                  اول خودت را معرفی کن
+                  اطلاعات پایه را وارد کن
                 </h1>
-                <div className="mt-7 space-y-5">
-                  <label className="block">
+                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
+                  همین چهار مورد برای ساخت پروفایل کافی است. وزن شروع برابر وزن فعلی و
+                  تاریخ هدف اولیه ۹۰ روز بعد در نظر گرفته می‌شود؛ هر دو بعداً قابل ویرایش‌اند.
+                </p>
+
+                <div className="mt-7 grid gap-4 desktop:grid-cols-2">
+                  <label className="desktop:col-span-2">
                     <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
                       نام
                     </span>
@@ -210,36 +355,20 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     suffix="سانتی‌متر"
                     value={form.heightCm}
                   />
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="mx-auto max-w-lg">
-                <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
-                  <Scale aria-hidden="true" size={25} />
-                </div>
-                <p className="mt-6 text-xs font-bold text-[var(--emerald)]">نقطه شروع</p>
-                <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
-                  نقطه شروع و هدف
-                </h1>
-                <div className="mt-7 grid gap-4 desktop:grid-cols-2">
-                  <NumberField
-                    label="وزن شروع"
-                    onChange={(startWeightKg) => setForm({ ...form, startWeightKg })}
-                    suffix="کیلوگرم"
-                    value={form.startWeightKg}
-                  />
                   <NumberField
                     label="وزن فعلی"
-                    onChange={(currentWeightKg) => setForm({ ...form, currentWeightKg })}
+                    onChange={(currentWeightKg) =>
+                      setForm({ ...form, currentWeightKg })
+                    }
                     suffix="کیلوگرم"
                     value={form.currentWeightKg}
                   />
                   <div className="desktop:col-span-2">
                     <NumberField
                       label="وزن هدف"
-                      onChange={(targetWeightKg) => setForm({ ...form, targetWeightKg })}
+                      onChange={(targetWeightKg) =>
+                        setForm({ ...form, targetWeightKg })
+                      }
                       suffix="کیلوگرم"
                       value={form.targetWeightKg}
                     />
@@ -249,67 +378,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             )}
 
             {step === 3 && (
-              <div className="mx-auto max-w-lg">
-                <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--gold-soft)] text-[var(--gold)]">
-                  <Target aria-hidden="true" size={25} />
-                </div>
-                <p className="mt-6 text-xs font-bold text-[var(--gold)]">خط پایان</p>
-                <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
-                  تاریخ هدف را انتخاب کن
-                </h1>
-                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
-                  تاریخ در برنامه همیشه با تقویم جلالی نمایش داده می‌شود.
-                </p>
-                <div className="mt-8">
-                  <JalaliDatePicker
-                    label="تاریخ هدف"
-                    maxYear={currentJalaliYear + 5}
-                    minYear={currentJalaliYear}
-                    onChange={(goalDate) => setForm({ ...form, goalDate })}
-                    value={form.goalDate}
-                  />
-                </div>
-                <div className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
-                  <p className="text-xs text-[var(--text-muted)]">تاریخ انتخاب‌شده</p>
-                  <p className="mt-2 text-base font-black text-[var(--text-primary)]">
-                    {formatJalaliDate(form.goalDate, 'full')}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="mx-auto max-w-lg">
-                <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
-                  <FileJson aria-hidden="true" size={25} />
-                </div>
-                <div className="mt-6 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold text-[var(--emerald)]">برنامه غذایی</p>
-                    <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
-                      فایل هفتگی داری؟
-                    </h1>
-                  </div>
-                  <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1.5 text-[10px] font-bold text-[var(--text-muted)]">
-                    اختیاری
-                  </span>
-                </div>
-                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
-                  می‌توانی همین حالا فایل JSON را انتخاب کنی، از فایل نمونه استفاده کنی یا
-                  بدون برنامه ادامه بدهی و بعداً از تنظیمات آن را وارد کنی.
-                </p>
-                <div className="mt-6">
-                  <PlanImportPanel
-                    confirmLabel="افزودن به راه‌اندازی"
-                    onClearStagedPlan={() => setStagedPlan(undefined)}
-                    onConfirm={(plan) => setStagedPlan(plan)}
-                    stagedPlan={stagedPlan}
-                  />
-                </div>
-              </div>
-            )}
-
-            {step === 5 && (
               <div className="mx-auto max-w-lg">
                 <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <Sparkles aria-hidden="true" size={25} />
@@ -342,8 +410,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   />
                   <p className="text-xs leading-6 text-[var(--text-secondary)]">
                     {stagedPlan
-                      ? `برنامه «${stagedPlan.planName}» از فایل انتخابی همراه پروفایل ذخیره می‌شود.`
-                      : 'بدون برنامه غذایی وارد می‌شوی و هر زمان خواستی می‌توانی از تنظیمات فایل JSON اضافه کنی.'}
+                      ? `برنامه «${stagedPlan.planName}» همراه پروفایل روی همین دستگاه ذخیره می‌شود.`
+                      : 'پروفایل بدون برنامه غذایی ساخته می‌شود و هر زمان خواستی می‌توانی از تنظیمات فایل اضافه کنی.'}
                   </p>
                 </div>
               </div>
@@ -363,22 +431,20 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   ? 'pointer-events-none opacity-0'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]'
               }`}
-              onClick={() => {
-                setError(undefined)
-                setStep((current) => Math.max(current - 1, 0))
-              }}
+              onClick={goBack}
               type="button"
             >
               <ArrowRight aria-hidden="true" size={18} />
               قبلی
             </button>
-            {step < 5 ? (
+
+            {step < 3 ? (
               <button
                 className="flex min-h-12 items-center gap-2 rounded-2xl bg-[var(--emerald)] px-5 text-sm font-black text-[#07110d] shadow-[0_10px_28px_rgba(70,205,145,0.2)]"
                 onClick={goNext}
                 type="button"
               >
-                {step === 0 ? 'شروع مسیر' : 'ادامه'}
+                {nextLabel}
                 {step === 0 ? (
                   <ChevronLeft aria-hidden="true" size={18} />
                 ) : (

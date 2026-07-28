@@ -1,4 +1,10 @@
-import { useEffect, useState, type ComponentType } from 'react'
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useState,
+  type ComponentType,
+} from 'react'
 import {
   CalendarDays,
   ClipboardList,
@@ -10,16 +16,29 @@ import {
 } from 'lucide-react'
 import type { LucideProps } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
-import { CalendarScreen } from '../../features/calendar/CalendarScreen'
 import { TodayScreen } from '../../features/dashboard/TodayScreen'
-import { MealPlanScreen } from '../../features/plans/MealPlanScreen'
-import { SettingsScreen } from '../../features/settings/SettingsScreen'
 import { EmptyScreen } from '../../features/shared/EmptyScreen'
 import { formatJalaliDate, getTodayIso } from '../../lib/dates/jalali'
 import { loadUiState, updateUiState } from '../../lib/ui-state'
 import type { AppTab, Theme } from '../../types/ui'
 import { OfflineNotice } from '../feedback/OfflineNotice'
 import { Brand } from './Brand'
+
+const CalendarScreen = lazy(() =>
+  import('../../features/calendar/CalendarScreen').then((module) => ({
+    default: module.CalendarScreen,
+  })),
+)
+const MealPlanScreen = lazy(() =>
+  import('../../features/plans/MealPlanScreen').then((module) => ({
+    default: module.MealPlanScreen,
+  })),
+)
+const SettingsScreen = lazy(() =>
+  import('../../features/settings/SettingsScreen').then((module) => ({
+    default: module.SettingsScreen,
+  })),
+)
 
 interface NavigationItem {
   id: AppTab
@@ -100,6 +119,19 @@ function MobileNavigation({
         })}
       </div>
     </nav>
+  )
+}
+
+function ScreenLoading() {
+  return (
+    <div
+      className="glass-panel grid min-h-48 place-items-center rounded-[26px]"
+      role="status"
+    >
+      <p className="animate-pulse text-xs font-bold text-[var(--text-muted)]">
+        در حال آماده‌سازی…
+      </p>
+    </div>
   )
 }
 
@@ -190,18 +222,20 @@ export function AppShell() {
           </header>
 
           <main className="mx-auto max-w-[1040px] px-4 pb-28 pt-5 desktop:px-8 desktop:pb-10 desktop:pt-8">
-            {selectedTab === 'today' && <TodayScreen />}
-            {selectedTab === 'meal-plan' && <MealPlanScreen />}
-            {selectedTab === 'calendar' && <CalendarScreen />}
-            {selectedTab === 'settings' && (
-              <SettingsScreen
-                theme={theme}
-                themeControl={
-                  <ThemeButton theme={theme} onToggle={toggleTheme} showLabel />
-                }
-              />
-            )}
-            {selectedTab === 'progress' && <EmptyScreen tab={selectedTab} />}
+            <Suspense fallback={<ScreenLoading />}>
+              {selectedTab === 'today' && <TodayScreen />}
+              {selectedTab === 'meal-plan' && <MealPlanScreen />}
+              {selectedTab === 'calendar' && <CalendarScreen />}
+              {selectedTab === 'settings' && (
+                <SettingsScreen
+                  theme={theme}
+                  themeControl={
+                    <ThemeButton theme={theme} onToggle={toggleTheme} showLabel />
+                  }
+                />
+              )}
+              {selectedTab === 'progress' && <EmptyScreen tab={selectedTab} />}
+            </Suspense>
           </main>
         </div>
       </div>
