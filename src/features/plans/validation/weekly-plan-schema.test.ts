@@ -20,35 +20,36 @@ describe('weekly meal plan validation', () => {
     expect(result.warnings).toEqual([])
   })
 
-  it('accepts optional onboarding profile data from the imported file', () => {
+  it('accepts the complete profile and planning context from the imported file', () => {
     const plan = {
       ...loadSample(),
-      schemaVersion: '2.1' as const,
+      schemaVersion: '0.1.0' as const,
       profile: {
         name: 'کاربر فایل',
+        age: 36,
+        sex: 'prefer_not_to_say' as const,
         heightCm: 170,
         currentWeightKg: 80,
         targetWeightKg: 74,
         startWeightKg: 82,
         goalDate: '2026-12-01' as const,
+        activityLevel: 'moderate' as const,
       },
     }
 
     const result = validateWeeklyMealPlan(plan)
 
     expect(result.success).toBe(true)
-    expect(result.data?.profile?.name).toBe('کاربر فایل')
-    expect(result.data?.profile?.goalDate).toBe('2026-12-01')
+    expect(result.data?.profile.name).toBe('کاربر فایل')
+    expect(result.data?.profile.goalDate).toBe('2026-12-01')
   })
 
   it('rejects invalid profile measurements with an exact path', () => {
     const plan = {
       ...loadSample(),
       profile: {
-        name: 'کاربر فایل',
+        ...loadSample().profile,
         heightCm: 20,
-        currentWeightKg: 80,
-        targetWeightKg: 74,
       },
     }
 
@@ -94,11 +95,21 @@ describe('weekly meal plan validation', () => {
     })
   })
 
-  it('rejects unknown major schema versions and unsafe text', () => {
-    const unsupported = { ...loadSample(), schemaVersion: '3.0' }
+  it('rejects any other schema version and unsafe text', () => {
+    const unsupported = { ...loadSample(), schemaVersion: '0.1.1' }
     const unsafe = { ...loadSample(), description: 'javascript:alert(1)' }
 
     expect(validateWeeklyMealPlan(unsupported).success).toBe(false)
     expect(validateWeeklyMealPlan(unsafe).errors[0].path).toBe('description')
+  })
+
+  it('rejects files without the current required profile contract', () => {
+    const plan = structuredClone(loadSample()) as Partial<WeeklyMealPlan>
+    delete plan.profile
+
+    const result = validateWeeklyMealPlan(plan)
+
+    expect(result.success).toBe(false)
+    expect(result.errors.some((error) => error.path === 'profile')).toBe(true)
   })
 })

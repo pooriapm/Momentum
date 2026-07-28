@@ -1,4 +1,5 @@
 import type { AppState, UserProfile } from '../../types/domain'
+import { STORAGE_VERSION } from '../version'
 
 const APP_STATE_KEY = 'momentum.appState'
 const STAGING_STATE_KEY = 'momentum.appState.staging'
@@ -44,7 +45,7 @@ function isAppState(value: unknown): value is AppState {
 
   const state = value as Partial<AppState>
   return (
-    state.storageVersion === 1 &&
+    state.storageVersion === STORAGE_VERSION &&
     isUserProfile(state.profile) &&
     Boolean(state.settings) &&
     Boolean(state.plans) &&
@@ -154,7 +155,7 @@ export function createAppState(profile: UserProfile): AppState {
   const now = new Date().toISOString()
 
   return {
-    storageVersion: 1,
+    storageVersion: STORAGE_VERSION,
     profile,
     settings: {
       streakCompletionThreshold: 70,

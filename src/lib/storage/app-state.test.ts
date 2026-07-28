@@ -28,7 +28,7 @@ describe('app state storage', () => {
 
     expect(saveAppState(state).success).toBe(true)
     expect(loadAppState().state?.profile.name).toBe('کاربر نمونه')
-    expect(loadAppState().state?.storageVersion).toBe(1)
+    expect(loadAppState().state?.storageVersion).toBe('0.1.0')
   })
 
   it('keeps corrupted state and returns a friendly error', () => {

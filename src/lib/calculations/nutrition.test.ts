@@ -15,16 +15,40 @@ const profile: UserProfile = {
 }
 
 const plan: WeeklyMealPlan = {
-  schemaVersion: '2.0',
+  schemaVersion: '0.1.0',
   planId: 'nutrition-test',
   planName: 'برنامه تست',
-  planVersion: '1.0.0',
+  planVersion: '0.1.0-alpha.1',
   generatedAt: '2026-07-28T08:00:00Z',
   validFrom: '2026-07-28',
   validTo: '2026-07-28',
   locale: 'fa-IR',
   direction: 'rtl',
   unitSystem: 'metric',
+  profile: {
+    name: 'کاربر تست',
+    age: 30,
+    sex: 'prefer_not_to_say',
+    heightCm: 172,
+    currentWeightKg: 81,
+    targetWeightKg: 75,
+    startWeightKg: 82,
+    goalDate: '2026-11-01',
+    activityLevel: 'moderate',
+  },
+  planningContext: {
+    requestedMealPattern: 'دو وعده',
+    preferredOptionCount: 2,
+    favoriteFoods: [],
+    dislikedFoods: [],
+    allergies: [],
+    medicalConsiderations: [],
+    medications: [],
+    supplements: [],
+    cookingConstraints: [],
+    lifestyleNotes: [],
+    trainingSchedule: [],
+  },
   defaultTargets: { calories: 1800, protein: 140 },
   days: [
     {

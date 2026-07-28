@@ -195,9 +195,35 @@ const profileWeightSchema = (label: string) =>
     .min(35, `${label} باید حداقل ۳۵ کیلوگرم باشد.`)
     .max(350, `${label} نمی‌تواند بیشتر از ۳۵۰ کیلوگرم باشد.`)
 
+const optionalMetric = (label: string, maximum: number) =>
+  nonNegativeNumber(label).max(maximum, `${label} از بازه قابل قبول خارج است.`).optional()
+
+const bodyCompositionSchema = z
+  .object({
+    measuredAt: isoDateSchema.optional(),
+    sourceType: z.enum(['image', 'pdf', 'scan', 'manual']).optional(),
+    bodyFatPercent: optionalMetric('درصد چربی بدن', 80),
+    fatMassKg: optionalMetric('توده چربی', 350),
+    leanMassKg: optionalMetric('توده بدون چربی', 350),
+    skeletalMuscleMassKg: optionalMetric('توده عضله اسکلتی', 250),
+    visceralFatRating: optionalMetric('شاخص چربی احشایی', 100),
+    waistCm: optionalMetric('دور کمر', 300),
+    basalMetabolicRate: optionalMetric('متابولیسم پایه', 10_000),
+    notes: z.array(requiredText('یادداشت ترکیب بدن', 500)).max(30).optional(),
+  })
+  .strict()
+
 const importedProfileSchema = z
   .object({
     name: requiredText('نام کاربر', 120),
+    age: z
+      .number({ error: 'سن باید عدد باشد.' })
+      .int('سن باید عدد صحیح باشد.')
+      .min(13, 'سن باید حداقل ۱۳ سال باشد.')
+      .max(100, 'سن نمی‌تواند بیشتر از ۱۰۰ سال باشد.'),
+    sex: z.enum(['female', 'male', 'other', 'prefer_not_to_say'], {
+      error: 'جنسیت معتبر نیست.',
+    }),
     heightCm: z
       .number({ error: 'قد باید عدد باشد.' })
       .finite('قد باید عدد محدود باشد.')
@@ -205,19 +231,64 @@ const importedProfileSchema = z
       .max(250, 'قد نمی‌تواند بیشتر از ۲۵۰ سانتی‌متر باشد.'),
     currentWeightKg: profileWeightSchema('وزن فعلی'),
     targetWeightKg: profileWeightSchema('وزن هدف'),
-    startWeightKg: profileWeightSchema('وزن شروع').optional(),
-    goalDate: isoDateSchema.optional(),
+    startWeightKg: profileWeightSchema('وزن شروع'),
+    goalDate: isoDateSchema,
+    activityLevel: z.enum(['sedentary', 'light', 'moderate', 'high', 'athlete'], {
+      error: 'سطح فعالیت معتبر نیست.',
+    }),
+    bodyComposition: bodyCompositionSchema.optional(),
+  })
+  .strict()
+
+const contextTextList = (label: string) =>
+  z.array(requiredText(label, 300)).max(50, `${label} بیش از حد طولانی است.`)
+
+const trainingScheduleSchema = z
+  .object({
+    day: requiredText('روز تمرین', 80),
+    type: z.enum(['rest', 'crossfit', 'full_body', 'cardio', 'walk']),
+    scheduledTime: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'زمان تمرین باید با قالب HH:mm باشد.')
+      .optional(),
+    durationMinutes: nonNegativeNumber('مدت تمرین').max(1440).optional(),
+    intensity: z.enum(['low', 'moderate', 'high']).optional(),
+    notes: requiredText('یادداشت تمرین', 500).optional(),
+  })
+  .strict()
+
+const planningContextSchema = z
+  .object({
+    requestedMealPattern: requiredText('الگوی وعده‌های درخواستی', 500),
+    preferredOptionCount: z
+      .number({ error: 'تعداد گزینه ترجیحی باید عدد باشد.' })
+      .int('تعداد گزینه ترجیحی باید عدد صحیح باشد.')
+      .min(1, 'برای هر وعده حداقل یک گزینه لازم است.')
+      .max(12, 'تعداد گزینه ترجیحی هر وعده نمی‌تواند بیشتر از ۱۲ باشد.'),
+    dietaryPattern: requiredText('الگوی غذایی', 200).optional(),
+    favoriteFoods: contextTextList('غذاهای مورد علاقه'),
+    dislikedFoods: contextTextList('غذاهای نامطلوب'),
+    allergies: contextTextList('حساسیت‌های غذایی'),
+    medicalConsiderations: contextTextList('ملاحظات پزشکی'),
+    medications: contextTextList('داروها'),
+    supplements: contextTextList('مکمل‌ها'),
+    cookingConstraints: contextTextList('محدودیت‌های آشپزی'),
+    lifestyleNotes: contextTextList('نکات سبک زندگی'),
+    trainingSchedule: z.array(trainingScheduleSchema).max(31),
   })
   .strict()
 
 export const weeklyMealPlanSchema = z
   .object({
-    schemaVersion: z
-      .string()
-      .regex(/^2\.\d+$/, 'نسخه schema باید از شاخه سازگار 2.x باشد.'),
+    schemaVersion: z.literal('0.1.0', {
+      error: 'schemaVersion این نسخه آلفا باید دقیقاً 0.1.0 باشد.',
+    }),
     planId: idSchema,
     planName: requiredText('نام برنامه'),
-    planVersion: requiredText('نسخه برنامه', 80),
+    planVersion: requiredText('نسخه برنامه', 80).regex(
+      /^0\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/,
+      'نسخه برنامه در دوره آلفا باید Semantic Version و کوچک‌تر از 1.0.0 باشد.',
+    ),
     generatedAt: z.iso.datetime({
       offset: true,
       error: 'generatedAt باید تاریخ و زمان ISO معتبر باشد.',
@@ -227,7 +298,8 @@ export const weeklyMealPlanSchema = z
     locale: z.literal('fa-IR', { error: 'locale باید fa-IR باشد.' }),
     direction: z.literal('rtl', { error: 'direction باید rtl باشد.' }),
     unitSystem: z.literal('metric', { error: 'unitSystem باید metric باشد.' }),
-    profile: importedProfileSchema.optional(),
+    profile: importedProfileSchema,
+    planningContext: planningContextSchema,
     author: requiredText('نام نویسنده', 200).optional(),
     description: requiredText('توضیحات برنامه', 1000).optional(),
     defaultTargets: dayTargetsSchema,

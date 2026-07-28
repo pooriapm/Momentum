@@ -527,6 +527,52 @@ export function MealPlanScreen() {
         </div>
       </section>
 
+      <section className="grid gap-3 rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4 desktop:grid-cols-[1fr_1.5fr] desktop:p-5">
+        <div className="rounded-2xl bg-[var(--emerald-soft)] p-4">
+          <p className="text-[9px] font-bold text-[var(--emerald)]">پروفایل این برنامه</p>
+          <p className="mt-2 text-sm font-black text-[var(--text-primary)]">
+            {plan.profile.name} · {toPersianDigits(plan.profile.age)} سال
+          </p>
+          <div className="mt-3 flex flex-wrap gap-1.5 text-[8px] font-bold text-[var(--text-secondary)]">
+            <span className="rounded-full bg-[var(--surface)] px-2.5 py-1">
+              {toPersianDigits(plan.profile.currentWeightKg)} کیلو
+            </span>
+            <span className="rounded-full bg-[var(--surface)] px-2.5 py-1">
+              هدف {toPersianDigits(plan.profile.targetWeightKg)} کیلو
+            </span>
+            {plan.profile.bodyComposition?.bodyFatPercent !== undefined && (
+              <span className="rounded-full bg-[var(--surface)] px-2.5 py-1">
+                چربی بدن {toPersianDigits(plan.profile.bodyComposition.bodyFatPercent)}٪
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="rounded-2xl bg-[var(--surface-soft)] p-4">
+          <p className="text-[9px] font-bold text-[var(--gold)]">منطق برنامه منعطف</p>
+          <p className="mt-2 text-xs font-black leading-6 text-[var(--text-primary)]">
+            {plan.planningContext.requestedMealPattern}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-1.5 text-[8px] font-bold text-[var(--text-muted)]">
+            <span className="rounded-full border border-[var(--border)] px-2.5 py-1">
+              {toPersianDigits(plan.planningContext.preferredOptionCount)} انتخاب برای هر وعده
+            </span>
+            {plan.planningContext.favoriteFoods.slice(0, 3).map((food) => (
+              <span
+                className="rounded-full border border-[var(--border)] px-2.5 py-1"
+                key={food}
+              >
+                {food}
+              </span>
+            ))}
+            {plan.planningContext.trainingSchedule.length > 0 && (
+              <span className="rounded-full border border-[var(--border)] px-2.5 py-1">
+                {toPersianDigits(plan.planningContext.trainingSchedule.length)} روز فعالیت
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
+
       <div className="flex gap-1 overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-1.5">
         {[
           { id: 'meals' as const, label: 'وعده‌ها', icon: UtensilsCrossed },

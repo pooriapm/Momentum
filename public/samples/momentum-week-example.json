@@ -1,16 +1,67 @@
 {
-  "schemaVersion": "2.0",
+  "schemaVersion": "0.1.0",
   "planId": "momentum-week-example",
-  "planName": "نمونه برنامه منعطف Momentum",
-  "planVersion": "2.0.0",
+  "planName": "دموی برنامه منعطف Momentum",
+  "planVersion": "0.1.0-alpha.1",
   "generatedAt": "2026-07-29T08:00:00Z",
   "validFrom": "2026-08-01",
   "validTo": "2026-08-02",
   "locale": "fa-IR",
   "direction": "rtl",
   "unitSystem": "metric",
+  "profile": {
+    "name": "کاربر دمو",
+    "age": 32,
+    "sex": "prefer_not_to_say",
+    "heightCm": 175,
+    "currentWeightKg": 80,
+    "targetWeightKg": 74,
+    "startWeightKg": 82,
+    "goalDate": "2026-11-01",
+    "activityLevel": "moderate",
+    "bodyComposition": {
+      "measuredAt": "2026-07-28",
+      "sourceType": "scan",
+      "bodyFatPercent": 24.5,
+      "fatMassKg": 19.6,
+      "leanMassKg": 60.4,
+      "skeletalMuscleMassKg": 31.8,
+      "waistCm": 91,
+      "basalMetabolicRate": 1680,
+      "notes": ["اعداد نمایشی و کاملاً ساختگی برای دموی محصول هستند."]
+    }
+  },
+  "planningContext": {
+    "requestedMealPattern": "روز استراحت ۳ وعده و روز تمرین ۵ وعده",
+    "preferredOptionCount": 3,
+    "dietaryPattern": "همه‌چیزخوار",
+    "favoriteFoods": ["مرغ زعفرانی", "ماهی", "پاستا", "ماست یونانی", "غذاهای ایرانی"],
+    "dislikedFoods": ["غذاهای بسیار چرب"],
+    "allergies": [],
+    "medicalConsiderations": [],
+    "medications": [],
+    "supplements": ["پروتئین وی پس از تمرین"],
+    "cookingConstraints": ["حداکثر ۳۰ دقیقه آماده‌سازی در روزهای کاری", "ناهار قابل‌حمل باشد"],
+    "lifestyleNotes": ["کار اداری", "خواب معمول از ۲۳:۳۰ تا ۰۷:۰۰", "یک وعده رستورانی در هفته"],
+    "trainingSchedule": [
+      {
+        "day": "روز اول",
+        "type": "rest",
+        "intensity": "low",
+        "notes": "ریکاوری و پیاده‌روی سبک"
+      },
+      {
+        "day": "روز دوم",
+        "type": "full_body",
+        "scheduledTime": "18:30",
+        "durationMinutes": 60,
+        "intensity": "high",
+        "notes": "تمرین قدرتی تمام بدن"
+      }
+    ]
+  },
   "author": "Momentum",
-  "description": "نمونه عمومی برای نمایش تعداد داینامیک وعده‌ها و انتخاب آزاد بین گزینه‌های هر وعده.",
+  "description": "نمونه عمومی و کاملاً ساختگی برای نمایش پروفایل، بادی‌کامپوزیشن، تعداد داینامیک وعده‌ها، تمرین و انتخاب آزاد بین چند غذای هم‌ارزش.",
   "defaultTargets": {
     "calories": 2000,
     "protein": 140,
@@ -78,6 +129,22 @@
               "prepTimeMinutes": 5,
               "portable": true,
               "satietyScore": 4
+            },
+            {
+              "id": "breakfast-avocado",
+              "title": "تست آووکادو و پنیر",
+              "subtitle": "گزینه سریع و بدون پخت",
+              "ingredients": [
+                { "name": "نان سبوس‌دار", "amount": 2, "unit": "slice" },
+                { "name": "آووکادو", "amount": 80, "unit": "g" },
+                { "name": "پنیر کم‌چرب", "amount": 60, "unit": "g" }
+              ],
+              "nutrition": { "calories": 405, "protein": 24, "carbs": 42, "fat": 17, "fiber": 9 },
+              "preparation": ["مواد را روی نان تست‌شده بچینید."],
+              "prepTimeMinutes": 7,
+              "portable": true,
+              "tags": ["سریع", "بدون پخت"],
+              "satietyScore": 4
             }
           ]
         },
@@ -127,6 +194,22 @@
               "prepTimeMinutes": 20,
               "portable": true,
               "satietyScore": 5
+            },
+            {
+              "id": "lunch-kebab",
+              "title": "کباب تابه‌ای، برنج و گوجه",
+              "subtitle": "انتخاب ایرانی مناسب ظرف محل کار",
+              "ingredients": [
+                { "name": "کباب تابه‌ای کم‌چرب", "amount": 170, "unit": "g" },
+                { "name": "برنج پخته", "amount": 170, "unit": "g" },
+                { "name": "گوجه کبابی", "amount": 180, "unit": "g" }
+              ],
+              "nutrition": { "calories": 655, "protein": 49, "carbs": 69, "fat": 20, "fiber": 7 },
+              "preparation": ["کباب و گوجه را آماده و با برنج تقسیم‌بندی کنید."],
+              "prepTimeMinutes": 30,
+              "portable": true,
+              "tags": ["ایرانی", "meal-prep"],
+              "satietyScore": 5
             }
           ]
         },
@@ -173,6 +256,22 @@
                 "fiber": 8
               },
               "prepTimeMinutes": 15,
+              "satietyScore": 4
+            },
+            {
+              "id": "dinner-chicken-wrap",
+              "title": "رپ مرغ و سبزیجات",
+              "ingredients": [
+                { "name": "مرغ پخته", "amount": 150, "unit": "g" },
+                { "name": "نان رپ سبوس‌دار", "amount": 1, "unit": "piece" },
+                { "name": "سبزیجات", "amount": 220, "unit": "g" },
+                { "name": "سس ماست", "amount": 3, "unit": "tbsp" }
+              ],
+              "nutrition": { "calories": 545, "protein": 48, "carbs": 53, "fat": 16, "fiber": 9 },
+              "preparation": ["مواد را داخل نان بپیچید و دو دقیقه گریل کنید."],
+              "prepTimeMinutes": 12,
+              "portable": true,
+              "tags": ["سریع", "پروتئین بالا"],
               "satietyScore": 4
             }
           ]
@@ -227,6 +326,20 @@
               "prepTimeMinutes": 4,
               "portable": true,
               "satietyScore": 3
+            },
+            {
+              "id": "day-2-breakfast-c",
+              "title": "اوتمیل گرم با سفیده تخم‌مرغ",
+              "ingredients": [
+                { "name": "جو دوسر", "amount": 55, "unit": "g" },
+                { "name": "سفیده تخم‌مرغ", "amount": 4, "unit": "piece" },
+                { "name": "توت", "amount": 100, "unit": "g" }
+              ],
+              "nutrition": { "calories": 410, "protein": 31, "carbs": 58, "fat": 7, "fiber": 8 },
+              "preparation": ["جو را بپزید و سفیده‌ها را در دقیقه آخر اضافه کنید."],
+              "prepTimeMinutes": 10,
+              "tags": ["قبل تمرین", "پروتئین بالا"],
+              "satietyScore": 4
             }
           ]
         },
@@ -258,6 +371,20 @@
               "nutrition": { "calories": 170, "protein": 20, "carbs": 14, "fat": 3, "fiber": 0 },
               "prepTimeMinutes": 1,
               "portable": true,
+              "satietyScore": 3
+            },
+            {
+              "id": "day-2-morning-cheese",
+              "title": "کراکر، پنیر و خیار",
+              "ingredients": [
+                { "name": "کراکر سبوس‌دار", "amount": 4, "unit": "piece" },
+                { "name": "پنیر کم‌چرب", "amount": 45, "unit": "g" },
+                { "name": "خیار", "amount": 150, "unit": "g" }
+              ],
+              "nutrition": { "calories": 195, "protein": 14, "carbs": 24, "fat": 6, "fiber": 4 },
+              "prepTimeMinutes": 3,
+              "portable": true,
+              "tags": ["محل کار"],
               "satietyScore": 3
             }
           ]
@@ -296,6 +423,21 @@
               "prepTimeMinutes": 25,
               "portable": true,
               "satietyScore": 5
+            },
+            {
+              "id": "day-2-lunch-c",
+              "title": "خوراک ماهی و کینوا",
+              "ingredients": [
+                { "name": "ماهی پخته", "amount": 180, "unit": "g" },
+                { "name": "کینوا پخته", "amount": 190, "unit": "g" },
+                { "name": "سبزیجات رنگی", "amount": 220, "unit": "g" }
+              ],
+              "nutrition": { "calories": 670, "protein": 54, "carbs": 68, "fat": 19, "fiber": 11 },
+              "preparation": ["مواد را در یک کاسه قابل‌حمل تقسیم کنید."],
+              "prepTimeMinutes": 28,
+              "portable": true,
+              "tags": ["امگا ۳", "meal-prep"],
+              "satietyScore": 5
             }
           ]
         },
@@ -332,6 +474,21 @@
               "prepTimeMinutes": 5,
               "portable": true,
               "satietyScore": 4
+            },
+            {
+              "id": "day-2-afternoon-c",
+              "title": "شیک موز و پروتئین",
+              "ingredients": [
+                { "name": "شیر کم‌چرب", "amount": 250, "unit": "ml" },
+                { "name": "پودر پروتئین", "amount": 1, "unit": "serving" },
+                { "name": "موز کوچک", "amount": 1, "unit": "piece" }
+              ],
+              "nutrition": { "calories": 270, "protein": 28, "carbs": 35, "fat": 4, "fiber": 4 },
+              "preparation": ["همه مواد را مخلوط کنید."],
+              "prepTimeMinutes": 3,
+              "portable": true,
+              "tags": ["قبل تمرین"],
+              "satietyScore": 3
             }
           ]
         },
@@ -366,6 +523,21 @@
               "nutrition": { "calories": 500, "protein": 46, "carbs": 42, "fat": 16, "fiber": 12 },
               "prepTimeMinutes": 15,
               "portable": true,
+              "satietyScore": 5
+            },
+            {
+              "id": "day-2-dinner-c",
+              "title": "چلو مرغ زعفرانی سبک",
+              "ingredients": [
+                { "name": "مرغ زعفرانی", "amount": 170, "unit": "g" },
+                { "name": "برنج پخته", "amount": 140, "unit": "g" },
+                { "name": "سالاد شیرازی", "amount": 250, "unit": "g" }
+              ],
+              "nutrition": { "calories": 525, "protein": 50, "carbs": 56, "fat": 12, "fiber": 7 },
+              "preparation": ["مرغ از قبل مزه‌دارشده را گریل و با برنج و سالاد سرو کنید."],
+              "prepTimeMinutes": 22,
+              "restaurantFriendly": true,
+              "tags": ["ایرانی", "پروتئین بالا"],
               "satietyScore": 5
             }
           ]
@@ -420,6 +592,31 @@
       },
       "rating": 4,
       "notes": ["مقادیر تغذیه‌ای تخمینی هستند."]
+    },
+    {
+      "id": "restaurant-persian-kebab",
+      "category": "رستوران ایرانی",
+      "title": "جوجه‌کباب با برنج کنترل‌شده",
+      "orderInstructions": [
+        "جوجه بدون پوست و کره اضافه سفارش دهید.",
+        "حدود نصف پرس برنج و تمام گوجه کبابی را مصرف کنید.",
+        "سالاد بدون سس کنار غذا بگیرید."
+      ],
+      "estimatedNutrition": { "calories": 690, "protein": 55, "carbs": 72, "fat": 18, "fiber": 6 },
+      "rating": 5,
+      "notes": ["اندازه پرس رستوران‌ها متفاوت است."]
+    },
+    {
+      "id": "restaurant-cafe",
+      "category": "کافه",
+      "title": "ساندویچ مرغ گریل",
+      "orderInstructions": [
+        "نان سبوس‌دار و مرغ گریل انتخاب کنید.",
+        "سس را جداگانه بگیرید.",
+        "سیب‌زمینی را با سالاد جایگزین کنید."
+      ],
+      "estimatedNutrition": { "calories": 560, "protein": 42, "carbs": 61, "fat": 16, "fiber": 8 },
+      "rating": 4
     }
   ],
   "groceryList": [
@@ -436,6 +633,23 @@
       "items": [
         { "name": "سبزیجات متنوع", "amount": 2500, "unit": "گرم" },
         { "name": "میوه فصل", "amount": 8, "unit": "عدد" }
+      ]
+    },
+    {
+      "category": "غلات و کربوهیدرات",
+      "items": [
+        { "name": "برنج", "amount": 700, "unit": "گرم" },
+        { "name": "جو دوسر", "amount": 300, "unit": "گرم" },
+        { "name": "نان سبوس‌دار", "amount": 1, "unit": "بسته" },
+        { "name": "پاستا", "amount": 300, "unit": "گرم" }
+      ]
+    },
+    {
+      "category": "چاشنی و ملزومات",
+      "items": [
+        { "name": "زعفران", "amount": 1, "unit": "بسته کوچک" },
+        { "name": "مغزها", "amount": 200, "unit": "گرم" },
+        { "name": "روغن زیتون", "amount": 1, "unit": "بطری کوچک" }
       ]
     }
   ]

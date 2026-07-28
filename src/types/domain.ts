@@ -10,6 +10,9 @@ export type MealType =
   | 'emergency'
 
 export type TrainingType = 'rest' | 'crossfit' | 'full_body' | 'cardio' | 'walk'
+export type Sex = 'female' | 'male' | 'other' | 'prefer_not_to_say'
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'high' | 'athlete'
+export type TrainingIntensity = 'low' | 'moderate' | 'high'
 
 export interface Nutrition {
   calories: number
@@ -90,15 +93,52 @@ export interface RestaurantChoice {
 
 export interface ImportedProfile {
   name: string
+  age: number
+  sex: Sex
   heightCm: number
   currentWeightKg: number
   targetWeightKg: number
-  startWeightKg?: number
-  goalDate?: ISODate
+  startWeightKg: number
+  goalDate: ISODate
+  activityLevel: ActivityLevel
+  bodyComposition?: {
+    measuredAt?: ISODate
+    sourceType?: 'image' | 'pdf' | 'scan' | 'manual'
+    bodyFatPercent?: number
+    fatMassKg?: number
+    leanMassKg?: number
+    skeletalMuscleMassKg?: number
+    visceralFatRating?: number
+    waistCm?: number
+    basalMetabolicRate?: number
+    notes?: string[]
+  }
+}
+
+export interface PlanningContext {
+  requestedMealPattern: string
+  preferredOptionCount: number
+  dietaryPattern?: string
+  favoriteFoods: string[]
+  dislikedFoods: string[]
+  allergies: string[]
+  medicalConsiderations: string[]
+  medications: string[]
+  supplements: string[]
+  cookingConstraints: string[]
+  lifestyleNotes: string[]
+  trainingSchedule: Array<{
+    day: string
+    type: TrainingType
+    scheduledTime?: string
+    durationMinutes?: number
+    intensity?: TrainingIntensity
+    notes?: string
+  }>
 }
 
 export interface WeeklyMealPlan {
-  schemaVersion: `2.${number}`
+  schemaVersion: '0.1.0'
   planId: string
   planName: string
   planVersion: string
@@ -108,7 +148,8 @@ export interface WeeklyMealPlan {
   locale: 'fa-IR'
   direction: 'rtl'
   unitSystem: 'metric'
-  profile?: ImportedProfile
+  profile: ImportedProfile
+  planningContext: PlanningContext
   author?: string
   description?: string
   defaultTargets: DayTargets
@@ -133,6 +174,10 @@ export type PlanConflictResolution =
 
 export interface UserProfile {
   name: string
+  age?: number
+  sex?: Sex
+  activityLevel?: ActivityLevel
+  bodyComposition?: ImportedProfile['bodyComposition']
   startWeightKg: number
   currentWeightKg: number
   targetWeightKg: number
@@ -217,7 +262,7 @@ export interface AchievementState {
 }
 
 export interface AppState {
-  storageVersion: 1
+  storageVersion: '0.1.0'
   profile: UserProfile
   settings: AppSettings
   plans: Record<string, WeeklyMealPlan>

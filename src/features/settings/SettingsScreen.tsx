@@ -19,12 +19,33 @@ import {
 import { useAppState } from '../../app/useAppState'
 import { JalaliDatePicker } from '../../components/forms/JalaliDatePicker'
 import { formatJalaliDate, toPersianDigits } from '../../lib/dates/jalali'
+import {
+  optionalLocalizedNumber,
+  parseLocalizedNumber,
+} from '../../lib/numbers/localized-number'
+import { APP_VERSION } from '../../lib/version'
+import type { ActivityLevel, Sex } from '../../types/domain'
 import type { Theme } from '../../types/ui'
 import { PlanImportPanel } from '../plans/import/PlanImportPanel'
 
 interface SettingsScreenProps {
   theme: Theme
   themeControl: ReactNode
+}
+
+const sexLabels: Record<Sex, string> = {
+  female: 'زن',
+  male: 'مرد',
+  other: 'سایر',
+  prefer_not_to_say: 'ترجیح می‌دهم نگویم',
+}
+
+const activityLabels: Record<ActivityLevel, string> = {
+  sedentary: 'کم‌تحرک',
+  light: 'فعالیت سبک',
+  moderate: 'فعالیت متوسط',
+  high: 'فعالیت زیاد',
+  athlete: 'ورزشکار',
 }
 
 export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
@@ -53,7 +74,8 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
       draft.heightCm < 100 ||
       draft.startWeightKg <= 0 ||
       draft.currentWeightKg <= 0 ||
-      draft.targetWeightKg <= 0
+      draft.targetWeightKg <= 0 ||
+      (draft.age !== undefined && (draft.age < 13 || draft.age > 100))
     ) {
       setError('نام، قد و وزن‌ها را با مقدار معتبر وارد کنید.')
       return
@@ -126,15 +148,81 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
               </label>
               <label>
                 <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                  سن
+                </span>
+                <input
+                  className={inputClass}
+                  inputMode="numeric"
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      age: optionalLocalizedNumber(event.target.value),
+                    })
+                  }
+                  type="text"
+                  value={draft.age ?? ''}
+                />
+              </label>
+              <label>
+                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                  جنسیت
+                </span>
+                <select
+                  className={inputClass}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      sex: (event.target.value || undefined) as Sex | undefined,
+                    })
+                  }
+                  value={draft.sex ?? ''}
+                >
+                  <option value="">ثبت نشده</option>
+                  {Object.entries(sexLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                  سطح فعالیت
+                </span>
+                <select
+                  className={inputClass}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      activityLevel: (event.target.value || undefined) as
+                        | ActivityLevel
+                        | undefined,
+                    })
+                  }
+                  value={draft.activityLevel ?? ''}
+                >
+                  <option value="">ثبت نشده</option>
+                  {Object.entries(activityLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
                   قد (سانتی‌متر)
                 </span>
                 <input
                   className={inputClass}
                   inputMode="numeric"
                   onChange={(event) =>
-                    setDraft({ ...draft, heightCm: Number(event.target.value) })
+                    setDraft({
+                      ...draft,
+                      heightCm: parseLocalizedNumber(event.target.value) || 0,
+                    })
                   }
-                  type="number"
+                  type="text"
                   value={draft.heightCm}
                 />
               </label>
@@ -146,10 +234,13 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                   className={inputClass}
                   inputMode="decimal"
                   onChange={(event) =>
-                    setDraft({ ...draft, startWeightKg: Number(event.target.value) })
+                    setDraft({
+                      ...draft,
+                      startWeightKg: parseLocalizedNumber(event.target.value) || 0,
+                    })
                   }
                   step="0.1"
-                  type="number"
+                  type="text"
                   value={draft.startWeightKg}
                 />
               </label>
@@ -161,10 +252,13 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                   className={inputClass}
                   inputMode="decimal"
                   onChange={(event) =>
-                    setDraft({ ...draft, currentWeightKg: Number(event.target.value) })
+                    setDraft({
+                      ...draft,
+                      currentWeightKg: parseLocalizedNumber(event.target.value) || 0,
+                    })
                   }
                   step="0.1"
-                  type="number"
+                  type="text"
                   value={draft.currentWeightKg}
                 />
               </label>
@@ -176,10 +270,13 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                   className={inputClass}
                   inputMode="decimal"
                   onChange={(event) =>
-                    setDraft({ ...draft, targetWeightKg: Number(event.target.value) })
+                    setDraft({
+                      ...draft,
+                      targetWeightKg: parseLocalizedNumber(event.target.value) || 0,
+                    })
                   }
                   step="0.1"
-                  type="number"
+                  type="text"
                   value={draft.targetWeightKg}
                 />
               </label>
@@ -222,6 +319,16 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
               ['وزن شروع', `${toPersianDigits(appState.profile.startWeightKg)} کیلو`],
               ['وزن فعلی', `${toPersianDigits(appState.profile.currentWeightKg)} کیلو`],
               ['وزن هدف', `${toPersianDigits(appState.profile.targetWeightKg)} کیلو`],
+              ['قد', `${toPersianDigits(appState.profile.heightCm)} سانتی‌متر`],
+              ...(appState.profile.age
+                ? [['سن', `${toPersianDigits(appState.profile.age)} سال`]]
+                : []),
+              ...(appState.profile.sex
+                ? [['جنسیت', sexLabels[appState.profile.sex]]]
+                : []),
+              ...(appState.profile.activityLevel
+                ? [['سطح فعالیت', activityLabels[appState.profile.activityLevel]]]
+                : []),
               ['تاریخ هدف', formatJalaliDate(appState.profile.goalDate, 'long')],
             ].map(([label, value]) => (
               <div
@@ -232,6 +339,34 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                 <p className="mt-2 text-xs font-black text-[var(--text-primary)]">{value}</p>
               </div>
             ))}
+          </div>
+        )}
+        {!isEditing && appState.profile.bodyComposition && (
+          <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--emerald-soft)] p-4">
+            <p className="text-[10px] font-black text-[var(--emerald)]">
+              آخرین بادی‌کامپوزیشن
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[9px] font-bold text-[var(--text-secondary)]">
+              {appState.profile.bodyComposition.bodyFatPercent !== undefined && (
+                <span className="rounded-full bg-[var(--surface)] px-3 py-1.5">
+                  چربی بدن {toPersianDigits(appState.profile.bodyComposition.bodyFatPercent)}٪
+                </span>
+              )}
+              {appState.profile.bodyComposition.skeletalMuscleMassKg !== undefined && (
+                <span className="rounded-full bg-[var(--surface)] px-3 py-1.5">
+                  عضله اسکلتی{' '}
+                  {toPersianDigits(
+                    appState.profile.bodyComposition.skeletalMuscleMassKg,
+                  )}{' '}
+                  کیلو
+                </span>
+              )}
+              {appState.profile.bodyComposition.waistCm !== undefined && (
+                <span className="rounded-full bg-[var(--surface)] px-3 py-1.5">
+                  دور کمر {toPersianDigits(appState.profile.bodyComposition.waistCm)} سانتی‌متر
+                </span>
+              )}
+            </div>
           </div>
         )}
       </section>
@@ -509,7 +644,7 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
         className="px-2 text-center text-[10px] font-bold tracking-[0.12em] text-[var(--text-muted)]"
         dir="ltr"
       >
-        MOMENTUM · LOCAL-FIRST
+        MOMENTUM · ALPHA {APP_VERSION}
       </p>
     </div>
   )

@@ -1,6 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Check, ClipboardCheck, Save, X } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
+import {
+  optionalLocalizedNumber,
+  sanitizeLocalizedNumberInput,
+} from '../../lib/numbers/localized-number'
 import type {
   DailyCheckInUpdate,
   DailyLog,
@@ -8,10 +12,6 @@ import type {
 } from '../../types/domain'
 
 type WorkoutType = NonNullable<DailyCheckInUpdate['workout']>['type']
-
-function optionalNumber(value: string) {
-  return value.trim() === '' ? undefined : Number(value)
-}
 
 function RatingField({
   label,
@@ -80,21 +80,21 @@ export function DailyCheckIn({
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const update: DailyCheckInUpdate = {
-      weightKg: optionalNumber(form.weightKg),
-      waistCm: optionalNumber(form.waistCm),
-      sleepHours: optionalNumber(form.sleepHours),
+      weightKg: optionalLocalizedNumber(form.weightKg),
+      waistCm: optionalLocalizedNumber(form.waistCm),
+      sleepHours: optionalLocalizedNumber(form.sleepHours),
       hungerScore,
       moodScore,
       energyScore,
-      waterMl: optionalNumber(form.waterMl),
-      steps: optionalNumber(form.steps),
-      treadmillMinutes: optionalNumber(form.treadmillMinutes),
+      waterMl: optionalLocalizedNumber(form.waterMl),
+      steps: optionalLocalizedNumber(form.steps),
+      treadmillMinutes: optionalLocalizedNumber(form.treadmillMinutes),
       workout: {
         type: form.workoutType as WorkoutType,
-        durationMinutes: optionalNumber(form.workoutDuration),
-        activeCalories: optionalNumber(form.activeCalories),
+        durationMinutes: optionalLocalizedNumber(form.workoutDuration),
+        activeCalories: optionalLocalizedNumber(form.activeCalories),
       },
-      adherencePercent: optionalNumber(form.adherencePercent),
+      adherencePercent: optionalLocalizedNumber(form.adherencePercent),
       notes: form.notes.trim() || undefined,
     }
 
@@ -172,10 +172,16 @@ export function DailyCheckIn({
                     inputMode={inputMode as 'decimal' | 'numeric'}
                     min="0"
                     onChange={(event) =>
-                      setForm({ ...form, [key]: event.target.value })
+                      setForm({
+                        ...form,
+                        [key]: sanitizeLocalizedNumberInput(
+                          event.target.value,
+                          inputMode === 'decimal',
+                        ),
+                      })
                     }
                     step="any"
-                    type="number"
+                    type="text"
                     value={form[key as keyof typeof form]}
                   />
                 </label>
@@ -216,9 +222,15 @@ export function DailyCheckIn({
                   inputMode="numeric"
                   min="0"
                   onChange={(event) =>
-                    setForm({ ...form, workoutDuration: event.target.value })
+                    setForm({
+                      ...form,
+                      workoutDuration: sanitizeLocalizedNumberInput(
+                        event.target.value,
+                        false,
+                      ),
+                    })
                   }
-                  type="number"
+                  type="text"
                   value={form.workoutDuration}
                 />
               </label>
@@ -231,9 +243,15 @@ export function DailyCheckIn({
                   inputMode="numeric"
                   min="0"
                   onChange={(event) =>
-                    setForm({ ...form, activeCalories: event.target.value })
+                    setForm({
+                      ...form,
+                      activeCalories: sanitizeLocalizedNumberInput(
+                        event.target.value,
+                        false,
+                      ),
+                    })
                   }
-                  type="number"
+                  type="text"
                   value={form.activeCalories}
                 />
               </label>
@@ -250,9 +268,15 @@ export function DailyCheckIn({
                   max="100"
                   min="0"
                   onChange={(event) =>
-                    setForm({ ...form, adherencePercent: event.target.value })
+                    setForm({
+                      ...form,
+                      adherencePercent: sanitizeLocalizedNumberInput(
+                        event.target.value,
+                        false,
+                      ),
+                    })
                   }
-                  type="number"
+                  type="text"
                   value={form.adherencePercent}
                 />
               </label>

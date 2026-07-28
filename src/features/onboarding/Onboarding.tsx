@@ -23,6 +23,10 @@ import {
   getTodayIso,
   toPersianDigits,
 } from '../../lib/dates/jalali'
+import {
+  parseLocalizedNumber,
+  sanitizeLocalizedNumberInput,
+} from '../../lib/numbers/localized-number'
 import type { ISODate, UserProfile, WeeklyMealPlan } from '../../types/domain'
 
 const PlanImportPanel = lazy(() =>
@@ -88,11 +92,11 @@ function NumberField({
           dir="ltr"
           id={inputId}
           inputMode="decimal"
-          max="350"
-          min="35"
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) =>
+            onChange(sanitizeLocalizedNumberInput(event.target.value))
+          }
           required
-          type="number"
+          type="text"
           value={value}
         />
         <span className="text-xs font-bold text-[var(--text-muted)]">{suffix}</span>
@@ -111,18 +115,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const stagePlan = (plan: WeeklyMealPlan) => {
     setStagedPlan(plan)
 
-    if (plan.profile) {
-      setForm({
-        name: plan.profile.name,
-        heightCm: String(plan.profile.heightCm),
-        startWeightKg: String(
-          plan.profile.startWeightKg ?? plan.profile.currentWeightKg,
-        ),
-        currentWeightKg: String(plan.profile.currentWeightKg),
-        targetWeightKg: String(plan.profile.targetWeightKg),
-        goalDate: plan.profile.goalDate ?? getDefaultGoalDate(),
-      })
-    }
+    setForm({
+      name: plan.profile.name,
+      heightCm: String(plan.profile.heightCm),
+      startWeightKg: String(plan.profile.startWeightKg),
+      currentWeightKg: String(plan.profile.currentWeightKg),
+      targetWeightKg: String(plan.profile.targetWeightKg),
+      goalDate: plan.profile.goalDate,
+    })
   }
 
   const clearPlan = () => {
@@ -131,9 +131,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   }
 
   const validateManualProfile = () => {
-    const height = Number(form.heightCm)
-    const current = Number(form.currentWeightKg)
-    const target = Number(form.targetWeightKg)
+    const height = parseLocalizedNumber(form.heightCm)
+    const current = parseLocalizedNumber(form.currentWeightKg)
+    const target = parseLocalizedNumber(form.targetWeightKg)
 
     if (!form.name.trim()) {
       return 'نام را وارد کنید.'
@@ -153,7 +153,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const goNext = () => {
     if (step === 1) {
       setError(undefined)
-      setStep(stagedPlan?.profile ? 3 : 2)
+      setStep(stagedPlan ? 3 : 2)
       return
     }
 
@@ -182,7 +182,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     setError(undefined)
 
     if (step === 3) {
-      setStep(stagedPlan?.profile ? 1 : 2)
+      setStep(stagedPlan ? 1 : 2)
       return
     }
 
@@ -191,17 +191,21 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   const finish = (event: FormEvent) => {
     event.preventDefault()
-    const currentWeightKg = Number(form.currentWeightKg)
+    const currentWeightKg = parseLocalizedNumber(form.currentWeightKg)
 
     onComplete(
       {
         name: form.name.trim(),
-        startWeightKg: Number(form.startWeightKg) || currentWeightKg,
+        startWeightKg: parseLocalizedNumber(form.startWeightKg) || currentWeightKg,
         currentWeightKg,
-        targetWeightKg: Number(form.targetWeightKg),
-        heightCm: Number(form.heightCm),
+        targetWeightKg: parseLocalizedNumber(form.targetWeightKg),
+        heightCm: parseLocalizedNumber(form.heightCm),
         journeyStartDate: getTodayIso(),
         goalDate: form.goalDate,
+        age: stagedPlan?.profile.age,
+        sex: stagedPlan?.profile.sex,
+        activityLevel: stagedPlan?.profile.activityLevel,
+        bodyComposition: stagedPlan?.profile.bodyComposition,
       },
       stagedPlan,
     )
@@ -211,11 +215,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     step === 0
       ? 'شروع مسیر'
       : step === 1
-        ? stagedPlan?.profile
+        ? stagedPlan
           ? 'استفاده از این فایل'
-          : stagedPlan
-            ? 'تکمیل اطلاعات'
-            : 'رد کردن و ورود دستی'
+          : 'رد کردن و ورود دستی'
         : 'مرور اطلاعات'
 
   return (
@@ -276,9 +278,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   </span>
                 </div>
                 <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
-                  فایل جدید Momentum علاوه بر وعده‌ها، نام، قد، وزن فعلی، وزن هدف و تاریخ
-                  هدف را هم وارد می‌کند. فایل‌های قدیمی همچنان پذیرفته می‌شوند و فقط
-                  اطلاعات پایه را دستی می‌پرسند.
+                  فایل Momentum علاوه بر وعده‌ها، مشخصات پایه، ترجیحات غذایی و برنامه
+                  تمرین را هم وارد می‌کند. فقط فایل مطابق قرارداد آلفای فعلی پذیرفته
+                  می‌شود.
                 </p>
 
                 <a

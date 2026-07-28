@@ -41,7 +41,7 @@ describe('plan state priority and conflicts', () => {
     const newer = {
       ...sample,
       planName: 'برنامه جدید',
-      planVersion: '2.0.0',
+      planVersion: '0.1.0-alpha.2',
     } as WeeklyMealPlan
     const secondImport = applyPlanImport(firstImport.state, newer, 'existing-first')
 
@@ -57,7 +57,7 @@ describe('plan state priority and conflicts', () => {
     const replacement = {
       ...sample,
       planName: 'جایگزین',
-      planVersion: '3.0.0',
+      planVersion: '0.1.0-alpha.3',
     } as WeeklyMealPlan
     const result = applyPlanImport(initial.state, replacement, 'replace-conflicts')
 

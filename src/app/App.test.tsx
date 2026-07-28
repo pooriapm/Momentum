@@ -23,14 +23,17 @@ function loadImportPlan(): WeeklyMealPlan {
 
   return {
     ...plan,
-    schemaVersion: '2.1',
+    schemaVersion: '0.1.0',
     profile: {
       name: 'کاربر فایل',
+      age: 34,
+      sex: 'prefer_not_to_say',
       heightCm: 168,
       currentWeightKg: 78,
       targetWeightKg: 72,
       startWeightKg: 80,
       goalDate: '2026-12-15',
+      activityLevel: 'moderate',
     },
   }
 }
@@ -88,12 +91,12 @@ describe('Momentum app', () => {
     fireEvent.change(screen.getByLabelText('نام'), {
       target: { value: 'کاربر نمونه' },
     })
-    fireEvent.change(screen.getByLabelText('قد'), { target: { value: '172' } })
+    fireEvent.change(screen.getByLabelText('قد'), { target: { value: '۱۷۲' } })
     fireEvent.change(screen.getByLabelText('وزن فعلی'), {
-      target: { value: '81' },
+      target: { value: '۸۱٫۵' },
     })
     fireEvent.change(screen.getByLabelText('وزن هدف'), {
-      target: { value: '75' },
+      target: { value: '۷۵' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'مرور اطلاعات' }))
     fireEvent.click(screen.getByRole('button', { name: 'ورود به داشبورد' }))
@@ -101,7 +104,9 @@ describe('Momentum app', () => {
     expect(await screen.findByText('سلام کاربر نمونه،')).toBeInTheDocument()
     const state = JSON.parse(localStorage.getItem('momentum.appState') ?? '{}')
     expect(state.plans).toEqual({})
-    expect(state.profile.startWeightKg).toBe(81)
+    expect(state.profile.heightCm).toBe(172)
+    expect(state.profile.currentWeightKg).toBe(81.5)
+    expect(state.profile.startWeightKg).toBe(81.5)
   })
 
   it('creates both profile and plan from one uploaded file', async () => {
@@ -118,9 +123,9 @@ describe('Momentum app', () => {
 
     fireEvent.change(input, { target: { files: [file] } })
     expect(
-      await screen.findByText('نمونه برنامه منعطف Momentum'),
+      await screen.findByText('دموی برنامه منعطف Momentum'),
     ).toBeInTheDocument()
-    expect(screen.getByText('موجود · کاربر فایل')).toBeInTheDocument()
+    expect(screen.getByText('کاربر فایل · ۳۴ سال')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'انتخاب این فایل' }))
     fireEvent.click(screen.getByRole('button', { name: 'استفاده از این فایل' }))
