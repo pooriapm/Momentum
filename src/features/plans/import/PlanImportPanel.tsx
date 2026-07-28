@@ -102,7 +102,7 @@ export function PlanImportPanel({
         type="file"
       />
 
-      {!result && (
+      {!result && !isReading && (
         <div className="rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] p-5 text-center">
           <div className="mx-auto grid size-14 place-items-center rounded-[18px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
             <UploadCloud aria-hidden="true" size={25} />
@@ -135,8 +135,18 @@ export function PlanImportPanel({
       )}
 
       {isReading && (
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center text-xs font-bold text-[var(--text-secondary)]">
-          در حال بررسی فایل…
+        <div
+          aria-label="در حال بررسی فایل"
+          className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-soft)] p-5"
+          role="status"
+        >
+          <div className="skeleton h-3 w-28" />
+          <div className="skeleton mt-4 h-16 w-full" />
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="skeleton h-12" />
+            <div className="skeleton h-12" />
+            <div className="skeleton h-12" />
+          </div>
         </div>
       )}
 

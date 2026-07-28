@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   Beef,
   CalendarClock,
@@ -101,6 +101,59 @@ function SummaryCard({
         <ProgressBar color={color} target={target} value={progress} />
       )}
     </article>
+  )
+}
+
+function WeightProgressRing({ progress }: { progress: number }) {
+  const [animatedProgress, setAnimatedProgress] = useState(0)
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setAnimatedProgress(progress)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [progress])
+
+  return (
+    <div className="relative mx-auto grid size-40 place-items-center desktop:size-48">
+      <svg
+        aria-hidden="true"
+        className="absolute inset-0 size-full -rotate-90 drop-shadow-[0_0_24px_rgba(70,205,145,0.12)]"
+        viewBox="0 0 120 120"
+      >
+        <circle
+          cx="60"
+          cy="60"
+          fill="none"
+          pathLength="100"
+          r="52"
+          stroke="var(--border)"
+          strokeWidth="7"
+        />
+        <circle
+          className="transition-[stroke-dashoffset] duration-1000 ease-out"
+          cx="60"
+          cy="60"
+          fill="none"
+          pathLength="100"
+          r="52"
+          stroke="var(--emerald)"
+          strokeDasharray="100"
+          strokeDashoffset={100 - animatedProgress}
+          strokeLinecap="round"
+          strokeWidth="7"
+        />
+      </svg>
+      <div className="absolute inset-[15px] rounded-full bg-[var(--surface-strong)] shadow-[inset_0_0_0_1px_var(--border)]" />
+      <div className="relative text-center">
+        <Target className="mx-auto text-[var(--emerald)]" aria-hidden="true" size={25} />
+        <p className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">
+          {toPersianDigits(Math.round(progress))}٪
+        </p>
+        <p className="mt-1 text-[10px] font-bold text-[var(--text-muted)]">پیشرفت وزن</p>
+      </div>
+    </div>
   )
 }
 
@@ -217,23 +270,7 @@ export function TodayScreen() {
               </span>
             </div>
           </div>
-          <div className="relative mx-auto grid size-40 place-items-center desktop:size-48">
-            <div
-              className="absolute inset-0 rounded-full p-[9px] shadow-[0_0_60px_rgba(70,205,145,0.12)]"
-              style={{
-                background: `conic-gradient(var(--emerald) 0 ${progress}%, var(--border) ${progress}% 100%)`,
-              }}
-            >
-              <div className="size-full rounded-full bg-[var(--surface-strong)]" />
-            </div>
-            <div className="relative text-center">
-              <Target className="mx-auto text-[var(--emerald)]" aria-hidden="true" size={25} />
-              <p className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">
-                {toPersianDigits(Math.round(progress))}٪
-              </p>
-              <p className="mt-1 text-[10px] font-bold text-[var(--text-muted)]">پیشرفت وزن</p>
-            </div>
-          </div>
+          <WeightProgressRing progress={progress} />
         </div>
       </section>
 

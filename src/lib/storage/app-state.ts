@@ -74,6 +74,22 @@ function parseStoredState(serializedState: string | null) {
   }
 }
 
+function hasUnsupportedStorageVersion(serializedState: string | null) {
+  if (!serializedState) return false
+
+  try {
+    const value = JSON.parse(serializedState) as { storageVersion?: unknown }
+    return (
+      Boolean(value) &&
+      typeof value === 'object' &&
+      'storageVersion' in value &&
+      value.storageVersion !== STORAGE_VERSION
+    )
+  } catch {
+    return false
+  }
+}
+
 function preserveCorruptedPrimary(serializedState: string | null) {
   if (!serializedState || parseStoredState(serializedState)) return
 
@@ -114,6 +130,9 @@ export function loadAppState(): LoadAppStateResult {
     if (candidates.length === 0) {
       if (primaryRaw) {
         preserveCorruptedPrimary(primaryRaw)
+        if (hasUnsupportedStorageVersion(primaryRaw)) {
+          return { state: null }
+        }
         return {
           state: null,
           error:
@@ -136,8 +155,9 @@ export function loadAppState(): LoadAppStateResult {
       return {
         state: selected.state,
         recoveredFromBackup: true,
-        error:
-          'نسخه اصلی قابل استفاده نبود؛ برنامه بدون حذف اطلاعات از نسخه بازیابی سالم باز شد.',
+        error: hasUnsupportedStorageVersion(primaryRaw)
+          ? undefined
+          : 'نسخه اصلی قابل استفاده نبود؛ برنامه بدون حذف اطلاعات از نسخه بازیابی سالم باز شد.',
       }
     }
 

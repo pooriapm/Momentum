@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 import { Onboarding } from '../features/onboarding/Onboarding'
+import { UpdatePrompt } from '../components/feedback/UpdatePrompt'
 import { useAppState } from './useAppState'
 
 const AppShell = lazy(() =>
@@ -13,12 +14,19 @@ function AppLoading() {
   return (
     <main
       aria-label="در حال بارگذاری Momentum"
-      className="grid min-h-screen place-items-center"
+      className="boot-splash"
       role="status"
     >
-      <div className="text-center">
-        <div className="mx-auto size-10 animate-pulse rounded-2xl bg-[var(--emerald-soft)] ring-1 ring-[var(--border-strong)]" />
-        <p className="mt-3 text-xs font-bold text-[var(--text-muted)]">Momentum</p>
+      <div className="boot-splash__content">
+        <img
+          alt=""
+          aria-hidden="true"
+          className="boot-splash__logo"
+          src="/pwa-192.png"
+        />
+        <p className="boot-splash__name" dir="ltr">MOMENTUM</p>
+        <p className="boot-splash__tagline">ریتم پایدار، پیشرفت واقعی</p>
+        <span className="boot-splash__progress" />
       </div>
     </main>
   )
@@ -34,6 +42,7 @@ export function AppContent() {
 
   return (
     <>
+      <UpdatePrompt />
       {storageError && (
         <div
           className="fixed inset-x-4 top-4 z-[80] mx-auto flex max-w-xl items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface-strong)] p-4 shadow-2xl"

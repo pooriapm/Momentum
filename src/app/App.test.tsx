@@ -109,6 +109,34 @@ describe('Momentum app', () => {
     expect(state.profile.startWeightKg).toBe(81.5)
   })
 
+  it('shows validation inside empty fields and clears it while typing', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'شروع مسیر' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'رد کردن و ورود دستی' }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'مرور اطلاعات' }))
+
+    expect(screen.getByText('نام را وارد کنید.')).toBeInTheDocument()
+    expect(screen.getByText('قد را وارد کنید.')).toBeInTheDocument()
+    expect(screen.getByText('وزن فعلی را وارد کنید.')).toBeInTheDocument()
+    expect(screen.getByText('وزن هدف را وارد کنید.')).toBeInTheDocument()
+    expect(screen.getByLabelText('نام')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText('سانتی‌متر')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('نام'), {
+      target: { value: 'کاربر نمونه' },
+    })
+    fireEvent.change(screen.getByLabelText('قد'), {
+      target: { value: '۱۷۲' },
+    })
+
+    expect(screen.queryByText('نام را وارد کنید.')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('نام')).toHaveAttribute('aria-invalid', 'false')
+    expect(screen.queryByText('سانتی‌متر')).not.toBeInTheDocument()
+  })
+
   it('creates both profile and plan from one uploaded file', async () => {
     render(<App />)
 

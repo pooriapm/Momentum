@@ -48,6 +48,9 @@ interface OnboardingForm {
   goalDate: ISODate
 }
 
+type ProfileField = 'name' | 'heightCm' | 'currentWeightKg' | 'targetWeightKg'
+type ProfileErrors = Partial<Record<ProfileField, string>>
+
 function getDefaultGoalDate(): ISODate {
   const date = new Date(`${getTodayIso()}T00:00:00Z`)
   date.setUTCDate(date.getUTCDate() + 90)
@@ -70,36 +73,60 @@ function NumberField({
   value,
   onChange,
   suffix,
+  error,
+  shakeKey,
 }: {
   label: string
   value: string
   onChange: (value: string) => void
   suffix: string
+  error?: string
+  shakeKey: number
 }) {
   const inputId = useId()
+  const errorId = `${inputId}-error`
 
   return (
-    <div>
+    <div className={error ? 'field-error-shake' : undefined} key={error ? shakeKey : 0}>
       <label
         className="mb-2 block text-xs font-bold text-[var(--text-secondary)]"
         htmlFor={inputId}
       >
         {label}
       </label>
-      <div className="flex min-h-13 items-center rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 transition focus-within:border-[var(--emerald)]">
-        <input
-          className="min-w-0 flex-1 bg-transparent text-left text-lg font-black text-[var(--text-primary)] outline-none"
-          dir="ltr"
-          id={inputId}
-          inputMode="decimal"
-          onChange={(event) =>
-            onChange(sanitizeLocalizedNumberInput(event.target.value))
-          }
-          required
-          type="text"
-          value={value}
-        />
-        <span className="text-xs font-bold text-[var(--text-muted)]">{suffix}</span>
+      <div
+        className={`overflow-hidden rounded-2xl border bg-[var(--surface-soft)] transition ${
+          error
+            ? 'border-[var(--danger)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--danger)_12%,transparent)]'
+            : 'border-[var(--border)] focus-within:border-[var(--emerald)]'
+        }`}
+      >
+        <div className="flex min-h-13 items-center px-4">
+          <input
+            aria-describedby={error ? errorId : undefined}
+            aria-invalid={Boolean(error)}
+            className="min-w-0 flex-1 bg-transparent text-left text-lg font-black text-[var(--text-primary)] outline-none"
+            dir="ltr"
+            id={inputId}
+            inputMode="decimal"
+            onChange={(event) =>
+              onChange(sanitizeLocalizedNumberInput(event.target.value))
+            }
+            type="text"
+            value={value}
+          />
+          {!value && (
+            <span className="text-xs font-bold text-[var(--text-muted)]">{suffix}</span>
+          )}
+        </div>
+        {error && (
+          <p
+            className="border-t border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] px-4 py-2 text-[10px] font-bold text-[var(--danger)]"
+            id={errorId}
+          >
+            {error}
+          </p>
+        )}
       </div>
     </div>
   )
@@ -108,7 +135,8 @@ function NumberField({
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<OnboardingForm>(createInitialForm)
-  const [error, setError] = useState<string>()
+  const [errors, setErrors] = useState<ProfileErrors>({})
+  const [errorAttempt, setErrorAttempt] = useState(0)
   const [stagedPlan, setStagedPlan] = useState<WeeklyMealPlan>()
   const progress = ((step + 1) / 4) * 100
 
@@ -130,38 +158,62 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     setForm(createInitialForm())
   }
 
+  const clearFieldError = (field: ProfileField) => {
+    setErrors((current) => {
+      if (!current[field]) return current
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
+  }
+
   const validateManualProfile = () => {
     const height = parseLocalizedNumber(form.heightCm)
     const current = parseLocalizedNumber(form.currentWeightKg)
     const target = parseLocalizedNumber(form.targetWeightKg)
+    const nextErrors: ProfileErrors = {}
 
     if (!form.name.trim()) {
-      return 'نام را وارد کنید.'
+      nextErrors.name = 'نام را وارد کنید.'
     }
 
-    if (!height || height < 100 || height > 250) {
-      return 'قد را به‌صورت عددی و در بازه معتبر وارد کنید.'
+    if (!Number.isFinite(height)) {
+      nextErrors.heightCm = 'قد را وارد کنید.'
+    } else if (height < 100 || height > 250) {
+      nextErrors.heightCm = 'قد باید بین ۱۰۰ تا ۲۵۰ سانتی‌متر باشد.'
     }
 
-    if ([current, target].some((value) => !value || value < 35 || value > 350)) {
-      return 'وزن فعلی و وزن هدف را در بازه معتبر وارد کنید.'
+    if (!Number.isFinite(current)) {
+      nextErrors.currentWeightKg = 'وزن فعلی را وارد کنید.'
+    } else if (current < 35 || current > 350) {
+      nextErrors.currentWeightKg = 'وزن فعلی باید بین ۳۵ تا ۳۵۰ کیلوگرم باشد.'
     }
 
-    return undefined
+    if (!Number.isFinite(target)) {
+      nextErrors.targetWeightKg = 'وزن هدف را وارد کنید.'
+    } else if (target < 35 || target > 350) {
+      nextErrors.targetWeightKg = 'وزن هدف باید بین ۳۵ تا ۳۵۰ کیلوگرم باشد.'
+    }
+
+    return nextErrors
   }
 
   const goNext = () => {
     if (step === 1) {
-      setError(undefined)
+      setErrors({})
       setStep(stagedPlan ? 3 : 2)
       return
     }
 
     if (step === 2) {
-      const validationError = validateManualProfile()
+      const validationErrors = validateManualProfile()
 
-      if (validationError) {
-        setError(validationError)
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors)
+        setErrorAttempt((current) => current + 1)
+        window.requestAnimationFrame(() => {
+          document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+        })
         return
       }
 
@@ -169,17 +221,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         ...current,
         startWeightKg: current.startWeightKg || current.currentWeightKg,
       }))
-      setError(undefined)
+      setErrors({})
       setStep(3)
       return
     }
 
-    setError(undefined)
+    setErrors({})
     setStep(1)
   }
 
   const goBack = () => {
-    setError(undefined)
+    setErrors({})
 
     if (step === 3) {
       setStep(stagedPlan ? 1 : 2)
@@ -231,7 +283,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </span>
         </div>
 
-        <form className="glass-panel overflow-hidden rounded-[30px]" onSubmit={finish}>
+        <form
+          className="glass-panel overflow-hidden rounded-[30px]"
+          noValidate
+          onSubmit={finish}
+        >
           <div className="h-1 bg-[var(--surface-soft)]">
             <div
               className="h-full rounded-full bg-[linear-gradient(90deg,var(--emerald-strong),var(--emerald))] transition-[width] duration-500"
@@ -239,9 +295,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             />
           </div>
 
-          <div className="min-h-[520px] p-6 desktop:p-10">
+          <div className="h-[520px] overflow-y-auto overscroll-contain p-6 desktop:h-[560px] desktop:p-10">
             {step === 0 && (
-              <div className="mx-auto flex min-h-[440px] max-w-lg flex-col justify-center text-center">
+              <div className="onboarding-step mx-auto flex min-h-[440px] max-w-lg flex-col justify-center text-center">
                 <div className="mx-auto grid size-20 place-items-center rounded-[26px] border border-[var(--border)] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <Target aria-hidden="true" size={36} strokeWidth={1.7} />
                 </div>
@@ -260,7 +316,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             )}
 
             {step === 1 && (
-              <div className="mx-auto max-w-xl">
+              <div className="onboarding-step mx-auto max-w-xl">
                 <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <FileJson aria-hidden="true" size={25} />
                 </div>
@@ -303,12 +359,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <Suspense
                     fallback={
                       <div
-                        className="grid min-h-44 place-items-center rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)]"
+                        aria-label="در حال آماده‌سازی آپلود"
+                        className="min-h-44 rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] p-5"
                         role="status"
                       >
-                        <p className="animate-pulse text-xs font-bold text-[var(--text-muted)]">
-                          در حال آماده‌سازی آپلود…
-                        </p>
+                        <div className="skeleton mx-auto size-14 rounded-[18px]" />
+                        <div className="skeleton mx-auto mt-4 h-3 w-36" />
+                        <div className="skeleton mx-auto mt-3 h-2.5 w-56 max-w-full" />
+                        <div className="skeleton mx-auto mt-5 h-11 w-32" />
                       </div>
                     }
                   >
@@ -324,7 +382,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             )}
 
             {step === 2 && (
-              <div className="mx-auto max-w-xl">
+              <div className="onboarding-step mx-auto max-w-xl">
                 <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <UserRound aria-hidden="true" size={25} />
                 </div>
@@ -340,37 +398,73 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </p>
 
                 <div className="mt-7 grid gap-4 desktop:grid-cols-2">
-                  <label className="desktop:col-span-2">
+                  <label
+                    className={`desktop:col-span-2 ${errors.name ? 'field-error-shake' : ''}`}
+                    key={errors.name ? errorAttempt : 0}
+                  >
                     <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
                       نام
                     </span>
-                    <input
-                      autoFocus
-                      className="min-h-13 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 text-base font-bold text-[var(--text-primary)] outline-none transition focus:border-[var(--emerald)]"
-                      onChange={(event) => setForm({ ...form, name: event.target.value })}
-                      value={form.name}
-                    />
+                    <div
+                      className={`overflow-hidden rounded-2xl border bg-[var(--surface-soft)] transition ${
+                        errors.name
+                          ? 'border-[var(--danger)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--danger)_12%,transparent)]'
+                          : 'border-[var(--border)] focus-within:border-[var(--emerald)]'
+                      }`}
+                    >
+                      <input
+                        aria-label="نام"
+                        aria-describedby={errors.name ? 'name-error' : undefined}
+                        aria-invalid={Boolean(errors.name)}
+                        autoFocus
+                        className="min-h-13 w-full bg-transparent px-4 text-base font-bold text-[var(--text-primary)] outline-none"
+                        onChange={(event) => {
+                          setForm({ ...form, name: event.target.value })
+                          clearFieldError('name')
+                        }}
+                        value={form.name}
+                      />
+                      {errors.name && (
+                        <p
+                          className="border-t border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] px-4 py-2 text-[10px] font-bold text-[var(--danger)]"
+                          id="name-error"
+                        >
+                          {errors.name}
+                        </p>
+                      )}
+                    </div>
                   </label>
                   <NumberField
+                    error={errors.heightCm}
                     label="قد"
-                    onChange={(heightCm) => setForm({ ...form, heightCm })}
+                    onChange={(heightCm) => {
+                      setForm({ ...form, heightCm })
+                      clearFieldError('heightCm')
+                    }}
+                    shakeKey={errorAttempt}
                     suffix="سانتی‌متر"
                     value={form.heightCm}
                   />
                   <NumberField
+                    error={errors.currentWeightKg}
                     label="وزن فعلی"
-                    onChange={(currentWeightKg) =>
+                    onChange={(currentWeightKg) => {
                       setForm({ ...form, currentWeightKg })
-                    }
+                      clearFieldError('currentWeightKg')
+                    }}
+                    shakeKey={errorAttempt}
                     suffix="کیلوگرم"
                     value={form.currentWeightKg}
                   />
                   <div className="desktop:col-span-2">
                     <NumberField
+                      error={errors.targetWeightKg}
                       label="وزن هدف"
-                      onChange={(targetWeightKg) =>
+                      onChange={(targetWeightKg) => {
                         setForm({ ...form, targetWeightKg })
-                      }
+                        clearFieldError('targetWeightKg')
+                      }}
+                      shakeKey={errorAttempt}
                       suffix="کیلوگرم"
                       value={form.targetWeightKg}
                     />
@@ -380,7 +474,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             )}
 
             {step === 3 && (
-              <div className="mx-auto max-w-lg">
+              <div className="onboarding-step mx-auto max-w-lg">
                 <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <Sparkles aria-hidden="true" size={25} />
                 </div>
@@ -419,11 +513,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
             )}
 
-            {error && (
-              <p className="mx-auto mt-5 max-w-lg rounded-xl bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] px-4 py-3 text-xs font-bold text-[var(--danger)]">
-                {error}
-              </p>
-            )}
           </div>
 
           <div className="flex items-center justify-between border-t border-[var(--border)] px-6 py-4 desktop:px-10">

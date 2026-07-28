@@ -90,10 +90,10 @@ export function CalendarScreen() {
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              aria-label="ماه بعد"
+              aria-label="ماه قبل"
               className="grid size-11 place-items-center rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"
               onClick={() =>
-                setVisibleMonth(changeMonth(visibleMonth.jy, visibleMonth.jm, 1))
+                setVisibleMonth(changeMonth(visibleMonth.jy, visibleMonth.jm, -1))
               }
               type="button"
             >
@@ -107,10 +107,10 @@ export function CalendarScreen() {
               امروز
             </button>
             <button
-              aria-label="ماه قبل"
+              aria-label="ماه بعد"
               className="grid size-11 place-items-center rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"
               onClick={() =>
-                setVisibleMonth(changeMonth(visibleMonth.jy, visibleMonth.jm, -1))
+                setVisibleMonth(changeMonth(visibleMonth.jy, visibleMonth.jm, 1))
               }
               type="button"
             >

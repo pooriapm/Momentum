@@ -41,6 +41,23 @@ describe('app state storage', () => {
     expect(localStorage.getItem('momentum.appState')).toBe('{not-json')
   })
 
+  it('silently quarantines an unsupported alpha state without deleting it', () => {
+    const unsupportedState = JSON.stringify({
+      storageVersion: 1,
+      profile,
+    })
+    localStorage.setItem('momentum.appState', unsupportedState)
+
+    const result = loadAppState()
+
+    expect(result.state).toBeNull()
+    expect(result.error).toBeUndefined()
+    expect(localStorage.getItem('momentum.appState')).toBe(unsupportedState)
+    expect(localStorage.getItem('momentum.appState.quarantine')).toBe(
+      unsupportedState,
+    )
+  })
+
   it('opens a healthy recovery copy without deleting the corrupted primary', () => {
     const recoveryState = createAppState({ ...profile, currentWeightKg: 80 })
     recoveryState.metadata.updatedAt = '2026-07-29T10:00:00.000Z'

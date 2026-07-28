@@ -509,57 +509,52 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
         </section>
       )}
 
-      <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
-        <div className="flex items-start gap-3">
-          <div className="grid size-11 shrink-0 place-items-center rounded-[15px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
-            <Smartphone aria-hidden="true" size={21} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-xs font-bold text-[var(--emerald)]">نصب روی آیفون</p>
-              {isStandalone && (
-                <span className="rounded-full bg-[var(--emerald-soft)] px-2 py-1 text-[8px] font-black text-[var(--emerald)]">
-                  نصب شده
-                </span>
-              )}
+      {!isStandalone && (
+        <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
+          <div className="flex items-start gap-3">
+            <div className="grid size-11 shrink-0 place-items-center rounded-[15px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
+              <Smartphone aria-hidden="true" size={21} />
             </div>
-            <h2 className="mt-2 text-xl font-black text-[var(--text-primary)]">
-              مثل یک اپ از Home Screen بازش کن
-            </h2>
-            <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
-              آدرس امن HTTPS برنامه را در Safari باز کن و مراحل زیر را انجام بده.
-            </p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-[var(--emerald)]">نصب روی آیفون</p>
+              <h2 className="mt-2 text-xl font-black text-[var(--text-primary)]">
+                مثل یک اپ از Home Screen بازش کن
+              </h2>
+              <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
+                آدرس امن HTTPS برنامه را در Safari باز کن و مراحل زیر را انجام بده.
+              </p>
+            </div>
           </div>
-        </div>
-        <ol className="mt-5 grid gap-2 desktop:grid-cols-3">
-          {[
-            {
-              icon: Share2,
-              title: '۱. Share',
-              body: 'دکمه اشتراک‌گذاری Safari را بزن.',
-            },
-            {
-              icon: PlusSquare,
-              title: '۲. Add to Home Screen',
-              body: 'افزودن به صفحه اصلی را انتخاب کن.',
-            },
-            {
-              icon: Smartphone,
-              title: '۳. Open as Web App',
-              body: 'این گزینه را روشن کن و Add را بزن.',
-            },
-          ].map(({ icon: Icon, title, body }) => (
-            <li
-              className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4"
-              key={title}
-            >
-              <Icon aria-hidden="true" className="text-[var(--emerald)]" size={17} />
-              <p className="mt-3 text-xs font-black text-[var(--text-primary)]">{title}</p>
-              <p className="mt-1 text-[9px] leading-5 text-[var(--text-muted)]">{body}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
+          <ol className="mt-5 grid gap-2 desktop:grid-cols-3">
+            {[
+              {
+                icon: Share2,
+                title: '۱. Share',
+                body: 'دکمه اشتراک‌گذاری Safari را بزن.',
+              },
+              {
+                icon: PlusSquare,
+                title: '۲. Add to Home Screen',
+                body: 'افزودن به صفحه اصلی را انتخاب کن.',
+              },
+              {
+                icon: Smartphone,
+                title: '۳. Open as Web App',
+                body: 'این گزینه را روشن کن و Add را بزن.',
+              },
+            ].map(({ icon: Icon, title, body }) => (
+              <li
+                className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4"
+                key={title}
+              >
+                <Icon aria-hidden="true" className="text-[var(--emerald)]" size={17} />
+                <p className="mt-3 text-xs font-black text-[var(--text-primary)]">{title}</p>
+                <p className="mt-1 text-[9px] leading-5 text-[var(--text-muted)]">{body}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
         <p className="text-xs font-bold text-[var(--emerald)]">ظاهر برنامه</p>

@@ -125,12 +125,18 @@ function MobileNavigation({
 function ScreenLoading() {
   return (
     <div
-      className="glass-panel grid min-h-48 place-items-center rounded-[26px]"
+      aria-label="در حال آماده‌سازی صفحه"
+      className="glass-panel rounded-[26px] p-5 desktop:p-7"
       role="status"
     >
-      <p className="animate-pulse text-xs font-bold text-[var(--text-muted)]">
-        در حال آماده‌سازی…
-      </p>
+      <div className="skeleton h-3 w-24" />
+      <div className="skeleton mt-4 h-8 w-2/3 max-w-sm" />
+      <div className="mt-7 grid grid-cols-2 gap-3 desktop:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div className="skeleton h-24" key={index} />
+        ))}
+      </div>
+      <div className="skeleton mt-4 h-44 w-full" />
     </div>
   )
 }
@@ -223,18 +229,20 @@ export function AppShell() {
 
           <main className="mx-auto max-w-[1040px] px-4 pb-28 pt-5 desktop:px-8 desktop:pb-10 desktop:pt-8">
             <Suspense fallback={<ScreenLoading />}>
-              {selectedTab === 'today' && <TodayScreen />}
-              {selectedTab === 'meal-plan' && <MealPlanScreen />}
-              {selectedTab === 'calendar' && <CalendarScreen />}
-              {selectedTab === 'settings' && (
-                <SettingsScreen
-                  theme={theme}
-                  themeControl={
-                    <ThemeButton theme={theme} onToggle={toggleTheme} showLabel />
-                  }
-                />
-              )}
-              {selectedTab === 'progress' && <EmptyScreen tab={selectedTab} />}
+              <div className="screen-enter" key={selectedTab}>
+                {selectedTab === 'today' && <TodayScreen />}
+                {selectedTab === 'meal-plan' && <MealPlanScreen />}
+                {selectedTab === 'calendar' && <CalendarScreen />}
+                {selectedTab === 'settings' && (
+                  <SettingsScreen
+                    theme={theme}
+                    themeControl={
+                      <ThemeButton theme={theme} onToggle={toggleTheme} showLabel />
+                    }
+                  />
+                )}
+                {selectedTab === 'progress' && <EmptyScreen tab={selectedTab} />}
+              </div>
             </Suspense>
           </main>
         </div>

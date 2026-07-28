@@ -68,6 +68,7 @@ html {
   min-width: 320px;
   min-height: 100%;
   background: var(--page-background);
+  scroll-behavior: smooth;
 }
 
 body {
@@ -90,6 +91,20 @@ select {
 
 button {
   -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+a {
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.975);
 }
 
 button:focus-visible,
@@ -121,6 +136,154 @@ a:focus-visible {
 
 .safe-bottom {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.boot-splash {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(75, 214, 154, 0.13), transparent 18rem),
+    var(--page-background);
+}
+
+.boot-splash__content {
+  display: grid;
+  justify-items: center;
+  padding: 2rem;
+  animation: soft-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.boot-splash__logo {
+  width: 4.75rem;
+  height: 4.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 1.6rem;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+  animation: splash-breathe 1.8s ease-in-out infinite;
+}
+
+.boot-splash__name {
+  margin: 1.25rem 0 0;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.28em;
+}
+
+.boot-splash__tagline {
+  margin: 0.45rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.boot-splash__progress {
+  width: 7rem;
+  height: 0.2rem;
+  margin-top: 1.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.boot-splash__progress::after {
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--emerald);
+  content: "";
+  animation: splash-progress 1.15s ease-in-out infinite;
+}
+
+.screen-enter,
+.onboarding-step {
+  animation: soft-enter 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.field-error-shake {
+  animation: field-shake 360ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.8rem;
+  background: var(--surface-soft);
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--text-primary) 7%, transparent) 45%,
+    transparent 70%
+  );
+  content: "";
+  transform: translateX(100%);
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+@keyframes soft-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes field-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(5px);
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes splash-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 22px 60px rgba(75, 214, 154, 0.14);
+  }
+}
+
+@keyframes splash-progress {
+  from {
+    transform: translateX(180%);
+  }
+  to {
+    transform: translateX(-240%);
+  }
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(-100%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
