@@ -1,5 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowLeft, CircleHelp, Sparkles } from 'lucide-react'
+import { Button } from '../../../components/ui/Button'
+import {
+  Field,
+  SelectInput,
+  TextArea,
+  TextInput,
+} from '../../../components/ui/FormField'
+import { IconTile } from '../../../components/ui/IconTile'
+import { Surface } from '../../../components/ui/Surface'
 import {
   parseQuestionValue,
   setValueAtPath,
@@ -71,35 +80,35 @@ export function ImportCompletionWizard({
   if (!question) return null
 
   return (
-    <section className="rounded-[24px] border border-[var(--emerald)] bg-[var(--emerald-soft)] p-4 desktop:p-5">
+    <Surface as="section" className="rounded-[24px] p-4 desktop:p-5" variant="accent">
       <div className="flex items-start gap-3">
-        <div className="animated-icon grid size-11 shrink-0 place-items-center rounded-[15px] bg-[var(--emerald)] text-[#07110d]">
+        <IconTile tone="accent-solid">
           <CircleHelp aria-hidden="true" size={21} />
-        </div>
+        </IconTile>
         <div>
-          <p className="text-xs font-black text-[var(--emerald)]">
+          <p className="text-xs font-black text-[var(--color-accent)]">
             تکمیل هوشمند فایل
           </p>
-          <h3 className="mt-1 text-base font-black text-[var(--text-primary)]">
+          <h3 className="mt-1 text-base font-black text-[var(--color-text)]">
             فقط اطلاعات جاافتاده را می‌پرسیم
           </h3>
-          <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+          <p className="mt-1 text-[10px] leading-5 text-[var(--color-text-secondary)]">
             سؤال {currentIndex + 1} از {questions.length} · گروه {question.group}
           </p>
         </div>
       </div>
 
       <form className="mt-5" onSubmit={submitAnswer}>
-        <label className="block">
-          <span className="mb-2 block text-sm font-black text-[var(--text-primary)]">
-            {question.question}
-          </span>
+        <Field
+          error={error || undefined}
+          label={question.question}
+          labelClassName="text-sm font-black text-[var(--color-text)]"
+        >
           {question.inputType === 'select' ? (
-            <select
+            <SelectInput
               autoFocus
-              className={`min-h-12 w-full rounded-xl border bg-[var(--surface)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none ${
-                error ? 'border-[var(--danger)]' : 'border-[var(--border)]'
-              }`}
+              className="rounded-xl bg-[var(--color-surface)] px-3 font-bold"
+              hasError={Boolean(error)}
               onChange={(event) => {
                 setValue(event.target.value)
                 setError('')
@@ -112,14 +121,13 @@ export function ImportCompletionWizard({
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectInput>
           ) : question.inputType === 'textarea' ||
             question.inputType === 'list' ? (
-            <textarea
+            <TextArea
               autoFocus
-              className={`min-h-28 w-full resize-y rounded-xl border bg-[var(--surface)] p-3 text-sm leading-7 text-[var(--text-primary)] outline-none ${
-                error ? 'border-[var(--danger)]' : 'border-[var(--border)]'
-              }`}
+              className="min-h-28 rounded-xl bg-[var(--color-surface)]"
+              hasError={Boolean(error)}
               onChange={(event) => {
                 setValue(event.target.value)
                 setError('')
@@ -128,11 +136,10 @@ export function ImportCompletionWizard({
               value={value}
             />
           ) : (
-            <input
+            <TextInput
               autoFocus
-              className={`min-h-12 w-full rounded-xl border bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none ${
-                error ? 'border-[var(--danger)]' : 'border-[var(--border)]'
-              }`}
+              className="rounded-xl bg-[var(--color-surface)] px-3"
+              hasError={Boolean(error)}
               inputMode={
                 question.inputType === 'number' ? 'decimal' : undefined
               }
@@ -149,16 +156,9 @@ export function ImportCompletionWizard({
               value={value}
             />
           )}
-        </label>
-        <div className="min-h-7 pt-2">
-          {error && (
-            <p className="text-[10px] font-bold text-[var(--danger)]" role="alert">
-              {error}
-            </p>
-          )}
-        </div>
-        <button
-          className="mt-2 flex min-h-11 items-center gap-2 rounded-xl bg-[var(--emerald)] px-4 text-xs font-black text-[#07110d]"
+        </Field>
+        <Button
+          className="mt-5"
           type="submit"
         >
           {currentIndex === questions.length - 1 ? (
@@ -169,8 +169,8 @@ export function ImportCompletionWizard({
           {currentIndex === questions.length - 1
             ? 'تکمیل و بررسی دوباره'
             : 'سؤال بعدی'}
-        </button>
+        </Button>
       </form>
-    </section>
+    </Surface>
   )
 }

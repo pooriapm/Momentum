@@ -18,6 +18,10 @@ import {
   UtensilsCrossed,
 } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
+import { Button } from '../../components/ui/Button'
+import { IconTile } from '../../components/ui/IconTile'
+import { ProgressBar } from '../../components/ui/ProgressBar'
+import { Surface } from '../../components/ui/Surface'
 import {
   calculateDailyNutrition,
   getNextIncompleteMeal,
@@ -44,34 +48,6 @@ function formatWeight(value: number) {
   }).format(value)
 }
 
-function ProgressBar({
-  value,
-  target,
-  color = 'var(--emerald)',
-}: {
-  value: number
-  target: number
-  color?: string
-}) {
-  const progress = target > 0 ? Math.min(100, Math.max(0, (value / target) * 100)) : 0
-
-  return (
-    <div
-      aria-label={`${toPersianDigits(Math.round(progress))} درصد`}
-      className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--border)]"
-      role="progressbar"
-      aria-valuemax={100}
-      aria-valuemin={0}
-      aria-valuenow={Math.round(progress)}
-    >
-      <div
-        className="h-full rounded-full transition-[width]"
-        style={{ background: color, width: `${progress}%` }}
-      />
-    </div>
-  )
-}
-
 function SummaryCard({
   icon,
   label,
@@ -90,17 +66,17 @@ function SummaryCard({
   color?: string
 }) {
   return (
-    <article className="glass-panel metric-card rounded-[22px] p-4">
+    <Surface as="article" className="metric-card rounded-[22px] p-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-bold text-[var(--text-muted)]">{label}</p>
-        <span className="animated-icon text-[var(--emerald)]">{icon}</span>
+        <p className="text-xs font-bold text-[var(--color-text-muted)]">{label}</p>
+        <span className="animated-icon text-[var(--color-accent)]">{icon}</span>
       </div>
-      <p className="mt-3 text-lg font-black text-[var(--text-primary)]">{value}</p>
-      <p className="mt-1 text-[11px] font-bold leading-5 text-[var(--text-muted)]">{detail}</p>
+      <p className="mt-3 text-lg font-black text-[var(--color-text)]">{value}</p>
+      <p className="mt-1 text-[11px] font-bold leading-5 text-[var(--color-text-muted)]">{detail}</p>
       {progress !== undefined && target !== undefined && (
-        <ProgressBar color={color} target={target} value={progress} />
+        <ProgressBar className="mt-3" color={color} max={target} value={progress} />
       )}
-    </article>
+    </Surface>
   )
 }
 
@@ -119,7 +95,7 @@ function WeightProgressRing({ progress }: { progress: number }) {
     <div className="relative mx-auto grid size-40 place-items-center desktop:size-48">
       <svg
         aria-hidden="true"
-        className="absolute inset-0 size-full -rotate-90 drop-shadow-[0_0_24px_rgba(70,205,145,0.12)]"
+        className="absolute inset-0 size-full -rotate-90 drop-shadow-[var(--shadow-progress)]"
         viewBox="0 0 120 120"
       >
         <circle
@@ -128,7 +104,7 @@ function WeightProgressRing({ progress }: { progress: number }) {
           fill="none"
           pathLength="100"
           r="52"
-          stroke="var(--border)"
+          stroke="var(--color-border)"
           strokeWidth="7"
         />
         <circle
@@ -138,20 +114,20 @@ function WeightProgressRing({ progress }: { progress: number }) {
           fill="none"
           pathLength="100"
           r="52"
-          stroke="var(--emerald)"
+          stroke="var(--color-accent)"
           strokeDasharray="100"
           strokeDashoffset={100 - animatedProgress}
           strokeLinecap="round"
           strokeWidth="7"
         />
       </svg>
-      <div className="absolute inset-[15px] rounded-full bg-[var(--surface-strong)] shadow-[inset_0_0_0_1px_var(--border)]" />
+      <div className="absolute inset-[15px] rounded-full bg-[var(--color-surface-raised)] shadow-[inset_0_0_0_1px_var(--color-border)]" />
       <div className="relative text-center">
-        <Target className="animated-icon mx-auto text-[var(--emerald)]" aria-hidden="true" size={25} />
-        <p className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">
+        <Target className="animated-icon mx-auto text-[var(--color-accent)]" aria-hidden="true" size={25} />
+        <p className="mt-2 text-3xl font-black tracking-tight text-[var(--color-text)]">
           {toPersianDigits(Math.round(progress))}٪
         </p>
-        <p className="mt-1 text-[11px] font-bold text-[var(--text-muted)]">پیشرفت وزن</p>
+        <p className="mt-1 text-[11px] font-bold text-[var(--color-text-muted)]">پیشرفت وزن</p>
       </div>
     </div>
   )
@@ -246,26 +222,26 @@ export function TodayScreen() {
 
   return (
     <div className="space-y-4 desktop:space-y-6">
-      <section className="relative overflow-hidden rounded-[28px] border border-[var(--border)] bg-[linear-gradient(135deg,var(--surface-strong),var(--surface))] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.18)] desktop:p-8">
+      <section className="relative overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-[linear-gradient(135deg,var(--color-surface-raised),var(--color-surface))] p-5 shadow-[var(--shadow-hero)] desktop:p-8">
         <div className="fine-grid pointer-events-none absolute inset-0 opacity-40" />
         <div className="relative grid gap-7 desktop:grid-cols-[1fr_auto] desktop:items-center">
           <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--emerald-soft)] px-3 py-1.5 text-[11px] font-bold text-[var(--emerald)]">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-accent-soft)] px-3 py-1.5 text-[11px] font-bold text-[var(--color-accent)]">
               <CalendarClock aria-hidden="true" size={14} />
               {formatJalaliDate(today, 'full')}
             </div>
-            <p className="text-sm font-bold text-[var(--text-secondary)]">
+            <p className="text-sm font-bold text-[var(--color-text-secondary)]">
               سلام {profile.name}،
             </p>
-            <h1 className="mt-2 max-w-xl text-[30px] font-black leading-[1.45] tracking-[-0.035em] text-[var(--text-primary)] desktop:text-[42px]">
+            <h1 className="mt-2 max-w-xl text-[30px] font-black leading-[1.45] tracking-[-0.035em] text-[var(--color-text)] desktop:text-[42px]">
               حرکت امروزت،{' '}
-              <span className="block text-[var(--emerald)]">Momentum فرداست.</span>
+              <span className="block text-[var(--color-accent)]">Momentum فرداست.</span>
             </h1>
             <div className="mt-5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-[11px] font-bold text-[var(--text-secondary)]">
+              <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[11px] font-bold text-[var(--color-text-secondary)]">
                 {toPersianDigits(daysRemaining)} روز تا هدف
               </span>
-              <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-[11px] font-bold text-[var(--text-secondary)]">
+              <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[11px] font-bold text-[var(--color-text-secondary)]">
                 هدف: {formatJalaliDate(profile.goalDate, 'long')}
               </span>
             </div>
@@ -297,13 +273,13 @@ export function TodayScreen() {
             icon: ChevronLeft,
           },
         ].map(({ label, value, icon: Icon }) => (
-          <article className="glass-panel metric-card rounded-[22px] p-4 desktop:p-5" key={label}>
+          <Surface as="article" className="metric-card rounded-[22px] p-4 desktop:p-5" key={label}>
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-bold text-[var(--text-muted)]">{label}</p>
-              <Icon aria-hidden="true" className="animated-icon text-[var(--emerald)]" size={16} />
+              <p className="text-xs font-bold text-[var(--color-text-muted)]">{label}</p>
+              <Icon aria-hidden="true" className="animated-icon text-[var(--color-accent)]" size={16} />
             </div>
-            <p className="mt-3 text-base font-black text-[var(--text-primary)]">{value}</p>
-          </article>
+            <p className="mt-3 text-base font-black text-[var(--color-text)]">{value}</p>
+          </Surface>
         ))}
       </section>
 
@@ -342,55 +318,55 @@ export function TodayScreen() {
             />
           </section>
 
-          <section className="glass-panel rounded-[26px] p-5 desktop:p-6">
+          <Surface as="section" className="p-5 desktop:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold text-[var(--gold)]">{activePlan.planName}</p>
-                <h2 className="mt-2 text-lg font-black text-[var(--text-primary)]">
+                <p className="text-xs font-bold text-[var(--color-highlight)]">{activePlan.planName}</p>
+                <h2 className="mt-2 text-lg font-black text-[var(--color-text)]">
                   {nextMeal && nextOption
                     ? `وعده بعدی: ${nextMeal.title} — ${nextOption.title}`
                     : 'همه وعده‌های امروز ثبت شده‌اند'}
                 </h2>
-                <p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">
+                <p className="mt-2 text-[11px] leading-5 text-[var(--color-text-muted)]">
                   {remaining.calories >= 0
                     ? `${toPersianDigits(Math.round(remaining.calories))} کالری تا هدف روز باقی مانده`
                     : `${toPersianDigits(Math.abs(Math.round(remaining.calories)))} کالری بیشتر از هدف ثبت شده`}
                 </p>
               </div>
-              <div className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-[var(--gold-soft)] text-[var(--gold)]">
+              <div className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-[var(--color-highlight-soft)] text-[var(--color-highlight)]">
                 <UtensilsCrossed aria-hidden="true" size={20} />
               </div>
             </div>
-          </section>
+          </Surface>
 
           {activePlan.emergencyOptions.length > 0 && (
             <button
-              className="flex min-h-16 w-full items-center gap-4 rounded-[22px] border border-[color-mix(in_srgb,var(--gold)_45%,transparent)] bg-[var(--gold-soft)] px-5 text-right transition hover:-translate-y-0.5"
+              className="flex min-h-16 w-full items-center gap-4 rounded-[22px] border border-[color-mix(in_srgb,var(--color-highlight)_45%,transparent)] bg-[var(--color-highlight-soft)] px-5 text-right transition hover:-translate-y-0.5"
               onClick={() => setShowEmergency(true)}
               type="button"
             >
-              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-[var(--gold)] text-[#171006]">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-[var(--color-highlight)] text-[var(--color-on-highlight)]">
                 <ShieldAlert aria-hidden="true" size={20} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-black text-[var(--text-primary)]">
+                <span className="block text-sm font-black text-[var(--color-text)]">
                   گرسنگی اضطراری دارم
                 </span>
-                <span className="mt-1 block text-[11px] text-[var(--text-secondary)]">
+                <span className="mt-1 block text-[11px] text-[var(--color-text-secondary)]">
                   انتخاب کنترل‌شده فقط از گزینه‌های فایل همین هفته
                 </span>
               </span>
-              <ChevronLeft aria-hidden="true" className="text-[var(--gold)]" size={19} />
+              <ChevronLeft aria-hidden="true" className="text-[var(--color-highlight)]" size={19} />
             </button>
           )}
 
           <section>
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-bold text-[var(--emerald)]">برنامه امروز</p>
-                <h2 className="mt-1 text-xl font-black text-[var(--text-primary)]">وعده‌ها</h2>
+                <p className="text-xs font-bold text-[var(--color-accent)]">برنامه امروز</p>
+                <h2 className="mt-1 text-xl font-black text-[var(--color-text)]">وعده‌ها</h2>
               </div>
-              <span className="text-[11px] font-bold text-[var(--text-muted)]">
+              <span className="text-[11px] font-bold text-[var(--color-text-muted)]">
                 {toPersianDigits(completedMeals)} / {toPersianDigits(planDay.meals.length)}
               </span>
             </div>
@@ -407,16 +383,16 @@ export function TodayScreen() {
           </section>
 
           {(loggedMeals.length > 0 || (dailyLog?.extraFoodLogs.length ?? 0) > 0) && (
-            <section className="glass-panel rounded-[26px] p-5 desktop:p-6">
+            <Surface as="section" className="p-5 desktop:p-6">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-[var(--emerald-soft)] text-[var(--emerald)]">
+                <div className="grid size-10 place-items-center rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
                   <ListChecks aria-hidden="true" size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-black text-[var(--text-primary)]">
+                  <p className="text-xs font-black text-[var(--color-text)]">
                     لاگ غذایی امروز
                   </p>
-                  <p className="mt-1 text-[11px] leading-5 text-[var(--text-muted)]">
+                  <p className="mt-1 text-[11px] leading-5 text-[var(--color-text-muted)]">
                     فقط گزینه‌هایی که انتخاب و مصرفشان را تأیید کرده‌ای
                   </p>
                 </div>
@@ -424,23 +400,23 @@ export function TodayScreen() {
               <div className="mt-4 space-y-2">
                 {loggedMeals.map((item) => (
                   <div
-                    className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3"
+                    className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3"
                     key={item.id}
                   >
                     <CheckCircle2
                       aria-hidden="true"
-                      className="shrink-0 text-[var(--emerald)]"
+                      className="shrink-0 text-[var(--color-accent)]"
                       size={17}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold text-[var(--text-muted)]">
+                      <p className="text-[11px] font-bold text-[var(--color-text-muted)]">
                         {item.slotTitle}
                       </p>
-                      <p className="mt-1 truncate text-xs font-black text-[var(--text-primary)]">
+                      <p className="mt-1 truncate text-xs font-black text-[var(--color-text)]">
                         {item.optionTitle}
                       </p>
                     </div>
-                    <div className="shrink-0 text-left text-[10px] font-bold leading-5 text-[var(--text-muted)]">
+                    <div className="shrink-0 text-left text-[10px] font-bold leading-5 text-[var(--color-text-muted)]">
                       <p>{toPersianDigits(item.nutrition.calories)} کالری</p>
                       <p className="mt-1">{toPersianDigits(item.nutrition.protein)}g پروتئین</p>
                     </div>
@@ -448,97 +424,96 @@ export function TodayScreen() {
                 ))}
                 {dailyLog?.extraFoodLogs.map((item) => (
                   <div
-                    className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--gold-soft)] p-3"
+                    className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-highlight-soft)] p-3"
                     key={item.id}
                   >
                     <ShieldAlert
                       aria-hidden="true"
-                      className="shrink-0 text-[var(--gold)]"
+                      className="shrink-0 text-[var(--color-highlight)]"
                       size={17}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold text-[var(--gold)]">
+                      <p className="text-[11px] font-bold text-[var(--color-highlight)]">
                         انتخاب اضطراری
                       </p>
-                      <p className="mt-1 truncate text-xs font-black text-[var(--text-primary)]">
+                      <p className="mt-1 truncate text-xs font-black text-[var(--color-text)]">
                         {item.title}
                       </p>
                     </div>
-                    <div className="shrink-0 text-left text-[10px] font-bold leading-5 text-[var(--text-muted)]">
+                    <div className="shrink-0 text-left text-[10px] font-bold leading-5 text-[var(--color-text-muted)]">
                       <p>{toPersianDigits(item.nutrition.calories)} کالری</p>
                       <p className="mt-1">{toPersianDigits(item.nutrition.protein)}g پروتئین</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </section>
+            </Surface>
           )}
 
-          <section className="glass-panel rounded-[26px] p-5 desktop:p-6">
+          <Surface as="section" className="p-5 desktop:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold text-[var(--emerald)]">فعالیت و وضعیت</p>
-                <h2 className="mt-2 text-lg font-black text-[var(--text-primary)]">
+                <p className="text-xs font-bold text-[var(--color-accent)]">فعالیت و وضعیت</p>
+                <h2 className="mt-2 text-lg font-black text-[var(--color-text)]">
                   چک‌لیست امروز
                 </h2>
               </div>
-              <button
-                className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--emerald)] px-3 text-[11px] font-black text-[#07110d]"
+              <Button
                 onClick={() => setShowCheckIn(true)}
-                type="button"
+                size="md"
               >
                 <ClipboardCheck aria-hidden="true" size={15} />
                 {dailyLog?.checkInCompletedAt ? 'ویرایش چک‌این' : 'ثبت روزانه'}
-              </button>
+              </Button>
             </div>
             <div className="mt-5 grid gap-2 desktop:grid-cols-2">
               {activities.map(({ label, complete, icon: Icon }) => (
                 <div
-                  className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3"
+                  className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3"
                   key={label}
                 >
                   <Icon
                     aria-hidden="true"
-                    className={complete ? 'text-[var(--emerald)]' : 'text-[var(--text-muted)]'}
+                    className={complete ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}
                     size={17}
                   />
-                  <p className="min-w-0 flex-1 text-[11px] font-bold leading-5 text-[var(--text-secondary)]">
+                  <p className="min-w-0 flex-1 text-[11px] font-bold leading-5 text-[var(--color-text-secondary)]">
                     {label}
                   </p>
                   {complete && (
-                    <CheckCircle2 aria-label="انجام‌شده" className="text-[var(--emerald)]" size={17} />
+                    <CheckCircle2 aria-label="انجام‌شده" className="text-[var(--color-accent)]" size={17} />
                   )}
                 </div>
               ))}
             </div>
-          </section>
+          </Surface>
         </>
       ) : (
-        <section className="glass-panel rounded-[26px] p-5 desktop:p-6">
+        <Surface as="section" className="p-5 desktop:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold text-[var(--gold)]">برنامه امروز</p>
-              <h2 className="mt-2 text-lg font-black text-[var(--text-primary)]">
+              <p className="text-xs font-bold text-[var(--color-highlight)]">برنامه امروز</p>
+              <h2 className="mt-2 text-lg font-black text-[var(--color-text)]">
                 برای امروز برنامه‌ای وارد نشده است
               </h2>
-              <p className="mt-2 max-w-xl text-xs leading-6 text-[var(--text-secondary)]">
+              <p className="mt-2 max-w-xl text-xs leading-6 text-[var(--color-text-secondary)]">
                 از تنظیمات فایل JSON را وارد کن؛ همه وعده‌ها و محاسبات امروز از همان فایل
                 ساخته می‌شوند.
               </p>
-              <button
-                className="mt-4 flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border)] px-4 text-xs font-black text-[var(--text-secondary)]"
+              <Button
+                className="mt-4"
                 onClick={() => setShowCheckIn(true)}
-                type="button"
+                variant="outline"
               >
                 <ClipboardCheck aria-hidden="true" size={16} />
                 ثبت روزانه بدون برنامه غذایی
-              </button>
+              </Button>
             </div>
-            <div className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-[var(--gold-soft)] text-[var(--gold)]">
+            <IconTile className="rounded-[14px]" tone="highlight">
               <ChevronLeft aria-hidden="true" size={21} />
-            </div>
+            </IconTile>
           </div>
-        </section>
+        </Surface>
       )}
 
       {showEmergency && activePlan && (

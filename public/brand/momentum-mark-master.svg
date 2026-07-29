@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Momentum master brand mark</title>
+  <desc>Editable master artwork. Named groups preserve the tile, orbital movement and continuous Momentum monogram as separate layers.</desc>
+  <defs>
+    <linearGradient id="background" x1="84" y1="56" x2="428" y2="456" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12251D"/>
+      <stop offset="1" stop-color="#07110E"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="104" y1="98" x2="398" y2="408" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#72E5AF"/>
+      <stop offset="1" stop-color="#25AD73"/>
+    </linearGradient>
+    <linearGradient id="orbit-dot" x1="366" y1="116" x2="400" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1D895"/>
+      <stop offset="1" stop-color="#D8B66A"/>
+    </linearGradient>
+  </defs>
+
+  <g id="app-tile">
+    <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#background)"/>
+    <rect x="17" y="17" width="478" height="478" rx="119" stroke="#E0F4E9" stroke-opacity=".14" stroke-width="2"/>
+  </g>
+
+  <g id="momentum-orbit">
+    <circle id="orbit-track" cx="256" cy="256" r="170" stroke="#DFF7EA" stroke-opacity=".13" stroke-width="22"/>
+    <circle id="orbit-progress" cx="256" cy="256" r="170" stroke="url(#accent)" stroke-width="24" stroke-linecap="round" stroke-dasharray="812 256" transform="rotate(-52 256 256)"/>
+  </g>
+
+  <g id="momentum-monogram">
+    <path id="continuous-m" d="M164 324V207C164 185 193 177 207 197L256 271L305 197C319 177 348 185 348 207V324" stroke="#F4F6EF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g id="orbit-point">
+    <circle id="point-halo" cx="382" cy="130" r="25" fill="#D8B66A" fill-opacity=".12"/>
+    <circle id="point" cx="382" cy="130" r="13" fill="url(#orbit-dot)"/>
+  </g>
+</svg>

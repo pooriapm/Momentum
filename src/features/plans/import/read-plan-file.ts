@@ -1,3 +1,4 @@
+import { APP_CONFIG } from '../../../config/app'
 import { getTodayIso } from '../../../lib/dates/jalali'
 import type { ISODate, WeeklyMealPlan } from '../../../types/domain'
 import {
@@ -10,7 +11,7 @@ import {
 } from './adapters/registry'
 import { PlanImportAdapterError } from './adapters/types'
 
-export const MAX_PLAN_FILE_BYTES = 1024 * 1024
+export const MAX_PLAN_FILE_BYTES = APP_CONFIG.planFile.maxBytes
 
 export interface PlanFileResult extends PlanValidationResult {
   fileName?: string
@@ -81,9 +82,15 @@ export async function readPlanFile(file: File): Promise<PlanFileResult> {
   }
 
   if (file.size > MAX_PLAN_FILE_BYTES) {
+    const maxMegabytes = Math.round(MAX_PLAN_FILE_BYTES / (1024 * 1024))
     return {
       success: false,
-      errors: [{ path: 'file', message: 'حجم فایل نباید بیشتر از ۱ مگابایت باشد.' }],
+      errors: [
+        {
+          path: 'file',
+          message: `حجم فایل نباید بیشتر از ${maxMegabytes} مگابایت باشد.`,
+        },
+      ],
       warnings: [],
       fileName: file.name,
     }

@@ -10,6 +10,10 @@ import {
   Target,
 } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
+import { Button } from '../../components/ui/Button'
+import { IconButton } from '../../components/ui/IconButton'
+import { IconTile } from '../../components/ui/IconTile'
+import { Surface } from '../../components/ui/Surface'
 import {
   formatJalaliDate,
   fromJalali,
@@ -77,11 +81,11 @@ export function CalendarScreen() {
 
   return (
     <div className="grid gap-4 desktop:grid-cols-[minmax(0,1fr)_310px]">
-      <section className="glass-panel overflow-hidden rounded-[28px] p-4 desktop:p-6">
+      <Surface as="section" className="overflow-hidden rounded-[28px] p-4 desktop:p-6">
         <header className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold text-[var(--emerald)]">تقویم جلالی</p>
-            <h1 className="mt-1 text-xl font-black text-[var(--text-primary)]">
+            <p className="text-xs font-bold text-[var(--color-accent)]">تقویم جلالی</p>
+            <h1 className="mt-1 text-xl font-black text-[var(--color-text)]">
               {formatJalaliDate(
                 fromJalali(visibleMonth.jy, visibleMonth.jm, 1),
                 'monthYear',
@@ -89,33 +93,31 @@ export function CalendarScreen() {
             </h1>
           </div>
           <div className="flex items-center gap-1.5">
-            <button
+            <IconButton
               aria-label="ماه قبل"
-              className="grid size-11 place-items-center rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"
+              className="border border-[var(--color-border)]"
               onClick={() =>
                 setVisibleMonth(changeMonth(visibleMonth.jy, visibleMonth.jm, -1))
               }
-              type="button"
             >
               <ChevronRight aria-hidden="true" size={19} />
-            </button>
-            <button
-              className="min-h-11 rounded-xl border border-[var(--border)] px-3 text-[11px] font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"
+            </IconButton>
+            <Button
               onClick={goToday}
-              type="button"
+              size="sm"
+              variant="outline"
             >
               امروز
-            </button>
-            <button
+            </Button>
+            <IconButton
               aria-label="ماه بعد"
-              className="grid size-11 place-items-center rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"
+              className="border border-[var(--color-border)]"
               onClick={() =>
                 setVisibleMonth(changeMonth(visibleMonth.jy, visibleMonth.jm, 1))
               }
-              type="button"
             >
               <ChevronLeft aria-hidden="true" size={19} />
-            </button>
+            </IconButton>
           </div>
         </header>
 
@@ -123,7 +125,7 @@ export function CalendarScreen() {
           {PERSIAN_WEEKDAYS.map((weekday, index) => (
             <div
               className={`py-2 text-center text-[10px] font-bold ${
-                index === 6 ? 'text-[var(--gold)]' : 'text-[var(--text-muted)]'
+                index === 6 ? 'text-[var(--color-highlight)]' : 'text-[var(--color-text-muted)]'
               }`}
               key={weekday}
               role="columnheader"
@@ -155,12 +157,12 @@ export function CalendarScreen() {
                 aria-pressed={isSelected}
                 className={`relative flex aspect-[0.82] min-h-12 flex-col items-center justify-center rounded-[14px] border text-sm font-bold transition desktop:aspect-square ${
                   isSelected
-                    ? 'border-[var(--emerald)] bg-[var(--emerald)] text-[#07110d] shadow-[0_8px_24px_rgba(70,205,145,0.2)]'
+                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-on-accent)] shadow-[var(--shadow-accent)]'
                     : isToday
-                      ? 'border-[var(--emerald)] bg-[var(--emerald-soft)] text-[var(--emerald)]'
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
                       : cell.isCurrentMonth
-                        ? 'border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)]'
-                        : 'border-transparent text-[var(--text-muted)] opacity-45'
+                        ? 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]'
+                        : 'border-transparent text-[var(--color-text-muted)] opacity-45'
                 }`}
                 key={cell.isoDate}
                 onClick={() => selectDate(cell.isoDate)}
@@ -171,12 +173,12 @@ export function CalendarScreen() {
                 <span className="absolute bottom-1.5 flex items-center gap-0.5">
                   {(hasPlan || isStart || isGoal) && (
                     <span
-                      className={`size-1 rounded-full ${isSelected ? 'bg-[#07110d]' : 'bg-[var(--gold)]'}`}
+                      className={`size-1 rounded-full ${isSelected ? 'bg-[var(--color-on-accent)]' : 'bg-[var(--color-highlight)]'}`}
                     />
                   )}
                   {(hasWeight || hasWorkout) && (
                     <span
-                      className={`size-1 rounded-full ${isSelected ? 'bg-[#07110d]' : 'bg-[var(--emerald)]'}`}
+                      className={`size-1 rounded-full ${isSelected ? 'bg-[var(--color-on-accent)]' : 'bg-[var(--color-accent)]'}`}
                     />
                   )}
                 </span>
@@ -185,87 +187,87 @@ export function CalendarScreen() {
           })}
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-[var(--border)] pt-4 text-[9px] font-bold text-[var(--text-muted)]">
+        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-[var(--color-border)] pt-4 text-[9px] font-bold text-[var(--color-text-muted)]">
           <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-[var(--emerald)]" />
+            <span className="size-1.5 rounded-full bg-[var(--color-accent)]" />
             امروز یا ثبت روزانه
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-[var(--gold)]" />
+            <span className="size-1.5 rounded-full bg-[var(--color-highlight)]" />
             برنامه یا رویداد مسیر
           </span>
         </div>
-      </section>
+      </Surface>
 
-      <aside className="glass-panel h-fit rounded-[28px] p-5 desktop:sticky desktop:top-24">
+      <Surface as="aside" className="h-fit rounded-[28px] p-5 desktop:sticky desktop:top-24">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold text-[var(--emerald)]">جزئیات روز</p>
-            <h2 className="mt-2 text-lg font-black leading-7 text-[var(--text-primary)]">
+            <p className="text-[10px] font-bold text-[var(--color-accent)]">جزئیات روز</p>
+            <h2 className="mt-2 text-lg font-black leading-7 text-[var(--color-text)]">
               {formatJalaliDate(selectedDate, 'full')}
             </h2>
           </div>
-          <div className="grid size-10 shrink-0 place-items-center rounded-[14px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
+          <IconTile className="size-10 rounded-[14px]">
             <CalendarCheck aria-hidden="true" size={19} />
-          </div>
+          </IconTile>
         </div>
 
         <div className="mt-5 space-y-2">
           {isJourneyStart && (
-            <div className="flex items-center gap-3 rounded-2xl bg-[var(--gold-soft)] p-3 text-xs font-bold text-[var(--gold)]">
+            <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-highlight-soft)] p-3 text-xs font-bold text-[var(--color-highlight)]">
               <Flag aria-hidden="true" size={17} />
               شروع مسیر
             </div>
           )}
           {isGoalDate && (
-            <div className="flex items-center gap-3 rounded-2xl bg-[var(--emerald-soft)] p-3 text-xs font-bold text-[var(--emerald)]">
+            <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-accent-soft)] p-3 text-xs font-bold text-[var(--color-accent)]">
               <Target aria-hidden="true" size={17} />
               تاریخ هدف
             </div>
           )}
           {selectedLog?.weightKg && (
-            <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
-              <Scale aria-hidden="true" className="text-[var(--emerald)]" size={17} />
+            <Surface className="flex items-center gap-3 rounded-2xl p-3" variant="muted">
+              <Scale aria-hidden="true" className="text-[var(--color-accent)]" size={17} />
               <div>
-                <p className="text-[9px] text-[var(--text-muted)]">وزن ثبت‌شده</p>
-                <p className="mt-1 text-xs font-black text-[var(--text-primary)]">
+                <p className="text-[9px] text-[var(--color-text-muted)]">وزن ثبت‌شده</p>
+                <p className="mt-1 text-xs font-black text-[var(--color-text)]">
                   {toPersianDigits(selectedLog.weightKg)} کیلوگرم
                 </p>
               </div>
-            </div>
+            </Surface>
           )}
           {selectedLog?.workout && selectedLog.workout.type !== 'none' && (
-            <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
-              <Dumbbell aria-hidden="true" className="text-[var(--emerald)]" size={17} />
-              <p className="text-xs font-bold text-[var(--text-primary)]">تمرین ثبت‌شده</p>
-            </div>
+            <Surface className="flex items-center gap-3 rounded-2xl p-3" variant="muted">
+              <Dumbbell aria-hidden="true" className="text-[var(--color-accent)]" size={17} />
+              <p className="text-xs font-bold text-[var(--color-text)]">تمرین ثبت‌شده</p>
+            </Surface>
           )}
           {activePlan && (
-            <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
-              <CircleDot aria-hidden="true" className="text-[var(--gold)]" size={17} />
+            <Surface className="flex items-center gap-3 rounded-2xl p-3" variant="muted">
+              <CircleDot aria-hidden="true" className="text-[var(--color-highlight)]" size={17} />
               <div>
-                <p className="text-[9px] text-[var(--text-muted)]">برنامه فعال</p>
-                <p className="mt-1 text-xs font-black text-[var(--text-primary)]">
+                <p className="text-[9px] text-[var(--color-text-muted)]">برنامه فعال</p>
+                <p className="mt-1 text-xs font-black text-[var(--color-text)]">
                   {activePlan.planName}
                 </p>
               </div>
-            </div>
+            </Surface>
           )}
           {!isJourneyStart &&
             !isGoalDate &&
             !selectedLog &&
             !activePlan && (
-              <div className="rounded-2xl border border-dashed border-[var(--border-strong)] p-4 text-center">
-                <p className="text-xs font-bold text-[var(--text-secondary)]">
+              <Surface className="rounded-2xl p-4 text-center" variant="dashed">
+                <p className="text-xs font-bold text-[var(--color-text-secondary)]">
                   رویدادی ثبت نشده است
                 </p>
-                <p className="mt-2 text-[10px] leading-5 text-[var(--text-muted)]">
+                <p className="mt-2 text-[10px] leading-5 text-[var(--color-text-muted)]">
                   برای ثبت اطلاعات این روز از صفحه امروز استفاده کن.
                 </p>
-              </div>
+              </Surface>
             )}
         </div>
-      </aside>
+      </Surface>
     </div>
   )
 }

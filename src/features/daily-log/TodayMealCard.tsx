@@ -10,6 +10,9 @@ import {
 } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
 import { MealOptionPicker } from '../../components/meals/MealOptionPicker'
+import { Button } from '../../components/ui/Button'
+import { IconButton } from '../../components/ui/IconButton'
+import { IconTile } from '../../components/ui/IconTile'
 import { RecipeScreen } from '../recipes/RecipeScreen'
 import { toPersianDigits } from '../../lib/dates/jalali'
 import { getSelectedMealOption } from '../../lib/calculations/nutrition'
@@ -46,57 +49,52 @@ export function TodayMealCard({
     <article
       className={`meal-card-enter overflow-hidden rounded-[24px] border ${
         completed
-          ? 'border-[color-mix(in_srgb,var(--emerald)_45%,transparent)] bg-[var(--emerald-soft)]'
-          : 'border-[var(--border)] bg-[var(--surface)]'
+          ? 'border-[color-mix(in_srgb,var(--color-accent)_45%,transparent)] bg-[var(--color-accent-soft)]'
+          : 'border-[var(--color-border)] bg-[var(--color-surface)]'
       }`}
       id={`meal-${meal.id}`}
       style={{ animationDelay: `${animationIndex * 70}ms` }}
     >
       <div className="p-4 desktop:p-5">
         <div className="flex items-start gap-3">
-          <div
-            className={`animated-icon grid size-10 shrink-0 place-items-center rounded-[14px] ${
-              completed
-                ? 'bg-[var(--emerald)] text-[#07110d]'
-                : 'bg-[var(--surface-soft)] text-[var(--emerald)]'
-            }`}
+          <IconTile
+            className="size-10 rounded-[14px]"
+            tone={completed ? 'accent-solid' : 'accent'}
           >
             {completed ? (
               <Check aria-hidden="true" size={19} />
             ) : (
               <UtensilsCrossed aria-hidden="true" size={18} />
             )}
-          </div>
+          </IconTile>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-black text-[var(--text-primary)]">{meal.title}</h3>
+              <h3 className="text-base font-black text-[var(--color-text)]">{meal.title}</h3>
               {meal.scheduledTime && (
-                <span className="flex items-center gap-1 text-[11px] font-bold text-[var(--text-muted)]">
+                <span className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-text-muted)]">
                   <Clock3 aria-hidden="true" size={13} />
                   {toPersianDigits(meal.scheduledTime)}
                 </span>
               )}
             </div>
-            <p className="mt-1.5 text-sm font-bold leading-6 text-[var(--text-secondary)]">
+            <p className="mt-1.5 text-sm font-bold leading-6 text-[var(--color-text-secondary)]">
               انتخاب فعلی: {option.title}
             </p>
-            <p className="mt-1 text-[11px] leading-5 text-[var(--text-muted)]">
+            <p className="mt-1 text-[11px] leading-5 text-[var(--color-text-muted)]">
               {option.ingredients.map((ingredient) => ingredient.name).join('، ')}
             </p>
           </div>
-          <button
+          <IconButton
             aria-label={`${expanded ? 'بستن' : 'نمایش'} جزئیات ${meal.title}`}
             aria-expanded={expanded}
-            className="grid size-11 shrink-0 place-items-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
             onClick={() => setExpanded((current) => !current)}
-            type="button"
           >
             <ChevronDown
               aria-hidden="true"
               className={`transition ${expanded ? 'rotate-180' : ''}`}
               size={18}
             />
-          </button>
+          </IconButton>
         </div>
 
         <MealOptionPicker
@@ -107,21 +105,21 @@ export function TodayMealCard({
         />
 
         {expanded && (
-          <div className="mt-4 space-y-4 border-t border-[var(--border)] pt-4">
+          <div className="mt-4 space-y-4 border-t border-[var(--color-border)] pt-4">
             <div>
-              <p className="text-xs font-black text-[var(--text-secondary)]">
+              <p className="text-xs font-black text-[var(--color-text-secondary)]">
                 مواد اولیه «{option.title}»
               </p>
               <div className="mt-2 grid gap-1.5 desktop:grid-cols-2">
                 {option.ingredients.map((ingredient, index) => (
                   <div
-                    className="flex items-center justify-between gap-3 rounded-xl bg-[var(--surface-soft)] px-3 py-2"
+                    className="flex items-center justify-between gap-3 rounded-xl bg-[var(--color-surface-muted)] px-3 py-2"
                     key={`${ingredient.name}-${index}`}
                   >
-                    <span className="text-xs font-bold text-[var(--text-primary)]">
+                    <span className="text-xs font-bold text-[var(--color-text)]">
                       {ingredient.name}
                     </span>
-                    <span className="text-[11px] font-black text-[var(--emerald)]">
+                    <span className="text-[11px] font-black text-[var(--color-accent)]">
                       {toPersianDigits(ingredient.amount)} {ingredient.unit}
                     </span>
                   </div>
@@ -131,14 +129,14 @@ export function TodayMealCard({
 
             {option.preparation && option.preparation.length > 0 && (
               <div>
-                <p className="text-xs font-black text-[var(--text-secondary)]">آماده‌سازی</p>
+                <p className="text-xs font-black text-[var(--color-text-secondary)]">آماده‌سازی</p>
                 <ol className="mt-2 space-y-1">
                   {option.preparation.map((step, index) => (
                     <li
-                      className="flex gap-2 text-[11px] leading-6 text-[var(--text-secondary)]"
+                      className="flex gap-2 text-[11px] leading-6 text-[var(--color-text-secondary)]"
                       key={`${step}-${index}`}
                     >
-                      <span className="font-black text-[var(--emerald)]">
+                      <span className="font-black text-[var(--color-accent)]">
                         {toPersianDigits(index + 1)}.
                       </span>
                       {step}
@@ -149,12 +147,12 @@ export function TodayMealCard({
             )}
 
             <label className="block">
-              <span className="mb-2 flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-muted)]">
+              <span className="mb-2 flex items-center gap-1.5 text-[11px] font-bold text-[var(--color-text-muted)]">
                 <StickyNote aria-hidden="true" size={13} />
                 یادداشت این وعده
               </span>
               <textarea
-                className="min-h-20 w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--emerald)]"
+                className="min-h-20 w-full resize-y rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]"
                 onBlur={() => saveMealNote(date, meal.id, note)}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder="یادداشت اختیاری…"
@@ -166,23 +164,18 @@ export function TodayMealCard({
 
         <div className="mt-4 flex gap-2">
           {option.recipe && (
-            <button
-              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-4 text-xs font-black text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
+            <Button
               onClick={() => setShowRecipe(true)}
-              type="button"
+              variant="outline"
             >
               <ChefHat aria-hidden="true" size={16} />
               دستور پخت
-            </button>
+            </Button>
           )}
-          <button
-            className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 text-xs font-black ${
-              completed
-                ? 'border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-secondary)]'
-                : 'bg-[var(--emerald)] text-[#07110d] shadow-[0_8px_22px_rgba(70,205,145,0.18)]'
-            }`}
+          <Button
+            className="flex-1"
             onClick={() => toggleMealCompletion(date, meal.id, meal.xp)}
-            type="button"
+            variant={completed ? 'secondary' : 'primary'}
           >
             {completed ? (
               <>
@@ -195,7 +188,7 @@ export function TodayMealCard({
                 «{option.title}» مصرف شد · {toPersianDigits(meal.xp)} XP
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
       {showRecipe && (

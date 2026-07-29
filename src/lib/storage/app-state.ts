@@ -1,11 +1,14 @@
 import type { AppState, UserProfile } from '../../types/domain'
+import { STORAGE_KEYS } from '../../config/app'
 import { STORAGE_VERSION } from '../version'
 
-const APP_STATE_KEY = 'momentum.appState'
-const STAGING_STATE_KEY = 'momentum.appState.staging'
-const RECOVERY_STATE_KEY = 'momentum.appState.recovery'
-const SECOND_RECOVERY_STATE_KEY = 'momentum.appState.recovery.2'
-const QUARANTINED_STATE_KEY = 'momentum.appState.quarantine'
+const {
+  appState: APP_STATE_KEY,
+  quarantinedState: QUARANTINED_STATE_KEY,
+  recoveryState: RECOVERY_STATE_KEY,
+  secondRecoveryState: SECOND_RECOVERY_STATE_KEY,
+  stagingState: STAGING_STATE_KEY,
+} = STORAGE_KEYS
 
 const APP_STATE_KEYS = [
   APP_STATE_KEY,
@@ -14,6 +17,8 @@ const APP_STATE_KEYS = [
   SECOND_RECOVERY_STATE_KEY,
   QUARANTINED_STATE_KEY,
 ] as const
+
+type AppStateStorageKey = (typeof APP_STATE_KEYS)[number]
 
 export interface LoadAppStateResult {
   state: AppState | null
@@ -105,7 +110,11 @@ function preserveCorruptedPrimary(serializedState: string | null) {
 export function loadAppState(): LoadAppStateResult {
   try {
     const primaryRaw = localStorage.getItem(APP_STATE_KEY)
-    const candidates = [
+    const storedCandidates: Array<{
+      key: AppStateStorageKey
+      state: AppState | undefined
+      priority: number
+    }> = [
       { key: APP_STATE_KEY, state: parseStoredState(primaryRaw), priority: 4 },
       {
         key: STAGING_STATE_KEY,
@@ -122,8 +131,13 @@ export function loadAppState(): LoadAppStateResult {
         state: parseStoredState(localStorage.getItem(SECOND_RECOVERY_STATE_KEY)),
         priority: 1,
       },
-    ].filter(
-      (candidate): candidate is { key: string; state: AppState; priority: number } =>
+    ]
+    const candidates = storedCandidates.filter(
+      (candidate): candidate is {
+        key: AppStateStorageKey
+        state: AppState
+        priority: number
+      } =>
         candidate.state !== undefined,
     )
 

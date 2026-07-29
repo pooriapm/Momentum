@@ -1,5 +1,9 @@
 import { lazy, Suspense } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
+import { APP_CONFIG } from '../config/app'
+import { MomentumLogo } from '../components/brand/MomentumLogo'
+import { IconButton } from '../components/ui/IconButton'
+import { Surface } from '../components/ui/Surface'
 import { Onboarding } from '../features/onboarding/Onboarding'
 import { UpdatePrompt } from '../components/feedback/UpdatePrompt'
 import { useAppState } from './useAppState'
@@ -13,19 +17,17 @@ const AppShell = lazy(() =>
 function AppLoading() {
   return (
     <main
-      aria-label="در حال بارگذاری Momentum"
+      aria-label={`در حال بارگذاری ${APP_CONFIG.name}`}
       className="boot-splash"
       role="status"
     >
       <div className="boot-splash__content">
-        <img
-          alt=""
-          aria-hidden="true"
+        <MomentumLogo
           className="boot-splash__logo"
-          src="/pwa-192.png"
+          motion="splash"
         />
-        <p className="boot-splash__name" dir="ltr">MOMENTUM</p>
-        <p className="boot-splash__tagline">ریتم پایدار، پیشرفت واقعی</p>
+        <p className="boot-splash__name" dir="ltr">{APP_CONFIG.wordmark}</p>
+        <p className="boot-splash__tagline">{APP_CONFIG.tagline}</p>
         <span className="boot-splash__progress" />
       </div>
     </main>
@@ -44,27 +46,26 @@ export function AppContent() {
     <>
       <UpdatePrompt />
       {storageError && (
-        <div
-          className="fixed inset-x-4 top-4 z-[80] mx-auto flex max-w-xl items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface-strong)] p-4 shadow-2xl"
+        <Surface
+          className="fixed inset-x-4 top-4 z-[80] mx-auto flex max-w-xl items-start gap-3 rounded-2xl p-4"
           role="alert"
+          variant="danger"
         >
           <AlertTriangle
             aria-hidden="true"
-            className="mt-0.5 shrink-0 text-[var(--danger)]"
+            className="mt-0.5 shrink-0 text-[var(--color-danger)]"
             size={19}
           />
-          <p className="flex-1 text-xs font-bold leading-6 text-[var(--text-secondary)]">
+          <p className="flex-1 text-xs font-bold leading-6 text-[var(--color-text-secondary)]">
             {storageError}
           </p>
-          <button
+          <IconButton
             aria-label="بستن هشدار ذخیره‌سازی"
-            className="grid size-11 shrink-0 place-items-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-soft)]"
             onClick={dismissStorageError}
-            type="button"
           >
             <X aria-hidden="true" size={18} />
-          </button>
-        </div>
+          </IconButton>
+        </Surface>
       )}
       {appState ? (
         <Suspense fallback={<AppLoading />}>

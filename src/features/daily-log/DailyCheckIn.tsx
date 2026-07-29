@@ -1,7 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { Check, ClipboardCheck, Save, X } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
-import { ViewportPortal } from '../../components/overlay/ViewportPortal'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
+import {
+  Field,
+  SelectInput,
+  TextArea,
+  TextInput,
+} from '../../components/ui/FormField'
+import { IconButton } from '../../components/ui/IconButton'
+import { IconTile } from '../../components/ui/IconTile'
 import {
   optionalLocalizedNumber,
   sanitizeLocalizedNumberInput,
@@ -13,6 +22,26 @@ import type {
 } from '../../types/domain'
 
 type WorkoutType = NonNullable<DailyCheckInUpdate['workout']>['type']
+type DailyMetricFieldKey =
+  | 'weightKg'
+  | 'waistCm'
+  | 'sleepHours'
+  | 'waterMl'
+  | 'steps'
+  | 'treadmillMinutes'
+
+const DAILY_METRIC_FIELDS: ReadonlyArray<{
+  key: DailyMetricFieldKey
+  label: string
+  inputMode: 'decimal' | 'numeric'
+}> = [
+  { key: 'weightKg', label: 'وزن (کیلوگرم)', inputMode: 'decimal' },
+  { key: 'waistCm', label: 'دور کمر (سانتی‌متر)', inputMode: 'decimal' },
+  { key: 'sleepHours', label: 'خواب (ساعت)', inputMode: 'decimal' },
+  { key: 'waterMl', label: 'آب (میلی‌لیتر)', inputMode: 'numeric' },
+  { key: 'steps', label: 'تعداد قدم', inputMode: 'numeric' },
+  { key: 'treadmillMinutes', label: 'تردمیل (دقیقه)', inputMode: 'numeric' },
+]
 
 function RatingField({
   label,
@@ -25,22 +54,20 @@ function RatingField({
 }) {
   return (
     <fieldset>
-      <legend className="text-[10px] font-bold text-[var(--text-secondary)]">{label}</legend>
+      <legend className="text-[10px] font-bold text-[var(--color-text-secondary)]">{label}</legend>
       <div className="mt-2 grid grid-cols-5 gap-1.5">
         {([1, 2, 3, 4, 5] as const).map((rating) => (
-          <button
+          <Button
             aria-pressed={value === rating}
-            className={`min-h-10 rounded-lg text-[10px] font-black ${
-              value === rating
-                ? 'bg-[var(--emerald)] text-[#07110d]'
-                : 'bg-[var(--surface-soft)] text-[var(--text-muted)]'
-            }`}
+            block
+            className="rounded-lg px-0 text-[10px]"
             key={rating}
             onClick={() => onChange(rating)}
-            type="button"
+            size="sm"
+            variant={value === rating ? 'primary' : 'secondary'}
           >
             {new Intl.NumberFormat('fa-IR').format(rating)}
-          </button>
+          </Button>
         ))}
       </div>
     </fieldset>
@@ -75,9 +102,6 @@ export function DailyCheckIn({
   const [energyScore, setEnergyScore] = useState(existing?.energyScore)
   const [saved, setSaved] = useState(false)
 
-  const inputClass =
-    'min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none focus:border-[var(--emerald)]'
-
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const update: DailyCheckInUpdate = {
@@ -105,73 +129,49 @@ export function DailyCheckIn({
   }
 
   return (
-    <ViewportPortal>
-      <div
-        aria-modal="true"
-        className="fixed inset-0 z-[70] flex h-[100dvh] items-end justify-center overflow-hidden bg-black/65 backdrop-blur-sm desktop:items-center desktop:p-5"
-        role="dialog"
-      >
-      <form
-        className="safe-bottom max-h-[calc(100dvh-0.75rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-t-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-2xl desktop:max-h-[calc(100dvh-2.5rem)] desktop:rounded-[30px] desktop:p-7"
-        onSubmit={submit}
-      >
+    <Dialog contentClassName="p-5 desktop:p-7" placement="sheet" size="xl">
+      <form onSubmit={submit}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="grid size-11 shrink-0 place-items-center rounded-[15px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
+            <IconTile>
               <ClipboardCheck aria-hidden="true" size={21} />
-            </div>
+            </IconTile>
             <div>
-              <p className="text-xs font-bold text-[var(--emerald)]">ثبت روزانه</p>
-              <h2 className="mt-1 text-xl font-black text-[var(--text-primary)]">
+              <p className="text-xs font-bold text-[var(--color-accent)]">ثبت روزانه</p>
+              <h2 className="mt-1 text-xl font-black text-[var(--color-text)]">
                 چک‌این امروز
               </h2>
-              <p className="mt-1 text-[9px] text-[var(--text-muted)]">
+              <p className="mt-1 text-[9px] text-[var(--color-text-muted)]">
                 همه فیلدها اختیاری‌اند؛ ذخیره اول ۸ XP دارد.
               </p>
             </div>
           </div>
-          <button
+          <IconButton
             aria-label="بستن چک‌این"
-            className="grid size-11 shrink-0 place-items-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
             onClick={onClose}
-            type="button"
           >
             <X aria-hidden="true" size={19} />
-          </button>
+          </IconButton>
         </div>
 
         {saved ? (
           <div className="my-12 text-center">
-            <div className="mx-auto grid size-16 place-items-center rounded-full bg-[var(--emerald-soft)] text-[var(--emerald)]">
+            <div className="mx-auto grid size-16 place-items-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
               <Check aria-hidden="true" size={28} />
             </div>
-            <p className="mt-4 text-lg font-black text-[var(--text-primary)]">چک‌این ذخیره شد</p>
-            <button
-              className="mt-5 min-h-11 rounded-xl bg-[var(--emerald)] px-5 text-xs font-black text-[#07110d]"
-              onClick={onClose}
-              type="button"
-            >
+            <p className="mt-4 text-lg font-black text-[var(--color-text)]">چک‌این ذخیره شد</p>
+            <Button className="mt-5" onClick={onClose}>
               بستن
-            </button>
+            </Button>
           </div>
         ) : (
           <>
             <div className="mt-6 grid gap-4 desktop:grid-cols-3">
-              {[
-                ['وزن (کیلوگرم)', 'weightKg', 'decimal'],
-                ['دور کمر (سانتی‌متر)', 'waistCm', 'decimal'],
-                ['خواب (ساعت)', 'sleepHours', 'decimal'],
-                ['آب (میلی‌لیتر)', 'waterMl', 'numeric'],
-                ['تعداد قدم', 'steps', 'numeric'],
-                ['تردمیل (دقیقه)', 'treadmillMinutes', 'numeric'],
-              ].map(([label, key, inputMode]) => (
-                <label key={key}>
-                  <span className="mb-2 block text-[10px] font-bold text-[var(--text-secondary)]">
-                    {label}
-                  </span>
-                  <input
-                    className={inputClass}
-                    inputMode={inputMode as 'decimal' | 'numeric'}
+              {DAILY_METRIC_FIELDS.map(({ key, label, inputMode }) => (
+                <Field key={key} label={label}>
+                  <TextInput
+                    className="min-h-11 rounded-xl px-3 font-bold"
+                    inputMode={inputMode}
                     min="0"
                     onChange={(event) =>
                       setForm({
@@ -184,9 +184,9 @@ export function DailyCheckIn({
                     }
                     step="any"
                     type="text"
-                    value={form[key as keyof typeof form]}
+                    value={form[key]}
                   />
-                </label>
+                </Field>
               ))}
             </div>
 
@@ -197,12 +197,9 @@ export function DailyCheckIn({
             </div>
 
             <div className="mt-6 grid gap-4 desktop:grid-cols-3">
-              <label>
-                <span className="mb-2 block text-[10px] font-bold text-[var(--text-secondary)]">
-                  نوع تمرین
-                </span>
-                <select
-                  className={inputClass}
+              <Field label="نوع تمرین">
+                <SelectInput
+                  className="min-h-11 rounded-xl px-3 font-bold"
                   onChange={(event) =>
                     setForm({ ...form, workoutType: event.target.value as WorkoutType })
                   }
@@ -213,14 +210,11 @@ export function DailyCheckIn({
                   <option value="full_body">فول‌بادی</option>
                   <option value="cardio">هوازی</option>
                   <option value="walk">پیاده‌روی</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-2 block text-[10px] font-bold text-[var(--text-secondary)]">
-                  مدت تمرین (دقیقه)
-                </span>
-                <input
-                  className={inputClass}
+                </SelectInput>
+              </Field>
+              <Field label="مدت تمرین (دقیقه)">
+                <TextInput
+                  className="min-h-11 rounded-xl px-3 font-bold"
                   inputMode="numeric"
                   min="0"
                   onChange={(event) =>
@@ -235,13 +229,10 @@ export function DailyCheckIn({
                   type="text"
                   value={form.workoutDuration}
                 />
-              </label>
-              <label>
-                <span className="mb-2 block text-[10px] font-bold text-[var(--text-secondary)]">
-                  کالری فعال ساعت
-                </span>
-                <input
-                  className={inputClass}
+              </Field>
+              <Field label="کالری فعال ساعت">
+                <TextInput
+                  className="min-h-11 rounded-xl px-3 font-bold"
                   inputMode="numeric"
                   min="0"
                   onChange={(event) =>
@@ -256,16 +247,13 @@ export function DailyCheckIn({
                   type="text"
                   value={form.activeCalories}
                 />
-              </label>
+              </Field>
             </div>
 
             <div className="mt-4 grid gap-4 desktop:grid-cols-[180px_1fr]">
-              <label>
-                <span className="mb-2 block text-[10px] font-bold text-[var(--text-secondary)]">
-                  پایبندی به برنامه (درصد)
-                </span>
-                <input
-                  className={inputClass}
+              <Field label="پایبندی به برنامه (درصد)">
+                <TextInput
+                  className="min-h-11 rounded-xl px-3 font-bold"
                   inputMode="numeric"
                   max="100"
                   min="0"
@@ -281,30 +269,28 @@ export function DailyCheckIn({
                   type="text"
                   value={form.adherencePercent}
                 />
-              </label>
-              <label>
-                <span className="mb-2 block text-[10px] font-bold text-[var(--text-secondary)]">
-                  یادداشت
-                </span>
-                <textarea
-                  className="min-h-24 w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--emerald)]"
+              </Field>
+              <Field label="یادداشت">
+                <TextArea
+                  className="min-h-24 rounded-xl text-xs"
                   onChange={(event) => setForm({ ...form, notes: event.target.value })}
                   value={form.notes}
                 />
-              </label>
+              </Field>
             </div>
 
-            <button
-              className="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--emerald)] text-sm font-black text-[#07110d]"
+            <Button
+              block
+              className="mt-6 rounded-xl"
+              size="lg"
               type="submit"
             >
               <Save aria-hidden="true" size={17} />
               ذخیره چک‌این
-            </button>
+            </Button>
           </>
         )}
       </form>
-      </div>
-    </ViewportPortal>
+    </Dialog>
   )
 }

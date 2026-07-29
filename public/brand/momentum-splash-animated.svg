@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Animated Momentum splash mark</title>
+  <defs>
+    <linearGradient id="splash-background" x1="84" y1="56" x2="428" y2="456" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12251D"/>
+      <stop offset="1" stop-color="#07110E"/>
+    </linearGradient>
+    <linearGradient id="splash-accent" x1="104" y1="98" x2="398" y2="408" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#72E5AF"/>
+      <stop offset="1" stop-color="#25AD73"/>
+    </linearGradient>
+    <linearGradient id="splash-dot" x1="366" y1="116" x2="400" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1D895"/>
+      <stop offset="1" stop-color="#D8B66A"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .arc {
+      animation: reveal 1.05s cubic-bezier(.22,1,.36,1) .12s both;
+    }
+    .letter {
+      stroke-dasharray: 520;
+      animation: draw .9s cubic-bezier(.22,1,.36,1) .48s both;
+    }
+    .point {
+      transform-box: view-box;
+      transform-origin: 256px 256px;
+      animation: orbit 1.6s cubic-bezier(.22,1,.36,1) .08s both;
+    }
+    .pulse {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pulse .8s ease-out 1.28s both;
+    }
+    @keyframes reveal {
+      from { stroke-dashoffset: 812; opacity: .2; }
+      to { stroke-dashoffset: 0; opacity: 1; }
+    }
+    @keyframes draw {
+      from { stroke-dashoffset: 520; opacity: .2; }
+      to { stroke-dashoffset: 0; opacity: 1; }
+    }
+    @keyframes orbit {
+      from { transform: rotate(-185deg); opacity: .2; }
+      to { transform: rotate(0); opacity: 1; }
+    }
+    @keyframes pulse {
+      from { opacity: .42; transform: scale(.72); }
+      to { opacity: 0; transform: scale(1.18); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .arc, .letter, .point, .pulse { animation: none; }
+      .pulse { opacity: 0; }
+    }
+  </style>
+
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#splash-background)"/>
+  <rect x="17" y="17" width="478" height="478" rx="119" stroke="#E0F4E9" stroke-opacity=".14" stroke-width="2"/>
+  <circle class="pulse" cx="256" cy="256" r="178" stroke="#72E5AF" stroke-width="6"/>
+  <circle cx="256" cy="256" r="170" stroke="#DFF7EA" stroke-opacity=".13" stroke-width="22"/>
+  <circle class="arc" cx="256" cy="256" r="170" stroke="url(#splash-accent)" stroke-width="24" stroke-linecap="round" stroke-dasharray="812 256" transform="rotate(-52 256 256)"/>
+  <path class="letter" d="M164 324V207C164 185 193 177 207 197L256 271L305 197C319 177 348 185 348 207V324" stroke="#F4F6EF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <g class="point">
+    <circle cx="382" cy="130" r="25" fill="#D8B66A" fill-opacity=".12"/>
+    <circle cx="382" cy="130" r="13" fill="url(#splash-dot)"/>
+  </g>
+</svg>

@@ -1,4 +1,6 @@
 import { AlertTriangle, CheckCircle2, Download, Sparkles } from 'lucide-react'
+import { Button } from '../../../components/ui/Button'
+import { Surface } from '../../../components/ui/Surface'
 import type { WeeklyMealPlan } from '../../../types/domain'
 import {
   analyzePlanHealth,
@@ -23,25 +25,25 @@ export function PlanHealthScoreCard({ plan }: { plan: WeeklyMealPlan }) {
   )
 
   return (
-    <section className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-soft)] p-4 desktop:p-5">
+    <Surface as="section" className="rounded-[24px] p-4 desktop:p-5" variant="muted">
       <div className="flex items-start gap-4">
         <div
-          className="grid size-16 shrink-0 place-items-center rounded-full border-[5px] border-[var(--emerald)] bg-[var(--surface)] text-center shadow-[0_0_30px_rgba(75,214,154,0.12)]"
+          className="grid size-16 shrink-0 place-items-center rounded-full border-[5px] border-[var(--color-accent)] bg-[var(--color-surface)] text-center shadow-[var(--shadow-health-score)]"
           title={`امتیاز ${analysis.score} از ۱۰۰`}
         >
-          <span className="text-lg font-black text-[var(--text-primary)]">
+          <span className="text-lg font-black text-[var(--color-text)]">
             {analysis.score}
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 text-[var(--emerald)]">
+          <div className="flex items-center gap-2 text-[var(--color-accent)]">
             <Sparkles aria-hidden="true" size={17} />
             <p className="text-xs font-black">Plan Health Score</p>
           </div>
-          <h3 className="mt-2 text-lg font-black text-[var(--text-primary)]">
+          <h3 className="mt-2 text-lg font-black text-[var(--color-text)]">
             کیفیت برنامه: {analysis.label}
           </h3>
-          <p className="mt-1 text-[11px] leading-5 text-[var(--text-secondary)]">
+          <p className="mt-1 text-[11px] leading-5 text-[var(--color-text-secondary)]">
             این امتیاز جایگزین نظر پزشک یا متخصص تغذیه نیست؛ فقط سازگاری و منطق داخلی
             فایل را بررسی می‌کند.
           </p>
@@ -52,57 +54,54 @@ export function PlanHealthScoreCard({ plan }: { plan: WeeklyMealPlan }) {
         {analysis.insights.slice(0, 6).map((insight) => {
           const positive = insight.severity === 'positive'
           return (
-            <div
-              className={`rounded-2xl border p-3 ${
-                positive
-                  ? 'border-[color-mix(in_srgb,var(--emerald)_20%,transparent)] bg-[var(--emerald-soft)]'
-                  : 'border-[color-mix(in_srgb,var(--gold)_25%,transparent)] bg-[var(--gold-soft)]'
-              }`}
+            <Surface
+              className="rounded-2xl p-3"
               key={insight.id}
+              variant={positive ? 'accent' : 'highlight'}
             >
               <div className="flex items-start gap-2">
                 {positive ? (
                   <CheckCircle2
                     aria-hidden="true"
-                    className="mt-0.5 shrink-0 text-[var(--emerald)]"
+                    className="mt-0.5 shrink-0 text-[var(--color-accent)]"
                     size={15}
                   />
                 ) : (
                   <AlertTriangle
                     aria-hidden="true"
-                    className="mt-0.5 shrink-0 text-[var(--gold)]"
+                    className="mt-0.5 shrink-0 text-[var(--color-highlight)]"
                     size={15}
                   />
                 )}
                 <div>
-                  <p className="text-[11px] font-black text-[var(--text-primary)]">
+                  <p className="text-[11px] font-black text-[var(--color-text)]">
                     {insight.title}
                   </p>
-                  <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+                  <p className="mt-1 text-[10px] leading-5 text-[var(--color-text-secondary)]">
                     {insight.message}
                   </p>
                 </div>
               </div>
-            </div>
+            </Surface>
           )
         })}
       </div>
 
       {issues.length > 0 && (
-        <button
-          className="mt-4 flex min-h-11 items-center gap-2 rounded-xl border border-[var(--gold)] px-4 text-[11px] font-black text-[var(--gold)] hover:bg-[var(--gold-soft)]"
+        <Button
+          className="mt-4"
           onClick={() =>
             downloadText(
               createPlanImprovementPrompt(plan, analysis),
               'momentum-plan-improvement-prompt.md',
             )
           }
-          type="button"
+          variant="highlight-soft"
         >
           <Download aria-hidden="true" size={16} />
           دریافت پرامپت اصلاح برنامه برای ChatGPT
-        </button>
+        </Button>
       )}
-    </section>
+    </Surface>
   )
 }

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/theme.css";
 
 @font-face {
   font-family: "Vazirmatn";
@@ -9,55 +10,18 @@
 }
 
 @theme {
-  --font-sans: "Vazirmatn", Tahoma, "Segoe UI", Arial, sans-serif;
+  --font-sans: var(--font-app);
   --breakpoint-desktop: 64rem;
 }
 
 :root {
   font-family: var(--font-sans);
-  color: var(--text-primary);
-  background: var(--page-background);
+  color: var(--color-text);
+  background: var(--color-background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --page-background: #07110e;
-  --surface: rgba(17, 34, 27, 0.86);
-  --surface-strong: #12251d;
-  --surface-soft: rgba(35, 59, 48, 0.56);
-  --surface-hover: rgba(48, 78, 64, 0.68);
-  --text-primary: #f4f6ef;
-  --text-secondary: #b4c5bc;
-  --text-muted: #758b80;
-  --border: rgba(224, 244, 233, 0.11);
-  --border-strong: rgba(224, 244, 233, 0.18);
-  --emerald: #4bd69a;
-  --emerald-strong: #25ad73;
-  --emerald-soft: rgba(75, 214, 154, 0.14);
-  --gold: #d8b66a;
-  --gold-soft: rgba(216, 182, 106, 0.13);
-  --danger: #ff8f7d;
-  color-scheme: dark;
-}
-
-:root.light {
-  --page-background: #f2f5ef;
-  --surface: rgba(255, 255, 255, 0.88);
-  --surface-strong: #ffffff;
-  --surface-soft: rgba(226, 234, 229, 0.65);
-  --surface-hover: rgba(213, 227, 219, 0.8);
-  --text-primary: #10241b;
-  --text-secondary: #4e675a;
-  --text-muted: #7a8e83;
-  --border: rgba(30, 65, 49, 0.11);
-  --border-strong: rgba(30, 65, 49, 0.18);
-  --emerald: #117b4f;
-  --emerald-strong: #0b6740;
-  --emerald-soft: rgba(17, 123, 79, 0.11);
-  --gold: #926b20;
-  --gold-soft: rgba(146, 107, 32, 0.11);
-  --danger: #bb4435;
-  color-scheme: light;
 }
 
 * {
@@ -67,7 +31,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
-  background: var(--page-background);
+  background: var(--color-background);
   scroll-behavior: smooth;
 }
 
@@ -77,9 +41,16 @@ body {
   min-height: 100dvh;
   margin: 0;
   background:
-    radial-gradient(circle at 88% -10%, rgba(37, 173, 115, 0.18), transparent 34rem),
-    radial-gradient(circle at -10% 70%, rgba(216, 182, 106, 0.08), transparent 28rem),
-    var(--page-background);
+    radial-gradient(circle at 88% -10%, var(--color-background-glow-accent), transparent 34rem),
+    radial-gradient(circle at -10% 70%, var(--color-background-glow-highlight), transparent 28rem),
+    var(--color-background);
+}
+
+:root.light body {
+  background:
+    radial-gradient(circle at 90% -8%, var(--color-background-glow-accent), transparent 30rem),
+    radial-gradient(circle at 2% 82%, var(--color-background-glow-highlight), transparent 24rem),
+    var(--color-background);
 }
 
 button,
@@ -96,11 +67,11 @@ button {
 button:not(:disabled),
 a {
   transition:
-    transform 180ms ease,
-    opacity 180ms ease,
-    border-color 180ms ease,
-    background-color 180ms ease,
-    color 180ms ease;
+    transform var(--motion-fast) ease,
+    opacity var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 button:not(:disabled):active {
@@ -109,27 +80,43 @@ button:not(:disabled):active {
 
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--emerald);
+  outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
 
 ::selection {
-  color: #07100c;
-  background: #72e5af;
+  color: var(--color-on-selection);
+  background: var(--color-selection);
 }
 
 .glass-panel {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.17);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
+:root.light input,
+:root.light textarea,
+:root.light select {
+  box-shadow: inset 0 0 0 1px var(--color-input-inner-border);
+}
+
+:root.light input::placeholder,
+:root.light textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.82;
+}
+
+:root.light .fine-grid {
+  opacity: 0.72;
+}
+
 .fine-grid {
   background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    linear-gradient(var(--color-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: linear-gradient(to bottom, black, transparent 80%);
 }
@@ -140,37 +127,39 @@ a:focus-visible {
 
 .boot-splash {
   position: fixed;
-  z-index: 100;
+  z-index: 1000;
   inset: 0;
   display: grid;
   place-items: center;
   min-height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
+  direction: ltr;
+  text-align: center;
   background:
-    radial-gradient(circle at 50% 38%, rgba(75, 214, 154, 0.13), transparent 18rem),
-    var(--page-background);
+    radial-gradient(circle at 50% 38%, var(--color-splash-glow), transparent 18rem),
+    var(--color-background);
 }
 
 .boot-splash__content {
   display: grid;
   justify-items: center;
+  width: min(100%, 24rem);
   padding: 2rem;
   animation: soft-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .boot-splash__logo {
-  width: 4.75rem;
-  height: 4.75rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 1.6rem;
-  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
-  animation: splash-breathe 1.8s ease-in-out infinite;
+  width: 6.25rem;
+  height: 6.25rem;
+  border-radius: 1.95rem;
+  box-shadow: var(--shadow-splash);
+  animation: logo-container-settle 1.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .boot-splash__name {
   margin: 1.25rem 0 0;
-  color: var(--text-primary);
+  color: var(--color-text);
   font-size: 0.75rem;
   font-weight: 900;
   letter-spacing: 0.28em;
@@ -178,9 +167,11 @@ a:focus-visible {
 
 .boot-splash__tagline {
   margin: 0.45rem 0 0;
-  color: var(--text-secondary);
+  direction: rtl;
+  color: var(--color-text-secondary);
   font-size: 0.75rem;
   font-weight: 700;
+  text-align: center;
 }
 
 .boot-splash__progress {
@@ -189,7 +180,7 @@ a:focus-visible {
   margin-top: 1.5rem;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--border);
+  background: var(--color-border);
 }
 
 .boot-splash__progress::after {
@@ -197,9 +188,14 @@ a:focus-visible {
   width: 45%;
   height: 100%;
   border-radius: inherit;
-  background: var(--emerald);
+  background: var(--color-accent);
   content: "";
   animation: splash-progress 1.15s ease-in-out infinite;
+}
+
+.boot-splash--exit {
+  pointer-events: none;
+  animation: boot-splash-exit 360ms cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 .screen-enter {
@@ -218,7 +214,7 @@ a:focus-visible {
   position: relative;
   overflow: hidden;
   border-radius: 0.8rem;
-  background: var(--surface-soft);
+  background: var(--color-surface-muted);
 }
 
 .skeleton::after {
@@ -227,7 +223,7 @@ a:focus-visible {
   background: linear-gradient(
     100deg,
     transparent 20%,
-    color-mix(in srgb, var(--text-primary) 7%, transparent) 45%,
+    color-mix(in srgb, var(--color-text) 7%, transparent) 45%,
     transparent 70%
   );
   content: "";
@@ -235,28 +231,82 @@ a:focus-visible {
   animation: skeleton-shimmer 1.35s ease-in-out infinite;
 }
 
+.momentum-logo {
+  display: block;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+}
+
+.momentum-logo__pulse {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.momentum-logo--splash .momentum-logo__orbit-arc {
+  animation: momentum-ring-reveal 1.05s cubic-bezier(0.22, 1, 0.36, 1) 120ms
+    both;
+}
+
+.momentum-logo--splash .momentum-logo__letter {
+  stroke-dasharray: 520;
+  animation: momentum-letter-draw 900ms cubic-bezier(0.22, 1, 0.36, 1) 480ms
+    both;
+}
+
+.momentum-logo--splash .momentum-logo__orbit-dot,
+.momentum-logo--splash .momentum-logo__orbit-dot-halo {
+  transform-box: view-box;
+  transform-origin: 256px 256px;
+  animation: momentum-dot-settle 1.6s cubic-bezier(0.22, 1, 0.36, 1) 80ms
+    both;
+}
+
+.momentum-logo--splash .momentum-logo__pulse {
+  animation: momentum-logo-pulse 800ms ease-out 1.28s both;
+}
+
+.momentum-logo--header .momentum-logo__orbit-arc {
+  animation: momentum-header-ring 850ms cubic-bezier(0.22, 1, 0.36, 1) 80ms
+    both;
+}
+
+.momentum-logo--header .momentum-logo__letter {
+  stroke-dasharray: 520;
+  animation: momentum-header-letter 680ms cubic-bezier(0.22, 1, 0.36, 1) 220ms
+    both;
+}
+
+.momentum-logo--header .momentum-logo__orbit-dot,
+.momentum-logo--header .momentum-logo__orbit-dot-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: momentum-header-dot 520ms cubic-bezier(0.34, 1.56, 0.64, 1) 680ms
+    both;
+}
+
+.momentum-logo--header .momentum-logo__tile-border {
+  animation: momentum-header-border 1.35s ease-out 180ms both;
+}
+
 .brand-mark {
-  transform-origin: 50% 60%;
-  animation: brand-float 4.8s ease-in-out infinite;
+  transition:
+    transform var(--motion-normal) cubic-bezier(0.22, 1, 0.36, 1),
+    filter var(--motion-normal) ease;
 }
 
 .brand-lockup:hover .brand-mark {
-  animation-duration: 1.8s;
+  filter: drop-shadow(0 8px 18px var(--color-accent-soft));
+  transform: scale(1.035);
 }
 
 .brand-wordmark {
-  color: transparent;
-  background: linear-gradient(
-    100deg,
-    var(--text-muted) 10%,
-    var(--emerald) 45%,
-    var(--gold) 55%,
-    var(--text-muted) 90%
-  );
-  background-size: 240% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  animation: brand-shimmer 7s linear infinite;
+  color: var(--color-highlight);
+  animation: brand-copy-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.brand-tagline {
+  animation: brand-copy-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
 }
 
 .meal-card-enter,
@@ -272,8 +322,8 @@ a:focus-visible {
 }
 
 .meal-card-enter:hover {
-  border-color: var(--border-strong);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-card);
   transform: translateY(-2px);
 }
 
@@ -301,8 +351,8 @@ a:focus-visible {
 }
 
 .metric-card:hover {
-  border-color: var(--border-strong);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-card);
   transform: translateY(-2px);
 }
 
@@ -326,21 +376,116 @@ a:focus-visible {
   }
 }
 
-@keyframes brand-float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+@keyframes boot-splash-exit {
+  from {
+    opacity: 1;
   }
-  50% {
-    transform: translateY(-3px) rotate(-1.5deg);
-    box-shadow: 0 13px 30px rgba(75, 214, 154, 0.14);
+  to {
+    opacity: 0;
+    visibility: hidden;
   }
 }
 
-@keyframes brand-shimmer {
+@keyframes momentum-ring-reveal {
+  from {
+    opacity: 0.2;
+    stroke-dashoffset: 812;
+  }
   to {
-    background-position: -240% 0;
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes momentum-letter-draw {
+  from {
+    opacity: 0.2;
+    stroke-dashoffset: 520;
+  }
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes momentum-dot-settle {
+  from {
+    opacity: 0.2;
+    transform: rotate(-185deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0);
+  }
+}
+
+@keyframes momentum-header-ring {
+  from {
+    opacity: 0.3;
+    stroke-dashoffset: 812;
+  }
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes momentum-header-letter {
+  from {
+    opacity: 0.25;
+    stroke-dashoffset: 520;
+  }
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes momentum-header-dot {
+  from {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes momentum-header-border {
+  0% {
+    opacity: 0.2;
+    stroke-width: 2;
+  }
+  55% {
+    opacity: 1;
+    stroke-width: 8;
+  }
+  100% {
+    opacity: 1;
+    stroke-width: 2;
+  }
+}
+
+@keyframes momentum-logo-pulse {
+  from {
+    opacity: 0.42;
+    transform: scale(0.72);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes brand-copy-enter {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -404,15 +549,21 @@ a:focus-visible {
   }
 }
 
-@keyframes splash-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+@keyframes logo-container-settle {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+    box-shadow: var(--shadow-splash);
   }
-  50% {
-    transform: scale(1.035);
-    box-shadow: 0 22px 60px rgba(75, 214, 154, 0.14);
+  68% {
+    opacity: 1;
+    transform: translateY(0) scale(1.025);
+    box-shadow: var(--shadow-splash-active);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: var(--shadow-splash);
   }
 }
 
@@ -440,23 +591,27 @@ a:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  .momentum-logo__pulse {
+    display: none;
+  }
 }
 
 @media print {
   :root,
   :root.light {
-    --page-background: #ffffff;
-    --surface: #ffffff;
-    --surface-strong: #ffffff;
-    --text-primary: #111111;
-    --text-secondary: #333333;
-    --text-muted: #555555;
-    --border: #d3d3d3;
+    --color-background: var(--color-print-background);
+    --color-surface: var(--color-print-background);
+    --color-surface-raised: var(--color-print-background);
+    --color-text: var(--color-print-text);
+    --color-text-secondary: var(--color-print-text-secondary);
+    --color-text-muted: var(--color-print-text-muted);
+    --color-border: var(--color-print-border);
     color-scheme: light;
   }
 
   body {
-    background: #ffffff;
+    background: var(--color-print-background);
   }
 
   [data-print-hidden="true"] {

@@ -19,6 +19,13 @@ import {
 import { useAppState } from '../../app/useAppState'
 import { TemplateDownloadButton } from '../../components/feedback/TemplateDownloadButton'
 import { JalaliDatePicker } from '../../components/forms/JalaliDatePicker'
+import { Badge } from '../../components/ui/Badge'
+import { Button } from '../../components/ui/Button'
+import { buttonClassNames } from '../../components/ui/button-styles'
+import { SelectInput, TextInput } from '../../components/ui/FormField'
+import { IconButton } from '../../components/ui/IconButton'
+import { Surface } from '../../components/ui/Surface'
+import { APP_CONFIG } from '../../config/app'
 import { formatJalaliDate, toPersianDigits } from '../../lib/dates/jalali'
 import {
   optionalLocalizedNumber,
@@ -34,6 +41,7 @@ import {
   mergeProfileWithPlanContext,
 } from '../ai-prompt/prompt-generator'
 import { PlanImportPanel } from '../plans/import/PlanImportPanel'
+import { SettingsSection } from './components/SettingsSection'
 
 interface SettingsScreenProps {
   theme: Theme
@@ -98,9 +106,6 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
     }
   }
 
-  const inputClass =
-    'min-h-12 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 text-sm font-bold text-[var(--text-primary)] outline-none transition focus:border-[var(--emerald)]'
-
   const orderedPlanKeys = [
     ...appState.planPriority,
     ...Object.keys(appState.plans).filter((key) => !appState.planPriority.includes(key)),
@@ -117,32 +122,31 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
   return (
     <div className="space-y-4">
       {saved && (
-        <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--emerald-soft)] px-4 py-3 text-xs font-bold text-[var(--emerald)]">
+        <div className="flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-accent-soft)] px-4 py-3 text-xs font-bold text-[var(--color-accent)]">
           <Check aria-hidden="true" size={17} />
           پروفایل با موفقیت ذخیره شد.
         </div>
       )}
 
-      <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
+      <Surface as="section" className="p-5 desktop:p-7">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold text-[var(--emerald)]">پروفایل</p>
-            <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
+            <p className="text-xs font-bold text-[var(--color-accent)]">پروفایل</p>
+            <h1 className="mt-2 text-2xl font-black text-[var(--color-text)]">
               اطلاعات {appState.profile.name}
             </h1>
           </div>
           {!isEditing && (
-            <button
-              className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border)] px-3 text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"
+            <Button
               onClick={() => {
                 setDraft(appState.profile)
                 setIsEditing(true)
               }}
-              type="button"
+              variant="outline"
             >
               <Edit3 aria-hidden="true" size={16} />
               ویرایش
-            </button>
+            </Button>
           )}
         </div>
 
@@ -150,21 +154,21 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
           <form className="mt-6 space-y-4" onSubmit={saveProfile}>
             <div className="grid gap-4 desktop:grid-cols-2">
               <label>
-                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                <span className="mb-2 block text-xs font-bold text-[var(--color-text-secondary)]">
                   نام
                 </span>
-                <input
-                  className={inputClass}
+                <TextInput
+                  className="font-bold"
                   onChange={(event) => setDraft({ ...draft, name: event.target.value })}
                   value={draft.name}
                 />
               </label>
               <label>
-                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                <span className="mb-2 block text-xs font-bold text-[var(--color-text-secondary)]">
                   سن
                 </span>
-                <input
-                  className={inputClass}
+                <TextInput
+                  className="font-bold"
                   inputMode="numeric"
                   onChange={(event) =>
                     setDraft({
@@ -177,11 +181,11 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                 />
               </label>
               <label>
-                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                <span className="mb-2 block text-xs font-bold text-[var(--color-text-secondary)]">
                   جنسیت
                 </span>
-                <select
-                  className={inputClass}
+                <SelectInput
+                  className="font-bold"
                   onChange={(event) =>
                     setDraft({
                       ...draft,
@@ -196,14 +200,14 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                       {label}
                     </option>
                   ))}
-                </select>
+                </SelectInput>
               </label>
               <label>
-                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                <span className="mb-2 block text-xs font-bold text-[var(--color-text-secondary)]">
                   سطح فعالیت
                 </span>
-                <select
-                  className={inputClass}
+                <SelectInput
+                  className="font-bold"
                   onChange={(event) =>
                     setDraft({
                       ...draft,
@@ -220,14 +224,14 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                       {label}
                     </option>
                   ))}
-                </select>
+                </SelectInput>
               </label>
               <label>
-                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                <span className="mb-2 block text-xs font-bold text-[var(--color-text-secondary)]">
                   قد (سانتی‌متر)
                 </span>
-                <input
-                  className={inputClass}
+                <TextInput
+                  className="font-bold"
                   inputMode="numeric"
                   onChange={(event) =>
                     setDraft({
@@ -240,11 +244,11 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                 />
               </label>
               <label>
-                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                <span className="mb-2 block text-xs font-bold text-[var(--color-text-secondary)]">
                   وزن شروع
                 </span>
-                <input
-                  className={inputClass}
+                <TextInput
+                  className="font-bold"
                   inputMode="decimal"
                   onChange={(event) =>
                     setDraft({
@@ -258,11 +262,11 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                 />
               </label>
               <label>
-                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                <span className="mb-2 block text-xs font-bold text-[var(--color-text-secondary)]">
                   وزن فعلی
                 </span>
-                <input
-                  className={inputClass}
+                <TextInput
+                  className="font-bold"
                   inputMode="decimal"
                   onChange={(event) =>
                     setDraft({
@@ -276,11 +280,11 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                 />
               </label>
               <label>
-                <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
+                <span className="mb-2 block text-xs font-bold text-[var(--color-text-secondary)]">
                   وزن هدف
                 </span>
-                <input
-                  className={inputClass}
+                <TextInput
+                  className="font-bold"
                   inputMode="decimal"
                   onChange={(event) =>
                     setDraft({
@@ -300,30 +304,28 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
               value={draft.goalDate}
             />
             {error && (
-              <p className="rounded-xl bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] px-4 py-3 text-xs font-bold text-[var(--danger)]">
+              <p className="rounded-xl bg-[color-mix(in_srgb,var(--color-danger)_12%,transparent)] px-4 py-3 text-xs font-bold text-[var(--color-danger)]">
                 {error}
               </p>
             )}
             <div className="flex justify-end gap-2 pt-2">
-              <button
-                className="flex min-h-11 items-center gap-2 rounded-xl px-4 text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"
+              <Button
                 onClick={() => {
                   setDraft(appState.profile)
                   setError(undefined)
                   setIsEditing(false)
                 }}
-                type="button"
+                variant="ghost"
               >
                 <X aria-hidden="true" size={16} />
                 انصراف
-              </button>
-              <button
-                className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--emerald)] px-4 text-xs font-black text-[#07110d]"
+              </Button>
+              <Button
                 type="submit"
               >
                 <Save aria-hidden="true" size={16} />
                 ذخیره تغییرات
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
@@ -345,28 +347,28 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
               ['تاریخ هدف', formatJalaliDate(appState.profile.goalDate, 'long')],
             ].map(([label, value]) => (
               <div
-                className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4"
+                className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"
                 key={label}
               >
-                <p className="text-[10px] font-bold text-[var(--text-muted)]">{label}</p>
-                <p className="mt-2 text-xs font-black text-[var(--text-primary)]">{value}</p>
+                <p className="text-[10px] font-bold text-[var(--color-text-muted)]">{label}</p>
+                <p className="mt-2 text-xs font-black text-[var(--color-text)]">{value}</p>
               </div>
             ))}
           </div>
         )}
         {!isEditing && appState.profile.bodyComposition && (
-          <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--emerald-soft)] p-4">
-            <p className="text-[10px] font-black text-[var(--emerald)]">
+          <div className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-accent-soft)] p-4">
+            <p className="text-[10px] font-black text-[var(--color-accent)]">
               آخرین بادی‌کامپوزیشن
             </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-[9px] font-bold text-[var(--text-secondary)]">
+            <div className="mt-3 flex flex-wrap gap-2 text-[9px] font-bold text-[var(--color-text-secondary)]">
               {appState.profile.bodyComposition.bodyFatPercent !== undefined && (
-                <span className="rounded-full bg-[var(--surface)] px-3 py-1.5">
+                <span className="rounded-full bg-[var(--color-surface)] px-3 py-1.5">
                   چربی بدن {toPersianDigits(appState.profile.bodyComposition.bodyFatPercent)}٪
                 </span>
               )}
               {appState.profile.bodyComposition.skeletalMuscleMassKg !== undefined && (
-                <span className="rounded-full bg-[var(--surface)] px-3 py-1.5">
+                <span className="rounded-full bg-[var(--color-surface)] px-3 py-1.5">
                   عضله اسکلتی{' '}
                   {toPersianDigits(
                     appState.profile.bodyComposition.skeletalMuscleMassKg,
@@ -375,30 +377,21 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                 </span>
               )}
               {appState.profile.bodyComposition.waistCm !== undefined && (
-                <span className="rounded-full bg-[var(--surface)] px-3 py-1.5">
+                <span className="rounded-full bg-[var(--color-surface)] px-3 py-1.5">
                   دور کمر {toPersianDigits(appState.profile.bodyComposition.waistCm)} سانتی‌متر
                 </span>
               )}
             </div>
           </div>
         )}
-      </section>
+      </Surface>
 
-      <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
-        <div className="flex items-start gap-3">
-          <div className="grid size-11 shrink-0 place-items-center rounded-[15px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
-            <FileJson aria-hidden="true" size={21} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-[var(--emerald)]">مدیریت برنامه غذایی</p>
-            <h2 className="mt-2 text-xl font-black text-[var(--text-primary)]">
-              وارد کردن فایل JSON
-            </h2>
-            <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
-              فایل قبل از ذخیره به‌طور کامل بررسی و پیش‌نمایش داده می‌شود.
-            </p>
-          </div>
-        </div>
+      <SettingsSection
+        description="فایل قبل از ذخیره به‌طور کامل بررسی و پیش‌نمایش داده می‌شود."
+        eyebrow="مدیریت برنامه غذایی"
+        icon={<FileJson aria-hidden="true" size={21} />}
+        title="وارد کردن فایل JSON"
+      >
         <div className="mt-6">
           <PlanImportPanel
             existingState={appState}
@@ -407,26 +400,24 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
             }}
           />
         </div>
-      </section>
+      </SettingsSection>
 
-      <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
-        <div className="flex items-start gap-3">
-          <div className="grid size-11 shrink-0 place-items-center rounded-[15px] bg-[var(--gold-soft)] text-[var(--gold)]">
-            <FileText aria-hidden="true" size={21} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-[var(--gold)]">ساخت برنامه هفته بعد</p>
-            <h2 className="mt-2 text-xl font-black text-[var(--text-primary)]">
-              Generate AI Prompt
-            </h2>
-            <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
-              Momentum روی همین دستگاه یک پرامپت شخصی و کامل می‌سازد. فایل را خودت برای
+      <SettingsSection
+        description={
+          <>
+            {APP_CONFIG.name} روی همین دستگاه یک پرامپت شخصی و کامل می‌سازد. فایل را خودت برای
               ChatGPT یا هر LLM دیگری می‌فرستی و پاسخ JSON را دوباره داخل برنامه Import
               می‌کنی؛ هیچ اتصال هوش مصنوعی داخل سایت وجود ندارد.
-            </p>
+          </>
+        }
+        eyebrow="ساخت برنامه هفته بعد"
+        icon={<FileText aria-hidden="true" size={21} />}
+        title="Generate AI Prompt"
+        tone="highlight"
+      >
+          <div className="min-w-0">
             <div className="mt-5 flex flex-wrap items-start gap-3">
-              <button
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--gold)] px-5 text-xs font-black text-[#171006]"
+              <Button
                 onClick={() => {
                   if (getMissingPromptQuestions(promptProfile).length > 0) {
                     setShowPromptWizard(true)
@@ -437,13 +428,18 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                   downloadMomentumPrompt(promptProfile)
                   setPromptStatus('پرامپت شخصی با موفقیت ساخته و دانلود شد.')
                 }}
-                type="button"
+                size="lg"
+                variant="highlight"
               >
                 <FileOutput aria-hidden="true" size={17} />
                 ساخت پرامپت شخصی
-              </button>
+              </Button>
               <TemplateDownloadButton
-                buttonClassName="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-5 text-xs font-black text-[var(--text-secondary)] disabled:cursor-wait disabled:opacity-80"
+                buttonClassName={buttonClassNames({
+                  className: 'disabled:cursor-wait disabled:opacity-80',
+                  size: 'lg',
+                  variant: 'outline',
+                })}
                 iconSize={17}
               >
                 دانلود قرارداد خام
@@ -451,20 +447,19 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
             </div>
             {promptStatus && (
               <p
-                className="mt-3 text-[11px] font-bold text-[var(--emerald)]"
+                className="mt-3 text-[11px] font-bold text-[var(--color-accent)]"
                 role="status"
               >
                 {promptStatus}
               </p>
             )}
           </div>
-        </div>
-      </section>
+      </SettingsSection>
 
       {orderedPlanKeys.length > 0 && (
-        <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
-          <p className="text-xs font-bold text-[var(--gold)]">تاریخچه برنامه‌ها</p>
-          <h2 className="mt-2 text-xl font-black text-[var(--text-primary)]">
+        <Surface as="section" className="p-5 desktop:p-7">
+          <p className="text-xs font-bold text-[var(--color-highlight)]">تاریخچه برنامه‌ها</p>
+          <h2 className="mt-2 text-xl font-black text-[var(--color-text)]">
             {toPersianDigits(orderedPlanKeys.length)} برنامه ذخیره‌شده
           </h2>
           <div className="mt-5 space-y-2">
@@ -475,45 +470,44 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
 
               return (
                 <article
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4"
+                  className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"
                   key={storageKey}
                 >
                   <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-xs font-black text-[var(--text-primary)]">
+                        <p className="text-xs font-black text-[var(--color-text)]">
                           {plan.planName}
                         </p>
                         {isPrioritized && (
-                          <span className="rounded-full bg-[var(--emerald-soft)] px-2 py-1 text-[8px] font-black text-[var(--emerald)]">
+                          <Badge className="px-2 py-1 text-[8px]" tone="accent">
                             اولویت اول
-                          </span>
+                          </Badge>
                         )}
                         {isArchived && (
-                          <span className="rounded-full bg-[var(--gold-soft)] px-2 py-1 text-[8px] font-black text-[var(--gold)]">
+                          <Badge className="px-2 py-1 text-[8px]" tone="highlight">
                             بایگانی
-                          </span>
+                          </Badge>
                         )}
                       </div>
-                      <p className="mt-2 text-[9px] leading-5 text-[var(--text-muted)]">
+                      <p className="mt-2 text-[9px] leading-5 text-[var(--color-text-muted)]">
                         {formatJalaliDate(plan.validFrom, 'long')} تا{' '}
                         {formatJalaliDate(plan.validTo, 'long')} · نسخه {plan.planVersion}
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1">
                       {!isPrioritized && !isArchived && (
-                        <button
+                        <IconButton
                           aria-label={`قرار دادن ${plan.planName} در اولویت`}
-                          className="grid size-11 place-items-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--emerald-soft)] hover:text-[var(--emerald)]"
+                          className="hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]"
                           onClick={() => prioritizePlan(storageKey)}
-                          type="button"
                         >
                           <ArrowUp aria-hidden="true" size={17} />
-                        </button>
+                        </IconButton>
                       )}
-                      <button
+                      <IconButton
                         aria-label={`حذف ${plan.planName}`}
-                        className="grid size-11 place-items-center rounded-xl text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] hover:text-[var(--danger)]"
+                        className="grid size-11 place-items-center rounded-xl text-[var(--color-text-muted)] hover:bg-[color-mix(in_srgb,var(--color-danger)_10%,transparent)] hover:text-[var(--color-danger)]"
                         onClick={() => {
                           if (
                             window.confirm(
@@ -523,10 +517,9 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                             removePlan(storageKey)
                           }
                         }}
-                        type="button"
                       >
                         <Trash2 aria-hidden="true" size={17} />
-                      </button>
+                      </IconButton>
                     </div>
                   </div>
                   <div className="mt-3 flex gap-1">
@@ -534,8 +527,8 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                       <span
                         className={`h-1 flex-1 rounded-full ${
                           priorityIndex === index && !isArchived
-                            ? 'bg-[var(--emerald)]'
-                            : 'bg-[var(--border)]'
+                            ? 'bg-[var(--color-accent)]'
+                            : 'bg-[var(--color-border)]'
                         }`}
                         key={priorityIndex}
                       />
@@ -545,25 +538,16 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
               )
             })}
           </div>
-        </section>
+        </Surface>
       )}
 
       {!isStandalone && (
-        <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
-          <div className="flex items-start gap-3">
-            <div className="grid size-11 shrink-0 place-items-center rounded-[15px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
-              <Smartphone aria-hidden="true" size={21} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-[var(--emerald)]">نصب روی آیفون</p>
-              <h2 className="mt-2 text-xl font-black text-[var(--text-primary)]">
-                مثل یک اپ از Home Screen بازش کن
-              </h2>
-              <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
-                آدرس امن HTTPS برنامه را در Safari باز کن و مراحل زیر را انجام بده.
-              </p>
-            </div>
-          </div>
+        <SettingsSection
+          description="آدرس امن HTTPS برنامه را در Safari باز کن و مراحل زیر را انجام بده."
+          eyebrow="نصب روی آیفون"
+          icon={<Smartphone aria-hidden="true" size={21} />}
+          title="مثل یک اپ از Home Screen بازش کن"
+        >
           <ol className="mt-5 grid gap-2 desktop:grid-cols-3">
             {[
               {
@@ -583,76 +567,76 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
               },
             ].map(({ icon: Icon, title, body }) => (
               <li
-                className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4"
+                className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"
                 key={title}
               >
-                <Icon aria-hidden="true" className="text-[var(--emerald)]" size={17} />
-                <p className="mt-3 text-xs font-black text-[var(--text-primary)]">{title}</p>
-                <p className="mt-1 text-[9px] leading-5 text-[var(--text-muted)]">{body}</p>
+                <Icon aria-hidden="true" className="text-[var(--color-accent)]" size={17} />
+                <p className="mt-3 text-xs font-black text-[var(--color-text)]">{title}</p>
+                <p className="mt-1 text-[9px] leading-5 text-[var(--color-text-muted)]">{body}</p>
               </li>
             ))}
           </ol>
-        </section>
+        </SettingsSection>
       )}
 
-      <section className="glass-panel rounded-[26px] p-5 desktop:p-7">
-        <p className="text-xs font-bold text-[var(--emerald)]">ظاهر برنامه</p>
-        <h2 className="mt-2 text-xl font-black text-[var(--text-primary)]">پوسته</h2>
-        <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+      <Surface as="section" className="p-5 desktop:p-7">
+        <p className="text-xs font-bold text-[var(--color-accent)]">ظاهر برنامه</p>
+        <h2 className="mt-2 text-xl font-black text-[var(--color-text)]">پوسته</h2>
+        <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
           <div>
-            <p className="text-sm font-bold text-[var(--text-primary)]">حالت نمایش</p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
+            <p className="text-sm font-bold text-[var(--color-text)]">حالت نمایش</p>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
               {theme === 'dark' ? 'تیره — پیشنهادشده' : 'روشن'}
             </p>
           </div>
           {themeControl}
         </div>
-      </section>
+      </Surface>
 
-      <section className="rounded-[26px] border border-[var(--border)] bg-[var(--emerald-soft)] p-5 desktop:p-6">
+      <Surface as="section" className="p-5 desktop:p-6" variant="accent">
         <div className="flex items-start gap-3">
           <LockKeyhole
             aria-hidden="true"
-            className="mt-0.5 shrink-0 text-[var(--emerald)]"
+            className="mt-0.5 shrink-0 text-[var(--color-accent)]"
             size={19}
           />
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-black text-[var(--text-primary)]">
+              <p className="text-sm font-black text-[var(--color-text)]">
                 ذخیره‌سازی امن و محلی
               </p>
-              <ShieldCheck aria-hidden="true" className="text-[var(--emerald)]" size={16} />
+              <ShieldCheck aria-hidden="true" className="text-[var(--color-accent)]" size={16} />
             </div>
-            <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
-              اطلاعات شما فقط در همین مرورگر ذخیره می‌شود. Momentum هیچ سرور، حساب
+            <p className="mt-2 text-xs leading-6 text-[var(--color-text-secondary)]">
+              اطلاعات شما فقط در همین مرورگر ذخیره می‌شود. {APP_CONFIG.name} هیچ سرور، حساب
               کاربری، ردیابی یا پایگاه داده‌ای ندارد. هر ذخیره ابتدا اعتبارسنجی می‌شود و دو
               نسخه بازیابی سالم نیز نگه داشته می‌شود؛ اگر نسخه اصلی خراب شود، برنامه از
               نسخه سالم قبلی باز می‌شود و فایل خراب را خودکار حذف نمی‌کند.
             </p>
           </div>
         </div>
-      </section>
+      </Surface>
 
-      <section className="rounded-[26px] border border-[color-mix(in_srgb,var(--danger)_35%,var(--border))] bg-[color-mix(in_srgb,var(--danger)_7%,var(--surface))] p-5 desktop:p-6">
+      <Surface as="section" className="p-5 desktop:p-6" variant="danger">
         <div className="flex flex-col gap-4 desktop:flex-row desktop:items-center desktop:justify-between">
           <div className="flex items-start gap-3">
             <DatabaseBackup
               aria-hidden="true"
-              className="mt-0.5 shrink-0 text-[var(--danger)]"
+              className="mt-0.5 shrink-0 text-[var(--color-danger)]"
               size={20}
             />
             <div>
-              <p className="text-sm font-black text-[var(--text-primary)]">
+              <p className="text-sm font-black text-[var(--color-text)]">
                 پاک‌کردن تمام اطلاعات
               </p>
-              <p className="mt-2 max-w-xl text-xs leading-6 text-[var(--text-secondary)]">
+              <p className="mt-2 max-w-xl text-xs leading-6 text-[var(--color-text-secondary)]">
                 پروفایل، برنامه‌های واردشده، لاگ روزانه، XP و تمام نسخه‌های بازیابی فقط با
                 تأیید دو مرحله‌ای حذف می‌شوند. این کار قابل بازگشت نیست.
               </p>
             </div>
           </div>
-          <button
-            className="flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--danger)] px-4 text-xs font-black text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]"
+          <Button
+            className="shrink-0 rounded-xl"
             onClick={() => {
               const firstConfirmation = window.confirm(
                 'تمام اطلاعات Momentum از این مرورگر پاک شود؟',
@@ -667,18 +651,19 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
                 clearAllData()
               }
             }}
-            type="button"
+            size="lg"
+            variant="danger-outline"
           >
             <Trash2 aria-hidden="true" size={17} />
             پاک‌کردن همه اطلاعات
-          </button>
+          </Button>
         </div>
-      </section>
+      </Surface>
       <p
-        className="px-2 text-center text-[10px] font-bold tracking-[0.12em] text-[var(--text-muted)]"
+        className="px-2 text-center text-[10px] font-bold tracking-[0.12em] text-[var(--color-text-muted)]"
         dir="ltr"
       >
-        MOMENTUM · ALPHA {APP_VERSION}
+        {APP_CONFIG.wordmark} · ALPHA {APP_VERSION}
       </p>
       {showPromptWizard && (
         <PromptGenerationWizard

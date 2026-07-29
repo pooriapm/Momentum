@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Momentum maskable app icon</title>
+  <desc>Full-bleed background with all essential artwork inside the maskable safe area.</desc>
+  <defs>
+    <linearGradient id="mask-background" x1="64" y1="24" x2="448" y2="488" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12251D"/>
+      <stop offset="1" stop-color="#07110E"/>
+    </linearGradient>
+    <linearGradient id="mask-accent" x1="104" y1="98" x2="398" y2="408" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#72E5AF"/>
+      <stop offset="1" stop-color="#25AD73"/>
+    </linearGradient>
+    <linearGradient id="mask-dot" x1="366" y1="116" x2="400" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1D895"/>
+      <stop offset="1" stop-color="#D8B66A"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#mask-background)"/>
+  <circle cx="256" cy="256" r="170" stroke="#DFF7EA" stroke-opacity=".13" stroke-width="22"/>
+  <circle cx="256" cy="256" r="170" stroke="url(#mask-accent)" stroke-width="24" stroke-linecap="round" stroke-dasharray="812 256" transform="rotate(-52 256 256)"/>
+  <path d="M164 324V207C164 185 193 177 207 197L256 271L305 197C319 177 348 185 348 207V324" stroke="#F4F6EF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="382" cy="130" r="25" fill="#D8B66A" fill-opacity=".12"/>
+  <circle cx="382" cy="130" r="13" fill="url(#mask-dot)"/>
+</svg>

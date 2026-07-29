@@ -1,6 +1,7 @@
-import type { UiState } from '../types/ui'
+import { STORAGE_KEYS } from '../config/app'
+import type { Theme, UiState } from '../types/ui'
 
-const UI_STATE_KEY = 'momentum.uiState'
+const UI_STATE_KEY = STORAGE_KEYS.uiState
 
 const defaultUiState: UiState = {
   selectedTab: 'today',
@@ -45,6 +46,24 @@ export function updateUiState(update: Partial<UiState>): UiState {
   }
 
   return nextState
+}
+
+export function applyUiTheme(theme: Theme) {
+  document.documentElement.classList.toggle('light', theme === 'light')
+  document.documentElement.dataset.theme = theme
+  document.documentElement.style.colorScheme = theme
+  const backgroundColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--color-background')
+    .trim()
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]')
+  const nextThemeColor = backgroundColor || themeColorMeta?.getAttribute('content')
+
+  if (nextThemeColor) {
+    themeColorMeta?.setAttribute('content', nextThemeColor)
+  }
+  document
+    .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+    ?.setAttribute('content', theme === 'light' ? 'default' : 'black')
 }
 
 export function resetUiState() {

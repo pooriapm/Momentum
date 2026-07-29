@@ -1,4 +1,5 @@
 import { CalendarDays } from 'lucide-react'
+import { SelectInput } from '../ui/FormField'
 import {
   fromJalali,
   getJalaliMonthLength,
@@ -42,21 +43,18 @@ export function JalaliDatePicker({
     onChange(fromJalali(year, month, day))
   }
 
-  const selectClass =
-    'min-h-12 w-full appearance-none rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-center text-sm font-bold text-[var(--text-primary)] outline-none transition focus:border-[var(--emerald)]'
-
   return (
     <fieldset>
-      <legend className="mb-2 flex items-center gap-2 text-xs font-bold text-[var(--text-secondary)]">
+      <legend className="mb-2 flex items-center gap-2 text-xs font-bold text-[var(--color-text-secondary)]">
         <CalendarDays aria-hidden="true" size={16} />
         {label}
       </legend>
       <div className="grid grid-cols-[0.8fr_1.35fr_1fr] gap-2" dir="rtl">
         <label>
           <span className="sr-only">روز</span>
-          <select
+          <SelectInput
             aria-label="روز"
-            className={selectClass}
+            className="appearance-none px-3 text-center font-bold"
             onChange={(event) => updateDate({ jd: Number(event.target.value) })}
             value={selected.jd}
           >
@@ -65,13 +63,13 @@ export function JalaliDatePicker({
                 {toPersianDigits(day)}
               </option>
             ))}
-          </select>
+          </SelectInput>
         </label>
         <label>
           <span className="sr-only">ماه</span>
-          <select
+          <SelectInput
             aria-label="ماه"
-            className={selectClass}
+            className="appearance-none px-3 text-center font-bold"
             onChange={(event) => updateDate({ jm: Number(event.target.value) })}
             value={selected.jm}
           >
@@ -80,13 +78,13 @@ export function JalaliDatePicker({
                 {month}
               </option>
             ))}
-          </select>
+          </SelectInput>
         </label>
         <label>
           <span className="sr-only">سال</span>
-          <select
+          <SelectInput
             aria-label="سال"
-            className={selectClass}
+            className="appearance-none px-3 text-center font-bold"
             onChange={(event) => updateDate({ jy: Number(event.target.value) })}
             value={selected.jy}
           >
@@ -95,7 +93,7 @@ export function JalaliDatePicker({
                 {toPersianDigits(year)}
               </option>
             ))}
-          </select>
+          </SelectInput>
         </label>
       </div>
     </fieldset>

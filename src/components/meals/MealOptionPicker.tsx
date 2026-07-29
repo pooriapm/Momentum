@@ -29,11 +29,11 @@ export function MealOptionPicker({
   return (
     <fieldset className="mt-4" disabled={disabled}>
       <legend className="flex w-full items-center justify-between gap-3">
-        <span className="text-xs font-black text-[var(--text-primary)]">
+        <span className="text-xs font-black text-[var(--color-text)]">
           یکی از {toPersianDigits(meal.options.length)} گزینه را انتخاب کن
         </span>
         {disabled && (
-          <span className="text-[10px] font-bold text-[var(--emerald)]">
+          <span className="text-[10px] font-bold text-[var(--color-accent)]">
             در لاگ روزانه ثبت شده
           </span>
         )}
@@ -51,8 +51,8 @@ export function MealOptionPicker({
               aria-checked={selected}
               className={`meal-option-card relative min-h-[164px] rounded-2xl border p-4 text-right ${
                 selected
-                  ? 'border-[var(--emerald)] bg-[var(--emerald-soft)] shadow-[0_8px_24px_rgba(70,205,145,0.08)]'
-                  : 'border-[var(--border)] bg-[var(--surface-soft)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)]'
+                  ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-[var(--shadow-option-selected)]'
+                  : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]'
               } disabled:cursor-not-allowed`}
               disabled={disabled}
               key={candidate.id}
@@ -65,43 +65,43 @@ export function MealOptionPicker({
                 <span
                   className={`meal-option-check mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border ${
                     selected
-                      ? 'border-[var(--emerald)] bg-[var(--emerald)] text-[#07110d]'
-                      : 'border-[var(--border-strong)] text-transparent'
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-on-accent)]'
+                      : 'border-[var(--color-border-strong)] text-transparent'
                   }`}
                 >
                   <Check aria-hidden="true" size={13} strokeWidth={3} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-sm font-black leading-6 text-[var(--text-primary)]">
+                    <span className="text-sm font-black leading-6 text-[var(--color-text)]">
                       {candidate.title}
                     </span>
                     {candidate.id === meal.defaultOptionId && (
-                      <span className="rounded-full bg-[var(--gold-soft)] px-2 py-1 text-[10px] font-black text-[var(--gold)]">
+                      <span className="rounded-full bg-[var(--color-highlight-soft)] px-2 py-1 text-[10px] font-black text-[var(--color-highlight)]">
                         پیشنهاد برنامه
                       </span>
                     )}
                   </span>
                   {candidate.subtitle && (
-                    <span className="mt-1.5 block text-[11px] leading-5 text-[var(--text-muted)]">
+                    <span className="mt-1.5 block text-[11px] leading-5 text-[var(--color-text-muted)]">
                       {candidate.subtitle}
                     </span>
                   )}
                 </span>
               </div>
 
-              <p className="mt-3 text-[11px] leading-5 text-[var(--text-secondary)]">
+              <p className="mt-3 text-[11px] leading-5 text-[var(--color-text-secondary)]">
                 {candidate.ingredients.map((ingredient) => ingredient.name).join('، ')}
               </p>
 
               {candidate.nutritionConfidence && (
-                <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-muted)]">
+                <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-text-muted)]">
                   <BadgeCheck
                     aria-hidden="true"
                     className={
                       candidate.nutritionConfidence === 'estimated'
-                        ? 'text-[var(--gold)]'
-                        : 'text-[var(--emerald)]'
+                        ? 'text-[var(--color-highlight)]'
+                        : 'text-[var(--color-accent)]'
                     }
                     size={12}
                   />
@@ -120,13 +120,13 @@ export function MealOptionPicker({
                   ['چربی', `${candidate.nutrition.fat}g`],
                 ].map(([label, value]) => (
                   <span
-                    className="rounded-lg bg-[color-mix(in_srgb,var(--surface-strong)_75%,transparent)] px-1.5 py-2 text-center"
+                    className="rounded-lg bg-[color-mix(in_srgb,var(--color-surface-raised)_75%,transparent)] px-1.5 py-2 text-center"
                     key={label}
                   >
-                    <span className="block text-[10px] font-bold leading-4 text-[var(--text-muted)]">
+                    <span className="block text-[10px] font-bold leading-4 text-[var(--color-text-muted)]">
                       {label}
                     </span>
-                    <span className="mt-0.5 block text-[11px] font-black text-[var(--text-primary)]">
+                    <span className="mt-0.5 block text-[11px] font-black text-[var(--color-text)]">
                       {toPersianDigits(value)}
                     </span>
                   </span>
@@ -136,7 +136,7 @@ export function MealOptionPicker({
               {(candidate.prepTimeMinutes !== undefined ||
                 candidate.portable ||
                 candidate.satietyScore !== undefined) && (
-                <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold leading-5 text-[var(--text-muted)]">
+                <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold leading-5 text-[var(--color-text-muted)]">
                   {candidate.prepTimeMinutes !== undefined && (
                     <span className="flex items-center gap-1">
                       <Clock3 aria-hidden="true" size={12} />

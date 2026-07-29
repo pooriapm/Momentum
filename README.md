@@ -126,17 +126,55 @@ public/
   templates/      تمپلیت عمومی تولید برنامه
 src/
   app/            state و پوسته اصلی
-  components/     اجزای مشترک
+  components/ui/  primitiveهای مشترک مثل Button، Surface، Dialog و Field
+  components/     اجزای دامنه‌ای و مشترک
+  config/         تنظیمات برند، navigation، فایل Import و storage keyها
   features/       onboarding، dashboard، plans، calendar و settings
-  lib/            تاریخ، محاسبات و storage
+  lib/            تاریخ، formatterها، محاسبات و storage
+  styles/         design tokenهای تم روشن و تیره
   types/          قراردادهای TypeScript
 docs/
   import-system-v2.md
 ```
 
+## سیستم طراحی و توسعه‌پذیری
+
+رنگ‌های featureها نباید مقدار مستقیم hex یا نام رنگ ظاهری داشته باشند. تمام رنگ،
+سایه، radius، ارتفاع control و motion از
+[`src/styles/theme.css`](src/styles/theme.css) می‌آید. برای تغییر palette یا برند،
+مقادیر semantic مثل `--color-accent`، `--color-surface` و `--color-text` را در همان
+فایل تغییر دهید؛ کامپوننت‌های feature نباید نیاز به ویرایش داشته باشند.
+
+اجزای تعاملی جدید باید تا جای ممکن از primitiveهای `src/components/ui` استفاده
+کنند:
+
+- `Button` و `IconButton` برای تمام actionها
+- `Surface` برای card، panel و stateهای accent/danger
+- `Dialog` برای modal و bottom sheet سازگار با viewport
+- `Field`، `TextInput`، `SelectInput` و `TextArea` برای فرم‌ها
+- `Badge`، `IconTile`، `ProgressBar` و `SectionHeading` برای الگوهای نمایشی
+
+اطلاعات قابل‌پیکربندی مثل نام محصول، namespace ذخیره‌سازی، محدودیت فایل و navigation
+در `src/config` قرار دارد. لیست‌هایی مثل metricهای تغذیه، فیلدهای چک‌این و مقدارهای
+سفارش نیز داده‌محور هستند تا افزودن گزینه جدید به تغییر markup نیاز نداشته باشد.
+
+### لوگو و Brand Motion
+
+فایل مادر و قابل‌ویرایش لوگو در
+[`public/brand/momentum-mark-master.svg`](public/brand/momentum-mark-master.svg)
+قرار دارد. نسخه‌های Light، Monochrome، Maskable، Horizontal Lockup و Splash
+متحرک نیز کنار آن نگهداری می‌شوند. فایل‌های PNG مربوط به PWA و iOS خروجی همین
+فایل‌های SVG هستند و نباید مستقیماً ویرایش شوند.
+
+هندسه داخل برنامه در `src/components/brand/MomentumLogo.tsx` تکرار شده و سه حالت
+`none`، `splash` و `header` دارد. تمام موشن‌ها باید
+`prefers-reduced-motion` را رعایت کنند.
+
 ## نکات مشارکت
 
 - هیچ داده شخصی، فایل برنامه واقعی، secret یا فایل `.env` را commit نکنید.
+- در featureها رنگ hex جدید، کلید storage یا اندازه مجاز فایل را hardcode نکنید.
+- پیش از ساخت UI تازه بررسی کنید primitive مشابهی در `src/components/ui` وجود دارد.
 - تا پیش از نسخه `1.0.0` تغییر قرارداد می‌تواند ناسازگار باشد؛ نمونه و تمپلیت باید همیشه هم‌نسخه با برنامه نگه داشته شوند.
 - هر تغییر باید با lint، tests و production build بررسی شود.
 - این ابزار جایگزین توصیه پزشک یا متخصص تغذیه نیست.

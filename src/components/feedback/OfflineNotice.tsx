@@ -23,7 +23,7 @@ export function OfflineNotice() {
 
   return (
     <div
-      className="flex items-center justify-center gap-2 border-b border-[var(--border)] bg-[var(--gold-soft)] px-4 py-2 text-xs font-bold text-[var(--gold)]"
+      className="flex items-center justify-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-highlight-soft)] px-4 py-2 text-xs font-bold text-[var(--color-highlight)]"
       role="status"
     >
       <WifiOff aria-hidden="true" size={15} />

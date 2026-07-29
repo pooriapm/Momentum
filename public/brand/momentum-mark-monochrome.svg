@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Momentum monochrome mark</title>
+  <circle cx="256" cy="256" r="170" stroke="currentColor" stroke-opacity=".18" stroke-width="22"/>
+  <circle cx="256" cy="256" r="170" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-dasharray="812 256" transform="rotate(-52 256 256)"/>
+  <path d="M164 324V207C164 185 193 177 207 197L256 271L305 197C319 177 348 185 348 207V324" stroke="currentColor" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="382" cy="130" r="13" fill="currentColor"/>
+</svg>

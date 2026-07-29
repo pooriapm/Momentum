@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Check, Clock3, Flame, ShieldCheck, Star, X } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
-import { ViewportPortal } from '../../components/overlay/ViewportPortal'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
+import { IconButton } from '../../components/ui/IconButton'
+import { Surface } from '../../components/ui/Surface'
 import { toPersianDigits } from '../../lib/dates/jalali'
 import type { EmergencyOption, ISODate } from '../../types/domain'
 
@@ -47,96 +50,88 @@ export function EmergencyHungerMode({
   }, [hunger, minutes, options])
 
   return (
-    <ViewportPortal>
-      <div
-        aria-modal="true"
-        className="fixed inset-0 z-[70] flex h-[100dvh] items-end justify-center overflow-hidden bg-black/65 p-0 backdrop-blur-sm desktop:items-center desktop:p-5"
-        role="dialog"
-      >
-        <div className="safe-bottom max-h-[calc(100dvh-0.75rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-t-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-2xl desktop:max-h-[calc(100dvh-2.5rem)] desktop:rounded-[30px] desktop:p-7">
+    <Dialog
+      contentClassName="p-5 desktop:p-7"
+      placement="sheet"
+      size="lg"
+    >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold text-[var(--gold)]">حالت کنترل گرسنگی</p>
-            <h2 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
+            <p className="text-xs font-bold text-[var(--color-highlight)]">حالت کنترل گرسنگی</p>
+            <h2 className="mt-2 text-2xl font-black text-[var(--color-text)]">
               گرسنگی اضطراری
             </h2>
-            <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
+            <p className="mt-2 text-xs leading-6 text-[var(--color-text-secondary)]">
               پیشنهادها فقط از برنامه غذایی واردشده انتخاب می‌شوند.
             </p>
           </div>
-          <button
+          <IconButton
             aria-label="بستن حالت گرسنگی اضطراری"
-            className="grid size-11 shrink-0 place-items-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
             onClick={onClose}
-            type="button"
           >
             <X aria-hidden="true" size={19} />
-          </button>
+          </IconButton>
         </div>
 
         <fieldset className="mt-6">
-          <legend className="text-xs font-black text-[var(--text-primary)]">
+          <legend className="text-xs font-black text-[var(--color-text)]">
             شدت گرسنگی چقدر است؟
           </legend>
           <div className="mt-3 grid grid-cols-5 gap-2">
             {([1, 2, 3, 4, 5] as const).map((level) => (
-              <button
+              <Button
                 aria-pressed={hunger === level}
-                className={`min-h-12 rounded-xl text-sm font-black ${
-                  hunger === level
-                    ? 'bg-[var(--gold)] text-[#171006]'
-                    : 'border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-secondary)]'
-                }`}
+                block
                 key={level}
                 onClick={() => setHunger(level)}
-                type="button"
+                size="lg"
+                variant={hunger === level ? 'highlight' : 'secondary'}
               >
                 {toPersianDigits(level)}
-              </button>
+              </Button>
             ))}
           </div>
         </fieldset>
 
         <fieldset className="mt-6">
-          <legend className="text-xs font-black text-[var(--text-primary)]">
+          <legend className="text-xs font-black text-[var(--color-text)]">
             شام چقدر فاصله دارد؟
           </legend>
           <div className="mt-3 grid gap-2 desktop:grid-cols-3">
             {dinnerWindows.map((window) => (
-              <button
+              <Button
                 aria-pressed={dinnerWindow === window.id}
-                className={`min-h-12 rounded-xl px-3 text-xs font-bold ${
-                  dinnerWindow === window.id
-                    ? 'border border-[var(--emerald)] bg-[var(--emerald-soft)] text-[var(--emerald)]'
-                    : 'border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-secondary)]'
-                }`}
+                block
                 key={window.id}
                 onClick={() => setDinnerWindow(window.id)}
-                type="button"
+                size="lg"
+                variant={dinnerWindow === window.id ? 'accent' : 'secondary'}
               >
                 {window.label}
-              </button>
+              </Button>
             ))}
           </div>
         </fieldset>
 
         <div className="mt-7">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-black text-[var(--text-primary)]">پیشنهادهای مناسب</p>
-            <span className="text-[9px] font-bold text-[var(--text-muted)]">
+            <p className="text-xs font-black text-[var(--color-text)]">پیشنهادهای مناسب</p>
+            <span className="text-[9px] font-bold text-[var(--color-text-muted)]">
               {toPersianDigits(matches.length)} گزینه
             </span>
           </div>
           <div className="mt-3 space-y-2">
             {matches.map((option) => (
-              <article
-                className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4"
+              <Surface
+                as="article"
+                className="rounded-2xl p-4"
                 key={option.id}
+                variant="muted"
               >
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-black text-[var(--text-primary)]">{option.title}</p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-[8px] font-bold text-[var(--text-muted)]">
+                    <p className="text-xs font-black text-[var(--color-text)]">{option.title}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[8px] font-bold text-[var(--color-text-muted)]">
                       <span className="flex items-center gap-1">
                         <Flame aria-hidden="true" size={11} />
                         {toPersianDigits(option.nutrition.calories)} کالری
@@ -156,19 +151,16 @@ export function EmergencyHungerMode({
                       )}
                     </div>
                   </div>
-                  <button
-                    className={`flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 text-[10px] font-black ${
-                      loggedOptionId === option.id
-                        ? 'bg-[var(--emerald-soft)] text-[var(--emerald)]'
-                        : 'bg-[var(--emerald)] text-[#07110d]'
-                    }`}
+                  <Button
+                    className="shrink-0"
                     disabled={loggedOptionId !== undefined}
                     onClick={() => {
                       if (logEmergencyFood(date, option)) {
                         setLoggedOptionId(option.id)
                       }
                     }}
-                    type="button"
+                    size="md"
+                    variant={loggedOptionId === option.id ? 'accent' : 'primary'}
                   >
                     {loggedOptionId === option.id ? (
                       <>
@@ -181,21 +173,19 @@ export function EmergencyHungerMode({
                         ثبت · ۵ XP
                       </>
                     )}
-                  </button>
+                  </Button>
                 </div>
-              </article>
+              </Surface>
             ))}
             {matches.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-[var(--border-strong)] p-5 text-center">
-                <p className="text-xs font-bold text-[var(--text-secondary)]">
+              <Surface className="rounded-2xl p-5 text-center" variant="dashed">
+                <p className="text-xs font-bold text-[var(--color-text-secondary)]">
                   گزینه متناسبی در فایل برنامه وجود ندارد.
                 </p>
-              </div>
+              </Surface>
             )}
           </div>
         </div>
-        </div>
-      </div>
-    </ViewportPortal>
+    </Dialog>
   )
 }

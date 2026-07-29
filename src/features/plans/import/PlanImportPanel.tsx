@@ -8,6 +8,12 @@ import {
   UploadCloud,
   X,
 } from 'lucide-react'
+import { Button } from '../../../components/ui/Button'
+import { buttonClassNames } from '../../../components/ui/button-styles'
+import { IconButton } from '../../../components/ui/IconButton'
+import { IconTile } from '../../../components/ui/IconTile'
+import { Surface } from '../../../components/ui/Surface'
+import { APP_CONFIG } from '../../../config/app'
 import { formatJalaliDate, toPersianDigits } from '../../../lib/dates/jalali'
 import type {
   AppState,
@@ -61,37 +67,35 @@ export function PlanImportPanel({
 
   if (stagedPlan) {
     return (
-      <div className="rounded-[22px] border border-[var(--emerald)] bg-[var(--emerald-soft)] p-4">
+      <Surface className="rounded-[22px] p-4" variant="accent">
         <div className="flex items-start gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--emerald)] text-[#07110d]">
+          <IconTile className="size-10 rounded-xl" tone="accent-solid">
             <Check aria-hidden="true" size={19} />
-          </div>
+          </IconTile>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black text-[var(--text-primary)]">{stagedPlan.planName}</p>
-            <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+            <p className="text-xs font-black text-[var(--color-text)]">{stagedPlan.planName}</p>
+            <p className="mt-1 text-[10px] leading-5 text-[var(--color-text-secondary)]">
               فایل معتبر است و اطلاعات {stagedPlan.profile.name}، ترجیحات غذایی و
               برنامه تمرین از آن خوانده شد.
             </p>
           </div>
           {onClearStagedPlan && (
-            <button
+            <IconButton
               aria-label="حذف فایل انتخاب‌شده"
-              className="grid size-11 shrink-0 place-items-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-soft)]"
               onClick={onClearStagedPlan}
-              type="button"
             >
               <X aria-hidden="true" size={17} />
-            </button>
+            </IconButton>
           )}
         </div>
-      </div>
+      </Surface>
     )
   }
 
   return (
     <div className="space-y-4">
       <input
-        accept=".json,application/json"
+        accept={`${APP_CONFIG.planFile.extension},${APP_CONFIG.planFile.mimeType}`}
         className="sr-only"
         id={inputId}
         onChange={(event) => {
@@ -105,42 +109,46 @@ export function PlanImportPanel({
       />
 
       {!result && !isReading && (
-        <div className="rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] p-4 text-center desktop:p-5">
-          <div className="mx-auto grid size-14 place-items-center rounded-[18px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
+        <Surface className="rounded-[24px] p-4 text-center desktop:p-5" variant="dashed">
+          <IconTile className="mx-auto size-14 rounded-[18px]">
             <UploadCloud aria-hidden="true" size={25} />
-          </div>
-          <p className="mt-4 text-sm font-black text-[var(--text-primary)]">
+          </IconTile>
+          <p className="mt-4 text-sm font-black text-[var(--color-text)]">
             فایل برنامه هفتگی JSON
           </p>
-          <p className="mx-auto mt-2 max-w-sm text-[10px] leading-5 text-[var(--text-muted)]">
-            فایل فقط روی همین دستگاه خوانده می‌شود و حداکثر حجم مجاز ۱ مگابایت است.
+          <p className="mx-auto mt-2 max-w-sm text-[10px] leading-5 text-[var(--color-text-muted)]">
+            فایل فقط روی همین دستگاه خوانده می‌شود و حداکثر حجم مجاز{' '}
+            {toPersianDigits(Math.round(APP_CONFIG.planFile.maxBytes / (1024 * 1024)))} مگابایت است.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <label
-              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl bg-[var(--emerald)] px-4 text-xs font-black text-[#07110d]"
+              className={buttonClassNames({
+                className: 'cursor-pointer',
+                variant: 'primary',
+              })}
               htmlFor={inputId}
             >
               <FileJson aria-hidden="true" size={17} />
               انتخاب فایل
             </label>
-            <button
-              className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border)] px-4 text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
+            <Button
               disabled={isReading}
               onClick={() => void loadResult(loadSamplePlan)}
-              type="button"
+              variant="outline"
             >
               <FlaskConical aria-hidden="true" size={17} />
               استفاده از دمو
-            </button>
+            </Button>
           </div>
-        </div>
+        </Surface>
       )}
 
       {isReading && (
-        <div
+        <Surface
           aria-label="در حال بررسی فایل"
-          className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-soft)] p-5"
+          className="rounded-[24px] p-5"
           role="status"
+          variant="muted"
         >
           <div className="skeleton h-3 w-28" />
           <div className="skeleton mt-4 h-16 w-full" />
@@ -149,7 +157,7 @@ export function PlanImportPanel({
             <div className="skeleton h-12" />
             <div className="skeleton h-12" />
           </div>
-        </div>
+        </Surface>
       )}
 
       {result &&
@@ -171,60 +179,58 @@ export function PlanImportPanel({
       {result &&
         !result.success &&
         (result.errors.length > 0 || !result.recoverableFields) && (
-        <div className="rounded-[22px] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-4">
-          <div className="flex items-center gap-2 text-xs font-black text-[var(--danger)]">
+        <Surface className="rounded-[22px] p-4" variant="danger">
+          <div className="flex items-center gap-2 text-xs font-black text-[var(--color-danger)]">
             <AlertTriangle aria-hidden="true" size={18} />
             فایل قابل وارد کردن نیست
           </div>
           <div className="mt-3 max-h-48 space-y-2 overflow-auto">
             {result.errors.map((error, index) => (
               <div
-                className="rounded-xl bg-[var(--surface)] px-3 py-2"
+                className="rounded-xl bg-[var(--color-surface)] px-3 py-2"
                 key={`${error.path}-${index}`}
               >
-                <code className="block text-left text-[9px] text-[var(--gold)]" dir="ltr">
+                <code className="block text-left text-[9px] text-[var(--color-highlight)]" dir="ltr">
                   {error.path || 'root'}
                 </code>
-                <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+                <p className="mt-1 text-[10px] leading-5 text-[var(--color-text-secondary)]">
                   {error.message}
                 </p>
               </div>
             ))}
           </div>
-          <button
-            className="mt-4 min-h-11 rounded-xl border border-[var(--border)] px-4 text-xs font-bold text-[var(--text-secondary)]"
+          <Button
+            className="mt-4"
             onClick={() => {
               setResult(undefined)
               if (inputRef.current) inputRef.current.value = ''
             }}
-            type="button"
+            variant="outline"
           >
             انتخاب فایل دیگر
-          </button>
-        </div>
+          </Button>
+        </Surface>
         )}
 
       {plan && result?.success && (
         <div className="space-y-4">
-          <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-soft)] p-4 desktop:p-5">
+          <Surface className="rounded-[24px] p-4 desktop:p-5" variant="muted">
             <div className="flex items-start gap-3">
-              <div className="grid size-11 shrink-0 place-items-center rounded-[15px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
+              <IconTile>
                 <ShieldCheck aria-hidden="true" size={21} />
-              </div>
+              </IconTile>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-black text-[var(--text-primary)]">{plan.planName}</p>
-                <p className="mt-1 text-[10px] text-[var(--text-muted)]">
+                <p className="text-sm font-black text-[var(--color-text)]">{plan.planName}</p>
+                <p className="mt-1 text-[10px] text-[var(--color-text-muted)]">
                   نسخه {plan.planVersion} · schema {plan.schemaVersion}
                 </p>
               </div>
-              <button
+              <IconButton
                 aria-label="بستن پیش‌نمایش"
-                className="grid size-11 shrink-0 place-items-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                 onClick={() => setResult(undefined)}
-                type="button"
               >
                 <X aria-hidden="true" size={17} />
-              </button>
+              </IconButton>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-2 desktop:grid-cols-3">
@@ -248,12 +254,12 @@ export function PlanImportPanel({
                 ],
               ].map(([label, value]) => (
                 <div
-                  className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3"
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
                   key={label}
                 >
-                  <p className="text-[9px] font-bold text-[var(--text-muted)]">{label}</p>
+                  <p className="text-[9px] font-bold text-[var(--color-text-muted)]">{label}</p>
                   <p
-                    className={`mt-1 text-[10px] font-black leading-5 text-[var(--text-primary)] ${label === 'بازه میلادی' ? 'text-left' : ''}`}
+                    className={`mt-1 text-[10px] font-black leading-5 text-[var(--color-text)] ${label === 'بازه میلادی' ? 'text-left' : ''}`}
                     dir={label === 'بازه میلادی' ? 'ltr' : undefined}
                   >
                     {value}
@@ -261,24 +267,24 @@ export function PlanImportPanel({
                 </div>
               ))}
             </div>
-          </div>
+          </Surface>
 
           <PlanHealthScoreCard plan={plan} />
 
           {result.warnings.length > 0 && (
-            <div className="rounded-2xl border border-[color-mix(in_srgb,var(--gold)_30%,transparent)] bg-[var(--gold-soft)] p-4">
-              <p className="text-xs font-black text-[var(--gold)]">هشدارهای قابل قبول</p>
-              <ul className="mt-2 list-inside list-disc space-y-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+            <Surface className="rounded-2xl p-4" variant="highlight">
+              <p className="text-xs font-black text-[var(--color-highlight)]">هشدارهای قابل قبول</p>
+              <ul className="mt-2 list-inside list-disc space-y-1 text-[10px] leading-5 text-[var(--color-text-secondary)]">
                 {result.warnings.map((warning) => (
                   <li key={warning}>{warning}</li>
                 ))}
               </ul>
-            </div>
+            </Surface>
           )}
 
           {conflictKeys.length > 0 && existingState && (
-            <fieldset className="rounded-2xl border border-[var(--border)] p-4">
-              <legend className="px-2 text-xs font-black text-[var(--gold)]">
+            <fieldset className="rounded-2xl border border-[var(--color-border)] p-4">
+              <legend className="px-2 text-xs font-black text-[var(--color-highlight)]">
                 هم‌پوشانی با {toPersianDigits(conflictKeys.length)} برنامه
               </legend>
               <div className="space-y-2">
@@ -302,25 +308,25 @@ export function PlanImportPanel({
                   <label
                     className={`block cursor-pointer rounded-xl border p-3 ${
                       resolution === option.value
-                        ? 'border-[var(--emerald)] bg-[var(--emerald-soft)]'
-                        : 'border-[var(--border)] bg-[var(--surface-soft)]'
+                        ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
+                        : 'border-[var(--color-border)] bg-[var(--color-surface-muted)]'
                     }`}
                     key={option.value}
                   >
                     <div className="flex items-start gap-3">
                       <input
                         checked={resolution === option.value}
-                        className="mt-1 accent-[var(--emerald)]"
+                        className="mt-1 accent-[var(--color-accent)]"
                         name="plan-conflict"
                         onChange={() => setResolution(option.value)}
                         type="radio"
                         value={option.value}
                       />
                       <div>
-                        <p className="text-xs font-black text-[var(--text-primary)]">
+                        <p className="text-xs font-black text-[var(--color-text)]">
                           {option.title}
                         </p>
-                        <p className="mt-1 text-[9px] leading-5 text-[var(--text-muted)]">
+                        <p className="mt-1 text-[9px] leading-5 text-[var(--color-text-muted)]">
                           {option.body}
                         </p>
                       </div>
@@ -332,22 +338,22 @@ export function PlanImportPanel({
           )}
 
           {confirmed ? (
-            <div className="flex items-center gap-2 rounded-2xl bg-[var(--emerald-soft)] px-4 py-3 text-xs font-black text-[var(--emerald)]">
+            <Surface className="flex items-center gap-2 rounded-2xl border-0 px-4 py-3 text-xs font-black text-[var(--color-accent)]" variant="accent">
               <Check aria-hidden="true" size={18} />
               برنامه با موفقیت آماده شد.
-            </div>
+            </Surface>
           ) : (
-            <button
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--emerald)] px-5 text-sm font-black text-[#07110d]"
+            <Button
+              block
               onClick={() => {
                 onConfirm(plan, conflictKeys.length > 0 ? resolution : 'imported-first')
                 setConfirmed(true)
               }}
-              type="button"
+              size="lg"
             >
               <Check aria-hidden="true" size={18} />
               {confirmLabel}
-            </button>
+            </Button>
           )}
         </div>
       )}

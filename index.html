@@ -2,7 +2,8 @@
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon-32.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta
       name="viewport"
@@ -18,28 +19,92 @@
     <meta name="apple-mobile-web-app-title" content="Momentum" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="format-detection" content="telephone=no" />
+    <link
+      rel="preload"
+      href="/brand/momentum-splash-animated.svg"
+      as="image"
+      type="image/svg+xml"
+    />
+    <style id="boot-splash-critical">
+      #boot-splash {
+        position: fixed;
+        z-index: 1000;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow: hidden;
+        direction: ltr;
+        text-align: center;
+        background:
+          radial-gradient(circle at 50% 42%, rgba(75, 214, 154, 0.16), transparent 19rem),
+          #07110e;
+      }
+
+      #boot-splash .boot-splash__content {
+        display: grid;
+        justify-items: center;
+        width: min(100%, 24rem);
+        padding: 2rem;
+      }
+
+      #boot-splash .boot-splash__logo {
+        display: block;
+        width: 6.25rem;
+        height: 6.25rem;
+        border-radius: 1.95rem;
+      }
+
+      #boot-splash .boot-splash__name {
+        margin: 1.35rem 0 0;
+        color: #f4f6ef;
+        font: 900 0.78rem/1.4 Arial, sans-serif;
+        letter-spacing: 0.3em;
+      }
+
+      #boot-splash .boot-splash__tagline {
+        margin: 0.5rem 0 0;
+        direction: rtl;
+        color: #b4c5bc;
+        font-size: 0.78rem;
+        font-weight: 700;
+        line-height: 1.8;
+        text-align: center;
+      }
+
+      #boot-splash .boot-splash__progress {
+        display: block;
+        width: 7rem;
+        height: 0.2rem;
+        margin-top: 1.6rem;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(224, 244, 233, 0.11);
+      }
+    </style>
     <title>Momentum — ریتم پایدار، پیشرفت واقعی</title>
   </head>
   <body>
-    <div id="root">
-      <div
-        aria-label="در حال اجرای Momentum"
-        class="boot-splash"
-        role="status"
-      >
-        <div class="boot-splash__content">
-          <img
-            alt=""
-            aria-hidden="true"
-            class="boot-splash__logo"
-            src="/pwa-192.png"
-          />
-          <p class="boot-splash__name">MOMENTUM</p>
-          <p class="boot-splash__tagline">ریتم پایدار، پیشرفت واقعی</p>
-          <span class="boot-splash__progress"></span>
-        </div>
+    <div
+      id="boot-splash"
+      aria-label="در حال اجرای Momentum"
+      class="boot-splash"
+      role="status"
+    >
+      <div class="boot-splash__content">
+        <img
+          alt=""
+          aria-hidden="true"
+          class="boot-splash__logo"
+          src="/brand/momentum-splash-animated.svg"
+        />
+        <p class="boot-splash__name">MOMENTUM</p>
+        <p class="boot-splash__tagline">ریتم پایدار، پیشرفت واقعی</p>
+        <span class="boot-splash__progress"></span>
       </div>
     </div>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

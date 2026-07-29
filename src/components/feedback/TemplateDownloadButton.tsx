@@ -120,9 +120,9 @@ export function TemplateDownloadButton({
             downloadState === 'downloading'
               ? 'animate-spin'
               : downloadState === 'success'
-                ? 'text-[var(--emerald)]'
+                ? 'text-[var(--color-accent)]'
                 : downloadState === 'error'
-                  ? 'text-[var(--danger)]'
+                  ? 'text-[var(--color-danger)]'
                   : ''
           }`}
           size={iconSize}
@@ -133,10 +133,10 @@ export function TemplateDownloadButton({
           <p
             className={`flex items-center gap-1.5 text-[10px] font-bold leading-4 ${
               downloadState === 'error'
-                ? 'text-[var(--danger)]'
+                ? 'text-[var(--color-danger)]'
                 : downloadState === 'success'
-                  ? 'text-[var(--emerald)]'
-                  : 'text-[var(--text-secondary)]'
+                  ? 'text-[var(--color-accent)]'
+                  : 'text-[var(--color-text-secondary)]'
             }`}
             role={downloadState === 'error' ? 'alert' : 'status'}
           >

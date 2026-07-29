@@ -10,8 +10,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       includeAssets: [
+        'favicon.svg',
         'favicon-32.png',
         'apple-touch-icon.png',
+        'brand/momentum-splash-animated.svg',
         'templates/momentum-weekly-plan-prompt.md',
       ],
       manifest: {
@@ -53,7 +55,7 @@ export default defineConfig({
       workbox: {
         navigateFallback: '/index.html',
         globPatterns: [
-          '**/*.{js,css,html,woff2}',
+          '**/*.{js,css,html,woff2,svg}',
           'favicon-32.png',
           'apple-touch-icon.png',
           'pwa-192.png',
