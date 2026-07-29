@@ -23,7 +23,6 @@ describe('weekly meal plan validation', () => {
   it('accepts the complete profile and planning context from the imported file', () => {
     const plan = {
       ...loadSample(),
-      schemaVersion: '0.1.0' as const,
       profile: {
         name: 'کاربر فایل',
         age: 36,
@@ -111,5 +110,70 @@ describe('weekly meal plan validation', () => {
 
     expect(result.success).toBe(false)
     expect(result.errors.some((error) => error.path === 'profile')).toBe(true)
+  })
+
+  it('calculates strategy adjustments and applies manual overrides last', () => {
+    const plan = structuredClone(loadSample())
+    plan.days[0].targets = {
+      protein: 145,
+      waterMl: 3100,
+    } as WeeklyMealPlan['days'][number]['targets']
+
+    const result = validateWeeklyMealPlan(plan)
+
+    expect(result.success).toBe(true)
+    expect(result.data?.days[0].targets).toMatchObject({
+      calories: 1900,
+      protein: 145,
+      waterMl: 3100,
+    })
+    expect(result.data?.days[0].targetOverrides).toEqual({
+      protein: 145,
+      waterMl: 3100,
+    })
+  })
+
+  it('returns a recoverable question when a required answer is missing', () => {
+    const plan = structuredClone(loadSample()) as unknown as {
+      profile: Record<string, unknown>
+    }
+    delete plan.profile.age
+
+    const result = validateWeeklyMealPlan(plan)
+
+    expect(result.success).toBe(false)
+    expect(result.errors).toEqual([])
+    expect(result.recoverableFields?.map((question) => question.path)).toContain(
+      'profile.age',
+    )
+    expect(result.draft).toBe(plan)
+  })
+
+  it('rejects invalid recipe metadata with a Persian, exact-path error', () => {
+    const plan = structuredClone(loadSample())
+    const option = plan.days[0].meals[0].options[0]
+    if (!option.recipe) throw new Error('Sample recipe is missing.')
+    option.recipe.difficulty = 'impossible' as 'easy'
+
+    const result = validateWeeklyMealPlan(plan)
+
+    expect(result.success).toBe(false)
+    expect(result.errors).toContainEqual({
+      path: 'days[0].meals[0].options[0].recipe.difficulty',
+      message: 'سطح سختی دستور پخت معتبر نیست.',
+    })
+  })
+
+  it('rejects nutrition numbers outside the logical range', () => {
+    const plan = structuredClone(loadSample())
+    plan.days[0].meals[0].options[0].nutrition.calories = 20_000
+
+    const result = validateWeeklyMealPlan(plan)
+
+    expect(result.success).toBe(false)
+    expect(result.errors).toContainEqual({
+      path: 'days[0].meals[0].options[0].nutrition.calories',
+      message: 'کالری از بازه منطقی خارج است.',
+    })
   })
 })

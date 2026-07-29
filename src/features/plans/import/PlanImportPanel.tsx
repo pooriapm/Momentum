@@ -21,6 +21,8 @@ import {
   readPlanFile,
   type PlanFileResult,
 } from './read-plan-file'
+import { PlanHealthScoreCard } from '../health/PlanHealthScoreCard'
+import { ImportCompletionWizard } from './ImportCompletionWizard'
 
 interface PlanImportPanelProps {
   existingState?: AppState | null
@@ -103,7 +105,7 @@ export function PlanImportPanel({
       />
 
       {!result && !isReading && (
-        <div className="rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] p-5 text-center">
+        <div className="rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] p-4 text-center desktop:p-5">
           <div className="mx-auto grid size-14 place-items-center rounded-[18px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
             <UploadCloud aria-hidden="true" size={25} />
           </div>
@@ -128,7 +130,7 @@ export function PlanImportPanel({
               type="button"
             >
               <FlaskConical aria-hidden="true" size={17} />
-              استفاده از نمونه
+              استفاده از دمو
             </button>
           </div>
         </div>
@@ -150,7 +152,25 @@ export function PlanImportPanel({
         </div>
       )}
 
-      {result && !result.success && (
+      {result &&
+        !result.success &&
+        result.errors.length === 0 &&
+        result.recoverableFields &&
+        Boolean(result.draft) && (
+          <ImportCompletionWizard
+            draft={result.draft!}
+            fileName={result.fileName}
+            key={result.recoverableFields
+              .map((question) => question.path)
+              .join('|')}
+            onResult={setResult}
+            questions={result.recoverableFields}
+          />
+        )}
+
+      {result &&
+        !result.success &&
+        (result.errors.length > 0 || !result.recoverableFields) && (
         <div className="rounded-[22px] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-4">
           <div className="flex items-center gap-2 text-xs font-black text-[var(--danger)]">
             <AlertTriangle aria-hidden="true" size={18} />
@@ -182,7 +202,7 @@ export function PlanImportPanel({
             انتخاب فایل دیگر
           </button>
         </div>
-      )}
+        )}
 
       {plan && result?.success && (
         <div className="space-y-4">
@@ -242,6 +262,8 @@ export function PlanImportPanel({
               ))}
             </div>
           </div>
+
+          <PlanHealthScoreCard plan={plan} />
 
           {result.warnings.length > 0 && (
             <div className="rounded-2xl border border-[color-mix(in_srgb,var(--gold)_30%,transparent)] bg-[var(--gold-soft)] p-4">

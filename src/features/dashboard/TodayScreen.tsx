@@ -90,13 +90,13 @@ function SummaryCard({
   color?: string
 }) {
   return (
-    <article className="glass-panel rounded-[22px] p-4">
+    <article className="glass-panel metric-card rounded-[22px] p-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-bold text-[var(--text-muted)]">{label}</p>
-        <span className="text-[var(--emerald)]">{icon}</span>
+        <p className="text-xs font-bold text-[var(--text-muted)]">{label}</p>
+        <span className="animated-icon text-[var(--emerald)]">{icon}</span>
       </div>
       <p className="mt-3 text-lg font-black text-[var(--text-primary)]">{value}</p>
-      <p className="mt-1 text-[9px] font-bold text-[var(--text-muted)]">{detail}</p>
+      <p className="mt-1 text-[11px] font-bold leading-5 text-[var(--text-muted)]">{detail}</p>
       {progress !== undefined && target !== undefined && (
         <ProgressBar color={color} target={target} value={progress} />
       )}
@@ -147,11 +147,11 @@ function WeightProgressRing({ progress }: { progress: number }) {
       </svg>
       <div className="absolute inset-[15px] rounded-full bg-[var(--surface-strong)] shadow-[inset_0_0_0_1px_var(--border)]" />
       <div className="relative text-center">
-        <Target className="mx-auto text-[var(--emerald)]" aria-hidden="true" size={25} />
+        <Target className="animated-icon mx-auto text-[var(--emerald)]" aria-hidden="true" size={25} />
         <p className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">
           {toPersianDigits(Math.round(progress))}٪
         </p>
-        <p className="mt-1 text-[10px] font-bold text-[var(--text-muted)]">پیشرفت وزن</p>
+        <p className="mt-1 text-[11px] font-bold text-[var(--text-muted)]">پیشرفت وزن</p>
       </div>
     </div>
   )
@@ -297,10 +297,10 @@ export function TodayScreen() {
             icon: ChevronLeft,
           },
         ].map(({ label, value, icon: Icon }) => (
-          <article className="glass-panel rounded-[22px] p-4 desktop:p-5" key={label}>
+          <article className="glass-panel metric-card rounded-[22px] p-4 desktop:p-5" key={label}>
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-bold text-[var(--text-muted)]">{label}</p>
-              <Icon aria-hidden="true" className="text-[var(--emerald)]" size={16} />
+              <p className="text-xs font-bold text-[var(--text-muted)]">{label}</p>
+              <Icon aria-hidden="true" className="animated-icon text-[var(--emerald)]" size={16} />
             </div>
             <p className="mt-3 text-base font-black text-[var(--text-primary)]">{value}</p>
           </article>
@@ -351,7 +351,7 @@ export function TodayScreen() {
                     ? `وعده بعدی: ${nextMeal.title} — ${nextOption.title}`
                     : 'همه وعده‌های امروز ثبت شده‌اند'}
                 </h2>
-                <p className="mt-2 text-[10px] leading-5 text-[var(--text-muted)]">
+                <p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">
                   {remaining.calories >= 0
                     ? `${toPersianDigits(Math.round(remaining.calories))} کالری تا هدف روز باقی مانده`
                     : `${toPersianDigits(Math.abs(Math.round(remaining.calories)))} کالری بیشتر از هدف ثبت شده`}
@@ -376,7 +376,7 @@ export function TodayScreen() {
                 <span className="block text-sm font-black text-[var(--text-primary)]">
                   گرسنگی اضطراری دارم
                 </span>
-                <span className="mt-1 block text-[10px] text-[var(--text-secondary)]">
+                <span className="mt-1 block text-[11px] text-[var(--text-secondary)]">
                   انتخاب کنترل‌شده فقط از گزینه‌های فایل همین هفته
                 </span>
               </span>
@@ -390,13 +390,18 @@ export function TodayScreen() {
                 <p className="text-xs font-bold text-[var(--emerald)]">برنامه امروز</p>
                 <h2 className="mt-1 text-xl font-black text-[var(--text-primary)]">وعده‌ها</h2>
               </div>
-              <span className="text-[10px] font-bold text-[var(--text-muted)]">
+              <span className="text-[11px] font-bold text-[var(--text-muted)]">
                 {toPersianDigits(completedMeals)} / {toPersianDigits(planDay.meals.length)}
               </span>
             </div>
             <div className="space-y-3">
-              {planDay.meals.map((meal) => (
-                <TodayMealCard date={today} key={meal.id} meal={meal} />
+              {planDay.meals.map((meal, index) => (
+                <TodayMealCard
+                  animationIndex={index}
+                  date={today}
+                  key={meal.id}
+                  meal={meal}
+                />
               ))}
             </div>
           </section>
@@ -411,7 +416,7 @@ export function TodayScreen() {
                   <p className="text-xs font-black text-[var(--text-primary)]">
                     لاگ غذایی امروز
                   </p>
-                  <p className="mt-1 text-[9px] text-[var(--text-muted)]">
+                  <p className="mt-1 text-[11px] leading-5 text-[var(--text-muted)]">
                     فقط گزینه‌هایی که انتخاب و مصرفشان را تأیید کرده‌ای
                   </p>
                 </div>
@@ -428,14 +433,14 @@ export function TodayScreen() {
                       size={17}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-bold text-[var(--text-muted)]">
+                      <p className="text-[11px] font-bold text-[var(--text-muted)]">
                         {item.slotTitle}
                       </p>
                       <p className="mt-1 truncate text-xs font-black text-[var(--text-primary)]">
                         {item.optionTitle}
                       </p>
                     </div>
-                    <div className="shrink-0 text-left text-[8px] font-bold text-[var(--text-muted)]">
+                    <div className="shrink-0 text-left text-[10px] font-bold leading-5 text-[var(--text-muted)]">
                       <p>{toPersianDigits(item.nutrition.calories)} کالری</p>
                       <p className="mt-1">{toPersianDigits(item.nutrition.protein)}g پروتئین</p>
                     </div>
@@ -452,14 +457,14 @@ export function TodayScreen() {
                       size={17}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-bold text-[var(--gold)]">
+                      <p className="text-[11px] font-bold text-[var(--gold)]">
                         انتخاب اضطراری
                       </p>
                       <p className="mt-1 truncate text-xs font-black text-[var(--text-primary)]">
                         {item.title}
                       </p>
                     </div>
-                    <div className="shrink-0 text-left text-[8px] font-bold text-[var(--text-muted)]">
+                    <div className="shrink-0 text-left text-[10px] font-bold leading-5 text-[var(--text-muted)]">
                       <p>{toPersianDigits(item.nutrition.calories)} کالری</p>
                       <p className="mt-1">{toPersianDigits(item.nutrition.protein)}g پروتئین</p>
                     </div>
@@ -478,7 +483,7 @@ export function TodayScreen() {
                 </h2>
               </div>
               <button
-                className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--emerald)] px-3 text-[10px] font-black text-[#07110d]"
+                className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--emerald)] px-3 text-[11px] font-black text-[#07110d]"
                 onClick={() => setShowCheckIn(true)}
                 type="button"
               >
@@ -497,7 +502,7 @@ export function TodayScreen() {
                     className={complete ? 'text-[var(--emerald)]' : 'text-[var(--text-muted)]'}
                     size={17}
                   />
-                  <p className="min-w-0 flex-1 text-[10px] font-bold text-[var(--text-secondary)]">
+                  <p className="min-w-0 flex-1 text-[11px] font-bold leading-5 text-[var(--text-secondary)]">
                     {label}
                   </p>
                   {complete && (

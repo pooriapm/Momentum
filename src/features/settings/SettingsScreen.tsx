@@ -3,8 +3,8 @@ import {
   ArrowUp,
   Check,
   DatabaseBackup,
-  Download,
   Edit3,
+  FileOutput,
   FileJson,
   FileText,
   LockKeyhole,
@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
+import { TemplateDownloadButton } from '../../components/feedback/TemplateDownloadButton'
 import { JalaliDatePicker } from '../../components/forms/JalaliDatePicker'
 import { formatJalaliDate, toPersianDigits } from '../../lib/dates/jalali'
 import {
@@ -26,6 +27,12 @@ import {
 import { APP_VERSION } from '../../lib/version'
 import type { ActivityLevel, Sex } from '../../types/domain'
 import type { Theme } from '../../types/ui'
+import { PromptGenerationWizard } from '../ai-prompt/PromptGenerationWizard'
+import {
+  downloadMomentumPrompt,
+  getMissingPromptQuestions,
+  mergeProfileWithPlanContext,
+} from '../ai-prompt/prompt-generator'
 import { PlanImportPanel } from '../plans/import/PlanImportPanel'
 
 interface SettingsScreenProps {
@@ -61,6 +68,8 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string>()
   const [draft, setDraft] = useState(() => appState?.profile)
+  const [showPromptWizard, setShowPromptWizard] = useState(false)
+  const [promptStatus, setPromptStatus] = useState<string>()
 
   if (!appState || !draft) {
     return null
@@ -96,6 +105,10 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
     ...appState.planPriority,
     ...Object.keys(appState.plans).filter((key) => !appState.planPriority.includes(key)),
   ]
+  const promptProfile = mergeProfileWithPlanContext(
+    appState.profile,
+    appState.plans[appState.planPriority[0]],
+  )
   const isStandalone =
     (typeof window.matchMedia === 'function' &&
       window.matchMedia('(display-mode: standalone)').matches) ||
@@ -404,20 +417,46 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-[var(--gold)]">ساخت برنامه هفته بعد</p>
             <h2 className="mt-2 text-xl font-black text-[var(--text-primary)]">
-              تمپلیت پرامپت هفتگی
+              Generate AI Prompt
             </h2>
             <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
-              قرارداد کامل JSON و جای‌خالی‌های لازم داخل فایل است. هر هفته ترجیحات و
-              محدودیت‌ها را به‌روز کن، برای ChatGPT بفرست و پاسخ JSON را همین‌جا وارد کن.
+              Momentum روی همین دستگاه یک پرامپت شخصی و کامل می‌سازد. فایل را خودت برای
+              ChatGPT یا هر LLM دیگری می‌فرستی و پاسخ JSON را دوباره داخل برنامه Import
+              می‌کنی؛ هیچ اتصال هوش مصنوعی داخل سایت وجود ندارد.
             </p>
-            <a
-              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--gold)] px-5 text-xs font-black text-[#171006]"
-              download
-              href="/templates/momentum-weekly-plan-prompt.md"
-            >
-              <Download aria-hidden="true" size={17} />
-              دانلود تمپلیت پرامپت
-            </a>
+            <div className="mt-5 flex flex-wrap items-start gap-3">
+              <button
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--gold)] px-5 text-xs font-black text-[#171006]"
+                onClick={() => {
+                  if (getMissingPromptQuestions(promptProfile).length > 0) {
+                    setShowPromptWizard(true)
+                    setPromptStatus(undefined)
+                    return
+                  }
+
+                  downloadMomentumPrompt(promptProfile)
+                  setPromptStatus('پرامپت شخصی با موفقیت ساخته و دانلود شد.')
+                }}
+                type="button"
+              >
+                <FileOutput aria-hidden="true" size={17} />
+                ساخت پرامپت شخصی
+              </button>
+              <TemplateDownloadButton
+                buttonClassName="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-5 text-xs font-black text-[var(--text-secondary)] disabled:cursor-wait disabled:opacity-80"
+                iconSize={17}
+              >
+                دانلود قرارداد خام
+              </TemplateDownloadButton>
+            </div>
+            {promptStatus && (
+              <p
+                className="mt-3 text-[11px] font-bold text-[var(--emerald)]"
+                role="status"
+              >
+                {promptStatus}
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -641,6 +680,22 @@ export function SettingsScreen({ theme, themeControl }: SettingsScreenProps) {
       >
         MOMENTUM · ALPHA {APP_VERSION}
       </p>
+      {showPromptWizard && (
+        <PromptGenerationWizard
+          initialProfile={promptProfile}
+          onCancel={() => setShowPromptWizard(false)}
+          onComplete={(completedProfile) => {
+            if (updateProfile(completedProfile)) {
+              setDraft(completedProfile)
+              downloadMomentumPrompt(completedProfile)
+              setPromptStatus(
+                'اطلاعات تکمیل شد و پرامپت شخصی با موفقیت دانلود شد.',
+              )
+              setShowPromptWizard(false)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }

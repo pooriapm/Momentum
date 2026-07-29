@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAppState, saveAppState } from '../lib/storage/app-state'
 import type { UserProfile, WeeklyMealPlan } from '../types/domain'
@@ -23,7 +23,6 @@ function loadImportPlan(): WeeklyMealPlan {
 
   return {
     ...plan,
-    schemaVersion: '0.1.0',
     profile: {
       name: 'کاربر فایل',
       age: 34,
@@ -41,6 +40,7 @@ function loadImportPlan(): WeeklyMealPlan {
 describe('Momentum app', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
     localStorage.clear()
     document.documentElement.classList.remove('light')
   })
@@ -56,85 +56,99 @@ describe('Momentum app', () => {
     expect(screen.getByRole('button', { name: 'شروع مسیر' })).toBeInTheDocument()
   })
 
-  it('offers template and upload before the manual profile fallback', () => {
+  it('explains the prompt workflow and blocks home until a plan is selected', async () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: 'شروع مسیر' }))
 
     expect(
-      screen.getByRole('heading', { name: 'برنامه آماده داری؟' }),
+      screen.getByRole('heading', { name: 'فایل برنامه‌ات را آماده کن' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /هنوز فایل نداری؟/ }),
-    ).toHaveAttribute('href', '/templates/momentum-weekly-plan-prompt.md')
+      screen.getByRole('button', { name: /دانلود پرامپت کامل Momentum/ }),
+    ).toBeEnabled()
+    expect(
+      screen.getByText(
+        'لازم نیست جای‌خالی‌ها را خودت پر کنی؛ ChatGPT همه اطلاعات ناقص را یک‌جا از تو می‌پرسد.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('button', { name: 'استفاده از دمو' }),
+    ).toBeEnabled()
+    expect(
+      screen.getByRole('button', { name: 'فایل یا دمو را انتخاب کن' }),
+    ).toBeDisabled()
+    expect(screen.queryByText('ورود دستی')).not.toBeInTheDocument()
+  })
 
+  it('shows progress and success while downloading the weekly template', async () => {
+    let resolveRequest:
+      | ((response: { ok: boolean; status: number; blob: () => Promise<Blob> }) => void)
+      | undefined
+    const fetchRequest = new Promise<{
+      ok: boolean
+      status: number
+      blob: () => Promise<Blob>
+    }>((resolve) => {
+      resolveRequest = resolve
+    })
+    vi.stubGlobal('fetch', vi.fn(() => fetchRequest))
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn(() => 'blob:momentum-template'),
+    })
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    })
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'شروع مسیر' }))
+
+    const downloadButton = screen.getByRole('button', {
+      name: /دانلود پرامپت کامل Momentum/,
+    })
+    fireEvent.click(downloadButton)
+
+    expect(downloadButton).toBeDisabled()
+    expect(
+      screen.getByText('در حال دریافت تمپلیت؛ لطفاً منتظر بمانید…'),
+    ).toBeInTheDocument()
+
+    await act(async () => {
+      resolveRequest?.({
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(['Momentum template']),
+      })
+      await fetchRequest
+    })
+
+    expect(
+      await screen.findByText('دانلود تمپلیت با موفقیت شروع شد.'),
+    ).toBeInTheDocument()
+    expect(downloadButton).toBeEnabled()
+    expect(URL.createObjectURL).toHaveBeenCalledOnce()
+  })
+
+  it('shows a retryable error when the template download fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Network error')))
+
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'شروع مسیر' }))
     fireEvent.click(
-      screen.getByRole('button', { name: 'رد کردن و ورود دستی' }),
+      screen.getByRole('button', { name: /دانلود پرامپت کامل Momentum/ }),
     )
 
     expect(
-      screen.getByRole('heading', { name: 'اطلاعات پایه را وارد کن' }),
-    ).toBeInTheDocument()
-    expect(screen.getByLabelText('نام')).toBeInTheDocument()
-    expect(screen.getByLabelText('قد')).toBeInTheDocument()
-    expect(screen.getByLabelText('وزن فعلی')).toBeInTheDocument()
-    expect(screen.getByLabelText('وزن هدف')).toBeInTheDocument()
-  })
-
-  it('allows onboarding to finish without uploading a meal plan', async () => {
-    render(<App />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'شروع مسیر' }))
-    fireEvent.click(
-      screen.getByRole('button', { name: 'رد کردن و ورود دستی' }),
+      await screen.findByRole('alert'),
+    ).toHaveTextContent(
+      'دانلود انجام نشد. اتصال اینترنت را بررسی و دوباره تلاش کنید.',
     )
-    fireEvent.change(screen.getByLabelText('نام'), {
-      target: { value: 'کاربر نمونه' },
-    })
-    fireEvent.change(screen.getByLabelText('قد'), { target: { value: '۱۷۲' } })
-    fireEvent.change(screen.getByLabelText('وزن فعلی'), {
-      target: { value: '۸۱٫۵' },
-    })
-    fireEvent.change(screen.getByLabelText('وزن هدف'), {
-      target: { value: '۷۵' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'مرور اطلاعات' }))
-    fireEvent.click(screen.getByRole('button', { name: 'ورود به داشبورد' }))
-
-    expect(await screen.findByText('سلام کاربر نمونه،')).toBeInTheDocument()
-    const state = JSON.parse(localStorage.getItem('momentum.appState') ?? '{}')
-    expect(state.plans).toEqual({})
-    expect(state.profile.heightCm).toBe(172)
-    expect(state.profile.currentWeightKg).toBe(81.5)
-    expect(state.profile.startWeightKg).toBe(81.5)
-  })
-
-  it('shows validation inside empty fields and clears it while typing', () => {
-    render(<App />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'شروع مسیر' }))
-    fireEvent.click(
-      screen.getByRole('button', { name: 'رد کردن و ورود دستی' }),
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'مرور اطلاعات' }))
-
-    expect(screen.getByText('نام را وارد کنید.')).toBeInTheDocument()
-    expect(screen.getByText('قد را وارد کنید.')).toBeInTheDocument()
-    expect(screen.getByText('وزن فعلی را وارد کنید.')).toBeInTheDocument()
-    expect(screen.getByText('وزن هدف را وارد کنید.')).toBeInTheDocument()
-    expect(screen.getByLabelText('نام')).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByText('سانتی‌متر')).toBeInTheDocument()
-
-    fireEvent.change(screen.getByLabelText('نام'), {
-      target: { value: 'کاربر نمونه' },
-    })
-    fireEvent.change(screen.getByLabelText('قد'), {
-      target: { value: '۱۷۲' },
-    })
-
-    expect(screen.queryByText('نام را وارد کنید.')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('نام')).toHaveAttribute('aria-invalid', 'false')
-    expect(screen.queryByText('سانتی‌متر')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /دانلود پرامپت کامل Momentum/ }),
+    ).toBeEnabled()
   })
 
   it('creates both profile and plan from one uploaded file', async () => {
@@ -155,13 +169,13 @@ describe('Momentum app', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('کاربر فایل · ۳۴ سال')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'انتخاب این فایل' }))
-    fireEvent.click(screen.getByRole('button', { name: 'استفاده از این فایل' }))
+    fireEvent.click(screen.getByRole('button', { name: 'انتخاب این برنامه' }))
+    fireEvent.click(screen.getByRole('button', { name: 'مرور برنامه' }))
 
     expect(
       screen.getByRole('heading', { name: 'خلاصه مسیر کاربر فایل' }),
     ).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'ورود به داشبورد' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ورود به خانه' }))
 
     expect(await screen.findByText('سلام کاربر فایل،')).toBeInTheDocument()
     const state = JSON.parse(localStorage.getItem('momentum.appState') ?? '{}')

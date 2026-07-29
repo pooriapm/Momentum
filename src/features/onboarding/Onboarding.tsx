@@ -1,7 +1,6 @@
 import {
   lazy,
   Suspense,
-  useId,
   useState,
   type FormEvent,
 } from 'react'
@@ -10,24 +9,19 @@ import {
   ArrowRight,
   Check,
   ChevronLeft,
-  Download,
   FileJson,
   LockKeyhole,
   Sparkles,
   Target,
-  UserRound,
 } from 'lucide-react'
+import { TemplateDownloadButton } from '../../components/feedback/TemplateDownloadButton'
 import { Brand } from '../../components/layout/Brand'
 import {
   formatJalaliDate,
   getTodayIso,
   toPersianDigits,
 } from '../../lib/dates/jalali'
-import {
-  parseLocalizedNumber,
-  sanitizeLocalizedNumberInput,
-} from '../../lib/numbers/localized-number'
-import type { ISODate, UserProfile, WeeklyMealPlan } from '../../types/domain'
+import type { UserProfile, WeeklyMealPlan } from '../../types/domain'
 
 const PlanImportPanel = lazy(() =>
   import('../plans/import/PlanImportPanel').then((module) => ({
@@ -39,225 +33,63 @@ interface OnboardingProps {
   onComplete: (profile: UserProfile, plan?: WeeklyMealPlan) => void
 }
 
-interface OnboardingForm {
-  name: string
-  heightCm: string
-  startWeightKg: string
-  currentWeightKg: string
-  targetWeightKg: string
-  goalDate: ISODate
-}
-
-type ProfileField = 'name' | 'heightCm' | 'currentWeightKg' | 'targetWeightKg'
-type ProfileErrors = Partial<Record<ProfileField, string>>
-
-function getDefaultGoalDate(): ISODate {
-  const date = new Date(`${getTodayIso()}T00:00:00Z`)
-  date.setUTCDate(date.getUTCDate() + 90)
-  return date.toISOString().slice(0, 10) as ISODate
-}
-
-function createInitialForm(): OnboardingForm {
-  return {
-    name: '',
-    heightCm: '',
-    startWeightKg: '',
-    currentWeightKg: '',
-    targetWeightKg: '',
-    goalDate: getDefaultGoalDate(),
-  }
-}
-
-function NumberField({
-  label,
-  value,
-  onChange,
-  suffix,
-  error,
-  shakeKey,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  suffix: string
-  error?: string
-  shakeKey: number
-}) {
-  const inputId = useId()
-  const errorId = `${inputId}-error`
-
-  return (
-    <div className={error ? 'field-error-shake' : undefined} key={error ? shakeKey : 0}>
-      <label
-        className="mb-2 block text-xs font-bold text-[var(--text-secondary)]"
-        htmlFor={inputId}
-      >
-        {label}
-      </label>
-      <div
-        className={`overflow-hidden rounded-2xl border bg-[var(--surface-soft)] transition ${
-          error
-            ? 'border-[var(--danger)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--danger)_12%,transparent)]'
-            : 'border-[var(--border)] focus-within:border-[var(--emerald)]'
-        }`}
-      >
-        <div className="flex min-h-13 items-center px-4">
-          <input
-            aria-describedby={error ? errorId : undefined}
-            aria-invalid={Boolean(error)}
-            className="min-w-0 flex-1 bg-transparent text-left text-lg font-black text-[var(--text-primary)] outline-none"
-            dir="ltr"
-            id={inputId}
-            inputMode="decimal"
-            onChange={(event) =>
-              onChange(sanitizeLocalizedNumberInput(event.target.value))
-            }
-            type="text"
-            value={value}
-          />
-          {!value && (
-            <span className="text-xs font-bold text-[var(--text-muted)]">{suffix}</span>
-          )}
-        </div>
-        {error && (
-          <p
-            className="border-t border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] px-4 py-2 text-[10px] font-bold text-[var(--danger)]"
-            id={errorId}
-          >
-            {error}
-          </p>
-        )}
-      </div>
-    </div>
-  )
-}
+const promptSteps = [
+  {
+    title: 'تمپلیت را دانلود کن',
+    body: 'فایل Markdown شامل سؤال‌ها و قرارداد دقیق Momentum است.',
+  },
+  {
+    title: 'آن را برای ChatGPT بفرست',
+    body: 'لازم نیست جای‌خالی‌ها را خودت پر کنی؛ ChatGPT همه اطلاعات ناقص را یک‌جا از تو می‌پرسد.',
+  },
+  {
+    title: 'به سؤال‌ها پاسخ بده',
+    body: 'در صورت داشتن InBody یا گزارش مشابه، تصویر یا PDF را همان‌جا به ChatGPT پیوست کن.',
+  },
+  {
+    title: 'JSON نهایی را اینجا وارد کن',
+    body: 'پاسخ نهایی ChatGPT را به‌صورت فایل JSON ذخیره و از بخش پایین انتخاب کن.',
+  },
+]
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0)
-  const [form, setForm] = useState<OnboardingForm>(createInitialForm)
-  const [errors, setErrors] = useState<ProfileErrors>({})
-  const [errorAttempt, setErrorAttempt] = useState(0)
   const [stagedPlan, setStagedPlan] = useState<WeeklyMealPlan>()
-  const progress = ((step + 1) / 4) * 100
-
-  const stagePlan = (plan: WeeklyMealPlan) => {
-    setStagedPlan(plan)
-
-    setForm({
-      name: plan.profile.name,
-      heightCm: String(plan.profile.heightCm),
-      startWeightKg: String(plan.profile.startWeightKg),
-      currentWeightKg: String(plan.profile.currentWeightKg),
-      targetWeightKg: String(plan.profile.targetWeightKg),
-      goalDate: plan.profile.goalDate,
-    })
-  }
-
-  const clearPlan = () => {
-    setStagedPlan(undefined)
-    setForm(createInitialForm())
-  }
-
-  const clearFieldError = (field: ProfileField) => {
-    setErrors((current) => {
-      if (!current[field]) return current
-      const next = { ...current }
-      delete next[field]
-      return next
-    })
-  }
-
-  const validateManualProfile = () => {
-    const height = parseLocalizedNumber(form.heightCm)
-    const current = parseLocalizedNumber(form.currentWeightKg)
-    const target = parseLocalizedNumber(form.targetWeightKg)
-    const nextErrors: ProfileErrors = {}
-
-    if (!form.name.trim()) {
-      nextErrors.name = 'نام را وارد کنید.'
-    }
-
-    if (!Number.isFinite(height)) {
-      nextErrors.heightCm = 'قد را وارد کنید.'
-    } else if (height < 100 || height > 250) {
-      nextErrors.heightCm = 'قد باید بین ۱۰۰ تا ۲۵۰ سانتی‌متر باشد.'
-    }
-
-    if (!Number.isFinite(current)) {
-      nextErrors.currentWeightKg = 'وزن فعلی را وارد کنید.'
-    } else if (current < 35 || current > 350) {
-      nextErrors.currentWeightKg = 'وزن فعلی باید بین ۳۵ تا ۳۵۰ کیلوگرم باشد.'
-    }
-
-    if (!Number.isFinite(target)) {
-      nextErrors.targetWeightKg = 'وزن هدف را وارد کنید.'
-    } else if (target < 35 || target > 350) {
-      nextErrors.targetWeightKg = 'وزن هدف باید بین ۳۵ تا ۳۵۰ کیلوگرم باشد.'
-    }
-
-    return nextErrors
-  }
+  const progress = ((step + 1) / 3) * 100
 
   const goNext = () => {
-    if (step === 1) {
-      setErrors({})
-      setStep(stagedPlan ? 3 : 2)
+    if (step === 0) {
+      setStep(1)
       return
     }
 
-    if (step === 2) {
-      const validationErrors = validateManualProfile()
-
-      if (Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors)
-        setErrorAttempt((current) => current + 1)
-        window.requestAnimationFrame(() => {
-          document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
-        })
-        return
-      }
-
-      setForm((current) => ({
-        ...current,
-        startWeightKg: current.startWeightKg || current.currentWeightKg,
-      }))
-      setErrors({})
-      setStep(3)
-      return
+    if (step === 1 && stagedPlan) {
+      setStep(2)
     }
-
-    setErrors({})
-    setStep(1)
   }
 
   const goBack = () => {
-    setErrors({})
-
-    if (step === 3) {
-      setStep(stagedPlan ? 1 : 2)
-      return
-    }
-
     setStep((current) => Math.max(current - 1, 0))
   }
 
   const finish = (event: FormEvent) => {
     event.preventDefault()
-    const currentWeightKg = parseLocalizedNumber(form.currentWeightKg)
+    if (!stagedPlan) return
 
+    const imported = stagedPlan.profile
     onComplete(
       {
-        name: form.name.trim(),
-        startWeightKg: parseLocalizedNumber(form.startWeightKg) || currentWeightKg,
-        currentWeightKg,
-        targetWeightKg: parseLocalizedNumber(form.targetWeightKg),
-        heightCm: parseLocalizedNumber(form.heightCm),
+        name: imported.name,
+        startWeightKg: imported.startWeightKg,
+        currentWeightKg: imported.currentWeightKg,
+        targetWeightKg: imported.targetWeightKg,
+        heightCm: imported.heightCm,
         journeyStartDate: getTodayIso(),
-        goalDate: form.goalDate,
-        age: stagedPlan?.profile.age,
-        sex: stagedPlan?.profile.sex,
-        activityLevel: stagedPlan?.profile.activityLevel,
-        bodyComposition: stagedPlan?.profile.bodyComposition,
+        goalDate: imported.goalDate,
+        age: imported.age,
+        sex: imported.sex,
+        activityLevel: imported.activityLevel,
+        bodyComposition: imported.bodyComposition,
       },
       stagedPlan,
     )
@@ -266,17 +98,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const nextLabel =
     step === 0
       ? 'شروع مسیر'
-      : step === 1
-        ? stagedPlan
-          ? 'استفاده از این فایل'
-          : 'رد کردن و ورود دستی'
-        : 'مرور اطلاعات'
+      : stagedPlan
+        ? 'مرور برنامه'
+        : 'فایل یا دمو را انتخاب کن'
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 py-5 desktop:grid desktop:place-items-center desktop:py-10">
+    <main className="relative min-h-screen overflow-hidden px-4 py-4 desktop:grid desktop:place-items-center desktop:py-10">
       <div className="fine-grid pointer-events-none absolute inset-0 opacity-30" />
       <div className="relative mx-auto w-full max-w-[760px]">
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between desktop:mb-5">
           <Brand />
           <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[10px] font-bold text-[var(--text-muted)]">
             راه‌اندازی اولیه
@@ -285,7 +115,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         <form
           className="glass-panel overflow-hidden rounded-[30px]"
-          noValidate
           onSubmit={finish}
         >
           <div className="h-1 bg-[var(--surface-soft)]">
@@ -295,13 +124,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             />
           </div>
 
-          <div className="h-[520px] overflow-y-auto overscroll-contain p-6 desktop:h-[560px] desktop:p-10">
+          <div className="h-[clamp(520px,calc(100dvh-165px),700px)] overflow-y-auto overscroll-contain p-5 desktop:h-[clamp(560px,calc(100dvh-230px),700px)] desktop:p-8">
             {step === 0 && (
               <div className="onboarding-step mx-auto flex min-h-[440px] max-w-lg flex-col justify-center text-center">
                 <div className="mx-auto grid size-20 place-items-center rounded-[26px] border border-[var(--border)] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <Target aria-hidden="true" size={36} strokeWidth={1.7} />
                 </div>
-                <p className="mt-7 text-xs font-bold text-[var(--emerald)]">خوش آمدید</p>
+                <p className="mt-7 text-xs font-bold text-[var(--emerald)]">
+                  خوش آمدید
+                </p>
                 <h1 className="mt-3 text-3xl font-black leading-[1.5] text-[var(--text-primary)] desktop:text-4xl">
                   Momentum{' '}
                   <span className="mt-1 block text-xl text-[var(--text-secondary)]">
@@ -309,195 +140,149 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   </span>
                 </h1>
                 <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-[var(--text-secondary)]">
-                  فایل برنامه می‌تواند همه اطلاعات لازم را یک‌جا وارد کند. اگر فایل نداری،
-                  راه‌اندازی دستی فقط یک مرحله کوتاه است.
+                  برای شروع، یک فایل برنامه معتبر وارد کن یا دموی آماده را انتخاب کن.
+                  پروفایل، هدف‌ها و تمام وعده‌ها از همان فایل ساخته می‌شوند.
                 </p>
               </div>
             )}
 
             {step === 1 && (
               <div className="onboarding-step mx-auto max-w-xl">
-                <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
-                  <FileJson aria-hidden="true" size={25} />
-                </div>
-                <div className="mt-6 flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold text-[var(--emerald)]">
-                      شروع سریع با فایل
-                    </p>
-                    <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
-                      برنامه آماده داری؟
-                    </h1>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="grid size-14 shrink-0 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
+                    <FileJson aria-hidden="true" size={25} />
                   </div>
-                  <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1.5 text-[10px] font-bold text-[var(--text-muted)]">
-                    اختیاری
+                  <span className="rounded-full border border-[var(--emerald)] bg-[var(--emerald-soft)] px-3 py-1.5 text-[10px] font-bold text-[var(--emerald)]">
+                    لازم برای ورود
                   </span>
                 </div>
-                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
-                  فایل Momentum علاوه بر وعده‌ها، مشخصات پایه، ترجیحات غذایی و برنامه
-                  تمرین را هم وارد می‌کند. فقط فایل مطابق قرارداد آلفای فعلی پذیرفته
-                  می‌شود.
+
+                <p className="mt-4 text-xs font-bold text-[var(--emerald)]">
+                  ساخت برنامه با ChatGPT
+                </p>
+                <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
+                  فایل برنامه‌ات را آماده کن
+                </h1>
+                <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
+                  Momentum به هوش مصنوعی متصل نیست. پرامپت را دانلود می‌کنی، بیرون
+                  از برنامه برای ChatGPT می‌فرستی و فایل JSON نهایی را برمی‌گردانی.
                 </p>
 
-                <a
-                  className="mt-5 flex min-h-13 items-center justify-between gap-4 rounded-2xl border border-[var(--gold)] bg-[var(--gold-soft)] px-4 text-right transition hover:bg-[color-mix(in_srgb,var(--gold)_18%,transparent)]"
-                  download
-                  href="/templates/momentum-weekly-plan-prompt.md"
+                <div className="mt-4 grid gap-2 desktop:grid-cols-2">
+                  {promptSteps.map((item, index) => (
+                    <div
+                      className="flex gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3"
+                      key={item.title}
+                    >
+                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--emerald)] text-[11px] font-black text-[#07110d]">
+                        {toPersianDigits(index + 1)}
+                      </span>
+                      <div>
+                        <p className="text-[11px] font-black text-[var(--text-primary)]">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+                          {item.body}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <TemplateDownloadButton
+                  buttonClassName="flex min-h-13 w-full items-center justify-between gap-4 rounded-2xl border border-[var(--gold)] bg-[var(--gold-soft)] px-4 text-right transition hover:bg-[color-mix(in_srgb,var(--gold)_18%,transparent)] disabled:cursor-wait disabled:opacity-80"
+                  className="mt-4"
                 >
                   <span>
                     <span className="block text-xs font-black text-[var(--text-primary)]">
-                      هنوز فایل نداری؟
+                      دانلود پرامپت کامل Momentum
                     </span>
                     <span className="mt-1 block text-[10px] text-[var(--text-secondary)]">
-                      تمپلیت کامل را دانلود و برای ChatGPT ارسال کن
+                      برای ارسال به ChatGPT یا هر مدل خارجی دیگر
                     </span>
                   </span>
-                  <Download aria-hidden="true" className="shrink-0 text-[var(--gold)]" size={20} />
-                </a>
+                </TemplateDownloadButton>
 
-                <div className="mt-5">
-                  <Suspense
-                    fallback={
-                      <div
-                        aria-label="در حال آماده‌سازی آپلود"
-                        className="min-h-44 rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] p-5"
-                        role="status"
-                      >
-                        <div className="skeleton mx-auto size-14 rounded-[18px]" />
-                        <div className="skeleton mx-auto mt-4 h-3 w-36" />
-                        <div className="skeleton mx-auto mt-3 h-2.5 w-56 max-w-full" />
-                        <div className="skeleton mx-auto mt-5 h-11 w-32" />
-                      </div>
-                    }
-                  >
-                    <PlanImportPanel
-                      confirmLabel="انتخاب این فایل"
-                      onClearStagedPlan={clearPlan}
-                      onConfirm={stagePlan}
-                      stagedPlan={stagedPlan}
-                    />
-                  </Suspense>
+                <div className="my-4 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-[var(--border)]" />
+                  <span className="text-[10px] font-bold text-[var(--text-muted)]">
+                    فایل آماده یا دموی محصول
+                  </span>
+                  <span className="h-px flex-1 bg-[var(--border)]" />
                 </div>
-              </div>
-            )}
 
-            {step === 2 && (
-              <div className="onboarding-step mx-auto max-w-xl">
-                <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
-                  <UserRound aria-hidden="true" size={25} />
-                </div>
-                <p className="mt-6 text-xs font-bold text-[var(--emerald)]">
-                  ورود دستی
-                </p>
-                <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
-                  اطلاعات پایه را وارد کن
-                </h1>
-                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
-                  همین چهار مورد برای ساخت پروفایل کافی است. وزن شروع برابر وزن فعلی و
-                  تاریخ هدف اولیه ۹۰ روز بعد در نظر گرفته می‌شود؛ هر دو بعداً قابل ویرایش‌اند.
-                </p>
-
-                <div className="mt-7 grid gap-4 desktop:grid-cols-2">
-                  <label
-                    className={`desktop:col-span-2 ${errors.name ? 'field-error-shake' : ''}`}
-                    key={errors.name ? errorAttempt : 0}
-                  >
-                    <span className="mb-2 block text-xs font-bold text-[var(--text-secondary)]">
-                      نام
-                    </span>
+                <Suspense
+                  fallback={
                     <div
-                      className={`overflow-hidden rounded-2xl border bg-[var(--surface-soft)] transition ${
-                        errors.name
-                          ? 'border-[var(--danger)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--danger)_12%,transparent)]'
-                          : 'border-[var(--border)] focus-within:border-[var(--emerald)]'
-                      }`}
+                      aria-label="در حال آماده‌سازی آپلود"
+                      className="min-h-44 rounded-[24px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] p-5"
+                      role="status"
                     >
-                      <input
-                        aria-label="نام"
-                        aria-describedby={errors.name ? 'name-error' : undefined}
-                        aria-invalid={Boolean(errors.name)}
-                        autoFocus
-                        className="min-h-13 w-full bg-transparent px-4 text-base font-bold text-[var(--text-primary)] outline-none"
-                        onChange={(event) => {
-                          setForm({ ...form, name: event.target.value })
-                          clearFieldError('name')
-                        }}
-                        value={form.name}
-                      />
-                      {errors.name && (
-                        <p
-                          className="border-t border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] px-4 py-2 text-[10px] font-bold text-[var(--danger)]"
-                          id="name-error"
-                        >
-                          {errors.name}
-                        </p>
-                      )}
+                      <div className="skeleton mx-auto size-14 rounded-[18px]" />
+                      <div className="skeleton mx-auto mt-4 h-3 w-36" />
+                      <div className="skeleton mx-auto mt-3 h-2.5 w-56 max-w-full" />
+                      <div className="skeleton mx-auto mt-5 h-11 w-32" />
                     </div>
-                  </label>
-                  <NumberField
-                    error={errors.heightCm}
-                    label="قد"
-                    onChange={(heightCm) => {
-                      setForm({ ...form, heightCm })
-                      clearFieldError('heightCm')
-                    }}
-                    shakeKey={errorAttempt}
-                    suffix="سانتی‌متر"
-                    value={form.heightCm}
+                  }
+                >
+                  <PlanImportPanel
+                    confirmLabel="انتخاب این برنامه"
+                    onClearStagedPlan={() => setStagedPlan(undefined)}
+                    onConfirm={setStagedPlan}
+                    stagedPlan={stagedPlan}
                   />
-                  <NumberField
-                    error={errors.currentWeightKg}
-                    label="وزن فعلی"
-                    onChange={(currentWeightKg) => {
-                      setForm({ ...form, currentWeightKg })
-                      clearFieldError('currentWeightKg')
-                    }}
-                    shakeKey={errorAttempt}
-                    suffix="کیلوگرم"
-                    value={form.currentWeightKg}
-                  />
-                  <div className="desktop:col-span-2">
-                    <NumberField
-                      error={errors.targetWeightKg}
-                      label="وزن هدف"
-                      onChange={(targetWeightKg) => {
-                        setForm({ ...form, targetWeightKg })
-                        clearFieldError('targetWeightKg')
-                      }}
-                      shakeKey={errorAttempt}
-                      suffix="کیلوگرم"
-                      value={form.targetWeightKg}
-                    />
-                  </div>
-                </div>
+                </Suspense>
               </div>
             )}
 
-            {step === 3 && (
+            {step === 2 && stagedPlan && (
               <div className="onboarding-step mx-auto max-w-lg">
                 <div className="grid size-14 place-items-center rounded-[20px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <Sparkles aria-hidden="true" size={25} />
                 </div>
-                <p className="mt-6 text-xs font-bold text-[var(--emerald)]">آماده شروع</p>
+                <p className="mt-6 text-xs font-bold text-[var(--emerald)]">
+                  آماده شروع
+                </p>
                 <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
-                  خلاصه مسیر {form.name}
+                  خلاصه مسیر {stagedPlan.profile.name}
                 </h1>
+                <p className="mt-2 text-xs leading-6 text-[var(--text-secondary)]">
+                  برنامه «{stagedPlan.planName}» برای ورود به خانه انتخاب شده است.
+                </p>
+
                 <div className="mt-7 grid grid-cols-2 gap-3">
                   {[
-                    ['وزن فعلی', `${toPersianDigits(form.currentWeightKg)} کیلو`],
-                    ['وزن هدف', `${toPersianDigits(form.targetWeightKg)} کیلو`],
-                    ['قد', `${toPersianDigits(form.heightCm)} سانتی‌متر`],
-                    ['تاریخ هدف', formatJalaliDate(form.goalDate, 'long')],
+                    [
+                      'وزن فعلی',
+                      `${toPersianDigits(stagedPlan.profile.currentWeightKg)} کیلو`,
+                    ],
+                    [
+                      'وزن هدف',
+                      `${toPersianDigits(stagedPlan.profile.targetWeightKg)} کیلو`,
+                    ],
+                    [
+                      'قد',
+                      `${toPersianDigits(stagedPlan.profile.heightCm)} سانتی‌متر`,
+                    ],
+                    [
+                      'تاریخ هدف',
+                      formatJalaliDate(stagedPlan.profile.goalDate, 'long'),
+                    ],
                   ].map(([label, value]) => (
                     <div
                       className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4"
                       key={label}
                     >
-                      <p className="text-[10px] font-bold text-[var(--text-muted)]">{label}</p>
-                      <p className="mt-2 text-sm font-black text-[var(--text-primary)]">{value}</p>
+                      <p className="text-[10px] font-bold text-[var(--text-muted)]">
+                        {label}
+                      </p>
+                      <p className="mt-2 text-sm font-black text-[var(--text-primary)]">
+                        {value}
+                      </p>
                     </div>
                   ))}
                 </div>
+
                 <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[var(--border)] bg-[var(--emerald-soft)] p-4">
                   <LockKeyhole
                     aria-hidden="true"
@@ -505,17 +290,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     size={18}
                   />
                   <p className="text-xs leading-6 text-[var(--text-secondary)]">
-                    {stagedPlan
-                      ? `برنامه «${stagedPlan.planName}» همراه پروفایل روی همین دستگاه ذخیره می‌شود.`
-                      : 'پروفایل بدون برنامه غذایی ساخته می‌شود و هر زمان خواستی می‌توانی از تنظیمات فایل اضافه کنی.'}
+                    پروفایل، برنامه و انتخاب‌های روزانه فقط روی همین دستگاه ذخیره
+                    می‌شوند و برای سرویسی ارسال نمی‌شوند.
                   </p>
                 </div>
               </div>
             )}
-
           </div>
 
-          <div className="flex items-center justify-between border-t border-[var(--border)] px-6 py-4 desktop:px-10">
+          <div className="flex items-center justify-between border-t border-[var(--border)] px-6 py-3 desktop:px-10 desktop:py-4">
             <button
               className={`flex min-h-12 items-center gap-2 rounded-2xl px-4 text-sm font-bold transition ${
                 step === 0
@@ -529,9 +312,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               قبلی
             </button>
 
-            {step < 3 ? (
+            {step < 2 ? (
               <button
-                className="flex min-h-12 items-center gap-2 rounded-2xl bg-[var(--emerald)] px-5 text-sm font-black text-[#07110d] shadow-[0_10px_28px_rgba(70,205,145,0.2)]"
+                className="flex min-h-12 items-center gap-2 rounded-2xl bg-[var(--emerald)] px-5 text-sm font-black text-[#07110d] shadow-[0_10px_28px_rgba(70,205,145,0.2)] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none"
+                disabled={step === 1 && !stagedPlan}
                 onClick={goNext}
                 type="button"
               >
@@ -547,7 +331,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 className="flex min-h-12 items-center gap-2 rounded-2xl bg-[var(--emerald)] px-5 text-sm font-black text-[#07110d] shadow-[0_10px_28px_rgba(70,205,145,0.2)]"
                 type="submit"
               >
-                ورود به داشبورد
+                ورود به خانه
                 <Check aria-hidden="true" size={18} />
               </button>
             )}

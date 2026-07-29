@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "0.2.0",
   "planId": "momentum-week-example",
   "planName": "دموی برنامه منعطف Momentum",
-  "planVersion": "0.1.0-alpha.1",
+  "planVersion": "0.2.0-alpha.1",
   "generatedAt": "2026-07-29T08:00:00Z",
   "validFrom": "2026-08-01",
   "validTo": "2026-08-02",
@@ -42,6 +42,10 @@
     "medications": [],
     "supplements": ["پروتئین وی پس از تمرین"],
     "cookingConstraints": ["حداکثر ۳۰ دقیقه آماده‌سازی در روزهای کاری", "ناهار قابل‌حمل باشد"],
+    "workSchedule": "شنبه تا چهارشنبه، ۰۹:۰۰ تا ۱۷:۰۰؛ ناهار در محل کار",
+    "budget": "متوسط؛ اولویت با مواد اولیه در دسترس و امکان meal-prep",
+    "availableEquipment": ["اجاق", "فر", "مخلوط‌کن", "مایکروویو محل کار"],
+    "restaurantMealsPerWeek": 1,
     "lifestyleNotes": ["کار اداری", "خواب معمول از ۲۳:۳۰ تا ۰۷:۰۰", "یک وعده رستورانی در هفته"],
     "trainingSchedule": [
       {
@@ -61,7 +65,7 @@
     ]
   },
   "author": "Momentum",
-  "description": "نمونه عمومی و کاملاً ساختگی برای نمایش پروفایل، بادی‌کامپوزیشن، تعداد داینامیک وعده‌ها، تمرین و انتخاب آزاد بین چند غذای هم‌ارزش.",
+  "description": "نمونه عمومی و کاملاً ساختگی برای نمایش پروفایل، بادی‌کامپوزیشن، تعداد داینامیک وعده‌ها، تمرین و انتخاب آزاد بین چند غذای هم‌ارزش. هنگام انتخاب نمونه، تاریخ برنامه به‌صورت خودکار از امروز شروع می‌شود تا داشبورد و وعده‌های روز قابل مشاهده باشند.",
   "defaultTargets": {
     "calories": 2000,
     "protein": 140,
@@ -74,9 +78,12 @@
       "date": "2026-08-01",
       "label": "روز با سه وعده",
       "trainingType": "rest",
+      "targetStrategy": {
+        "type": "rest_day",
+        "calorieAdjustment": -100,
+        "proteinAdjustment": -10
+      },
       "targets": {
-        "calories": 1900,
-        "protein": 130,
         "fiber": 28,
         "waterMl": 2500,
         "steps": 8000
@@ -94,6 +101,8 @@
             {
               "id": "breakfast-eggs",
               "title": "تخم‌مرغ و نان سبوس‌دار",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "تخم‌مرغ", "amount": 2, "unit": "piece" },
                 { "name": "نان سبوس‌دار", "amount": 2, "unit": "slice" },
@@ -107,12 +116,23 @@
                 "fiber": 6
               },
               "preparation": ["تخم‌مرغ را آماده و همراه نان و سبزیجات سرو کنید."],
+              "recipe": {
+                "steps": [
+                  "تابه را روی حرارت متوسط گرم کنید و تخم‌مرغ‌ها را بپزید.",
+                  "نان را تست کنید و تخم‌مرغ را همراه سبزیجات تازه سرو کنید."
+                ],
+                "tips": ["برای آماده‌سازی سریع‌تر، سبزیجات را از شب قبل بشویید."],
+                "estimatedCookingTime": 12,
+                "difficulty": "easy"
+              },
               "prepTimeMinutes": 12,
               "satietyScore": 4
             },
             {
               "id": "breakfast-yogurt",
               "title": "ماست، جو دوسر و میوه",
+              "nutritionConfidence": "manufacturer",
+              "nutritionSource": "برچسب ماست یونانی و برآورد سایر مواد",
               "ingredients": [
                 { "name": "ماست یونانی", "amount": 250, "unit": "g" },
                 { "name": "جو دوسر", "amount": 45, "unit": "g" },
@@ -133,6 +153,8 @@
             {
               "id": "breakfast-avocado",
               "title": "تست آووکادو و پنیر",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "subtitle": "گزینه سریع و بدون پخت",
               "ingredients": [
                 { "name": "نان سبوس‌دار", "amount": 2, "unit": "slice" },
@@ -160,6 +182,8 @@
             {
               "id": "lunch-chicken",
               "title": "مرغ، برنج و سالاد",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "مرغ پخته", "amount": 180, "unit": "g" },
                 { "name": "برنج پخته", "amount": 180, "unit": "g" },
@@ -173,12 +197,23 @@
                 "fiber": 8
               },
               "prepTimeMinutes": 30,
+              "recipe": {
+                "steps": [
+                  "مرغ را با زعفران، آب‌لیمو و ادویه مزه‌دار و سپس گریل کنید.",
+                  "برنج را بپزید و همراه مرغ و سالاد در ظرف تقسیم کنید."
+                ],
+                "tips": ["برای دو وعده هم‌زمان آماده کنید تا زمان آشپزی روز بعد کم شود."],
+                "estimatedCookingTime": 30,
+                "difficulty": "medium"
+              },
               "portable": true,
               "satietyScore": 5
             },
             {
               "id": "lunch-legumes",
               "title": "خوراک حبوبات و نان",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "خوراک حبوبات", "amount": 350, "unit": "g" },
                 { "name": "نان سبوس‌دار", "amount": 2, "unit": "slice" },
@@ -198,6 +233,8 @@
             {
               "id": "lunch-kebab",
               "title": "کباب تابه‌ای، برنج و گوجه",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "subtitle": "انتخاب ایرانی مناسب ظرف محل کار",
               "ingredients": [
                 { "name": "کباب تابه‌ای کم‌چرب", "amount": 170, "unit": "g" },
@@ -225,6 +262,8 @@
             {
               "id": "dinner-fish",
               "title": "ماهی و سبزیجات",
+              "nutritionConfidence": "usda",
+              "nutritionSource": "USDA FoodData Central، برآورد ترکیب وعده",
               "ingredients": [
                 { "name": "ماهی پخته", "amount": 180, "unit": "g" },
                 { "name": "سبزیجات بخارپز", "amount": 300, "unit": "g" },
@@ -243,6 +282,8 @@
             {
               "id": "dinner-omelet",
               "title": "املت سبزیجات و نان",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "تخم‌مرغ", "amount": 3, "unit": "piece" },
                 { "name": "سبزیجات", "amount": 250, "unit": "g" },
@@ -261,6 +302,8 @@
             {
               "id": "dinner-chicken-wrap",
               "title": "رپ مرغ و سبزیجات",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "مرغ پخته", "amount": 150, "unit": "g" },
                 { "name": "نان رپ سبوس‌دار", "amount": 1, "unit": "piece" },
@@ -283,9 +326,13 @@
       "date": "2026-08-02",
       "label": "روز با پنج وعده",
       "trainingType": "full_body",
+      "targetStrategy": {
+        "type": "training_day",
+        "calorieAdjustment": 150,
+        "proteinAdjustment": 10,
+        "carbAdjustment": 30
+      },
       "targets": {
-        "calories": 2150,
-        "protein": 150,
         "fiber": 30,
         "waterMl": 2800,
         "steps": 9000,
@@ -304,6 +351,8 @@
             {
               "id": "day-2-breakfast-a",
               "title": "پنیر، گردو و نان",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "پنیر", "amount": 50, "unit": "g" },
                 { "name": "گردو", "amount": 15, "unit": "g" },
@@ -317,6 +366,8 @@
             {
               "id": "day-2-breakfast-b",
               "title": "اسموتی پروتئینی",
+              "nutritionConfidence": "manufacturer",
+              "nutritionSource": "برچسب پودر پروتئین و شیر",
               "ingredients": [
                 { "name": "شیر", "amount": 300, "unit": "ml" },
                 { "name": "پودر پروتئین", "amount": 1, "unit": "serving" },
@@ -330,6 +381,8 @@
             {
               "id": "day-2-breakfast-c",
               "title": "اوتمیل گرم با سفیده تخم‌مرغ",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "جو دوسر", "amount": 55, "unit": "g" },
                 { "name": "سفیده تخم‌مرغ", "amount": 4, "unit": "piece" },
@@ -355,6 +408,8 @@
             {
               "id": "day-2-morning-fruit",
               "title": "میوه و مغزها",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "میوه فصل", "amount": 1, "unit": "piece" },
                 { "name": "مغزها", "amount": 20, "unit": "g" }
@@ -367,6 +422,8 @@
             {
               "id": "day-2-morning-yogurt",
               "title": "ماست پروتئینی",
+              "nutritionConfidence": "manufacturer",
+              "nutritionSource": "برچسب محصول نمونه",
               "ingredients": [{ "name": "ماست پروتئینی", "amount": 200, "unit": "g" }],
               "nutrition": { "calories": 170, "protein": 20, "carbs": 14, "fat": 3, "fiber": 0 },
               "prepTimeMinutes": 1,
@@ -376,6 +433,8 @@
             {
               "id": "day-2-morning-cheese",
               "title": "کراکر، پنیر و خیار",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "کراکر سبوس‌دار", "amount": 4, "unit": "piece" },
                 { "name": "پنیر کم‌چرب", "amount": 45, "unit": "g" },
@@ -401,6 +460,8 @@
             {
               "id": "day-2-lunch-a",
               "title": "گوشت، سیب‌زمینی و سالاد",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "گوشت پخته", "amount": 160, "unit": "g" },
                 { "name": "سیب‌زمینی", "amount": 250, "unit": "g" },
@@ -414,6 +475,8 @@
             {
               "id": "day-2-lunch-b",
               "title": "پاستا و مرغ",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "پاستای پخته", "amount": 220, "unit": "g" },
                 { "name": "مرغ پخته", "amount": 160, "unit": "g" },
@@ -427,6 +490,8 @@
             {
               "id": "day-2-lunch-c",
               "title": "خوراک ماهی و کینوا",
+              "nutritionConfidence": "usda",
+              "nutritionSource": "USDA FoodData Central، برآورد ترکیب وعده",
               "ingredients": [
                 { "name": "ماهی پخته", "amount": 180, "unit": "g" },
                 { "name": "کینوا پخته", "amount": 190, "unit": "g" },
@@ -453,6 +518,8 @@
             {
               "id": "day-2-afternoon-a",
               "title": "ماست و میوه",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "ماست یونانی", "amount": 200, "unit": "g" },
                 { "name": "میوه", "amount": 1, "unit": "piece" }
@@ -465,6 +532,8 @@
             {
               "id": "day-2-afternoon-b",
               "title": "ساندویچ کوچک پنیر",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "نان", "amount": 2, "unit": "slice" },
                 { "name": "پنیر", "amount": 40, "unit": "g" },
@@ -478,6 +547,8 @@
             {
               "id": "day-2-afternoon-c",
               "title": "شیک موز و پروتئین",
+              "nutritionConfidence": "manufacturer",
+              "nutritionSource": "برچسب پودر پروتئین و شیر",
               "ingredients": [
                 { "name": "شیر کم‌چرب", "amount": 250, "unit": "ml" },
                 { "name": "پودر پروتئین", "amount": 1, "unit": "serving" },
@@ -504,6 +575,8 @@
             {
               "id": "day-2-dinner-a",
               "title": "سوپ و ساندویچ مرغ",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "سوپ سبزیجات", "amount": 300, "unit": "ml" },
                 { "name": "ساندویچ مرغ", "amount": 1, "unit": "serving" }
@@ -515,6 +588,8 @@
             {
               "id": "day-2-dinner-b",
               "title": "سالاد پروتئینی",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "سالاد مخلوط", "amount": 350, "unit": "g" },
                 { "name": "منبع پروتئین", "amount": 160, "unit": "g" },
@@ -528,6 +603,8 @@
             {
               "id": "day-2-dinner-c",
               "title": "چلو مرغ زعفرانی سبک",
+              "nutritionConfidence": "estimated",
+              "nutritionSource": "AI",
               "ingredients": [
                 { "name": "مرغ زعفرانی", "amount": 170, "unit": "g" },
                 { "name": "برنج پخته", "amount": 140, "unit": "g" },
@@ -550,6 +627,8 @@
     {
       "id": "emergency-yogurt",
       "title": "ماست پروتئینی",
+      "nutritionConfidence": "manufacturer",
+      "nutritionSource": "برچسب محصول نمونه",
       "ingredients": [{ "name": "ماست پروتئینی", "amount": 200, "unit": "g" }],
       "nutrition": { "calories": 170, "protein": 20, "carbs": 14, "fat": 3, "fiber": 0 },
       "prepTimeMinutes": 1,
@@ -561,6 +640,8 @@
     {
       "id": "emergency-vegetables",
       "title": "سبزیجات و دیپ ماست",
+      "nutritionConfidence": "estimated",
+      "nutritionSource": "AI",
       "ingredients": [
         { "name": "سبزیجات خام", "amount": 250, "unit": "g" },
         { "name": "دیپ ماست", "amount": 100, "unit": "g" }

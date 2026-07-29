@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Check, Clock3, Flame, ShieldCheck, Star, X } from 'lucide-react'
 import { useAppState } from '../../app/useAppState'
+import { ViewportPortal } from '../../components/overlay/ViewportPortal'
 import { toPersianDigits } from '../../lib/dates/jalali'
 import type { EmergencyOption, ISODate } from '../../types/domain'
 
@@ -46,12 +47,13 @@ export function EmergencyHungerMode({
   }, [hunger, minutes, options])
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm desktop:items-center desktop:p-5"
-      role="dialog"
-    >
-      <div className="safe-bottom max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-2xl desktop:rounded-[30px] desktop:p-7">
+    <ViewportPortal>
+      <div
+        aria-modal="true"
+        className="fixed inset-0 z-[70] flex h-[100dvh] items-end justify-center overflow-hidden bg-black/65 p-0 backdrop-blur-sm desktop:items-center desktop:p-5"
+        role="dialog"
+      >
+        <div className="safe-bottom max-h-[calc(100dvh-0.75rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-t-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-2xl desktop:max-h-[calc(100dvh-2.5rem)] desktop:rounded-[30px] desktop:p-7">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold text-[var(--gold)]">حالت کنترل گرسنگی</p>
@@ -192,7 +194,8 @@ export function EmergencyHungerMode({
             )}
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </ViewportPortal>
   )
 }

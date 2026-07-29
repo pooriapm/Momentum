@@ -202,7 +202,10 @@ a:focus-visible {
   animation: splash-progress 1.15s ease-in-out infinite;
 }
 
-.screen-enter,
+.screen-enter {
+  animation: soft-enter 300ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
 .onboarding-step {
   animation: soft-enter 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -232,6 +235,86 @@ a:focus-visible {
   animation: skeleton-shimmer 1.35s ease-in-out infinite;
 }
 
+.brand-mark {
+  transform-origin: 50% 60%;
+  animation: brand-float 4.8s ease-in-out infinite;
+}
+
+.brand-lockup:hover .brand-mark {
+  animation-duration: 1.8s;
+}
+
+.brand-wordmark {
+  color: transparent;
+  background: linear-gradient(
+    100deg,
+    var(--text-muted) 10%,
+    var(--emerald) 45%,
+    var(--gold) 55%,
+    var(--text-muted) 90%
+  );
+  background-size: 240% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: brand-shimmer 7s linear infinite;
+}
+
+.meal-card-enter,
+.meal-option-card {
+  animation: card-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.meal-card-enter {
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.meal-card-enter:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.meal-option-card {
+  transition:
+    transform 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.meal-option-card:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.meal-option-card[aria-checked="true"] .meal-option-check {
+  animation: option-check-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.metric-card {
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.metric-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.animated-icon {
+  transform-origin: center;
+  animation: icon-breathe 3.8s ease-in-out infinite;
+}
+
+.recipe-screen-enter {
+  animation: recipe-screen-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes soft-enter {
   from {
     opacity: 0;
@@ -240,6 +323,68 @@ a:focus-visible {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes brand-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-1.5deg);
+    box-shadow: 0 13px 30px rgba(75, 214, 154, 0.14);
+  }
+}
+
+@keyframes brand-shimmer {
+  to {
+    background-position: -240% 0;
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes option-check-pop {
+  0% {
+    transform: scale(0.72);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes icon-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.06);
+  }
+}
+
+@keyframes recipe-screen-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

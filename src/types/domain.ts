@@ -13,6 +13,20 @@ export type TrainingType = 'rest' | 'crossfit' | 'full_body' | 'cardio' | 'walk'
 export type Sex = 'female' | 'male' | 'other' | 'prefer_not_to_say'
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'high' | 'athlete'
 export type TrainingIntensity = 'low' | 'moderate' | 'high'
+export type NutritionConfidence =
+  | 'estimated'
+  | 'verified'
+  | 'usda'
+  | 'manufacturer'
+export type RecipeDifficulty = 'easy' | 'medium' | 'hard'
+export type TargetStrategyType =
+  | 'training_day'
+  | 'rest_day'
+  | 'crossfit_day'
+  | 'cardio_day'
+  | 'refeed_day'
+  | 'diet_break'
+  | 'custom'
 
 export interface Nutrition {
   calories: number
@@ -35,7 +49,15 @@ export interface MealOption {
   subtitle?: string
   ingredients: Ingredient[]
   nutrition: Nutrition
+  nutritionConfidence?: NutritionConfidence
+  nutritionSource?: string
   preparation?: string[]
+  recipe?: {
+    steps: string[]
+    tips?: string[]
+    estimatedCookingTime?: number
+    difficulty: RecipeDifficulty
+  }
   prepTimeMinutes?: number
   portable?: boolean
   restaurantFriendly?: boolean
@@ -66,11 +88,24 @@ export interface DayTargets {
   treadmillMinutes?: number
 }
 
+export type DayTargetOverrides = Partial<DayTargets>
+
+export interface TargetStrategy {
+  type: TargetStrategyType
+  calorieAdjustment?: number
+  proteinAdjustment?: number
+  carbAdjustment?: number
+  fatAdjustment?: number
+  fiberAdjustment?: number
+}
+
 export interface PlanDay {
   date: ISODate
   label?: string
   trainingType?: TrainingType
   targets: DayTargets
+  targetStrategy?: TargetStrategy
+  targetOverrides?: DayTargetOverrides
   meals: MealSlot[]
   notes?: string[]
 }
@@ -126,6 +161,12 @@ export interface PlanningContext {
   medications: string[]
   supplements: string[]
   cookingConstraints: string[]
+  workSchedule?: string
+  budget?: string
+  availableEquipment?: string[]
+  restaurantMealsPerWeek?: number
+  restaurantPreferences?: string[]
+  groceryPreferences?: string[]
   lifestyleNotes: string[]
   trainingSchedule: Array<{
     day: string
@@ -138,7 +179,7 @@ export interface PlanningContext {
 }
 
 export interface WeeklyMealPlan {
-  schemaVersion: '0.1.0'
+  schemaVersion: '0.1.0' | '0.2.0'
   planId: string
   planName: string
   planVersion: string
@@ -184,6 +225,33 @@ export interface UserProfile {
   heightCm: number
   journeyStartDate: ISODate
   goalDate: ISODate
+  planningPreferences?: {
+    goalType?:
+      | 'fat_loss'
+      | 'muscle_gain'
+      | 'maintenance'
+      | 'performance'
+      | 'custom'
+    customGoal?: string
+    dietType?: string
+    requestedMealPattern?: string
+    preferredOptionCount?: number
+    favoriteFoods?: string[]
+    dislikedFoods?: string[]
+    allergies?: string[]
+    medicalConsiderations?: string[]
+    medications?: string[]
+    supplements?: string[]
+    lifestyleNotes?: string[]
+    workSchedule?: string
+    cookingLimitations?: string[]
+    budget?: string
+    availableEquipment?: string[]
+    restaurantMealsPerWeek?: number
+    restaurantPreferences?: string[]
+    groceryPreferences?: string[]
+    trainingSchedule?: string
+  }
 }
 
 export interface AppSettings {

@@ -9,7 +9,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon-32.png', 'apple-touch-icon.png'],
+      includeAssets: [
+        'favicon-32.png',
+        'apple-touch-icon.png',
+        'templates/momentum-weekly-plan-prompt.md',
+      ],
       manifest: {
         id: '/',
         name: 'Momentum',

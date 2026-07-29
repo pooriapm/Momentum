@@ -23,6 +23,7 @@ import {
   toPersianDigits,
 } from '../../lib/dates/jalali'
 import { MealOptionPicker } from '../../components/meals/MealOptionPicker'
+import { RecipeScreen } from '../recipes/RecipeScreen'
 import type {
   MealOption,
   Nutrition,
@@ -87,8 +88,8 @@ function NutritionGrid({
               size={14}
             />
           )}
-          <p className="text-[9px] font-bold text-[var(--text-muted)]">{label}</p>
-          <p className="mt-1 text-[11px] font-black text-[var(--text-primary)]">
+          <p className="text-[10px] font-bold text-[var(--text-muted)]">{label}</p>
+          <p className="mt-1 text-xs font-black text-[var(--text-primary)]">
             {formatNumber(value)}
             {suffix}
           </p>
@@ -104,7 +105,7 @@ function MealOptionDetails({ option }: { option: MealOption }) {
       <NutritionGrid nutrition={option.nutrition} />
 
       <div>
-        <p className="text-[10px] font-black text-[var(--text-secondary)]">مواد اولیه</p>
+        <p className="text-xs font-black text-[var(--text-secondary)]">مواد اولیه</p>
         <div className="mt-2 grid gap-1.5 desktop:grid-cols-2">
           {option.ingredients.map((ingredient, index) => (
             <div
@@ -112,14 +113,14 @@ function MealOptionDetails({ option }: { option: MealOption }) {
               key={`${ingredient.name}-${index}`}
             >
               <div>
-                <p className="text-[10px] font-bold text-[var(--text-primary)]">
+                <p className="text-xs font-bold text-[var(--text-primary)]">
                   {ingredient.name}
                 </p>
                 {ingredient.note && (
-                  <p className="mt-0.5 text-[8px] text-[var(--text-muted)]">{ingredient.note}</p>
+                  <p className="mt-1 text-[10px] leading-5 text-[var(--text-muted)]">{ingredient.note}</p>
                 )}
               </div>
-              <span className="shrink-0 text-[9px] font-black text-[var(--emerald)]">
+              <span className="shrink-0 text-[11px] font-black text-[var(--emerald)]">
                 {formatNumber(ingredient.amount)} {unitLabels[ingredient.unit] ?? ingredient.unit}
               </span>
             </div>
@@ -129,11 +130,11 @@ function MealOptionDetails({ option }: { option: MealOption }) {
 
       {option.preparation && option.preparation.length > 0 && (
         <div>
-          <p className="text-[10px] font-black text-[var(--text-secondary)]">آماده‌سازی</p>
+          <p className="text-xs font-black text-[var(--text-secondary)]">آماده‌سازی</p>
           <ol className="mt-2 space-y-1.5">
             {option.preparation.map((step, index) => (
               <li
-                className="flex gap-2 rounded-xl bg-[var(--surface-soft)] px-3 py-2 text-[9px] leading-5 text-[var(--text-secondary)]"
+                className="flex gap-2 rounded-xl bg-[var(--surface-soft)] px-3 py-2.5 text-[11px] leading-6 text-[var(--text-secondary)]"
                 key={`${step}-${index}`}
               >
                 <span className="font-black text-[var(--emerald)]">
@@ -150,7 +151,7 @@ function MealOptionDetails({ option }: { option: MealOption }) {
         <div className="flex flex-wrap gap-1.5">
           {option.tags?.map((tag) => (
             <span
-              className="rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[8px] font-bold text-[var(--emerald)]"
+              className="rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[10px] font-bold text-[var(--emerald)]"
               key={tag}
             >
               {tag}
@@ -158,7 +159,7 @@ function MealOptionDetails({ option }: { option: MealOption }) {
           ))}
           {option.warnings?.map((warning) => (
             <span
-              className="rounded-full bg-[var(--gold-soft)] px-2.5 py-1 text-[8px] font-bold text-[var(--gold)]"
+              className="rounded-full bg-[var(--gold-soft)] px-2.5 py-1 text-[10px] font-bold text-[var(--gold)]"
               key={warning}
             >
               {warning}
@@ -173,6 +174,7 @@ function MealOptionDetails({ option }: { option: MealOption }) {
 function DayMeals({ day }: { day: PlanDay }) {
   const { appState, selectMealOption } = useAppState()
   const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({})
+  const [recipeOption, setRecipeOption] = useState<MealOption>()
 
   if (!appState) {
     return null
@@ -192,32 +194,36 @@ function DayMeals({ day }: { day: PlanDay }) {
         const expanded = expandedMeals[meal.id] ?? index === 0
 
         return (
-          <article className="glass-panel overflow-hidden rounded-[24px]" key={meal.id}>
+          <article
+            className="glass-panel meal-card-enter overflow-hidden rounded-[24px]"
+            key={meal.id}
+            style={{ animationDelay: `${index * 70}ms` }}
+          >
             <div className="p-4 desktop:p-5">
               <div className="flex items-start gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-[14px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
+                <div className="animated-icon grid size-10 shrink-0 place-items-center rounded-[14px] bg-[var(--emerald-soft)] text-[var(--emerald)]">
                   <UtensilsCrossed aria-hidden="true" size={18} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <h3 className="text-sm font-black text-[var(--text-primary)]">{meal.title}</h3>
+                    <h3 className="text-base font-black text-[var(--text-primary)]">{meal.title}</h3>
                     {meal.scheduledTime && (
-                      <span className="flex items-center gap-1 text-[9px] font-bold text-[var(--text-muted)]">
-                        <Clock3 aria-hidden="true" size={12} />
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-[var(--text-muted)]">
+                        <Clock3 aria-hidden="true" size={13} />
                         {toPersianDigits(meal.scheduledTime)}
                       </span>
                     )}
                     {!meal.required && (
-                      <span className="rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-[8px] font-bold text-[var(--text-muted)]">
+                      <span className="rounded-full bg-[var(--surface-soft)] px-2 py-1 text-[10px] font-bold text-[var(--text-muted)]">
                         اختیاری
                       </span>
                     )}
                   </div>
-                  <p className="mt-2 text-xs font-bold text-[var(--text-secondary)]">
+                  <p className="mt-2 text-sm font-bold leading-6 text-[var(--text-secondary)]">
                     {option.title}
                   </p>
                   {option.subtitle && (
-                    <p className="mt-1 text-[9px] leading-5 text-[var(--text-muted)]">
+                    <p className="mt-1 text-[11px] leading-5 text-[var(--text-muted)]">
                       {option.subtitle}
                     </p>
                   )}
@@ -251,7 +257,7 @@ function DayMeals({ day }: { day: PlanDay }) {
                 selectedOptionId={selectedOptionId}
               />
 
-              <div className="mt-3 flex flex-wrap gap-2 text-[8px] font-bold text-[var(--text-muted)]">
+              <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold leading-5 text-[var(--text-muted)]">
                 {option.prepTimeMinutes !== undefined && (
                   <span className="flex items-center gap-1 rounded-full bg-[var(--surface-soft)] px-2.5 py-1">
                     <Clock3 aria-hidden="true" size={11} />
@@ -278,6 +284,16 @@ function DayMeals({ day }: { day: PlanDay }) {
                 <span className="rounded-full bg-[var(--gold-soft)] px-2.5 py-1 text-[var(--gold)]">
                   {toPersianDigits(meal.xp)} XP
                 </span>
+                {option.recipe && (
+                  <button
+                    className="flex items-center gap-1 rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[var(--emerald)]"
+                    onClick={() => setRecipeOption(option)}
+                    type="button"
+                  >
+                    <ChefHat aria-hidden="true" size={12} />
+                    دستور پخت کامل
+                  </button>
+                )}
               </div>
 
               {expanded && <MealOptionDetails option={option} />}
@@ -285,6 +301,12 @@ function DayMeals({ day }: { day: PlanDay }) {
           </article>
         )
       })}
+      {recipeOption && (
+        <RecipeScreen
+          onClose={() => setRecipeOption(undefined)}
+          option={recipeOption}
+        />
+      )}
     </div>
   )
 }
@@ -315,7 +337,7 @@ function PlannedTotals({ day }: { day: PlanDay }) {
     <section className="glass-panel rounded-[24px] p-4 desktop:p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold text-[var(--emerald)]">جمع انتخاب‌های روز</p>
+          <p className="text-xs font-bold text-[var(--emerald)]">جمع انتخاب‌های روز</p>
           <p className="mt-1 text-xs font-black text-[var(--text-primary)]">
             هدف: {formatNumber(day.targets.calories)} کالری ·{' '}
             {formatNumber(day.targets.protein)} گرم پروتئین
@@ -326,7 +348,7 @@ function PlannedTotals({ day }: { day: PlanDay }) {
       <div className="mt-4">
         <NutritionGrid nutrition={total} compact />
       </div>
-      <div className="mt-3 flex flex-wrap gap-1.5 text-[8px] font-bold text-[var(--text-muted)]">
+      <div className="mt-3 flex flex-wrap gap-1.5 text-[10px] font-bold leading-5 text-[var(--text-muted)]">
         {day.targets.fiber !== undefined && (
           <span className="rounded-full bg-[var(--surface-soft)] px-2.5 py-1">
             فیبر هدف: {formatNumber(day.targets.fiber)} گرم
@@ -362,10 +384,10 @@ function RestaurantCard({ choice }: { choice: RestaurantChoice }) {
     <article className="glass-panel rounded-[24px] p-4 desktop:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="text-[9px] font-bold text-[var(--emerald)]">{choice.category}</span>
+          <span className="text-[11px] font-bold text-[var(--emerald)]">{choice.category}</span>
           <h3 className="mt-1 text-sm font-black text-[var(--text-primary)]">{choice.title}</h3>
         </div>
-        <div className="flex items-center gap-1 rounded-full bg-[var(--gold-soft)] px-2 py-1 text-[9px] font-black text-[var(--gold)]">
+        <div className="flex items-center gap-1 rounded-full bg-[var(--gold-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--gold)]">
           <Star aria-hidden="true" size={11} fill="currentColor" />
           {toPersianDigits(choice.rating)}
         </div>
@@ -373,7 +395,7 @@ function RestaurantCard({ choice }: { choice: RestaurantChoice }) {
       <ul className="mt-4 space-y-1.5">
         {choice.orderInstructions.map((instruction) => (
           <li
-            className="flex gap-2 rounded-xl bg-[var(--surface-soft)] px-3 py-2 text-[9px] leading-5 text-[var(--text-secondary)]"
+            className="flex gap-2 rounded-xl bg-[var(--surface-soft)] px-3 py-2.5 text-[11px] leading-6 text-[var(--text-secondary)]"
             key={instruction}
           >
             <Check aria-hidden="true" className="mt-1 shrink-0 text-[var(--emerald)]" size={12} />
@@ -382,11 +404,11 @@ function RestaurantCard({ choice }: { choice: RestaurantChoice }) {
         ))}
       </ul>
       <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-[9px] font-bold text-[var(--text-muted)]">مقدار سفارش</p>
+        <p className="text-[11px] font-bold text-[var(--text-muted)]">مقدار سفارش</p>
         <div className="flex gap-1">
           {[0.5, 1, 1.5].map((value) => (
             <button
-              className={`min-h-9 min-w-10 rounded-lg text-[9px] font-black ${
+              className={`min-h-10 min-w-11 rounded-lg text-[11px] font-black ${
                 quantity === value
                   ? 'bg-[var(--emerald)] text-[#07110d]'
                   : 'bg-[var(--surface-soft)] text-[var(--text-secondary)]'
@@ -406,13 +428,13 @@ function RestaurantCard({ choice }: { choice: RestaurantChoice }) {
       {choice.notes && choice.notes.length > 0 && (
         <ul className="mt-3 space-y-1">
           {choice.notes.map((note) => (
-            <li className="text-[8px] leading-4 text-[var(--text-muted)]" key={note}>
+            <li className="text-[10px] leading-5 text-[var(--text-muted)]" key={note}>
               • {note}
             </li>
           ))}
         </ul>
       )}
-      <p className="mt-3 text-[8px] leading-4 text-[var(--text-muted)]">
+      <p className="mt-3 text-[10px] leading-5 text-[var(--text-muted)]">
         مقادیر تغذیه‌ای تخمینی هستند.
       </p>
     </article>
@@ -482,7 +504,7 @@ export function MealPlanScreen() {
                   {plan.description}
                 </p>
               )}
-              <div className="mt-4 flex flex-wrap gap-2 text-[9px] font-bold text-[var(--text-muted)]">
+              <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-bold text-[var(--text-muted)]">
                 <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1.5">
                   {formatJalaliDate(plan.validFrom, 'long')} تا{' '}
                   {formatJalaliDate(plan.validTo, 'long')}
@@ -499,7 +521,7 @@ export function MealPlanScreen() {
             </div>
             {activeKeys.length > 1 && (
               <label className="min-w-56">
-                <span className="mb-2 block text-[9px] font-bold text-[var(--text-muted)]">
+                <span className="mb-2 block text-[11px] font-bold text-[var(--text-muted)]">
                   انتخاب برنامه
                 </span>
                 <select
@@ -529,11 +551,11 @@ export function MealPlanScreen() {
 
       <section className="grid gap-3 rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4 desktop:grid-cols-[1fr_1.5fr] desktop:p-5">
         <div className="rounded-2xl bg-[var(--emerald-soft)] p-4">
-          <p className="text-[9px] font-bold text-[var(--emerald)]">پروفایل این برنامه</p>
+          <p className="text-[11px] font-bold text-[var(--emerald)]">پروفایل این برنامه</p>
           <p className="mt-2 text-sm font-black text-[var(--text-primary)]">
             {plan.profile.name} · {toPersianDigits(plan.profile.age)} سال
           </p>
-          <div className="mt-3 flex flex-wrap gap-1.5 text-[8px] font-bold text-[var(--text-secondary)]">
+          <div className="mt-3 flex flex-wrap gap-1.5 text-[10px] font-bold leading-5 text-[var(--text-secondary)]">
             <span className="rounded-full bg-[var(--surface)] px-2.5 py-1">
               {toPersianDigits(plan.profile.currentWeightKg)} کیلو
             </span>
@@ -548,11 +570,11 @@ export function MealPlanScreen() {
           </div>
         </div>
         <div className="rounded-2xl bg-[var(--surface-soft)] p-4">
-          <p className="text-[9px] font-bold text-[var(--gold)]">منطق برنامه منعطف</p>
+          <p className="text-[11px] font-bold text-[var(--gold)]">منطق برنامه منعطف</p>
           <p className="mt-2 text-xs font-black leading-6 text-[var(--text-primary)]">
             {plan.planningContext.requestedMealPattern}
           </p>
-          <div className="mt-3 flex flex-wrap gap-1.5 text-[8px] font-bold text-[var(--text-muted)]">
+          <div className="mt-3 flex flex-wrap gap-1.5 text-[10px] font-bold leading-5 text-[var(--text-muted)]">
             <span className="rounded-full border border-[var(--border)] px-2.5 py-1">
               {toPersianDigits(plan.planningContext.preferredOptionCount)} انتخاب برای هر وعده
             </span>
@@ -612,7 +634,7 @@ export function MealPlanScreen() {
                   type="button"
                 >
                   <p
-                    className={`text-[9px] font-bold ${selected ? 'text-[var(--emerald)]' : 'text-[var(--text-muted)]'}`}
+                    className={`text-[11px] font-bold ${selected ? 'text-[var(--emerald)]' : 'text-[var(--text-muted)]'}`}
                   >
                     {formatJalaliDate(day.date, 'weekday')}
                   </p>
@@ -623,7 +645,7 @@ export function MealPlanScreen() {
                     )}
                   </p>
                   {day.trainingType && (
-                    <p className="mt-2 flex items-center gap-1 text-[8px] font-bold text-[var(--gold)]">
+                    <p className="mt-2 flex items-center gap-1 text-[10px] font-bold text-[var(--gold)]">
                       <Dumbbell aria-hidden="true" size={11} />
                       {trainingLabels[day.trainingType] ?? day.trainingType}
                     </p>
@@ -647,11 +669,11 @@ export function MealPlanScreen() {
                 <PlannedTotals day={selectedDay} />
                 {selectedDay.notes && selectedDay.notes.length > 0 && (
                   <section className="rounded-[24px] border border-[var(--border)] bg-[var(--gold-soft)] p-4">
-                    <p className="text-[10px] font-black text-[var(--gold)]">یادداشت‌های روز</p>
+                    <p className="text-xs font-black text-[var(--gold)]">یادداشت‌های روز</p>
                     <ul className="mt-2 space-y-1.5">
                       {selectedDay.notes.map((note) => (
                         <li
-                          className="flex gap-2 text-[9px] leading-5 text-[var(--text-secondary)]"
+                          className="flex gap-2 text-[11px] leading-6 text-[var(--text-secondary)]"
                           key={note}
                         >
                           <AlertTriangle
@@ -679,7 +701,7 @@ export function MealPlanScreen() {
                   <p className="text-xs font-black text-[var(--text-primary)]">
                     گزینه‌های گرسنگی اضطراری
                   </p>
-                  <p className="mt-1 text-[9px] text-[var(--text-muted)]">
+                  <p className="mt-1 text-[11px] text-[var(--text-muted)]">
                     {toPersianDigits(plan.emergencyOptions.length)} گزینه از فایل برنامه
                   </p>
                 </div>
@@ -691,14 +713,14 @@ export function MealPlanScreen() {
                     key={option.id}
                   >
                     <p className="text-xs font-black text-[var(--text-primary)]">{option.title}</p>
-                    <p className="mt-2 text-[9px] font-bold text-[var(--emerald)]">
+                    <p className="mt-2 text-[11px] font-bold text-[var(--emerald)]">
                       {formatNumber(option.nutrition.calories)} کالری ·{' '}
                       {formatNumber(option.nutrition.protein)} گرم پروتئین
                     </p>
                     <div className="mt-3 flex flex-wrap gap-1">
                       {option.suitableForHungerLevels.map((level) => (
                         <span
-                          className="rounded-full bg-[var(--gold-soft)] px-2 py-1 text-[8px] font-bold text-[var(--gold)]"
+                          className="rounded-full bg-[var(--gold-soft)] px-2 py-1 text-[10px] font-bold text-[var(--gold)]"
                           key={level}
                         >
                           گرسنگی {toPersianDigits(level)}
@@ -729,15 +751,15 @@ export function MealPlanScreen() {
                       key={`${item.name}-${index}`}
                     >
                       <div>
-                        <p className="text-[10px] font-bold text-[var(--text-primary)]">
+                        <p className="text-xs font-bold text-[var(--text-primary)]">
                           {item.name}
                         </p>
                         {item.note && (
-                          <p className="mt-0.5 text-[8px] text-[var(--text-muted)]">{item.note}</p>
+                          <p className="mt-1 text-[10px] leading-5 text-[var(--text-muted)]">{item.note}</p>
                         )}
                       </div>
                       {item.amount !== undefined && (
-                        <span className="text-[9px] font-black text-[var(--emerald)]">
+                        <span className="text-[11px] font-black text-[var(--emerald)]">
                           {formatNumber(item.amount)} {item.unit ?? ''}
                         </span>
                       )}
