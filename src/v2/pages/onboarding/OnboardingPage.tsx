@@ -19,6 +19,8 @@ import { sanitizeLocalizedNumberInput } from '../../../lib/numbers/localized-num
 import { loadAccountDashboard } from '../../data/repository'
 import { localizedPath } from '../../router/route-utils'
 import { Input, Select, Textarea } from '../../ui/FormControls'
+import { CountryCombobox } from '../../ui/CountryCombobox'
+import { LocalizedDatePicker } from '../../ui/LocalizedDatePicker'
 import { BrandLockup } from '../../ui/OrbitMark'
 import { Button, ContentCard, PageSkeleton, StatusPill } from '../../ui/primitives'
 import {
@@ -41,8 +43,8 @@ import {
   type OnboardingStepKey,
   validateSection,
 } from '../../onboarding/schema'
-import { countryName, sortedCountryCodes } from '../../onboarding/countries'
 import { useOnlineStatus } from '../../../platform/pwa/network'
+import { loadPricingContext } from '../../data/pricing'
 
 interface OnboardingPageProps {
   locale: AppLocale
@@ -97,10 +99,23 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
     enabled: Boolean(user),
   })
 
-  const values = useMemo(
-    () => ({ ...onboardingDefaultValues, ...(draftQuery.data?.values ?? {}), ...valueEdits }),
-    [draftQuery.data?.values, valueEdits],
+  const geoQuery = useQuery({
+    queryKey: ['geo-context', 'onboarding-country'],
+    queryFn: () => loadPricingContext(),
+    enabled: Boolean(user),
+    staleTime: 30 * 60 * 1000,
+  })
+
+  const values = useMemo<Record<string, string>>(
+    () => ({
+      ...onboardingDefaultValues,
+      ...(draftQuery.data?.values ?? {}),
+      ...valueEdits,
+      country: valueEdits.country || draftQuery.data?.values?.country || geoQuery.data?.country || '',
+    }),
+    [draftQuery.data?.values, geoQuery.data?.country, valueEdits],
   )
+  const countrySuggested = Boolean(geoQuery.data?.country && !draftQuery.data?.values?.country && !valueEdits.country)
   const onboardingFlowId = values.onboardingFlowId || flowIdRef.current
   const missingPrerequisite = useMemo(
     () => onboardingSections
@@ -327,6 +342,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                   field={field}
                   key={field.key}
                   onChange={(value) => updateValue(field, value)}
+                  suggested={field.key === 'country' && countrySuggested}
                   value={values[field.key] ?? ''}
                 />
               ))}
@@ -377,13 +393,17 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   )
 }
 
-function DynamicField({ field, value, error, onChange }: { field: OnboardingField; value: string; error?: string; onChange: (value: string) => void }) {
+function DynamicField({ field, value, error, onChange, suggested }: { field: OnboardingField; value: string; error?: string; onChange: (value: string) => void; suggested?: boolean }) {
   const { t, i18n } = useTranslation()
   const locale: AppLocale = i18n.resolvedLanguage === 'en' ? 'en' : 'fa'
+  if (field.kind === 'date') {
+    return <LocalizedDatePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} purpose={field.key === 'birthDate' ? 'birth' : 'report'} value={value} />
+  }
+  if (field.optionSource === 'countries') {
+    return <CountryCombobox error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} suggested={suggested} value={value} />
+  }
   if (field.kind === 'select') {
-    const options = field.optionSource === 'countries'
-      ? sortedCountryCodes(locale).map((code) => ({ value: code, label: countryName(code, locale) }))
-      : field.options?.map((option) => ({ value: option.value, label: t(option.labelKey) })) ?? []
+    const options = field.options?.map((option) => ({ value: option.value, label: t(option.labelKey) })) ?? []
     return (
       <Select error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} value={value}>
         <option value="">—</option>

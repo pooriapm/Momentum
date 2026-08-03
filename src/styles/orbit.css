@@ -747,6 +747,47 @@ textarea {
 .onboarding-multiselect label:focus-within { box-shadow: 0 0 0 3px var(--color-focus); }
 .onboarding-multiselect small { color: var(--color-danger); display: block; margin-top: .5rem; }
 .onboarding-multiselect.has-error { animation: orbit-field-shake .32s ease; }
+.localized-date-field, .country-combobox { position: relative; }
+.localized-date-trigger { align-items: center; background: var(--color-surface-muted); border: 1px solid var(--color-border-strong); border-radius: var(--radius-control); color: var(--color-text-muted); cursor: pointer; display: grid; gap: .08rem .7rem; grid-template-columns: auto 1fr; min-height: 3.3rem; padding: .55rem .75rem; text-align: start; transition: var(--motion-fast); width: 100%; }
+.localized-date-trigger:hover, .localized-date-trigger:focus-visible { background: var(--color-surface-raised); border-color: var(--color-brand); box-shadow: 0 0 0 3px var(--color-brand-soft); outline: none; }
+.localized-date-trigger > span { align-items: center; background: var(--color-brand-soft); border-radius: .7rem; color: var(--color-brand); display: flex; grid-row: 1 / 3; height: 2.25rem; justify-content: center; width: 2.25rem; }
+.localized-date-trigger strong { color: inherit; font-size: .78rem; font-weight: 760; }
+.localized-date-trigger.has-value strong { color: var(--color-text); }
+.localized-date-trigger small { color: var(--color-text-muted); font: 600 .61rem var(--font-latin); }
+.localized-date-popover { background: color-mix(in srgb, var(--color-surface-raised) 96%, transparent); border: 1px solid var(--color-border-strong); border-radius: 1.1rem; box-shadow: var(--shadow-panel); inset-inline-start: 0; margin-top: .45rem; padding: .8rem; position: absolute; top: 100%; width: min(23rem, calc(100vw - 3rem)); z-index: 80; animation: orbit-popover-in var(--motion-normal) ease-out; }
+@keyframes orbit-popover-in { from { opacity: 0; transform: translateY(-5px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.localized-date-popover__topbar { align-items: center; display: grid; gap: .4rem; grid-template-columns: auto 1fr auto; }
+.localized-date-popover__topbar > button { align-items: center; background: transparent; border: 1px solid var(--color-border); border-radius: .7rem; color: var(--color-text-secondary); cursor: pointer; display: flex; height: 2.25rem; justify-content: center; width: 2.25rem; }
+.localized-date-popover__topbar > button:hover { background: var(--color-brand-soft); border-color: var(--color-brand); color: var(--color-brand); }
+.localized-date-popover__topbar > div { display: grid; gap: .35rem; grid-template-columns: 1.35fr .9fr; }
+.localized-date-popover select { background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: .65rem; color: var(--color-text); font: 700 .7rem var(--font-app); min-height: 2.25rem; outline: none; padding: .35rem .5rem; width: 100%; }
+.localized-date-popover select:focus { border-color: var(--color-brand); box-shadow: 0 0 0 2px var(--color-brand-soft); }
+.localized-date-weekdays, .localized-date-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.localized-date-weekdays { margin-top: .65rem; }
+.localized-date-weekdays span { color: var(--color-text-muted); font-size: .58rem; font-weight: 700; padding: .3rem 0; text-align: center; }
+.localized-date-grid { gap: .18rem; }
+.localized-date-grid button { align-items: center; aspect-ratio: 1; background: transparent; border: 1px solid transparent; border-radius: .65rem; color: var(--color-text-secondary); cursor: pointer; display: flex; font: 700 .68rem var(--font-app); justify-content: center; position: relative; transition: var(--motion-fast); }
+.localized-date-grid button:hover:not(:disabled) { background: var(--color-brand-soft); border-color: color-mix(in srgb, var(--color-brand) 35%, transparent); color: var(--color-brand); transform: translateY(-1px); }
+.localized-date-grid button.is-outside { color: color-mix(in srgb, var(--color-text-muted) 45%, transparent); }
+.localized-date-grid button.is-selected { background: var(--color-brand); color: var(--color-on-brand); box-shadow: 0 6px 15px color-mix(in srgb, var(--color-brand) 30%, transparent); }
+.localized-date-grid button:disabled { cursor: not-allowed; opacity: .2; }
+.localized-date-grid button svg { inset-inline-end: .12rem; position: absolute; top: .12rem; }
+.orbit-field--error .localized-date-trigger, .orbit-field--error .country-combobox__control { border-color: var(--color-danger); box-shadow: 0 0 0 3px var(--color-danger-soft); animation: orbit-field-shake 320ms ease; }
+.country-combobox__control { align-items: center; background: var(--color-surface-muted); border: 1px solid var(--color-border-strong); border-radius: var(--radius-control); display: grid; grid-template-columns: auto 1fr auto; min-height: 3.3rem; transition: var(--motion-fast); }
+.country-combobox__control:focus-within { background: var(--color-surface-raised); border-color: var(--color-brand); box-shadow: 0 0 0 3px var(--color-brand-soft); }
+.country-combobox__control > span { align-items: center; color: var(--color-brand); display: flex; font-size: 1.1rem; justify-content: center; width: 2.8rem; }
+.country-combobox__control input { background: transparent; border: 0; color: var(--color-text); font: 700 .78rem var(--font-app); min-width: 0; outline: 0; padding: .7rem 0; width: 100%; }
+.country-combobox__control input::placeholder { color: var(--color-text-muted); font-weight: 500; }
+.country-combobox__control > button { align-items: center; align-self: stretch; background: transparent; border: 0; color: var(--color-text-muted); cursor: pointer; display: flex; justify-content: center; width: 2.7rem; }
+.country-combobox__hint { align-items: center; color: var(--color-text-muted); display: flex; font-size: .62rem; gap: .3rem; line-height: 1.5; }
+.country-combobox__menu { background: color-mix(in srgb, var(--color-surface-raised) 96%, transparent); border: 1px solid var(--color-border-strong); border-radius: 1rem; box-shadow: var(--shadow-panel); display: grid; inset-inline: 0; margin-top: .4rem; max-height: 19rem; overflow: auto; padding: .4rem; position: absolute; top: 100%; z-index: 80; animation: orbit-popover-in var(--motion-normal) ease-out; }
+.country-combobox__menu button { align-items: center; background: transparent; border: 0; border-radius: .7rem; color: var(--color-text); cursor: pointer; display: grid; gap: .5rem; grid-template-columns: 1.5rem 1fr auto auto; min-height: 2.65rem; padding: .45rem .55rem; text-align: start; }
+.country-combobox__menu button:hover, .country-combobox__menu button[aria-selected='true'] { background: var(--color-brand-soft); }
+.country-combobox__menu button > span { font-size: 1rem; }
+.country-combobox__menu button strong { font-size: .7rem; }
+.country-combobox__menu button small { color: var(--color-text-muted); font: 700 .6rem var(--font-latin); }
+.country-combobox__menu button svg { color: var(--color-brand); }
+.country-combobox__menu > p { color: var(--color-text-muted); font-size: .68rem; margin: 0; padding: 1rem; text-align: center; }
 .onboarding-actions { align-items: center; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1.2rem; }
 .body-upload-step, .onboarding-review { align-items: center; display: flex; flex-direction: column; margin: 1rem auto; max-width: 37rem; text-align: center; }
 .body-upload-step__icon, .onboarding-review__mark { align-items: center; background: var(--color-brand-soft); border-radius: 1.3rem; color: var(--color-brand); display: flex; height: 4.6rem; justify-content: center; margin-bottom: 1rem; width: 4.6rem; }
