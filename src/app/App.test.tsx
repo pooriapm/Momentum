@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
@@ -15,6 +15,7 @@ describe('Momentum public product', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/fa')
     localStorage.clear()
+    window.dispatchEvent(new Event('online'))
   })
 
   it('renders the new Persian landing experience', async () => {
@@ -57,5 +58,24 @@ describe('Momentum public product', () => {
 
     expect(await screen.findByRole('heading', { name: 'به اندازه‌ی همراهی‌ای که نیاز داری' })).toBeInTheDocument()
     expect(screen.getByText(/فروش قابلیت AI تا رفع محدودیت سرویس‌دهنده غیرفعال/)).toBeInTheDocument()
+  })
+
+  it('shows a floating offline state and confirms reconnection', async () => {
+    Object.defineProperty(window, 'fetch', {
+      configurable: true,
+      value: vi.fn().mockResolvedValue({ ok: true }),
+      writable: true,
+    })
+    render(<App />)
+
+    await act(async () => {
+      window.dispatchEvent(new Event('offline'))
+    })
+    expect(await screen.findByText('Momentum در حالت آفلاین اجرا می‌شود')).toBeInTheDocument()
+
+    await act(async () => {
+      window.dispatchEvent(new Event('online'))
+    })
+    expect(await screen.findByText('اتصال دوباره برقرار شد')).toBeInTheDocument()
   })
 })
