@@ -18,8 +18,11 @@
     })
 
     window.addEventListener('load', () => {
-      void navigator.serviceWorker.getRegistration()
-        .then((registration) => registration?.update())
+      void navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      })
+        .then((registration) => registration.update())
         .catch(() => undefined)
     }, { once: true })
   }
