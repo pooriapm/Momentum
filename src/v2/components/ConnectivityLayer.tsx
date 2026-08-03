@@ -1,8 +1,7 @@
-import { RefreshCw, Wifi, WifiOff, X } from 'lucide-react'
+import { Wifi, WifiOff } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRegisterSW } from 'virtual:pwa-register/react'
-import { Button, GlassChrome } from '../ui/primitives'
 import { initializeInstallPromptCapture } from '../../platform/pwa/install-prompt'
 import { useOnlineStatus } from '../../platform/pwa/network'
 
@@ -11,13 +10,9 @@ initializeInstallPromptCapture()
 export function ConnectivityLayer() {
   const { i18n } = useTranslation()
   const online = useOnlineStatus()
-  const [updateError, setUpdateError] = useState('')
   const [showRestored, setShowRestored] = useState(false)
   const previousOnline = useRef(online)
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW()
+  useRegisterSW({ immediate: true })
   const fa = i18n.resolvedLanguage === 'fa'
 
   useEffect(() => {
@@ -27,7 +22,7 @@ export function ConnectivityLayer() {
         void navigator.serviceWorker.getRegistration().then((registration) => registration?.update()).catch(() => undefined)
       }
     }
-    const interval = window.setInterval(check, 30 * 60 * 1000)
+    const interval = window.setInterval(check, 5 * 60 * 1000)
     window.addEventListener('focus', check)
     document.addEventListener('visibilitychange', check)
     check()
@@ -68,13 +63,6 @@ export function ConnectivityLayer() {
           <span className="connectivity-toast__icon"><Wifi size={19} /></span>
           <div><strong>{fa ? 'اتصال دوباره برقرار شد' : 'You are back online'}</strong><p>{fa ? 'همگام‌سازی و ثبت اطلاعات دوباره فعال است.' : 'Sync and saving are available again.'}</p></div>
         </div>
-      ) : null}
-      {needRefresh ? (
-        <GlassChrome aria-labelledby="pwa-update-title" aria-live="assertive" aria-modal="false" className="pwa-update-card" role="alertdialog">
-          <button aria-label={fa ? 'بستن اعلان به‌روزرسانی' : 'Dismiss update'} onClick={() => setNeedRefresh(false)} type="button"><X size={17} /></button>
-          <div><strong id="pwa-update-title">{fa ? 'نسخه‌ی تازه آماده است' : 'A new version is ready'}</strong><p>{updateError || (fa ? 'به‌روزرسانی، کش قبلی را امن جایگزین می‌کند.' : 'Update now to safely replace the previous cached version.')}</p></div>
-          <Button onClick={() => { setUpdateError(''); void updateServiceWorker(true).catch(() => setUpdateError(fa ? 'به‌روزرسانی انجام نشد؛ اتصال را بررسی کن.' : 'Update failed. Check your connection.')) }}><RefreshCw size={17} />{fa ? 'به‌روزرسانی' : 'Update'}</Button>
-        </GlassChrome>
       ) : null}
     </>
   )
