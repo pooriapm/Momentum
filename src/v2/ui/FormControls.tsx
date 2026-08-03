@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 
 interface FieldShellProps {
@@ -48,7 +49,10 @@ export function Select({ label, hint, error, children, ...props }: SelectProps) 
   const descriptionId = error || hint ? `${controlId}-description` : undefined
   return (
     <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label}>
-      <select aria-describedby={descriptionId} aria-invalid={Boolean(error)} className="orbit-input" {...props} id={controlId}>{children}</select>
+      <div className="orbit-select-shell">
+        <select aria-describedby={descriptionId} aria-invalid={Boolean(error)} className="orbit-input orbit-select" {...props} id={controlId}>{children}</select>
+        <ChevronDown aria-hidden="true" size={17} />
+      </div>
     </FieldShell>
   )
 }

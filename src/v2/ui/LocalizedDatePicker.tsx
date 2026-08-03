@@ -26,14 +26,15 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
   const id = useId()
   const rootRef = useRef<HTMLDivElement>(null)
   const today = todayIso()
-  const initialIso = value || (purpose === 'birth' ? shiftIsoYears(today, -30) : today)
+  const minIso = purpose === 'birth' ? shiftIsoYears(today, -100) : shiftIsoYears(today, -10)
+  const maxIso = purpose === 'birth' ? shiftIsoYears(today, -18) : today
+  const fallbackIso = purpose === 'birth' ? shiftIsoYears(today, -30) : today
+  const initialIso = clampIsoDate(value || fallbackIso, minIso, maxIso)
   const initial = calendarParts(initialIso, locale)
   const [open, setOpen] = useState(false)
   const [viewYear, setViewYear] = useState(initial.year)
   const [viewMonth, setViewMonth] = useState(initial.month)
   const fa = locale === 'fa'
-  const minIso = purpose === 'birth' ? shiftIsoYears(today, -100) : shiftIsoYears(today, -10)
-  const maxIso = purpose === 'birth' ? shiftIsoYears(today, -18) : today
   const minYear = calendarParts(minIso, locale).year
   const maxYear = calendarParts(maxIso, locale).year
   const cells = useMemo(() => monthGrid(viewYear, viewMonth, locale), [locale, viewMonth, viewYear])
@@ -62,7 +63,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
   }, [])
 
   function showPicker() {
-    const next = calendarParts(value || initialIso, locale)
+    const next = calendarParts(clampIsoDate(value || initialIso, minIso, maxIso), locale)
     setViewYear(next.year)
     setViewMonth(next.month)
     setOpen((current) => !current)
@@ -140,4 +141,10 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
       {error ? <span className="orbit-field__error" role="alert">{error}</span> : null}
     </div>
   )
+}
+
+function clampIsoDate(value: string, min: string, max: string) {
+  if (value < min) return min
+  if (value > max) return max
+  return value
 }

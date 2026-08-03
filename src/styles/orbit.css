@@ -347,6 +347,24 @@ textarea {
   box-shadow: 0 0 0 3px var(--color-brand-soft);
 }
 
+.orbit-select-shell {
+  position: relative;
+}
+
+.orbit-select {
+  appearance: none;
+  padding-inline-end: 2.75rem;
+}
+
+.orbit-select-shell > svg {
+  color: var(--color-text-secondary);
+  inset-inline-end: 1rem;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .orbit-textarea {
   min-height: 6.5rem;
   resize: vertical;
@@ -754,7 +772,7 @@ textarea {
 .localized-date-trigger strong { color: inherit; font-size: .78rem; font-weight: 760; }
 .localized-date-trigger.has-value strong { color: var(--color-text); }
 .localized-date-trigger small { color: var(--color-text-muted); font: 600 .61rem var(--font-latin); }
-.localized-date-popover { background: color-mix(in srgb, var(--color-surface-raised) 96%, transparent); border: 1px solid var(--color-border-strong); border-radius: 1.1rem; box-shadow: var(--shadow-panel); inset-inline-start: 0; margin-top: .45rem; padding: .8rem; position: absolute; top: 100%; width: min(23rem, calc(100vw - 3rem)); z-index: 80; animation: orbit-popover-in var(--motion-normal) ease-out; }
+.localized-date-popover { background: var(--color-surface-raised); border: 1px solid color-mix(in srgb, var(--color-brand) 38%, var(--color-border-strong)); border-radius: 1.1rem; box-shadow: 0 24px 70px rgba(1, 4, 12, .55), inset 0 1px 0 rgba(255, 255, 255, .06); inset-inline-start: 0; margin-top: .45rem; padding: .8rem; position: absolute; top: 100%; width: min(23rem, calc(100vw - 3rem)); z-index: 80; animation: orbit-popover-in var(--motion-normal) ease-out; }
 @keyframes orbit-popover-in { from { opacity: 0; transform: translateY(-5px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .localized-date-popover__topbar { align-items: center; display: grid; gap: .4rem; grid-template-columns: auto 1fr auto; }
 .localized-date-popover__topbar > button { align-items: center; background: transparent; border: 1px solid var(--color-border); border-radius: .7rem; color: var(--color-text-secondary); cursor: pointer; display: flex; height: 2.25rem; justify-content: center; width: 2.25rem; }
@@ -764,13 +782,13 @@ textarea {
 .localized-date-popover select:focus { border-color: var(--color-brand); box-shadow: 0 0 0 2px var(--color-brand-soft); }
 .localized-date-weekdays, .localized-date-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .localized-date-weekdays { margin-top: .65rem; }
-.localized-date-weekdays span { color: var(--color-text-muted); font-size: .58rem; font-weight: 700; padding: .3rem 0; text-align: center; }
+.localized-date-weekdays span { color: var(--color-text-secondary); font-size: .62rem; font-weight: 750; padding: .3rem 0; text-align: center; }
 .localized-date-grid { gap: .18rem; }
-.localized-date-grid button { align-items: center; aspect-ratio: 1; background: transparent; border: 1px solid transparent; border-radius: .65rem; color: var(--color-text-secondary); cursor: pointer; display: flex; font: 700 .68rem var(--font-app); justify-content: center; position: relative; transition: var(--motion-fast); }
+.localized-date-grid button { align-items: center; aspect-ratio: 1; background: transparent; border: 1px solid transparent; border-radius: .65rem; color: var(--color-text); cursor: pointer; display: flex; font: 700 .7rem var(--font-app); justify-content: center; position: relative; transition: var(--motion-fast); }
 .localized-date-grid button:hover:not(:disabled) { background: var(--color-brand-soft); border-color: color-mix(in srgb, var(--color-brand) 35%, transparent); color: var(--color-brand); transform: translateY(-1px); }
-.localized-date-grid button.is-outside { color: color-mix(in srgb, var(--color-text-muted) 45%, transparent); }
+.localized-date-grid button.is-outside { color: color-mix(in srgb, var(--color-text-muted) 72%, transparent); }
 .localized-date-grid button.is-selected { background: var(--color-brand); color: var(--color-on-brand); box-shadow: 0 6px 15px color-mix(in srgb, var(--color-brand) 30%, transparent); }
-.localized-date-grid button:disabled { cursor: not-allowed; opacity: .2; }
+.localized-date-grid button:disabled { cursor: not-allowed; opacity: .34; }
 .localized-date-grid button svg { inset-inline-end: .12rem; position: absolute; top: .12rem; }
 .orbit-field--error .localized-date-trigger, .orbit-field--error .country-combobox__control { border-color: var(--color-danger); box-shadow: 0 0 0 3px var(--color-danger-soft); animation: orbit-field-shake 320ms ease; }
 .country-combobox__control { align-items: center; background: var(--color-surface-muted); border: 1px solid var(--color-border-strong); border-radius: var(--radius-control); display: grid; grid-template-columns: auto 1fr auto; min-height: 3.3rem; transition: var(--motion-fast); }

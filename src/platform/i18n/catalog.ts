@@ -213,6 +213,8 @@ export const resources = {
       safety: {
         title: 'مرزهای روشن برای یک همراه امن',
         intro: 'Momentum یک محصول سلامت عمومی برای بزرگسالان است؛ تشخیص، درمان یا توصیه‌ی پزشکی ارائه نمی‌کند.',
+        important: 'مهم',
+        emergency: 'Momentum یک سرویس اورژانسی نیست. اگر حال مساعدی ندارید یا فکر می‌کنید ممکن است در خطر باشید، با خدمات اورژانس محل زندگی خود یا یک پزشک واجد صلاحیت تماس بگیرید.',
         adult: 'عرضه‌ی اولیه فقط برای افراد ۱۸ سال و بالاتر است.',
         clinical: 'بارداری، اختلال خوردن و بیماری‌های پرریسک به متخصص ارجاع می‌شوند.',
         control: 'پیشنهاد مدل قبل از ذخیره اعتبارسنجی و با قواعد قطعی بررسی می‌شود.',
@@ -242,7 +244,7 @@ export const resources = {
         eyebrow: 'Transparent, controllable pricing', title: 'Choose the level of support you need', subtitle: 'Payments are not enabled yet. These plans validate product value while keeping AI costs predictable.', trial: 'Preview', core: 'Core', pro: 'Pro', trialPrice: '7 days free', corePrice: '$9.99 / month', proPrice: '$19.99 / month', localDisabled: 'Iran pricing is designed, but AI sales stay disabled until provider restrictions are resolved.', choose: 'Choose plan',
       },
       safety: {
-        title: 'Clear boundaries for safer support', intro: 'Momentum is an adult general-wellness product. It does not diagnose, treat, or provide medical advice.', adult: 'The initial release is limited to people aged 18 and over.', clinical: 'Pregnancy, eating-disorder risk, and higher-risk conditions are referred to qualified professionals.', control: 'Model suggestions are validated and checked by deterministic rules before storage.', privacy: 'Body reports are private; unreadable values are never guessed and deletion stays under your control.',
+        title: 'Clear boundaries for safer support', intro: 'Momentum is an adult general-wellness product. It does not diagnose, treat, or provide medical advice.', important: 'Important', emergency: 'Momentum is not an emergency service. If you feel unwell or believe you may be in danger, contact local emergency services or a qualified clinician.', adult: 'The initial release is limited to people aged 18 and over.', clinical: 'Pregnancy, eating-disorder risk, and higher-risk conditions are referred to qualified professionals.', control: 'Model suggestions are validated and checked by deterministic rules before storage.', privacy: 'Body reports are private; unreadable values are never guessed and deletion stays under your control.',
       },
     },
   },

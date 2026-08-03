@@ -25,8 +25,8 @@ export function SafetyPage({ locale }: { locale: AppLocale }) {
           {cards.map(([Icon, copy]) => <ContentCard key={copy}><Icon size={26} /><p>{copy}</p></ContentCard>)}
         </div>
         <ContentCard className="safety-disclaimer">
-          <strong>Important</strong>
-          <p>Momentum is not an emergency service. If you feel unwell or believe you may be in danger, contact local emergency services or a qualified clinician.</p>
+          <strong>{t('safety.important')}</strong>
+          <p>{t('safety.emergency')}</p>
         </ContentCard>
       </main>
       <PublicFooter locale={locale} />

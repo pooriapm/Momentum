@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { CountryCombobox } from './CountryCombobox'
 import { LocalizedDatePicker } from './LocalizedDatePicker'
+import { calendarParts, shiftIsoYears, todayIso } from './localized-date'
 
 describe('localized onboarding inputs', () => {
   it('renders a Jalali date in Persian while returning Gregorian ISO', () => {
@@ -13,6 +14,16 @@ describe('localized onboarding inputs', () => {
     expect(screen.getByRole('dialog', { name: 'انتخاب‌گر تاریخ' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '۲ فروردین ۱۳۶۹' }))
     expect(onChange).toHaveBeenCalledWith('1990-03-22')
+  })
+
+  it('opens an out-of-range birth date at the nearest allowed year', () => {
+    const maxBirthDate = shiftIsoYears(todayIso(), -18)
+    const maxBirthYear = calendarParts(maxBirthDate, 'fa').year
+
+    render(<LocalizedDatePicker label="تاریخ تولد" locale="fa" onChange={vi.fn()} purpose="birth" value={todayIso()} />)
+    fireEvent.click(screen.getByRole('button', { name: /تاریخ تولد/ }))
+
+    expect(screen.getByRole('combobox', { name: 'سال' })).toHaveValue(String(maxBirthYear))
   })
 
   it('searches localized countries and returns an ISO country code', () => {
