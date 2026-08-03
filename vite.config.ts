@@ -1,36 +1,32 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: [
         'favicon.svg',
         'favicon-32.png',
         'apple-touch-icon.png',
-        'brand/momentum-splash-animated.svg',
-        'templates/momentum-weekly-plan-prompt.md',
+        'brand/momentum-orbit-splash.svg',
+        'brand/momentum-orbit-master.svg',
       ],
       manifest: {
         id: '/',
         name: 'Momentum',
         short_name: 'Momentum',
-        description: 'برنامه محلی و منعطف برای برنامه غذایی، پیگیری روزانه و حفظ روند پیشرفت',
-        lang: 'fa',
-        dir: 'rtl',
+        description: 'Personal nutrition, training, progress, and AI-assisted general wellness coaching',
         display: 'standalone',
-        orientation: 'portrait-primary',
+        orientation: 'any',
         start_url: '/',
         scope: '/',
         prefer_related_applications: false,
-        background_color: '#07110e',
-        theme_color: '#07110e',
-        categories: ['health', 'lifestyle'],
+        background_color: '#090d1a',
+        theme_color: '#090d1a',
+        categories: ['health', 'fitness', 'lifestyle'],
         icons: [
           {
             src: '/pwa-192.png',

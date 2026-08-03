@@ -13,6 +13,7 @@ describe('UI state', () => {
     updateUiState({ selectedTab: 'calendar', theme: 'light' })
 
     expect(loadUiState()).toEqual({
+      locale: 'en',
       selectedTab: 'calendar',
       theme: 'light',
     })

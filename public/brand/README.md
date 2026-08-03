@@ -1,25 +1,25 @@
 # Momentum brand assets
 
-The master source is `momentum-mark-master.svg`. Its groups and paths remain
-named and editable so a designer can open it in Figma, Illustrator, Sketch or
-Affinity Designer without tracing raster artwork.
+The canonical source for the current product identity is
+`momentum-orbit-master.svg`. All current favicon, PWA, Apple-icon, splash and UI
+derivatives must trace back to this vector. `momentum-mark-master.svg` is an
+earlier design study retained for reference; it is not the source for new
+production exports unless an explicit brand decision replaces Orbit.
 
 ## Files
 
-- `momentum-mark-master.svg`: primary app-tile artwork and designer hand-off.
-- `momentum-mark-maskable.svg`: full-bleed source for PWA and iOS masks.
-- `momentum-mark-on-light.svg`: transparent version for light surfaces.
-- `momentum-mark-monochrome.svg`: single-color production variant.
-- `momentum-splash-animated.svg`: self-contained animated splash asset.
-- `momentum-lockup-horizontal.svg`: editable mark, wordmark and Persian tagline.
+- `momentum-orbit-master.svg`: canonical editable app-mark artwork.
+- `momentum-orbit-splash.svg`: current splash derivative.
+- `momentum-mark-master.svg` and `momentum-mark-*`: legacy design-study sources.
+- `momentum-splash-animated.svg`: legacy self-contained animated splash study.
+- `momentum-lockup-horizontal.svg`: legacy editable lockup study.
 
-The product uses the same geometry through
-`src/components/brand/MomentumLogo.tsx`. Raster PWA and Apple icons are exports
-of the SVG master; edit the vector first and regenerate them instead of editing
-PNG files directly.
+Edit the Orbit vector first and regenerate derivatives instead of editing PNG
+files directly. Export automation and checksum verification are still a launch
+gap; see [`docs/design/CONFORMANCE.md`](../../docs/design/CONFORMANCE.md).
 
 ## Motion language
 
-The premium motion sequence is: orbit reveal, continuous-M draw, orbital point
-settle, then one restrained pulse. Motion must remain optional and respect
-`prefers-reduced-motion`.
+The current Orbit motion sequence is: path draw, monogram settle, then satellite
+arrival. Motion must remain optional and respect `prefers-reduced-motion`; the
+legacy green-mark animation is not the current production reference.

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <title>Momentum Orbit</title>
+  <defs>
+    <linearGradient id="surface" x1="72" y1="36" x2="441" y2="484" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#171F35"/>
+      <stop offset="1" stop-color="#090D1A"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="88" y1="72" x2="425" y2="438" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9B70FF"/>
+      <stop offset="0.48" stop-color="#5B5FEF"/>
+      <stop offset="1" stop-color="#57C7E6"/>
+    </linearGradient>
+    <linearGradient id="satellite" x1="375" y1="87" x2="427" y2="139" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7AB95"/>
+      <stop offset="1" stop-color="#F28163"/>
+    </linearGradient>
+    <filter id="shadow" x="-80" y="-80" width="672" height="672" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="26" stdDeviation="30" flood-color="#050711" flood-opacity="0.42"/>
+    </filter>
+    <filter id="glow" x="20" y="15" width="472" height="472" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="32" y="32" width="448" height="448" rx="144" fill="url(#surface)"/>
+    <rect x="33.5" y="33.5" width="445" height="445" rx="142.5" stroke="#E1E5FF" stroke-opacity="0.12" stroke-width="3"/>
+    <path d="M402 124C457 198 443 307 372 379C282 469 136 440 79 327C38 246 61 149 131 90" stroke="url(#orbit)" stroke-opacity="0.42" stroke-width="34" stroke-linecap="round" filter="url(#glow)"/>
+    <path d="M402 124C457 198 443 307 372 379C282 469 136 440 79 327C38 246 61 149 131 90" stroke="url(#orbit)" stroke-width="24" stroke-linecap="round"/>
+    <circle cx="402" cy="124" r="26" fill="url(#satellite)"/>
+    <path d="M154 348L173 169L257 280L340 169L359 348H310L302 267L257 327L212 267L203 348H154Z" fill="#F7F8FC"/>
+  </g>
+</svg>

@@ -11,7 +11,7 @@ import { validateWeeklyMealPlan } from '../validation/weekly-plan-schema'
 function loadSample(): WeeklyMealPlan {
   return JSON.parse(
     readFileSync(
-      resolve('public/samples/momentum-week-example.json'),
+      resolve('src/test/fixtures/legacy-momentum-week-example.json'),
       'utf8',
     ),
   ) as WeeklyMealPlan

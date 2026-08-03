@@ -1,11 +1,11 @@
 export const APP_CONFIG = {
   name: 'Momentum',
   wordmark: 'MOMENTUM',
-  tagline: 'ریتم پایدار، پیشرفت واقعی',
+  tagline: 'مربی هوشمندِ حرکت‌های ماندگار',
   locale: 'fa-IR',
   storageNamespace: 'momentum',
   brandMotion: {
-    bootMinimumDurationMs: 2300,
+    bootMinimumDurationMs: 1400,
     bootExitDurationMs: 360,
   },
   planFile: {

@@ -37,3 +37,8 @@ lerna-debug.log*
 # Local agent instructions and tooling state
 Agent.md
 .openai/
+
+# Supabase local runtime and generated state
+supabase/.branches/
+supabase/.temp/
+supabase/.env

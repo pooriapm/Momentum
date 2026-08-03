@@ -9,7 +9,7 @@ import {
   planRangesOverlap,
 } from './plan-state'
 
-const samplePath = resolve('public/samples/momentum-week-example.json')
+const samplePath = resolve('src/test/fixtures/legacy-momentum-week-example.json')
 const sample = JSON.parse(readFileSync(samplePath, 'utf8')) as WeeklyMealPlan
 const profile: UserProfile = {
   name: 'کاربر نمونه',

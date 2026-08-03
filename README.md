@@ -1,180 +1,198 @@
 # Momentum
 
-Momentum یک PWA فارسی، راست‌چین و mobile-first برای برنامه‌ریزی غذای هفتگی، انتخاب غذا از میان چند گزینه، ثبت روزانه و پیگیری روند است. هر نصب کاملاً مستقل است و داده‌های هر کاربر فقط در مرورگر همان دستگاه ذخیره می‌شود.
+Momentum یک محصول دو‌زبانه‌ی **general wellness** برای ساخت و اجرای برنامه‌ی شخصی غذا و تمرین، چک‌این روزانه، نمایش روند و همراهی مربی AI است. وب‌اپ فعلی PWA است؛ قراردادهای داده، API و design tokenها طوری تفکیک شده‌اند که کلاینت‌های native iOS و Android بعداً همان backend را مصرف کنند.
 
-نسخه فعلی `0.2.0-alpha.1` است. تا پیش از اعلام لانچ عمومی، قرارداد فایل و storage
-ممکن است تغییر ناسازگار داشته باشد و پشتیبانی از نسخه‌های آزمایشی قبلی هدف پروژه نیست.
+نسخه‌ی فعلی آلفا و زیر `1.0.0` است. پرداخت هنوز فعال نشده و عرضه‌ی AI برای بعضی کشورها، از جمله ایران، تا تأیید سرویس‌دهنده و بررسی حقوقی مسدود است.
 
-## امکانات
+## چه چیزی تغییر کرده است؟
 
-- راه‌اندازی اولیه فقط با فایل معتبر Momentum یا دموی داخلی، بدون ورود دستی پروفایل
-- وارد کردن برنامه غذایی، پروفایل، بادی‌کامپوزیشن، ترجیحات و ورزش با یک فایل JSON
-- تولید محلی پرامپت شخصی برای استفاده در ChatGPT یا هر مدل خارجی، بدون اتصال AI داخل سایت
-- هدف‌های روزانه پویا برای روز تمرین، استراحت، هوازی، Refeed، Diet Break و حالت سفارشی
-- نمایش سطح اطمینان و منبع مقادیر تغذیه‌ای
-- دستور پخت مرحله‌به‌مرحله برای گزینه‌هایی که recipe دارند
-- اعتبارسنجی عمیق، تکمیل تعاملی اطلاعات قابل‌بازیابی و Plan Health Score محلی
-- تعداد داینامیک وعده‌ها برای هر روز و تعداد داینامیک گزینه‌ها برای هر وعده
-- انتخاب یک غذا از میان گزینه‌های هر وعده و افزودن آن به لاگ همان روز
-- نمایش برنامه هفتگی، کالری و درشت‌مغذی‌ها
-- چک‌این روزانه، وزن، آب، قدم، خواب، تمرین و شاخص‌های حال عمومی
-- تقویم جلالی و تاریخچه برنامه‌های واردشده
-- حالت گرسنگی اضطراری بر اساس گزینه‌های فایل
-- تم روشن و تیره
-- نصب‌پذیری روی iPhone و سایر دستگاه‌های سازگار با PWA
-- ذخیره مقاوم در برابر خرابی با staging، دو نسخه بازیابی و قرنطینه نسخه ناسالم
-- پاک‌کردن کامل داده‌های محلی با تأیید دو مرحله‌ای
+- حساب کاربری و session با Supabase Auth
+- PostgreSQL، RLS، private Storage و Edge Function به‌جای `localStorage` برای داده‌های سلامت
+- onboarding داده‌محور و قابل‌ادامه در حساب کاربر
+- آپلود اختیاری و خصوصی گزارش Body Composition
+- تولید برنامه و گفت‌وگوی مربی فقط از سمت سرور؛ کلید OpenAI هرگز وارد مرورگر نمی‌شود
+- Structured Output، اعتبارسنجی قطعی، quota، idempotency و ثبت مصرف AI
+- مسیرهای اصلی فارسی/RTL و انگلیسی/LTR؛ زبان، کشور، واحد پول و فرهنگ غذایی در مدل
+  جدا هستند، اما پوشش کامل واحدها، تقویم‌ها، ترجمه‌ها و فرهنگ غذایی هنوز release gate است
+- IA جدید: Today، Plan، Coach، Progress و Me
+- سیستم بصری **Momentum Orbit** با الهام از عمق و material شیشه‌ای؛ glass فقط در chrome و کنترل‌ها استفاده می‌شود
+- Preview حافظه‌ای با دادهٔ مصنوعی برای بررسی بدون backend؛ دادهٔ سلامت یا تجاری را persist نمی‌کند، هرچند ترجیحات غیرحساس UI و cache دارایی‌های PWA ممکن است روی دستگاه بمانند
+- PWA با prompt به‌روزرسانی، تشخیص offline و assetهای برند جدید
 
-## حریم خصوصی و مدل کاربری
+## معماری
 
-Momentum در نسخه فعلی backend، database، authentication، analytics، حساب کاربری یا
-اتصال داخلی به هوش مصنوعی ندارد. ساخت برنامه در ChatGPT یا هر مدل دیگری خارج از
-Momentum انجام می‌شود؛ سایت فقط پرامپت را روی دستگاه می‌سازد و JSON برگشتی را
-اعتبارسنجی و Import می‌کند. برای یک پایلوت کوچک زیر ۱۰ نفر مناسب است: همه از یک URL
-استفاده می‌کنند، اما پروفایل، برنامه‌ها و لاگ هر نفر فقط در storage مرورگر همان گوشی
-باقی می‌ماند.
+```text
+Browser / future native apps
+        │  Supabase anon session (RLS)
+        ▼
+Supabase Auth + PostgreSQL + private Storage
+        │
+        ├── user-owned reads/writes protected by RLS
+        └── Edge Functions (privileged mutations, quota, safety)
+                 │
+                 └── OpenAI Responses API (server-side only)
+```
 
-این مدل چند محدودیت مهم دارد:
+در حالت account متصل، داده‌ی پروفایل، برنامه، گزارش بدن، لاگ‌ها، پیام‌های مربی و
+مصرف AI در دیتابیس ذخیره می‌شود. تنها session احراز هویت و ترجیحات غیرحساس UI
+می‌توانند روی دستگاه نگهداری شوند. درخواست‌های API به‌صورت network-only هستند؛
+آفلاین بودن به معنی حالت read-only shell است، نه queue کردن داده‌ی سلامت روی دستگاه.
 
-- اطلاعات بین گوشی و لپ‌تاپ همگام نمی‌شوند.
-- پاک‌کردن داده‌های Safari، تغییر دامنه یا حذف storage ممکن است اطلاعات محلی را از دسترس خارج کند.
-- مدیر برنامه به داده‌های کاربران دسترسی ندارد.
-- برای انتشار عمومی گسترده، قابلیت export/backup و سیاست حریم خصوصی باید پیش از هر backend احتمالی طراحی شوند.
+انتخاب backend در [`docs/architecture/0001-supabase-platform.md`](docs/architecture/0001-supabase-platform.md)، مدل داده در [`docs/architecture/data-model.md`](docs/architecture/data-model.md) و threat model در [`docs/security/threat-model.md`](docs/security/threat-model.md) مستند شده‌اند.
 
-## اجرای محلی
+## اجرای وب‌اپ
 
-پیش‌نیاز: Node.js نسخه 22 یا جدیدتر و npm.
+پیش‌نیاز وب: Node.js `>=22.12` و npm سازگار با lockfile. برای backend محلی،
+Docker Desktop، Supabase CLI و Deno 2 (برای lint/check مستقیم Edge Functionها)
+نیز لازم‌اند. حداقل نسخهٔ Node و نسخهٔ package manager در `package.json` ثبت
+شده‌اند و نسخهٔ ابزارهای backend باید در CI/release نیز pin شوند.
 
 ```bash
 npm install
 npm run dev
 ```
 
-آدرس نمایش‌داده‌شده در ترمینال، معمولاً `http://localhost:5173`، را باز کنید.
+بدون متغیر محیطی، landing، pricing، safety و Preview اجرا می‌شوند؛ ثبت‌نام و عملیات ابری با پیام setup غیرفعال می‌مانند.
 
-فرمان‌های کنترل کیفیت:
+برای اتصال به Supabase، فایل `.env.local` شخصی بسازید و مقادیر عمومی `.env.example` را قرار دهید:
+
+```dotenv
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLIC_PUBLISHABLE_KEY
+VITE_APP_ENV=development
+```
+
+هیچ‌وقت `service_role` یا `OPENAI_API_KEY` را با پیشوند `VITE_` تعریف نکنید. این secretها فقط در Supabase Edge Function secrets قرار می‌گیرند.
+
+## راه‌اندازی Supabase
+
+پس از نصب و login در Supabase CLI:
+
+```bash
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+supabase functions deploy geo-context
+supabase functions deploy generate-plan
+supabase functions deploy coach
+supabase functions deploy analyze-body-composition
+supabase functions deploy account-data
+```
+
+سپس secretهای server را تنظیم کنید. نام مدل‌ها و فهرست کشورهای مجاز باید configuration باشند، نه مقدار پراکنده در UI:
+
+```bash
+supabase secrets set --env-file /absolute/path/to/momentum.production.env
+```
+
+فایل production باید علاوه بر مدل‌های واقعیِ در دسترس حساب، originهای دقیق،
+نسخه‌های consent، کلید safety، سقف‌ها، allowlist تأییدشده و master/feature switchها
+را داشته باشد. مقدار نمونه یا حضور یک کشور در فایل env مجوز عرضه نیست.
+
+راهنمای کامل backend در [`supabase/README.md`](supabase/README.md) است.
+
+## کنترل کیفیت
 
 ```bash
 npm run lint
 npm test
 npm run build
-npm run preview
+npm audit --omit=dev
 ```
 
-خروجی production در پوشه `dist/` ساخته می‌شود.
+Build production در `dist/` قرار می‌گیرد. تمام چهار فرمان باید پیش از merge یا deploy موفق باشند.
 
-## فایل برنامه غذایی
+## انتشار وب
 
-Momentum فایل JSON با `schemaVersion` برابر `0.1.0` یا `0.2.0` را می‌پذیرد.
-نسخه `0.2.0` قرارداد اصلی فعلی است و هدف‌های پویا، confidence تغذیه و recipe را
-اضافه می‌کند.
-`profile` و `planningContext` اجباری‌اند و نام، سن، جنسیت، قد، وزن‌ها، سطح فعالیت،
-بادی‌کامپوزیشن اختیاری، ترجیحات غذایی، محدودیت‌ها و برنامه ورزش را منتقل می‌کنند.
-هر روز حداقل یک وعده و هر وعده حداقل یک گزینه دارد؛ تعداد وعده‌ها می‌تواند بین
-روزها متفاوت باشد و کاربر از میان گزینه‌های هر وعده دقیقاً یکی را انتخاب می‌کند.
-فایل پیش از ذخیره با قرارداد سخت‌گیرانه Zod اعتبارسنجی و سپس پیش‌نمایش داده می‌شود.
-خطاهای قابل‌جبران به پرسش‌های همان فیلد تبدیل می‌شوند؛ خطاهای ساختاری جدی Import را
-متوقف می‌کنند. Plan Health Score نیز با قواعد قطعی محلی اجرا می‌شود و هیچ درخواست
-شبکه‌ای یا تحلیل AI ندارد.
+Frontend یک static Vite build است و می‌تواند روی Cloudflare Pages یا Vercel اجرا شود:
 
-- نمونه عمومی: [`public/samples/momentum-week-example.json`](public/samples/momentum-week-example.json)
-- تمپلیت عمومی ChatGPT: [`public/templates/momentum-weekly-plan-prompt.md`](public/templates/momentum-weekly-plan-prompt.md)
-
-در Settings می‌توانید پرامپت شخصی Markdown بسازید؛ فرم فقط اطلاعات گمشده را سؤال
-می‌کند. فایل را برای مدل خارجی بفرستید و JSON تولیدشده را از راه‌اندازی اولیه یا
-تنظیمات وارد کنید. تمپلیت عمومی نیز برای استفاده بدون پروفایل ذخیره‌شده در دسترس است.
-
-جزئیات معماری و مرزهای Import v2 در
-[`docs/import-system-v2.md`](docs/import-system-v2.md) آمده است.
-
-## انتشار در GitHub و Cloudflare Pages
-
-پس از قرار دادن repository در GitHub، یک پروژه Cloudflare Pages بسازید و تنظیمات زیر را انتخاب کنید:
-
-- Production branch: `main`
-- Framework preset: `Vite`
 - Build command: `npm run build`
-- Build output directory: `dist`
-- Node.js version: `22`
+- Output directory: `dist`
+- Node.js: `>=22.12`
+- Environment: دو مقدار عمومی Supabase و برچسب محیط بالا
 
-این پروژه static است و به متغیر محیطی یا سرویس backend نیاز ندارد. برای اینکه داده‌های نصب‌شده کاربران در همان origin بماند، دامنه production را بعد از انتشار بی‌دلیل تغییر ندهید.
+Database و Edge Functionها جداگانه در Supabase deploy می‌شوند. برای callbackهای Auth، دامنه‌ی production را در Supabase URL Configuration اضافه کنید.
 
-## نصب روی iPhone
+## AI و کنترل هزینه
 
-1. URL نسخه production را با Safari باز کنید.
-2. دکمه Share را بزنید.
-3. گزینه **Add to Home Screen** را انتخاب کنید.
-4. نام Momentum را تأیید و **Add** را بزنید.
+- مسیرهای plan، coach و body extraction از server config مدل می‌گیرند. پیش‌فرض
+  آلفا Terra برای ساخت برنامه و Luna برای گفت‌وگو/استخراج است؛ هر route پیش از
+  production باید روی دادهٔ نمایشی فارسی و انگلیسی eval و از نظر دسترسی حساب تأیید شود.
+- آلفای فعلی Structured Output، schema/range validation، quota، idempotency و
+  usage ledger دارد، اما catalog حاکم و کامل غذا/مواد مغذی/تمرین و constraintهای
+  امضاشده توسط متخصص هنوز launch gate هستند. خروجی AI نباید verified یا medical
+  معرفی شود.
+- prompt ثابت پیش از context متغیر قرار می‌گیرد تا caching مؤثر بماند
+- هر درخواست quota، idempotency key، schema validation و usage ledger دارد
+- خروجی خام مدل مستقیماً قرارداد UI نیست و فقط پس از parse/validation قابل‌استفاده است
 
-بعد از اولین بارگذاری کامل، shell برنامه برای استفاده آفلاین cache می‌شود. وارد کردن فایل جدید و بعضی داده‌های خارج از cache همچنان نیازمند دسترسی محلی به همان فایل هستند.
+جزئیات در [`docs/architecture/ai-architecture.md`](docs/architecture/ai-architecture.md) و [`docs/product/MONETIZATION.md`](docs/product/MONETIZATION.md) آمده است.
 
-## پشته فنی
+## ایمنی و محدودیت منطقه‌ای
 
-- React 19 و TypeScript
-- Vite
-- Tailwind CSS
-- Zod
-- Vitest و Testing Library
-- vite-plugin-pwa / Workbox
-- Vazirmatn variable font
+Momentum پزشک، متخصص تغذیه یا سرویس اورژانسی نیست. عرضه‌ی نخست فقط برای بزرگسالان است. بارداری/شیردهی، نگرانی اختلال خوردن و شرایط پرریسک از برنامه‌ریزی خودکار خارج می‌شوند و باید به متخصص واجد شرایط ارجاع داده شوند.
 
-## ساختار اصلی
+کشور ایران در زمان آخرین بررسی در فهرست کشورهای پشتیبانی‌شده‌ی OpenAI API نبود. بنابراین:
+
+- RTL، غذاهای ایرانی، قیمت‌گذاری و معماری برای ایران طراحی می‌شوند؛
+- فروش trial یا قابلیت AI برای کاربر/صورتحساب ایران **launch-blocked** است؛
+- VPN، proxy یا سرور ثالث راه‌حل قابل‌قبول برای دورزدن محدودیت نیست؛
+- فعال‌سازی فقط پس از مجوز کتبی provider و بررسی حقوقی انجام می‌شود.
+
+سیاست کامل در [`docs/product/SAFETY_AND_LAUNCH_POLICY.md`](docs/product/SAFETY_AND_LAUNCH_POLICY.md) ثبت شده است.
+
+## ساختار مهم پروژه
 
 ```text
-public/
-  samples/        نمونه برنامه عمومی
-  templates/      تمپلیت عمومی تولید برنامه
 src/
-  app/            state و پوسته اصلی
-  components/ui/  primitiveهای مشترک مثل Button، Surface، Dialog و Field
-  components/     اجزای دامنه‌ای و مشترک
-  config/         تنظیمات برند، navigation، فایل Import و storage keyها
-  features/       onboarding، dashboard، plans، calendar و settings
-  lib/            تاریخ، formatterها، محاسبات و storage
-  styles/         design tokenهای تم روشن و تیره
-  types/          قراردادهای TypeScript
+  platform/          auth، Supabase، query و i18n
+  v2/
+    components/      chrome و لایه‌های سراسری
+    data/            contract، repository و Preview data
+    onboarding/      schema و persistence
+    pages/           public، auth، onboarding و app
+    router/          routeهای locale-aware
+    ui/              primitiveهای Orbit
+  styles/
+    app.css           stylesheet ورودی production
+    orbit.css         پیاده‌سازی semantic design system
+supabase/
+  migrations/        schema، constraint، index و RLS
+  functions/         APIهای server-side
 docs/
-  import-system-v2.md
+  architecture/      ADR، data model و AI
+  design/            Orbit tokens و handoff وب/native
+  product/           PRD، pricing، metrics و safety
+  security/          threat model
 ```
 
-## سیستم طراحی و توسعه‌پذیری
+قرارداد مرجع طراحی در [`docs/design/tokens.json`](docs/design/tokens.json) قرار دارد؛
+generator/validator و خروجی native هنوز پیاده‌سازی نشده‌اند و فعلاً صرفاً handoff
+spec هستند. وضعیت دقیق در [`docs/design/CONFORMANCE.md`](docs/design/CONFORMANCE.md)
+آمده است. منبع canonical هویت فعلی فقط
+[`public/brand/momentum-orbit-master.svg`](public/brand/momentum-orbit-master.svg)
+است؛ splash، favicon و PNGهای PWA derivative هستند.
 
-رنگ‌های featureها نباید مقدار مستقیم hex یا نام رنگ ظاهری داشته باشند. تمام رنگ،
-سایه، radius، ارتفاع control و motion از
-[`src/styles/theme.css`](src/styles/theme.css) می‌آید. برای تغییر palette یا برند،
-مقادیر semantic مثل `--color-accent`، `--color-surface` و `--color-text` را در همان
-فایل تغییر دهید؛ کامپوننت‌های feature نباید نیاز به ویرایش داشته باشند.
+## اسناد محصول
 
-اجزای تعاملی جدید باید تا جای ممکن از primitiveهای `src/components/ui` استفاده
-کنند:
+- [`docs/product/PRD.md`](docs/product/PRD.md)
+- [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- [`docs/product/MONETIZATION.md`](docs/product/MONETIZATION.md)
+- [`docs/product/METRICS.md`](docs/product/METRICS.md)
+- [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
+- [`docs/design/README.md`](docs/design/README.md)
+- [`docs/design/CONFORMANCE.md`](docs/design/CONFORMANCE.md)
+- [`docs/legal/PRIVACY.md`](docs/legal/PRIVACY.md)
+- [`docs/legal/TERMS.md`](docs/legal/TERMS.md)
+- [`docs/legal/DATA_RETENTION.md`](docs/legal/DATA_RETENTION.md)
+- [`docs/legal/SUBPROCESSORS.md`](docs/legal/SUBPROCESSORS.md)
+- [`docs/legal/COUNTRY_GO_NO_GO.md`](docs/legal/COUNTRY_GO_NO_GO.md)
 
-- `Button` و `IconButton` برای تمام actionها
-- `Surface` برای card، panel و stateهای accent/danger
-- `Dialog` برای modal و bottom sheet سازگار با viewport
-- `Field`، `TextInput`، `SelectInput` و `TextArea` برای فرم‌ها
-- `Badge`، `IconTile`، `ProgressBar` و `SectionHeading` برای الگوهای نمایشی
+## قواعد مشارکت
 
-اطلاعات قابل‌پیکربندی مثل نام محصول، namespace ذخیره‌سازی، محدودیت فایل و navigation
-در `src/config` قرار دارد. لیست‌هایی مثل metricهای تغذیه، فیلدهای چک‌این و مقدارهای
-سفارش نیز داده‌محور هستند تا افزودن گزینه جدید به تغییر markup نیاز نداشته باشد.
-
-### لوگو و Brand Motion
-
-فایل مادر و قابل‌ویرایش لوگو در
-[`public/brand/momentum-mark-master.svg`](public/brand/momentum-mark-master.svg)
-قرار دارد. نسخه‌های Light، Monochrome، Maskable، Horizontal Lockup و Splash
-متحرک نیز کنار آن نگهداری می‌شوند. فایل‌های PNG مربوط به PWA و iOS خروجی همین
-فایل‌های SVG هستند و نباید مستقیماً ویرایش شوند.
-
-هندسه داخل برنامه در `src/components/brand/MomentumLogo.tsx` تکرار شده و سه حالت
-`none`، `splash` و `header` دارد. تمام موشن‌ها باید
-`prefers-reduced-motion` را رعایت کنند.
-
-## نکات مشارکت
-
-- هیچ داده شخصی، فایل برنامه واقعی، secret یا فایل `.env` را commit نکنید.
-- در featureها رنگ hex جدید، کلید storage یا اندازه مجاز فایل را hardcode نکنید.
-- پیش از ساخت UI تازه بررسی کنید primitive مشابهی در `src/components/ui` وجود دارد.
-- تا پیش از نسخه `1.0.0` تغییر قرارداد می‌تواند ناسازگار باشد؛ نمونه و تمپلیت باید همیشه هم‌نسخه با برنامه نگه داشته شوند.
-- هر تغییر باید با lint، tests و production build بررسی شود.
-- این ابزار جایگزین توصیه پزشک یا متخصص تغذیه نیست.
+- secret، فایل `.env`، گزارش واقعی بدن یا داده‌ی شخصی را commit نکنید.
+- هر جدول خصوصی باید RLS و تست جداسازی دو کاربر داشته باشد.
+- service-role فقط در backend؛ browser هرگز هزینه، entitlement یا plan version را مستقیم نمی‌نویسد.
+- هیچ رنگ feature-level یا مقدار AI model در component hardcode نشود؛ از token/config استفاده کنید.
+- داده‌ی Preview باید صریحاً demo و کاملاً جدا از repository production بماند.
+- تغییر contract باید version، migration و test داشته باشد.
+- تا اعلام رسمی launch، نسخه‌ها آلفا و زیر `1.0.0` می‌مانند.

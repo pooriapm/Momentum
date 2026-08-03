@@ -1,0 +1,142 @@
+@import "./orbit.css";
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  font-family: var(--font-app);
+  color: var(--color-text);
+  background: var(--color-background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--color-background);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: var(--color-on-selection);
+  background: var(--color-selection);
+}
+
+.boot-splash {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  direction: ltr;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 40%, var(--color-splash-glow), transparent 20rem),
+    var(--color-background);
+}
+
+.boot-splash__content {
+  display: grid;
+  justify-items: center;
+  width: min(100%, 24rem);
+  padding: 2rem;
+  animation: orbit-page-enter 420ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.boot-splash__logo {
+  width: 6.25rem;
+  height: 6.25rem;
+  border-radius: 1.95rem;
+  box-shadow: var(--shadow-panel);
+}
+
+.boot-splash__name {
+  margin: 1.25rem 0 0;
+  color: var(--color-text);
+  font: 900 .75rem/1.4 var(--font-latin);
+  letter-spacing: .28em;
+}
+
+.boot-splash__tagline {
+  margin: .45rem 0 0;
+  direction: rtl;
+  color: var(--color-text-secondary);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.boot-splash__progress {
+  width: 7rem;
+  height: .2rem;
+  margin-top: 1.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-border);
+}
+
+.boot-splash__progress::after {
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-brand);
+  content: "";
+  animation: splash-progress 1.05s ease-in-out infinite;
+}
+
+.boot-splash--exit {
+  pointer-events: none;
+  animation: boot-splash-exit 320ms cubic-bezier(.4, 0, 1, 1) both;
+}
+
+@keyframes splash-progress {
+  from { transform: translateX(-130%); }
+  to { transform: translateX(250%); }
+}
+
+@keyframes boot-splash-exit {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}

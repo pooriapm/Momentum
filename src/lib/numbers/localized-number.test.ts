@@ -17,7 +17,8 @@ describe('localized number input', () => {
   })
 
   it('sanitizes integer fields and keeps empty values optional', () => {
-    expect(sanitizeLocalizedNumberInput('۱۲۳٫۴', false)).toBe('1234')
+    expect(sanitizeLocalizedNumberInput('۱۲۳٫۴', false)).toBe('123')
+    expect(sanitizeLocalizedNumberInput('۹.۵', false)).toBe('9')
     expect(optionalLocalizedNumber('')).toBeUndefined()
   })
 })

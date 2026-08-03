@@ -1,7 +1,12 @@
 {
   "name": "momentum",
   "private": true,
-  "version": "0.2.0-alpha.1",
+  "version": "0.3.0-alpha.0",
+  "packageManager": "npm@11.17.0",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,16 +16,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "@tanstack/react-query": "^5.101.4",
+    "i18next": "^26.3.6",
     "jalaali-js": "^2.0.0",
     "lucide-react": "^1.27.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-i18next": "^17.0.11",
     "vite-plugin-pwa": "^1.2.0",
+    "wouter": "^3.10.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@types/jalaali-js": "^1.2.0",
@@ -33,7 +42,7 @@
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
     "jsdom": "^30.0.0",
-    "tailwindcss": "^4.3.3",
+    "supabase": "^2.111.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",
     "vite": "^7.3.6",

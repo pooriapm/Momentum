@@ -4,6 +4,7 @@ import type { Theme, UiState } from '../types/ui'
 const UI_STATE_KEY = STORAGE_KEYS.uiState
 
 const defaultUiState: UiState = {
+  locale: typeof navigator !== 'undefined' && !navigator.language.toLowerCase().startsWith('fa') ? 'en' : 'fa',
   selectedTab: 'today',
   theme: 'dark',
 }
@@ -26,6 +27,7 @@ export function loadUiState(): UiState {
     ]
 
     return {
+      locale: candidate.locale === 'en' ? 'en' : candidate.locale === 'fa' ? 'fa' : defaultUiState.locale,
       selectedTab: validTabs.includes(candidate.selectedTab as UiState['selectedTab'])
         ? (candidate.selectedTab as UiState['selectedTab'])
         : defaultUiState.selectedTab,

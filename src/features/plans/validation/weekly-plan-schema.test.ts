@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import type { WeeklyMealPlan } from '../../../types/domain'
 import { validateWeeklyMealPlan } from './weekly-plan-schema'
 
-const samplePath = resolve('public/samples/momentum-week-example.json')
+const samplePath = resolve('src/test/fixtures/legacy-momentum-week-example.json')
 
 function loadSample(): WeeklyMealPlan {
   return JSON.parse(readFileSync(samplePath, 'utf8')) as WeeklyMealPlan

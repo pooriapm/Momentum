@@ -11,7 +11,7 @@ import {
 function loadPlan() {
   const raw = JSON.parse(
     readFileSync(
-      resolve('public/samples/momentum-week-example.json'),
+      resolve('src/test/fixtures/legacy-momentum-week-example.json'),
       'utf8',
     ),
   ) as WeeklyMealPlan

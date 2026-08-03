@@ -14,9 +14,9 @@ export function sanitizeLocalizedNumberInput(
   const normalized = toLatinDigits(value)
     .replace(/[٬,\s]/g, '')
     .replace(/٫/g, '.')
-    .replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, '')
+    .replace(/[^0-9.]/g, '')
 
-  if (!allowDecimal) return normalized
+  if (!allowDecimal) return normalized.split('.', 1)[0] ?? ''
 
   const [whole = '', ...decimalParts] = normalized.split('.')
   return decimalParts.length > 0
