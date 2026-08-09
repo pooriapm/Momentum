@@ -39,9 +39,15 @@ const EXPORT_TABLES = [
   'ai_generation_jobs',
   'plans',
   'plan_versions',
+  'plan_recalibrations',
   'daily_checkins',
+  'weekly_checkins',
   'daily_meal_status',
   'extra_food_logs',
+  'workout_sessions',
+  'workout_exercise_logs',
+  'workout_set_logs',
+  'ai_safety_reports',
   'coach_threads',
   'coach_messages',
 ] as const
@@ -83,7 +89,7 @@ async function listAllAccountFiles(
   const paths: string[] = []
   while (folders.length) {
     const folder = folders.shift()!
-    for (let offset = 0; ; offset += 100) {
+    for (let offset = 0;; offset += 100) {
       const { data, error } = await admin.storage
         .from('body-composition')
         .list(folder, { limit: 100, offset, sortBy: { column: 'name', order: 'asc' } })
@@ -122,7 +128,7 @@ async function createPortableFileLinks(
       throw new HttpError(503, 'account_export_failed', 'Private file export is unavailable.')
     }
     for (const item of data ?? []) {
-      if (item.signedUrl) {
+      if (item.signedUrl && item.path) {
         result.push({ path: item.path, signed_url: item.signedUrl, expires_in_seconds: 600 })
       }
     }
@@ -164,7 +170,11 @@ async function deleteAccount(
       .from('body-composition')
       .remove(paths.slice(offset, offset + 100))
     if (removeError) {
-      throw new HttpError(503, 'account_delete_storage_failed', 'Private files could not be removed.')
+      throw new HttpError(
+        503,
+        'account_delete_storage_failed',
+        'Private files could not be removed.',
+      )
     }
   }
   const { error } = await admin.auth.admin.deleteUser(userId)
@@ -231,9 +241,7 @@ function parseDashboard(body: AccountDataBody): DashboardRequest {
   }
   return {
     action: 'dashboard',
-    requestedLocalDate: body.local_date === undefined
-      ? undefined
-      : parseLocalDate(body.local_date),
+    requestedLocalDate: body.local_date === undefined ? undefined : parseLocalDate(body.local_date),
   }
 }
 
@@ -346,6 +354,7 @@ function projectNutrition(value: unknown): Record<string, number | string> | nul
   if (
     ![
       'model_estimate',
+      'catalog_reference',
       'food_label',
       'verified_database',
       'user_provided',
@@ -685,28 +694,29 @@ async function loadDashboard(
   }
 
   let planProjection: Record<string, unknown> | null = null
-  if (planResult.data?.active_version_id) {
+  const activePlan = planResult.data
+  if (activePlan?.active_version_id) {
     const { data: version, error } = await admin
       .from('plan_versions')
       .select('id,schema_version,content')
-      .eq('id', planResult.data.active_version_id)
+      .eq('id', activePlan.active_version_id)
       .eq('user_id', userId)
       .single()
     if (!error && version) {
       const currentProjection = projectPlanDay({
-        plan: planResult.data,
+        plan: activePlan,
         version,
         localDate: input.localDate,
         statuses: statusesResult.data ?? [],
       })
       if (currentProjection) {
-        const validFrom = String(planResult.data.valid_from)
-        const validTo = String(planResult.data.valid_to)
+        const validFrom = String(activePlan.valid_from)
+        const validTo = String(activePlan.valid_to)
         const dayCount = Math.min(31, differenceInDays(validFrom, validTo) + 1)
         const days = Array.from({ length: Math.max(0, dayCount) }, (_, index) => {
           const localDate = addIsoDays(validFrom, index)
           const projection = projectPlanDay({
-            plan: planResult.data,
+            plan: activePlan,
             version,
             localDate,
             statuses: localDate === input.localDate ? (statusesResult.data ?? []) : [],
@@ -842,11 +852,21 @@ Deno.serve(async (request) => {
     const idempotencyKey = requireIdempotencyKey(request)
     if (body.action === 'delete-account') {
       if (body.confirmation !== 'DELETE') {
-        throw new HttpError(400, 'delete_confirmation_required', 'Type DELETE to confirm account deletion.')
+        throw new HttpError(
+          400,
+          'delete_confirmation_required',
+          'Type DELETE to confirm account deletion.',
+        )
       }
-      const lastSignIn = auth.user.last_sign_in_at ? Date.parse(auth.user.last_sign_in_at) : Number.NaN
+      const lastSignIn = auth.user.last_sign_in_at
+        ? Date.parse(auth.user.last_sign_in_at)
+        : Number.NaN
       if (!Number.isFinite(lastSignIn) || Date.now() - lastSignIn > 15 * 60 * 1_000) {
-        throw new HttpError(403, 'recent_authentication_required', 'Sign in again before deleting your account.')
+        throw new HttpError(
+          403,
+          'recent_authentication_required',
+          'Sign in again before deleting your account.',
+        )
       }
       await deleteAccount(auth.admin, auth.user.id)
       return jsonResponse(request, { deleted: true })

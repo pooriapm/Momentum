@@ -4,6 +4,9 @@ dist/
 dist-ssr/
 dev-dist/
 coverage/
+test-results/
+playwright-report/
+blob-report/
 *.tsbuildinfo
 
 # Environment files and private local data

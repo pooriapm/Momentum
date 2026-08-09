@@ -19,6 +19,8 @@ import { completeMeal, currentLocalDate, logMealSelection } from '../../data/rep
 import { localize, type MealChoice, type MomentumPlanDayView, type MomentumPlanView } from '../../data/types'
 import { formatNumber } from '../../lib/format'
 import { MealDetailSheet } from '../../components/MealDetailSheet'
+import { PlanRecalibrationCard } from '../../components/PlanRecalibrationCard'
+import { WorkoutLogger } from '../../components/WorkoutLogger'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
 
@@ -154,6 +156,8 @@ export function PlanPage({ locale, plan, preview = false }: { locale: AppLocale;
         <StatusPill tone="success"><Check size={13} />{locale === 'fa' ? 'برنامه فعال' : 'Active plan'}</StatusPill>
       </section>
 
+      {!preview ? <PlanRecalibrationCard locale={locale} /> : null}
+
       <div aria-label={locale === 'fa' ? 'روزهای برنامه' : 'Plan days'} className="plan-day-strip">
         {availableDays.map((day) => (
           <button
@@ -239,12 +243,20 @@ export function PlanPage({ locale, plan, preview = false }: { locale: AppLocale;
       {segment === 'workout' ? (
         <div aria-labelledby="plan-tab-workout" id="plan-panel-workout" role="tabpanel">
           {selectedDay.workout ? (
-            <ContentCard className="workout-detail-card">
+            <><ContentCard className="workout-detail-card">
               <span className="workout-detail-card__icon"><Dumbbell size={29} /></span><StatusPill tone="energy">{intensityLabel(selectedDay.workout.intensity, locale)}</StatusPill>
               <h2>{localize(selectedDay.workout.name, locale)}</h2><p>{localize(selectedDay.workout.focus, locale)}</p>
               <div className="workout-detail-card__metrics"><span><Clock3 size={18} /><strong>{formatNumber(selectedDay.workout.durationMinutes, locale)} {locale === 'fa' ? 'دقیقه' : 'min'}</strong></span><span><ListChecks size={18} /><strong>{formatNumber(selectedDay.workout.exercises, locale)} {locale === 'fa' ? 'حرکت' : 'exercises'}</strong></span></div>
               <ol>{selectedDay.workout.exerciseItems.map((item, index) => <li key={`${selectedDay.localDate}-${index}`}>{localize(item, locale)}</li>)}</ol>
             </ContentCard>
+            <WorkoutLogger
+              enabled={isToday && (preview || online)}
+              key={`${selectedDay.localDate}-${selectedDay.workout.id}`}
+              locale={locale}
+              localDate={selectedDay.localDate}
+              preview={preview}
+              workout={selectedDay.workout}
+            /></>
           ) : <ContentCard><h2>{locale === 'fa' ? 'روز استراحت و ریکاوری' : 'Rest and recovery day'}</h2><p>{locale === 'fa' ? 'برای این روز تمرین برنامه‌ریزی نشده است.' : 'No workout is scheduled for this day.'}</p></ContentCard>}
         </div>
       ) : null}

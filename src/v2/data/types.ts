@@ -19,7 +19,7 @@ export interface MealChoice {
   nutrition: NutritionSummary
   confidence: 'estimated' | 'verified' | 'usda' | 'manufacturer'
   confidenceLevel?: 'low' | 'medium' | 'high'
-  nutritionSource?: 'model_estimate' | 'food_label' | 'verified_database' | 'user_provided'
+  nutritionSource?: 'model_estimate' | 'catalog_reference' | 'food_label' | 'verified_database' | 'user_provided'
   cookingMinutes: number
   ingredients?: Array<{ name: LocalizedText; amount: number; unit: string; note?: LocalizedText }>
   recipe?: {
@@ -47,6 +47,14 @@ export interface WorkoutBlock {
   durationMinutes: number
   exercises: number
   exerciseItems: LocalizedText[]
+  exerciseDetails: Array<{
+    key: string
+    name: LocalizedText
+    sets: number
+    reps: string
+    restSeconds: number
+    substitution: LocalizedText | null
+  }>
   intensity: 'low' | 'moderate' | 'high'
 }
 

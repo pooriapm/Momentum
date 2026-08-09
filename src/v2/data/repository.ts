@@ -7,6 +7,7 @@ import {
   coachEdgeResponseSchema,
   coachHistoryRowsSchema,
   dashboardResponseSchema,
+  planRevisionResponseSchema,
   type DashboardResponse,
 } from './contracts'
 import type { LocalizedText, MealChoice, MomentumPlanDayView, MomentumPlanView } from './types'
@@ -144,6 +145,14 @@ function mapPlanDay(day: DashboardPlanDay, planId: string, locale: AppLocale): M
       exerciseItems: day.workout.exercises.map((exercise) =>
         localized(`${exercise.name} · ${exercise.sets} × ${exercise.reps}`),
       ),
+      exerciseDetails: day.workout.exercises.map((exercise) => ({
+        key: exercise.exercise_key,
+        name: localized(exercise.name),
+        sets: exercise.sets,
+        reps: exercise.reps,
+        restSeconds: exercise.rest_seconds,
+        substitution: exercise.substitution ? localized(exercise.substitution) : null,
+      })),
       intensity: day.workout.intensity,
     } : null,
   }
@@ -266,32 +275,62 @@ export async function completeMeal(date: string, slotKey: string, optionKey: str
   if (error) throw error
 }
 
-export interface DailyCheckInInput {
-  adherencePercent?: number
-  energyScore: number
-  hungerScore: number
-  moodScore: number
-  sleepMinutes: number
-  weightKg?: number
+export interface PlanRevisionState {
+  id: string
+  status: 'preview' | 'active' | 'cancelled' | 'expired' | 'rolled_back'
+  rationale: string
+  mode: string
+  changedWorkouts: number
+  changedExercises: number
+  nutritionChanged: boolean
+  expiresAt?: string
 }
 
-export async function saveDailyCheckIn(input: DailyCheckInInput, localDate: string, timezone: string) {
-  assertOnline()
+function mapPlanRevision(data: unknown): PlanRevisionState | null {
+  const parsed = planRevisionResponseSchema.parse(data).revision
+  if (!parsed) return null
+  const id = parsed.id ?? parsed.revision_id
+  if (!id) throw new Error('invalid_plan_revision_response')
+  return {
+    id,
+    status: parsed.status,
+    rationale: parsed.change_reason?.rationale ?? '',
+    mode: parsed.diff?.mode ?? parsed.change_reason?.code ?? 'stabilize',
+    changedWorkouts: parsed.diff?.changed_workouts ?? 0,
+    changedExercises: parsed.diff?.changed_exercises ?? 0,
+    nutritionChanged: parsed.diff?.nutrition_changed ?? false,
+    expiresAt: parsed.expires_at,
+  }
+}
+
+async function invokePlanRevision(
+  body: Record<string, unknown>,
+  mutation = false,
+): Promise<PlanRevisionState | null> {
+  if (mutation) assertOnline()
   const client = requireSupabase()
-  const { data: authData, error: authError } = await client.auth.getUser()
-  if (authError || !authData.user) throw authError ?? new Error('authentication_required')
-  const { error } = await client.from('daily_checkins').upsert({
-    user_id: authData.user.id,
-    local_date: localDate,
-    timezone,
-    sleep_minutes: input.sleepMinutes,
-    hunger_score: input.hungerScore,
-    mood_score: input.moodScore,
-    energy_score: input.energyScore,
-    adherence_percent: input.adherencePercent ?? null,
-    weight_kg: input.weightKg ?? null,
-  }, { onConflict: 'user_id,local_date' })
+  const { data, error } = await client.functions.invoke('plan-revisions', {
+    body,
+    headers: mutation ? { 'Idempotency-Key': crypto.randomUUID() } : undefined,
+  })
   if (error) throw error
+  return mapPlanRevision(data)
+}
+
+export function loadPlanRevisionStatus() {
+  return invokePlanRevision({ action: 'status' })
+}
+
+export function previewPlanRecalibration(reason?: string) {
+  return invokePlanRevision({ action: 'preview', reason: reason?.trim() || undefined }, true)
+}
+
+export function confirmPlanRecalibration(revisionId: string) {
+  return invokePlanRevision({ action: 'confirm', revision_id: revisionId }, true)
+}
+
+export function rollbackPlanRecalibration(revisionId: string) {
+  return invokePlanRevision({ action: 'rollback', revision_id: revisionId }, true)
 }
 
 export async function exportAccountData() {
@@ -337,6 +376,7 @@ export async function sendCoachMessage(
     const parsed = coachEdgeResponseSchema.parse(data)
     if ('message' in parsed) {
       return {
+        messageId: parsed.message.id,
         message: parsed.message.content,
         threadId: parsed.thread_id,
         safety: parsed.safety,
@@ -346,6 +386,24 @@ export async function sendCoachMessage(
     await new Promise((resolve) => window.setTimeout(resolve, 1_000))
   }
   throw new Error('coach_response_still_processing')
+}
+
+export async function reportAiSafetyIssue(
+  surface: 'coach' | 'plan' | 'body_extraction',
+  referenceId: string,
+  reasonCode: 'unsafe_or_inappropriate' | 'medical_advice' | 'eating_disorder' | 'unsafe_exercise' | 'body_shame' | 'self_harm' | 'privacy' | 'incorrect_output' | 'other' = 'unsafe_or_inappropriate',
+  details?: string,
+) {
+  assertOnline()
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('submit_ai_safety_report', {
+    p_surface: surface,
+    p_reference_id: referenceId,
+    p_reason_code: reasonCode,
+    p_details: details?.trim() || null,
+  })
+  if (error) throw error
+  return data
 }
 
 export async function loadCoachHistory(locale: AppLocale) {

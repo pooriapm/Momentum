@@ -43,6 +43,15 @@ Meal mutation dates are derived server-side from the stored profile timezone,
 must fall inside the active plan, and are rechecked in the transactional RPC.
 The client cannot write a past or future meal by changing its request body.
 
+Workout execution uses `start_workout_session(local_date, workout_key)` and
+`mutate_workout_session(session_id, action, exercise_key, set_number, values)`.
+Both RPCs derive ownership from `auth.uid()` and validate the current local day
+and active immutable plan version. Authenticated clients have read-only RLS
+access to workout sessions, exercise logs and set logs; direct writes are not
+granted. Supported mutations log set completion, weight, reps, RPE and rest;
+complete/skip/substitute exercises; save notes; report pain; and finish or stop
+the session. Pain severity 4–5 closes the session immediately.
+
 ## AI routes
 
 - `generate-plan` new success: HTTP 201

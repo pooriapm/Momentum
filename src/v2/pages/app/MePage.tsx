@@ -17,6 +17,7 @@ export function MePage({ locale, plan, preview }: { locale: AppLocale; plan: Mom
   const { user, signOut } = useAuth()
   const [lightTheme, setLightTheme] = useState(() => document.documentElement.classList.contains('light'))
   const items = [
+    [Languages, t('app.profile'), locale === 'fa' ? 'هدف، غذا، تمرین، زبان و رضایت‌ها' : 'Goal, food, training, language, and consent', `${localizedPath(locale, '/app/settings')}${preview ? '?preview=1' : ''}`],
     [CreditCard, t('app.subscription'), plan?.progress.entitlementLabel ? localize(plan.progress.entitlementLabel, locale) : (preview ? 'Momentum Core' : 'Momentum'), localizedPath(locale, '/pricing')],
     [Globe2, t('app.region'), locale === 'fa' ? 'قیمت و دسترسی مستقل از زبان' : 'Pricing and access are separate from language', localizedPath(locale, '/pricing')],
     [ShieldCheck, t('app.privacy'), locale === 'fa' ? 'خروجی، نگهداری و حذف حساب' : 'Export, retention, and account deletion', `${localizedPath(locale, '/app/account')}${preview ? '?preview=1' : ''}`],

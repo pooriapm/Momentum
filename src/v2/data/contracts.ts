@@ -9,7 +9,7 @@ const nutritionApiSchema = z.object({
   fat_g: z.number().finite().nonnegative().max(1_000),
   fiber_g: z.number().finite().nonnegative().max(200),
   confidence: z.enum(['low', 'medium', 'high']),
-  source: z.enum(['model_estimate', 'food_label', 'verified_database', 'user_provided']),
+  source: z.enum(['model_estimate', 'catalog_reference', 'food_label', 'verified_database', 'user_provided']),
 })
 const targetApiSchema = z.object({
   calories: z.number().positive().max(10_000),
@@ -20,6 +20,7 @@ const targetApiSchema = z.object({
   water_ml: z.number().nonnegative().max(20_000),
 })
 const ingredientApiSchema = z.object({
+  ingredient_id: z.string().optional(),
   name: z.string().min(1).max(160),
   amount: z.number().nonnegative().max(100_000),
   unit: z.string().min(1).max(30),
@@ -44,14 +45,17 @@ const dashboardPlanDaySchema = z.object({
     intensity: z.enum(['low', 'moderate', 'high']),
     warmup: z.array(z.string()),
     exercises: z.array(z.object({
+      exercise_id: z.string().optional(),
       exercise_key: z.string(),
       name: z.string(),
       sets: z.number().int().positive(),
       reps: z.string(),
       rest_seconds: z.number().int().nonnegative(),
       equipment: z.array(z.string()),
+      equipment_ids: z.array(z.string()).optional(),
       intensity_note: z.string().nullable(),
       substitution: z.string().nullable(),
+      substitution_exercise_id: z.string().nullable().optional(),
     })),
     cooldown: z.array(z.string()),
     safety_note: z.string().nullable(),
@@ -66,6 +70,7 @@ const dashboardPlanDaySchema = z.object({
     completion_status: z.enum(['planned', 'completed', 'skipped']),
     completed_at: z.string().nullable(),
     options: z.array(z.object({
+      food_id: z.string().optional(),
       option_key: z.string(),
       title: z.string(),
       ingredients: z.array(ingredientApiSchema),
@@ -261,5 +266,33 @@ export const accountExportResponseSchema = z.object({
 })
 
 export const accountDeleteResponseSchema = z.object({ deleted: z.literal(true) })
+
+export const planRevisionResponseSchema = z.object({
+  revision: z.object({
+    id: z.string().uuid().optional(),
+    revision_id: z.string().uuid().optional(),
+    status: z.enum(['preview', 'active', 'cancelled', 'expired', 'rolled_back']),
+    plan_id: z.string().uuid().optional(),
+    from_version_id: z.string().uuid().optional(),
+    candidate_version_id: z.string().uuid().optional(),
+    active_version_id: z.string().uuid().optional(),
+    change_reason: z.object({
+      code: z.string().optional(),
+      rationale: z.string().optional(),
+      user_reason: z.string().nullable().optional(),
+    }).passthrough().optional(),
+    diff: z.object({
+      mode: z.string().optional(),
+      changed_workouts: z.number().int().nonnegative().optional(),
+      changed_exercises: z.number().int().nonnegative().optional(),
+      nutrition_changed: z.boolean().optional(),
+      operations: z.array(z.unknown()).optional(),
+    }).passthrough().optional(),
+    expires_at: z.string().optional(),
+    confirmed_at: z.string().nullable().optional(),
+    rolled_back_at: z.string().nullable().optional(),
+    created_at: z.string().optional(),
+  }).passthrough().nullable(),
+})
 
 export type DashboardResponse = z.infer<typeof dashboardResponseSchema>

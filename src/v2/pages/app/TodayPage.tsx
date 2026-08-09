@@ -17,7 +17,8 @@ import { type CSSProperties, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
-import { completeMeal, currentLocalDate, logMealSelection, saveDailyCheckIn } from '../../data/repository'
+import { saveDailyCheckIn } from '../../checkins/repository'
+import { completeMeal, currentLocalDate, logMealSelection } from '../../data/repository'
 import { localize, type MomentumPlanView } from '../../data/types'
 import { formatNumber } from '../../lib/format'
 import { Button, ContentCard, GlassChrome, StatusPill } from '../../ui/primitives'
@@ -193,10 +194,13 @@ export function TodayPage({ locale, plan, preview }: { locale: AppLocale; plan: 
       </section>
       {checkInOpen ? <CheckInSheet locale={locale} onClose={() => setCheckInOpen(false)} onSave={async (input) => {
         if (!preview) {
-          await saveDailyCheckIn(input, plan.localDate ?? currentLocalDate(), plan.timezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'))
+          const result = await saveDailyCheckIn(input, plan.localDate ?? currentLocalDate(), plan.timezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'))
           await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
+          setCheckInSaved(true)
+          return result
         }
         setCheckInSaved(true)
+        return { safety: { level: input.redFlags?.length ? 'urgent' as const : input.painScore >= 4 || input.recoveryScore <= 2 ? 'caution' as const : 'normal' as const, reasons: [] } }
       }} /> : null}
     </main>
   )

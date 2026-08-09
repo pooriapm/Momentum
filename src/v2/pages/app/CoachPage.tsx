@@ -1,9 +1,9 @@
-import { BrainCircuit, CalendarClock, ChevronRight, Send, ShieldAlert, Sparkles, UtensilsCrossed, Zap } from 'lucide-react'
+import { BrainCircuit, CalendarClock, ChevronRight, Flag, Send, ShieldAlert, Sparkles, UtensilsCrossed, Zap } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { type FormEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AppLocale } from '../../../platform/i18n/catalog'
-import { loadCoachHistory, sendCoachMessage } from '../../data/repository'
+import { loadCoachHistory, reportAiSafetyIssue, sendCoachMessage } from '../../data/repository'
 import type { MomentumPlanView } from '../../data/types'
 import { Button, ContentCard, GlassChrome, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
@@ -25,6 +25,8 @@ export function CoachPage({ locale, plan, preview }: { locale: AppLocale; plan: 
   const [error, setError] = useState('')
   const [threadId, setThreadId] = useState<string>()
   const [suggestedActions, setSuggestedActions] = useState<string[]>([])
+  const [reportingId, setReportingId] = useState('')
+  const [reportNotice, setReportNotice] = useState('')
   const pendingRequest = useRef<{ key: string; message: string; threadId?: string } | null>(null)
   const historyQuery = useQuery({
     queryKey: ['coach-history', locale],
@@ -64,7 +66,7 @@ export function CoachPage({ locale, plan, preview }: { locale: AppLocale; plan: 
         : await sendCoachMessage(message, locale, effectiveThreadId, request.key)
       if ('threadId' in response) setThreadId(response.threadId)
       setSuggestedActions(response.suggestedActions)
-      setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', content: response.message, safetyLevel: response.safety?.level }])
+      setMessages((current) => [...current, { id: 'messageId' in response ? response.messageId : crypto.randomUUID(), role: 'assistant', content: response.message, safetyLevel: response.safety?.level }])
       pendingRequest.current = null
     } catch {
       setInput(message)
@@ -72,6 +74,17 @@ export function CoachPage({ locale, plan, preview }: { locale: AppLocale; plan: 
     } finally {
       setSending(false)
     }
+  }
+
+  async function reportMessage(messageId: string) {
+    if (preview || reportingId) return
+    setReportingId(messageId); setReportNotice('')
+    try {
+      await reportAiSafetyIssue('coach', messageId)
+      setReportNotice(locale === 'fa' ? 'گزارش برای بررسی انسانی ثبت شد.' : 'Report submitted for human review.')
+    } catch {
+      setReportNotice(locale === 'fa' ? 'گزارش ثبت نشد؛ دوباره تلاش کن.' : 'Report was not submitted. Try again.')
+    } finally { setReportingId('') }
   }
 
   return (
@@ -86,13 +99,14 @@ export function CoachPage({ locale, plan, preview }: { locale: AppLocale; plan: 
             {displayMessages.map((message) => (
               <div className={`coach-message coach-message--${message.role} ${message.safetyLevel && message.safetyLevel !== 'normal' ? `coach-message--${message.safetyLevel}` : ''}`} key={message.id}>
                 {message.role === 'assistant' ? <span><BrainCircuit size={18} /></span> : null}
-                <div>{message.safetyLevel && message.safetyLevel !== 'normal' ? <strong className="coach-safety-label"><ShieldAlert size={15} />{message.safetyLevel === 'urgent' ? (locale === 'fa' ? 'اقدام فوری' : 'Urgent') : (locale === 'fa' ? 'احتیاط' : 'Caution')}</strong> : null}<p>{message.content}</p></div>
+                <div>{message.safetyLevel && message.safetyLevel !== 'normal' ? <strong className="coach-safety-label"><ShieldAlert size={15} />{message.safetyLevel === 'urgent' ? (locale === 'fa' ? 'اقدام فوری' : 'Urgent') : (locale === 'fa' ? 'احتیاط' : 'Caution')}</strong> : null}<p>{message.content}</p>{message.role === 'assistant' && !preview && message.id !== 'welcome' ? <button className="coach-report-button" disabled={Boolean(reportingId)} onClick={() => void reportMessage(message.id)} type="button"><Flag size={13} />{reportingId === message.id ? (locale === 'fa' ? 'در حال ثبت…' : 'Reporting…') : (locale === 'fa' ? 'گزارش پاسخ' : 'Report response')}</button> : null}</div>
               </div>
             ))}
             {sending ? <div className="coach-message coach-message--assistant"><span><BrainCircuit size={18} /></span><p className="typing-indicator"><i /><i /><i /></p></div> : null}
           </div>
           <div className="coach-suggestions">{[...new Set([...suggestedActions, ...(historyQuery.data?.suggestedActions ?? []), ...suggestions])].slice(0, 6).map((suggestion) => <button key={suggestion} onClick={() => setInput(suggestion)} type="button">{suggestion}</button>)}</div>
           {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
+          {reportNotice ? <div className="inline-notice" role="status">{reportNotice}</div> : null}
           <GlassChrome className="coach-composer">
             <form onSubmit={submit}>
               <textarea aria-label={t('app.coachPlaceholder')} disabled={!preview && !online} onChange={(event) => setInput(event.target.value)} placeholder={t('app.coachPlaceholder')} rows={1} value={input} />

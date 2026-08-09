@@ -1,0 +1,89 @@
+name: Quality and security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --audit-level=high
+
+  e2e:
+    name: Browser smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  backend:
+    name: Supabase and Deno
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm ci
+      - name: Deno formatting
+        run: deno fmt --check supabase/functions
+      - name: Deno lint
+        run: deno lint supabase/functions
+      - name: Edge Function type checks
+        run: find supabase/functions -mindepth 2 -maxdepth 2 -name index.ts -print0 | xargs -0 -n1 deno check --config supabase/functions/deno.json
+      - name: Start local Supabase and apply all migrations
+        run: npx supabase start
+      - name: Reset from an empty database
+        run: npx supabase db reset --local
+      - name: PostgreSQL lint
+        run: npx supabase db lint --local --level warning
+      - name: Database and RLS tests
+        run: npx supabase test db
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop --no-backup
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

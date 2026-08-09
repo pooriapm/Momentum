@@ -1,13 +1,20 @@
-import { ArrowDownRight, CalendarDays, Check, Flame, LineChart, MoonStar, Scale, Sparkles, TrendingUp } from 'lucide-react'
+import { ArrowDownRight, CalendarCheck2, CalendarDays, Check, Flame, LineChart, MoonStar, Scale, Sparkles, TrendingUp } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AppLocale } from '../../../platform/i18n/catalog'
+import { useOnlineStatus } from '../../../platform/pwa/network'
+import { currentWeekStart, saveWeeklyCheckIn } from '../../checkins/repository'
+import { WeeklyCheckInSheet } from '../../components/WeeklyCheckInSheet'
 import { localize, type MomentumPlanView } from '../../data/types'
 import { formatNumber } from '../../lib/format'
-import { ContentCard, StatusPill } from '../../ui/primitives'
+import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
 
-export function ProgressPage({ locale, plan }: { locale: AppLocale; plan: MomentumPlanView | null }) {
+export function ProgressPage({ locale, plan, preview }: { locale: AppLocale; plan: MomentumPlanView | null; preview: boolean }) {
   const { t } = useTranslation()
+  const online = useOnlineStatus()
+  const [weeklyOpen, setWeeklyOpen] = useState(false)
+  const [weeklySaved, setWeeklySaved] = useState(false)
   if (!plan) return <EmptyPlanState locale={locale} />
   const change = plan.progress.currentWeight - plan.progress.startWeight
   const onTrack = plan.progress.weeklyAdherence >= 70
@@ -38,7 +45,7 @@ export function ProgressPage({ locale, plan }: { locale: AppLocale; plan: Moment
   const DirectionIcon = direction
   return (
     <main className="app-page progress-page screen-enter">
-      <section className="page-heading"><div><p className="orbit-eyebrow"><Sparkles size={15} />Signal over noise</p><h1>{t('app.progressTitle')}</h1><p>{locale === 'fa' ? 'اندازه‌گیری‌های ثبت‌شده کنار هم نمایش داده می‌شوند تا تغییرات واقعی را ببینی.' : 'Your logged measurements are shown together so you can see the real trend.'}</p></div><StatusPill tone={onTrack ? 'success' : 'neutral'}><TrendingUp size={14} />{onTrack ? (locale === 'fa' ? 'در مسیر' : 'On track') : (locale === 'fa' ? 'نیازمند توجه' : 'Needs attention')}</StatusPill></section>
+      <section className="page-heading"><div><p className="orbit-eyebrow"><Sparkles size={15} />Signal over noise</p><h1>{t('app.progressTitle')}</h1><p>{locale === 'fa' ? 'اندازه‌گیری‌های ثبت‌شده کنار هم نمایش داده می‌شوند تا تغییرات واقعی را ببینی.' : 'Your logged measurements are shown together so you can see the real trend.'}</p></div><div className="progress-heading-actions"><StatusPill tone={onTrack ? 'success' : 'neutral'}><TrendingUp size={14} />{onTrack ? (locale === 'fa' ? 'در مسیر' : 'On track') : (locale === 'fa' ? 'نیازمند توجه' : 'Needs attention')}</StatusPill><Button disabled={!preview && !online} onClick={() => setWeeklyOpen(true)} variant="secondary"><CalendarCheck2 size={17} />{weeklySaved ? (locale === 'fa' ? 'چک‌این هفته ثبت شد' : 'Weekly check-in saved') : (locale === 'fa' ? 'چک‌این هفتگی' : 'Weekly check-in')}</Button></div></section>
       <div className="progress-metrics-grid">
         <ContentCard><span><Scale size={19} /></span><small>{locale === 'fa' ? 'وزن فعلی' : 'Current weight'}</small><strong>{formatNumber(plan.progress.currentWeight, locale)} kg</strong><em><DirectionIcon size={15} />{formatNumber(Math.abs(change), locale)} kg</em></ContentCard>
         <ContentCard><span><Check size={19} /></span><small>{t('app.consistency')}</small><strong>{formatNumber(plan.progress.weeklyAdherence, locale)}%</strong><em>{locale === 'fa' ? 'میانگین ۷ روز اخیر' : 'Last 7-day average'}</em></ContentCard>
@@ -64,6 +71,27 @@ export function ProgressPage({ locale, plan }: { locale: AppLocale; plan: Moment
           <ul>{plan.progress.recentCheckIns.map((checkIn) => <li key={`${checkIn.date.en}-${checkIn.score}`}><span><strong>{localize(checkIn.date, locale)}</strong><small>{localize(checkIn.note, locale)}</small></span><em>{formatNumber(checkIn.score, locale)}%</em></li>)}</ul>
         </ContentCard>
       </div>
+      {weeklyOpen ? <WeeklyCheckInSheet locale={locale} onClose={() => setWeeklyOpen(false)} onSave={async (input) => {
+        const result = preview
+          ? {
+              checkin: {
+                id: crypto.randomUUID(),
+                week_start: currentWeekStart(),
+                updated_at: new Date().toISOString(),
+                trend_summary: {
+                  current: { adherence_percent: 84, pain_score: 1.5, recovery_score: 3.8, training_difficulty_score: 3.2 },
+                  previous: { adherence_percent: 79, pain_score: 2.1, recovery_score: 3.4, training_difficulty_score: 3.6 },
+                  delta: { adherence_percent: 5, pain_score: -0.6, recovery_score: 0.4, training_difficulty_score: -0.4 },
+                  current_daily_count: 5,
+                  previous_daily_count: 6,
+                },
+              },
+              safety: { level: input.redFlags?.length ? 'urgent' as const : input.painTrend === 'worse' || input.recoveryTrend === 'worse' ? 'caution' as const : 'normal' as const, reasons: [] },
+            }
+          : await saveWeeklyCheckIn(input, currentWeekStart(), plan.timezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'))
+        setWeeklySaved(true)
+        return result
+      }} /> : null}
     </main>
   )
 }

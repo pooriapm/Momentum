@@ -1,4 +1,5 @@
 import { HttpError } from './http.ts'
+import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 
 const nutritionSchema = {
   type: 'object',
@@ -11,7 +12,7 @@ const nutritionSchema = {
     confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
     source: {
       type: 'string',
-      enum: ['model_estimate'],
+      enum: ['model_estimate', 'catalog_reference'],
     },
   },
   required: [
@@ -43,6 +44,10 @@ const targetSchema = {
 const ingredientSchema = {
   type: 'object',
   properties: {
+    ingredient_id: {
+      type: 'string',
+      pattern: '^ingredient:[a-z0-9._-]+@v[1-9][0-9]*$',
+    },
     name: { type: 'string', minLength: 1, maxLength: 160 },
     amount: { type: 'number', minimum: 0, maximum: 100_000 },
     unit: {
@@ -51,7 +56,7 @@ const ingredientSchema = {
     },
     note: { type: ['string', 'null'], maxLength: 240 },
   },
-  required: ['name', 'amount', 'unit', 'note'],
+  required: ['ingredient_id', 'name', 'amount', 'unit', 'note'],
   additionalProperties: false,
 } as const
 
@@ -74,6 +79,10 @@ const recipeSchema = {
 const optionSchema = {
   type: 'object',
   properties: {
+    food_id: {
+      type: 'string',
+      pattern: '^food:[a-z0-9._-]+@v[1-9][0-9]*$',
+    },
     option_key: {
       type: 'string',
       pattern: '^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$',
@@ -95,6 +104,7 @@ const optionSchema = {
     portable: { type: 'boolean' },
   },
   required: [
+    'food_id',
     'option_key',
     'title',
     'ingredients',
@@ -122,6 +132,10 @@ const targetStrategySchema = {
 const exerciseSchema = {
   type: 'object',
   properties: {
+    exercise_id: {
+      type: 'string',
+      pattern: '^exercise:[a-z0-9._-]+@v[1-9][0-9]*$',
+    },
     exercise_key: {
       type: 'string',
       pattern: '^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$',
@@ -135,18 +149,33 @@ const exerciseSchema = {
       maxItems: 12,
       items: { type: 'string', minLength: 1, maxLength: 100 },
     },
+    equipment_ids: {
+      type: 'array',
+      maxItems: 12,
+      items: {
+        type: 'string',
+        pattern: '^equipment:[a-z0-9._-]+@v[1-9][0-9]*$',
+      },
+    },
     intensity_note: { type: ['string', 'null'], maxLength: 240 },
     substitution: { type: ['string', 'null'], maxLength: 240 },
+    substitution_exercise_id: {
+      type: ['string', 'null'],
+      pattern: '^exercise:[a-z0-9._-]+@v[1-9][0-9]*$',
+    },
   },
   required: [
+    'exercise_id',
     'exercise_key',
     'name',
     'sets',
     'reps',
     'rest_seconds',
     'equipment',
+    'equipment_ids',
     'intensity_note',
     'substitution',
+    'substitution_exercise_id',
   ],
   additionalProperties: false,
 } as const
@@ -393,7 +422,7 @@ function assertNutrition(value: unknown): void {
   if (!['low', 'medium', 'high'].includes(String(value.confidence))) {
     throw new HttpError(502, 'invalid_plan_output', 'Generated nutrition confidence is invalid.')
   }
-  if (value.source !== 'model_estimate') {
+  if (!['model_estimate', 'catalog_reference'].includes(String(value.source))) {
     throw new HttpError(502, 'invalid_plan_output', 'Generated nutrition source is invalid.')
   }
 
@@ -436,38 +465,76 @@ function assertTarget(value: unknown, minimumCalories: number): void {
   }
 }
 
-function normalizeFoodTerm(value: string): string {
-  return value.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
-}
-
-function assertNoDeclaredAllergens(
-  option: Record<string, unknown>,
-  normalizedAllergens: string[],
+function assertCatalogIngredient(
+  ingredient: Record<string, unknown>,
+  allowedIngredientIds: ReadonlySet<string>,
+  catalog: PlanCatalogSnapshot,
+  declaredAllergenIds: ReadonlySet<string>,
 ): void {
-  if (!Array.isArray(option.ingredients)) return
-  for (const ingredient of option.ingredients) {
-    if (!isRecord(ingredient) || typeof ingredient.name !== 'string') continue
-    const ingredientName = normalizeFoodTerm(ingredient.name)
-    if (
-      normalizedAllergens.some((allergen) =>
-        allergen.length >= 2 && (
-          ingredientName === allergen ||
-          ingredientName.includes(` ${allergen} `) ||
-          ingredientName.startsWith(`${allergen} `) ||
-          ingredientName.endsWith(` ${allergen}`)
-        )
-      )
-    ) {
-      throw new HttpError(
-        502,
-        'allergen_in_generated_plan',
-        'Generated plan contains a declared allergen.',
-      )
-    }
+  const ingredientId = ingredient.ingredient_id
+  if (typeof ingredientId !== 'string' || !allowedIngredientIds.has(ingredientId)) {
+    throw new HttpError(502, 'unknown_catalog_id', 'Plan contains an unknown catalog ID.')
+  }
+  const canonical = catalog.ingredients.get(ingredientId)
+  if (!canonical) {
+    throw new HttpError(502, 'unknown_catalog_id', 'Plan contains an unknown catalog ID.')
+  }
+  if ([...canonical.allergenIds].some((id) => declaredAllergenIds.has(id))) {
+    throw new HttpError(
+      502,
+      'allergen_in_generated_plan',
+      'Generated plan contains a declared allergen.',
+    )
   }
 }
 
-function assertWorkout(value: unknown): void {
+function assertCatalogOption(
+  option: Record<string, unknown>,
+  catalog: PlanCatalogSnapshot,
+  declaredAllergenIds: ReadonlySet<string>,
+): void {
+  const foodId = option.food_id
+  const food = typeof foodId === 'string' ? catalog.foods.get(foodId) : undefined
+  if (!food) {
+    throw new HttpError(502, 'unknown_catalog_id', 'Plan contains an unknown catalog ID.')
+  }
+  if (!Array.isArray(option.ingredients) || option.ingredients.length < 1) {
+    throw new HttpError(502, 'invalid_plan_output', 'Generated ingredients are invalid.')
+  }
+  const seenIngredientIds = new Set<string>()
+  for (const ingredient of option.ingredients) {
+    if (!isRecord(ingredient) || typeof ingredient.ingredient_id !== 'string') {
+      throw new HttpError(502, 'invalid_plan_output', 'Generated ingredient is invalid.')
+    }
+    if (seenIngredientIds.has(ingredient.ingredient_id)) {
+      throw new HttpError(502, 'invalid_plan_output', 'Generated ingredients are duplicated.')
+    }
+    seenIngredientIds.add(ingredient.ingredient_id)
+    assertCatalogIngredient(ingredient, food.ingredientIds, catalog, declaredAllergenIds)
+  }
+  if (
+    seenIngredientIds.size !== food.ingredientIds.size ||
+    [...food.ingredientIds].some((id) => !seenIngredientIds.has(id))
+  ) {
+    throw new HttpError(502, 'catalog_food_modified', 'Catalog food ingredients were modified.')
+  }
+  if (!isRecord(option.nutrition)) {
+    throw new HttpError(502, 'invalid_plan_output', 'Generated nutrition is invalid.')
+  }
+  for (const key of ['calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g'] as const) {
+    if (Math.abs(Number(option.nutrition[key]) - food.nutrition[key]) > 0.01) {
+      throw new HttpError(502, 'catalog_food_modified', 'Catalog food nutrition was modified.')
+    }
+  }
+  if (option.nutrition.source !== 'catalog_reference' || option.nutrition.confidence !== 'high') {
+    throw new HttpError(502, 'catalog_food_modified', 'Catalog food provenance is invalid.')
+  }
+  if (option.portable !== food.portable) {
+    throw new HttpError(502, 'catalog_food_modified', 'Catalog food attributes were modified.')
+  }
+}
+
+function assertWorkout(value: unknown, catalog: PlanCatalogSnapshot): void {
   if (value === null) return
   if (
     !isRecord(value) ||
@@ -485,6 +552,7 @@ function assertWorkout(value: unknown): void {
   for (const exercise of value.exercises) {
     if (
       !isRecord(exercise) ||
+      typeof exercise.exercise_id !== 'string' ||
       typeof exercise.exercise_key !== 'string' ||
       !Number.isInteger(exercise.sets) ||
       Number(exercise.sets) < 1 ||
@@ -493,9 +561,32 @@ function assertWorkout(value: unknown): void {
       !Number.isInteger(exercise.rest_seconds) ||
       Number(exercise.rest_seconds) < 0 ||
       Number(exercise.rest_seconds) > 600 ||
-      exerciseKeys.has(exercise.exercise_key)
+      exerciseKeys.has(exercise.exercise_key) ||
+      !Array.isArray(exercise.equipment_ids)
     ) {
       throw new HttpError(502, 'invalid_plan_output', 'Generated workout exercise is invalid.')
+    }
+    const canonical = catalog.exercises.get(exercise.exercise_id)
+    if (!canonical) {
+      throw new HttpError(502, 'unknown_catalog_id', 'Plan contains an unknown catalog ID.')
+    }
+    const equipmentIds = new Set(exercise.equipment_ids)
+    if (
+      equipmentIds.size !== exercise.equipment_ids.length ||
+      [...equipmentIds].some((id) => typeof id !== 'string' || !catalog.equipmentIds.has(id)) ||
+      equipmentIds.size !== canonical.equipmentIds.size ||
+      [...canonical.equipmentIds].some((id) => !equipmentIds.has(id))
+    ) {
+      throw new HttpError(502, 'invalid_exercise_equipment', 'Exercise equipment is invalid.')
+    }
+    if (
+      exercise.substitution_exercise_id !== null &&
+      (
+        typeof exercise.substitution_exercise_id !== 'string' ||
+        !canonical.substitutionIds.has(exercise.substitution_exercise_id)
+      )
+    ) {
+      throw new HttpError(502, 'invalid_exercise_substitution', 'Exercise substitution is invalid.')
     }
     exerciseKeys.add(exercise.exercise_key)
   }
@@ -505,7 +596,11 @@ export function assertGeneratedPlan(
   value: unknown,
   requestedDays: number,
   requestedLocale: 'fa-IR' | 'en-US',
-  safety: { minimumCalories?: number; allergies?: string[] } = {},
+  safety: {
+    catalog: PlanCatalogSnapshot
+    declaredAllergenIds?: ReadonlySet<string>
+    minimumCalories?: number
+  },
 ): asserts value is Record<string, unknown> {
   if (
     !isRecord(value) ||
@@ -515,9 +610,7 @@ export function assertGeneratedPlan(
     throw new HttpError(502, 'invalid_plan_output', 'Generated plan is invalid.')
   }
   const minimumCalories = Math.max(1_200, Math.min(6_000, safety.minimumCalories ?? 1_200))
-  const normalizedAllergens = (safety.allergies ?? [])
-    .map(normalizeFoodTerm)
-    .filter(Boolean)
+  const declaredAllergenIds = safety.declaredAllergenIds ?? new Set<string>()
   assertTarget(value.default_targets, minimumCalories)
   if (!Array.isArray(value.days) || value.days.length !== requestedDays) {
     throw new HttpError(502, 'invalid_plan_output', 'Generated plan has the wrong number of days.')
@@ -534,7 +627,7 @@ export function assertGeneratedPlan(
     }
     dayIndexes.add(dayIndex)
     assertTarget(rawDay.targets, minimumCalories)
-    assertWorkout(rawDay.workout)
+    assertWorkout(rawDay.workout, safety.catalog)
     if (!Array.isArray(rawDay.meals) || rawDay.meals.length < 1 || rawDay.meals.length > 8) {
       throw new HttpError(502, 'invalid_plan_output', 'Generated meals are invalid.')
     }
@@ -566,7 +659,15 @@ export function assertGeneratedPlan(
         }
         optionKeys.add(rawOption.option_key)
         assertNutrition(rawOption.nutrition)
-        assertNoDeclaredAllergens(rawOption, normalizedAllergens)
+        assertCatalogOption(rawOption, safety.catalog, declaredAllergenIds)
+        const food = safety.catalog.foods.get(String(rawOption.food_id))
+        if (!food?.meal_types.includes(String(rawMeal.type))) {
+          throw new HttpError(
+            502,
+            'invalid_food_meal_type',
+            'Catalog food is invalid for meal type.',
+          )
+        }
         if (
           rawOption.option_key === rawMeal.default_option_key &&
           isRecord(rawOption.nutrition)
@@ -605,6 +706,26 @@ export function assertGeneratedPlan(
       throw new HttpError(502, 'invalid_plan_output', 'Generated emergency option is invalid.')
     }
     assertNutrition(option.nutrition)
-    assertNoDeclaredAllergens(option, normalizedAllergens)
+    assertCatalogOption(option, safety.catalog, declaredAllergenIds)
+  }
+
+  if (!Array.isArray(value.grocery_list)) {
+    throw new HttpError(502, 'invalid_plan_output', 'Generated grocery list is invalid.')
+  }
+  for (const group of value.grocery_list) {
+    if (!isRecord(group) || !Array.isArray(group.items)) {
+      throw new HttpError(502, 'invalid_plan_output', 'Generated grocery list is invalid.')
+    }
+    for (const ingredient of group.items) {
+      if (!isRecord(ingredient)) {
+        throw new HttpError(502, 'invalid_plan_output', 'Generated grocery ingredient is invalid.')
+      }
+      assertCatalogIngredient(
+        ingredient,
+        new Set(safety.catalog.ingredients.keys()),
+        safety.catalog,
+        declaredAllergenIds,
+      )
+    }
   }
 }

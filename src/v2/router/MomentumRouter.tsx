@@ -16,6 +16,7 @@ const CoachPage = lazy(async () => ({ default: (await import('../pages/app/Coach
 const ProgressPage = lazy(async () => ({ default: (await import('../pages/app/ProgressPage')).ProgressPage }))
 const MePage = lazy(async () => ({ default: (await import('../pages/app/MePage')).MePage }))
 const AccountDataPage = lazy(async () => ({ default: (await import('../pages/app/AccountDataPage')).AccountDataPage }))
+const AccountSettingsPage = lazy(async () => ({ default: (await import('../pages/app/AccountSettingsPage')).AccountSettingsPage }))
 const AuthPage = lazy(async () => ({ default: (await import('../pages/auth/AuthPage')).AuthPage }))
 const OnboardingPage = lazy(async () => ({ default: (await import('../pages/onboarding/OnboardingPage')).OnboardingPage }))
 const OnboardingResumePage = lazy(async () => ({ default: (await import('../pages/onboarding/OnboardingResumePage')).OnboardingResumePage }))
@@ -63,6 +64,13 @@ export function MomentumRouter() {
           </AppFrame></AccountBoundary>
         ))}
       </Route>
+      <Route path="/:locale/app/settings">
+        {(params) => withLocale(params.locale, (locale) => (
+          <AccountBoundary><AppFrame locale={locale} tab="me">
+            {({ preview }) => <AccountSettingsPage locale={locale} preview={preview} />}
+          </AppFrame></AccountBoundary>
+        ))}
+      </Route>
       <Route path="/:locale/app/:tab">
         {(params) => withLocale(params.locale, (locale) => {
           const tab = appTabs.includes(params.tab as AppTab) ? params.tab as AppTab : 'today'
@@ -72,7 +80,7 @@ export function MomentumRouter() {
                 if (tab === 'today') return <TodayPage locale={locale} plan={plan} preview={preview} />
                 if (tab === 'plan') return <PlanPage locale={locale} plan={plan} preview={preview} />
                 if (tab === 'coach') return <CoachPage locale={locale} plan={plan} preview={preview} />
-                if (tab === 'progress') return <ProgressPage locale={locale} plan={plan} />
+                if (tab === 'progress') return <ProgressPage locale={locale} plan={plan} preview={preview} />
                 return <MePage locale={locale} plan={plan} preview={preview} />
               }}
             </AppFrame></AccountBoundary>

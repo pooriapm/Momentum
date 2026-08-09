@@ -2,6 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { authenticate } from '../_shared/auth.ts'
 import { assertAiFeatureEnabled } from '../_shared/ai-gate.ts'
 import {
+  deterministicSafetyReply,
+  isOutputSafetyDenial,
+  safetyHttpError,
+  screenAiText,
+} from '../_shared/ai-safety.ts'
+import {
   assertCoachOutput,
   type CoachOutput,
   coachOutputJsonSchema,
@@ -36,23 +42,6 @@ interface CoachBody {
   thread_id?: unknown
   message?: unknown
   locale?: unknown
-}
-
-function deterministicUrgentReply(message: string, locale: 'fa-IR' | 'en-US'): string | null {
-  const normalized = message
-    .toLowerCase()
-    .replaceAll('ي', 'ی')
-    .replaceAll('ك', 'ک')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-  const explicitUrgentPattern = locale === 'fa-IR'
-    ? /(قصد خودکشی|خودکشی کنم|خودم را بکشم|خودمو بکشم|نمی ?توانم نفس بکشم|نمی ?تونم نفس بکشم|درد (شدید )?قفسه سینه|بیهوش شدم|اوردوز)/
-    : /\b(i (?:want|plan|intend|am going) to (?:kill|hurt) myself|suicid(?:e|al)|overdos(?:e|ed)|can(?:not|'t) breathe|severe chest pain|passed out|unconscious)\b/
-  if (!explicitUrgentPattern.test(normalized)) return null
-  return locale === 'fa-IR'
-    ? 'این وضعیت می‌تواند فوری باشد. همین حالا با خدمات اورژانس یا خط بحران محل زندگی‌ات تماس بگیر یا از یک فرد قابل‌اعتماد بخواه کنارت بماند و تو را به نزدیک‌ترین مرکز درمانی برساند. تنها نمان و برای پاسخ این چت منتظر نمان.'
-    : 'This may be an emergency. Contact local emergency or crisis services now, or ask a trusted person to stay with you and take you to the nearest emergency department. Do not stay alone or wait for this chat.'
 }
 
 function parseBody(body: CoachBody): {
@@ -183,8 +172,10 @@ Deno.serve(async (request) => {
       throw new HttpError(400, 'invalid_locale', 'Locale must be fa-IR or en-US.')
     }
 
-    const urgentReply = deterministicUrgentReply(body.message, locale)
-    if (urgentReply) {
+    const inputSafety = await screenAiText(body.message)
+    if (inputSafety) {
+      const safeReply = deterministicSafetyReply(locale, inputSafety)
+      const safetyLevel = inputSafety.level === 'urgent' ? 'urgent' : 'caution'
       const thread = await getOrCreateThread(
         admin,
         auth.user.id,
@@ -200,23 +191,27 @@ Deno.serve(async (request) => {
             user_id: auth.user.id,
             role: 'user',
             content: body.message,
-            safety_level: 'urgent',
-            safety_reason: 'deterministic_urgent_phrase',
+            safety_level: safetyLevel,
+            safety_reason: inputSafety.reason,
           },
           {
             thread_id: thread.id,
             user_id: auth.user.id,
             role: 'assistant',
-            content: urgentReply,
-            safety_level: 'urgent',
-            safety_reason: 'deterministic_urgent_phrase',
+            content: safeReply,
+            safety_level: safetyLevel,
+            safety_reason: inputSafety.reason,
             suggested_actions: [],
           },
         ])
         .select('id,thread_id,role,content,safety_level,safety_reason,suggested_actions,created_at')
       const urgentAssistant = urgentMessages?.find((message) => message.role === 'assistant')
       if (urgentError || !urgentAssistant) {
-        throw new HttpError(503, 'urgent_message_persistence_failed', 'Urgent guidance is unavailable.')
+        throw new HttpError(
+          503,
+          'urgent_message_persistence_failed',
+          'Urgent guidance is unavailable.',
+        )
       }
       const { error: threadUpdateError } = await admin
         .from('coach_threads')
@@ -238,7 +233,7 @@ Deno.serve(async (request) => {
           created_at: urgentAssistant.created_at,
         },
         suggested_actions: [],
-        safety: { level: 'urgent', reason: 'deterministic_urgent_phrase' },
+        safety: { level: safetyLevel, reason: inputSafety.reason },
       })
     }
 
@@ -407,6 +402,8 @@ Return only the schema-constrained result.`
     const combinedContent = providerResponse.parsed.follow_up_question
       ? `${providerResponse.parsed.reply}\n\n${providerResponse.parsed.follow_up_question}`
       : providerResponse.parsed.reply
+    const outputSafety = await screenAiText(combinedContent)
+    if (outputSafety) throw safetyHttpError('output', outputSafety)
     const { data: assistantMessage, error: assistantMessageError } = await admin.rpc(
       'persist_coach_reply_and_finalize',
       {
@@ -438,7 +435,12 @@ Return only the schema-constrained result.`
   } catch (error) {
     if (admin && reservation) {
       try {
-        await finalizeAiUsage(admin, reservation, 'failed', providerUsage)
+        await finalizeAiUsage(
+          admin,
+          reservation,
+          isOutputSafetyDenial(error) ? 'released' : 'failed',
+          providerUsage,
+        )
       } catch {
         // Reconciliation handles rare partial failures without exposing details.
       }

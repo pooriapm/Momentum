@@ -1,0 +1,14 @@
+.coach-report-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: .65rem;
+  gap: .3rem;
+  margin-top: .35rem;
+  padding: .2rem 0;
+}
+.coach-report-button:hover { color: var(--color-danger); }
+.coach-report-button:disabled { cursor: wait; opacity: .55; }

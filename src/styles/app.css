@@ -1,4 +1,6 @@
 @import "./orbit.css";
+@import "./workout.css";
+@import "./ai-safety.css";
 
 @font-face {
   font-family: "Vazirmatn";

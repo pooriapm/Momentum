@@ -89,6 +89,14 @@ export const demoPlan: MomentumPlanView = {
       { fa: 'پالوف پرس · ۳ × ۱۲', en: 'Pallof press · 3 × 12' },
       { fa: 'سردکردن تنفسی · ۴ دقیقه', en: 'Breathing cooldown · 4 min' },
     ],
+    exerciseDetails: [
+      { key: 'goblet-squat', name: { fa: 'اسکوات جام', en: 'Goblet squat' }, sets: 4, reps: '8', restSeconds: 90, substitution: { fa: 'اسکوات با وزن بدن', en: 'Bodyweight squat' } },
+      { key: 'romanian-deadlift', name: { fa: 'ددلیفت رومانیایی', en: 'Romanian deadlift' }, sets: 3, reps: '10', restSeconds: 90, substitution: { fa: 'پل باسن', en: 'Glute bridge' } },
+      { key: 'split-squat', name: { fa: 'اسپلیت اسکوات', en: 'Split squat' }, sets: 3, reps: '8/side', restSeconds: 75, substitution: { fa: 'لانج معکوس', en: 'Reverse lunge' } },
+      { key: 'hip-thrust', name: { fa: 'هیپ تراست', en: 'Hip thrust' }, sets: 3, reps: '12', restSeconds: 75, substitution: { fa: 'پل باسن', en: 'Glute bridge' } },
+      { key: 'pallof-press', name: { fa: 'پالوف پرس', en: 'Pallof press' }, sets: 3, reps: '12', restSeconds: 60, substitution: { fa: 'پلانک', en: 'Plank' } },
+      { key: 'breathing-cooldown', name: { fa: 'سردکردن تنفسی', en: 'Breathing cooldown' }, sets: 1, reps: '4 min', restSeconds: 0, substitution: null },
+    ],
   },
   shoppingGroups: [
     { id: 'protein', name: { fa: 'پروتئین', en: 'Protein' }, items: [

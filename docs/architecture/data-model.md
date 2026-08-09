@@ -18,6 +18,9 @@ erDiagram
   PLANS ||--o{ PLAN_VERSIONS : versions
   PROFILES ||--o{ DAILY_CHECKINS : records
   PLAN_VERSIONS ||--o{ DAILY_MEAL_STATUS : snapshots
+  PLAN_VERSIONS ||--o{ WORKOUT_SESSIONS : snapshots
+  WORKOUT_SESSIONS ||--o{ WORKOUT_EXERCISE_LOGS : contains
+  WORKOUT_EXERCISE_LOGS ||--o{ WORKOUT_SET_LOGS : contains
   PROFILES ||--o{ ENTITLEMENTS : receives
   ENTITLEMENTS ||--o{ USAGE_LEDGER : limits
   USAGE_LEDGER ||--o| AI_GENERATION_JOBS : reserves
@@ -55,6 +58,10 @@ archives an overlapping plan inside the same database transaction.
 Daily selections reference the exact immutable `plan_version_id` and retain
 title/nutrition snapshots. Historical logs therefore remain intelligible after
 later plan versions are created.
+
+Workout sessions similarly retain the active version plus planned exercise,
+set, rep and rest snapshots. Only owner-bound RPCs mutate workout execution;
+RLS clients can read but cannot directly write these health/activity logs.
 
 ## AI, subscriptions and usage
 

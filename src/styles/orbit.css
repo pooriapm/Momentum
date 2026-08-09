@@ -947,6 +947,30 @@ textarea {
 .score-field button.is-selected { background: var(--color-brand-soft); border-color: var(--color-brand); color: var(--color-brand); }
 .check-in-sheet__numbers { display: grid; gap: .7rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .check-in-sheet__numbers .orbit-field:last-child { grid-column: 1 / -1; }
+.check-in-red-flags { background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: 1rem; display: grid; gap: .45rem; margin: 0; padding: .8rem; }
+.check-in-red-flags legend { font-size: .72rem; font-weight: 750; padding-inline: .25rem; }
+.check-in-red-flags > p { color: var(--color-text-muted); font-size: .62rem; line-height: 1.6; margin: 0; }
+.check-in-red-flags > div { display: grid; gap: .4rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.check-in-red-flags label { align-items: flex-start; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: .7rem; cursor: pointer; display: flex; font-size: .65rem; gap: .45rem; line-height: 1.55; padding: .55rem; }
+.check-in-red-flags input, .weekly-change-toggle input { accent-color: var(--color-brand); flex: none; margin-top: .15rem; }
+.check-in-safety-result { align-items: flex-start; border: 1px solid var(--color-border); border-radius: 1rem; display: flex; gap: .7rem; margin-bottom: 1rem; padding: .9rem; }
+.check-in-safety-result > svg { flex: none; }
+.check-in-safety-result strong { font-size: .78rem; }
+.check-in-safety-result p { color: var(--color-text-secondary); font-size: .7rem; line-height: 1.8; margin: .35rem 0 0; }
+.check-in-safety-result--caution { background: var(--color-warning-soft); border-color: color-mix(in srgb, var(--color-warning) 35%, var(--color-border)); color: var(--color-warning); }
+.check-in-safety-result--urgent { background: var(--color-danger-soft); border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border)); color: var(--color-danger); }
+.weekly-check-in-sheet { max-width: 38rem; }
+.weekly-change-toggle { align-items: flex-start; background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: .9rem; cursor: pointer; display: flex; gap: .55rem; padding: .7rem; }
+.weekly-change-toggle span { display: grid; gap: .15rem; }
+.weekly-change-toggle strong { font-size: .7rem; }
+.weekly-change-toggle small { color: var(--color-text-muted); font-size: .6rem; line-height: 1.6; }
+.weekly-trend-summary { display: grid; gap: .55rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.weekly-trend-summary > div { background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: .9rem; display: grid; gap: .15rem; padding: .75rem; }
+.weekly-trend-summary small { color: var(--color-text-muted); font-size: .6rem; }
+.weekly-trend-summary strong { font: 800 1rem var(--font-latin); }
+.weekly-trend-summary span { color: var(--color-text-secondary); font-size: .58rem; line-height: 1.5; }
+.weekly-trend-summary__coverage { color: var(--color-text-muted); font-size: .62rem; line-height: 1.7; margin: .7rem 0 1rem; }
+.progress-heading-actions { align-items: flex-end; display: flex; flex-direction: column; gap: .65rem; }
 .today-side-stack { display: grid; gap: 1rem; }
 .workout-card, .recovery-card { padding: 1.1rem; }
 .workout-card__icon { align-items: center; background: var(--color-energy-soft); border-radius: .85rem; color: var(--color-energy); display: flex; height: 2.8rem; justify-content: center; width: 2.8rem; }
@@ -1091,6 +1115,26 @@ textarea {
 .settings-list button > span:nth-child(2), .settings-link-button > span:nth-child(2) { display: grid; gap: .12rem; }
 .settings-list strong { font-size: .75rem; }
 .settings-list small { color: var(--color-text-muted); font-size: .6rem; }
+.account-settings-form { display: grid; gap: 1rem; }
+.account-settings-section { display: grid; gap: 1rem; padding: 1.2rem; }
+.account-settings-section > h2, .account-settings-section .section-title-row h2 { font-size: 1rem; margin: 0; }
+.account-settings-grid { display: grid; gap: .8rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.account-settings-grid .orbit-field:has(textarea) { grid-column: 1 / -1; }
+.protected-setting-note { align-items: flex-start; background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: .9rem; color: var(--color-text-muted); display: flex; gap: .6rem; padding: .75rem; }
+.protected-setting-note svg { color: var(--color-brand); flex: none; }
+.protected-setting-note p { font-size: .65rem; line-height: 1.75; margin: 0; }
+.schedule-editor { display: grid; gap: .6rem; }
+.schedule-editor > div { background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: .9rem; padding: .7rem; }
+.schedule-editor > div.is-selected { border-color: color-mix(in srgb, var(--color-brand) 45%, var(--color-border)); }
+.schedule-editor > div > label { align-items: center; cursor: pointer; display: flex; font-size: .7rem; gap: .45rem; }
+.schedule-editor > div > label input { accent-color: var(--color-brand); }
+.schedule-editor > div > div { display: grid; gap: .6rem; grid-template-columns: 1.2fr 1fr .8fr; margin-top: .7rem; }
+.account-settings-consent > div:first-child { align-items: flex-start; display: flex; gap: .7rem; }
+.account-settings-consent > div:first-child > svg { color: var(--color-danger); flex: none; }
+.account-settings-consent h2 { margin: 0; }
+.account-settings-consent p { color: var(--color-text-muted); font-size: .66rem; line-height: 1.7; margin: .25rem 0 0; }
+.consent-withdraw-confirm { background: var(--color-danger-soft); border-radius: .9rem; display: flex; flex-wrap: wrap; gap: .6rem; padding: .8rem; }
+.consent-withdraw-confirm p { flex-basis: 100%; }
 .data-promise-card { align-items: flex-start; display: flex; gap: .75rem; padding: 1rem; }
 .data-promise-card > svg { color: var(--color-success); flex: none; }
 .data-promise-card h3 { font-size: .75rem; margin: 0; }
@@ -1244,6 +1288,8 @@ textarea {
   .check-in-sheet { padding: 1rem; }
   .check-in-sheet header { margin-bottom: .75rem; padding-bottom: .75rem; }
   .check-in-sheet form { gap: .7rem; }
+  .check-in-sheet__numbers, .check-in-red-flags > div { grid-template-columns: 1fr; }
+  .check-in-sheet__numbers .orbit-field:last-child { grid-column: auto; }
   .review-grid { grid-template-columns: repeat(2, 1fr); }
   .app-topbar { padding-inline: 1rem; }
   .app-topbar__date span { display: none; }
@@ -1252,6 +1298,9 @@ textarea {
   .app-page { padding: 1.25rem 1rem; }
   .page-heading { align-items: flex-start; flex-direction: column; }
   .page-heading > .orbit-button { width: 100%; }
+  .progress-heading-actions { align-items: stretch; width: 100%; }
+  .account-settings-grid, .schedule-editor > div > div { grid-template-columns: 1fr; }
+  .account-settings-grid .orbit-field:has(textarea) { grid-column: auto; }
   .today-side-stack { grid-template-columns: 1fr; }
   .macro-row { grid-template-columns: repeat(2, 1fr); row-gap: 1rem; }
   .macro-row > span:nth-child(3) { border-inline-start: 0; padding-inline-start: 0; }

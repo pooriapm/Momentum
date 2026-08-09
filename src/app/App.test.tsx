@@ -11,6 +11,18 @@ vi.mock('../platform/config/runtime', () => ({
   },
 }))
 
+vi.mock('../platform/data/supabase', () => {
+  const client = {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
+    },
+  }
+  return { supabase: client, requireSupabase: () => client }
+})
+
 describe('Momentum public product', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/fa')
@@ -40,7 +52,7 @@ describe('Momentum public product', () => {
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: 'صبح بخیر، آوا' })).toBeInTheDocument()
-    expect(screen.getByText(/Preview حافظه‌ای/)).toBeInTheDocument()
+    expect(await screen.findByText(/Preview حافظه‌ای/)).toBeInTheDocument()
     expect(localStorage.getItem('momentum.appState')).toBeNull()
   })
 

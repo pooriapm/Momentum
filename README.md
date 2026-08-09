@@ -76,6 +76,8 @@ supabase functions deploy generate-plan
 supabase functions deploy coach
 supabase functions deploy analyze-body-composition
 supabase functions deploy account-data
+supabase functions deploy checkins
+supabase functions deploy account-settings
 ```
 
 سپس secretهای server را تنظیم کنید. نام مدل‌ها و فهرست کشورهای مجاز باید configuration باشند، نه مقدار پراکنده در UI:

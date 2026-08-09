@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { authenticate } from '../_shared/auth.ts'
 import { assertAiFeatureEnabled } from '../_shared/ai-gate.ts'
+import { isOutputSafetyDenial, safetyHttpError, screenAiText } from '../_shared/ai-safety.ts'
 import { integerEnv, requiredEnv } from '../_shared/config.ts'
 import { assertCurrentConsents } from '../_shared/consent.ts'
 import { canonicalJson, sha256 } from '../_shared/crypto.ts'
@@ -23,10 +24,15 @@ import {
 } from '../_shared/limits.ts'
 import { assertAiJurisdiction, assertAiRequestRegion } from '../_shared/jurisdiction.ts'
 import { createStructuredResponse, hashedSafetyIdentifier } from '../_shared/openai.ts'
+import {
+  loadPlanCatalog,
+  planCatalogPromptContext,
+  resolveDeclaredAllergenIds,
+} from '../_shared/plan-catalog.ts'
 import { assertGeneratedPlan, generatedPlanJsonSchema } from '../_shared/plan-contract.ts'
 
-const PROMPT_VERSION = 'plan-v2'
-const OUTPUT_SCHEMA_VERSION = '1.0.0'
+const PROMPT_VERSION = 'plan-v3-catalog-v1'
+const OUTPUT_SCHEMA_VERSION = '1.1.0'
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -273,6 +279,14 @@ Deno.serve(async (request) => {
       )
     }
 
+    const catalog = await loadPlanCatalog(admin)
+    const declaredAllergenIds = resolveDeclaredAllergenIds(
+      catalog,
+      Array.isArray(preferenceResult.data?.allergies)
+        ? preferenceResult.data.allergies.map(String)
+        : [],
+    )
+
     const context = {
       request: {
         start_date: parsedRequest.startDate,
@@ -291,6 +305,8 @@ Deno.serve(async (request) => {
       health_context: healthResult.data ?? {},
       latest_body_composition: measurementResult.data ?? null,
       training_schedule: trainingResult.data ?? [],
+      governed_catalog: planCatalogPromptContext(catalog),
+      declared_allergen_ids: [...declaredAllergenIds],
     }
     const canonicalContext = canonicalJson(context)
     if (new TextEncoder().encode(canonicalContext).byteLength > 48_000) {
@@ -300,6 +316,8 @@ Deno.serve(async (request) => {
         'Profile context must be shortened before generation.',
       )
     }
+    const inputSafety = await screenAiText(canonicalContext)
+    if (inputSafety) throw safetyHttpError('input', inputSafety)
     const fingerprint = await sha256(canonicalContext)
     const model = requiredEnv('OPENAI_PLAN_MODEL')
     reservation = await reserveAiUsage(
@@ -400,7 +418,8 @@ Success criteria:
 - every day has an explicit target strategy, final energy/macro targets, executable meals, and a workout or an intentional null rest-day workout
 - each meal has the requested number of genuinely interchangeable options
 - every workout contains safe exercises with sets, reps, rest, equipment, and substitutions
-- ingredient quantities and nutrition are internally plausible; nutrition source must be model_estimate unless the input explicitly supplies a label/database value
+- every food, ingredient, exercise, equipment and substitution must use an exact ID from governed_catalog; never invent an ID
+- copy each catalog food's complete ingredient ID set, nutrition, portable flag and catalog_reference provenance without modification
 - recipe is null for no-cook items and otherwise contains concise executable steps
 - restaurant, grocery, emergency, and safety sections are useful and compact
 
@@ -439,12 +458,13 @@ Return only the schema-constrained result.`
       parsedRequest.days,
       parsedRequest.locale,
       {
+        catalog,
+        declaredAllergenIds,
         minimumCalories,
-        allergies: Array.isArray(preferenceResult.data?.allergies)
-          ? preferenceResult.data.allergies.map(String)
-          : [],
       },
     )
+    const outputSafety = await screenAiText(canonicalJson(providerResponse.parsed))
+    if (outputSafety) throw safetyHttpError('output', outputSafety)
 
     const contentHash = await sha256(canonicalJson(providerResponse.parsed))
     const validTo = addIsoDays(parsedRequest.startDate, parsedRequest.days - 1)
@@ -490,7 +510,12 @@ Return only the schema-constrained result.`
       await markJobFailed(admin, jobId, code)
       if (reservation) {
         try {
-          await finalizeAiUsage(admin, reservation, 'failed', providerUsage)
+          await finalizeAiUsage(
+            admin,
+            reservation,
+            isOutputSafetyDenial(error) ? 'released' : 'failed',
+            providerUsage,
+          )
         } catch {
           // A reconciliation job should repair rare provider/DB split failures.
         }

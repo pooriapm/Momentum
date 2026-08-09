@@ -2,6 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { authenticate } from '../_shared/auth.ts'
 import { assertAiFeatureEnabled } from '../_shared/ai-gate.ts'
 import {
+  isOutputSafetyDenial,
+  moderateWithOpenAI,
+  safetyHttpError,
+  screenAiText,
+} from '../_shared/ai-safety.ts'
+import {
   assertBodyCompositionExtraction,
   type BodyCompositionExtraction,
   bodyCompositionExtractionJsonSchema,
@@ -113,7 +119,11 @@ async function deleteSourceReport(
     .from('body-composition')
     .remove([reportObjectPath])
   if (removeError) {
-    throw new HttpError(503, 'body_report_retention_failed', 'The source report could not be retired.')
+    throw new HttpError(
+      503,
+      'body_report_retention_failed',
+      'The source report could not be retired.',
+    )
   }
   const { error: updateError } = await admin
     .from('body_composition_measurements')
@@ -121,7 +131,11 @@ async function deleteSourceReport(
     .eq('id', measurementId)
     .eq('user_id', userId)
   if (updateError) {
-    throw new HttpError(503, 'body_report_retention_failed', 'The source report could not be retired.')
+    throw new HttpError(
+      503,
+      'body_report_retention_failed',
+      'The source report could not be retired.',
+    )
   }
 }
 
@@ -236,6 +250,36 @@ Deno.serve(async (request) => {
       throw new HttpError(409, 'body_report_not_pending', 'This report is not awaiting analysis.')
     }
 
+    const { data: reportBlob, error: downloadError } = await admin.storage
+      .from('body-composition')
+      .download(measurement.report_object_path)
+    if (downloadError || !reportBlob) {
+      throw new HttpError(503, 'body_report_download_failed', 'The report could not be read.')
+    }
+    const mimeType = reportBlob.type.toLowerCase().split(';', 1)[0]?.trim() ?? ''
+    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+      throw new HttpError(415, 'unsupported_report_type', 'Report must be PDF, JPEG, PNG, or WebP.')
+    }
+    if (reportBlob.size < 1 || reportBlob.size > MAX_FILE_BYTES) {
+      throw new HttpError(413, 'invalid_report_size', 'Report must be between 1 byte and 10 MB.')
+    }
+    const bytes = new Uint8Array(await reportBlob.arrayBuffer())
+    if (detectedMimeType(bytes) !== mimeType) {
+      throw new HttpError(
+        415,
+        'report_signature_mismatch',
+        'Report content does not match its declared type.',
+      )
+    }
+    const moderationInput = mimeType === 'application/pdf'
+      ? 'Body-composition PDF submitted for numeric transcription only.'
+      : [{
+        type: 'image_url' as const,
+        image_url: { url: `data:${mimeType};base64,${bytesToBase64(bytes)}` },
+      }]
+    const inputSafety = await moderateWithOpenAI(moderationInput)
+    if (inputSafety) throw safetyHttpError('input', inputSafety)
+
     const requestHash = await sha256(canonicalJson({
       measurement_id: measurement.id,
       report_object_path: measurement.report_object_path,
@@ -296,24 +340,6 @@ Deno.serve(async (request) => {
       )
     }
 
-    const { data: reportBlob, error: downloadError } = await admin.storage
-      .from('body-composition')
-      .download(claimed.report_object_path)
-    if (downloadError || !reportBlob) {
-      throw new HttpError(503, 'body_report_download_failed', 'The report could not be read.')
-    }
-    const mimeType = reportBlob.type.toLowerCase().split(';', 1)[0]?.trim() ?? ''
-    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-      throw new HttpError(415, 'unsupported_report_type', 'Report must be PDF, JPEG, PNG, or WebP.')
-    }
-    if (reportBlob.size < 1 || reportBlob.size > MAX_FILE_BYTES) {
-      throw new HttpError(413, 'invalid_report_size', 'Report must be between 1 byte and 10 MB.')
-    }
-
-    const bytes = new Uint8Array(await reportBlob.arrayBuffer())
-    if (detectedMimeType(bytes) !== mimeType) {
-      throw new HttpError(415, 'report_signature_mismatch', 'Report content does not match its declared type.')
-    }
     const fileName = mimeType === 'application/pdf' ? 'body-report.pdf' : 'body-report-image'
     const providerResponse = await createStructuredResponse<BodyCompositionExtraction>({
       model: requiredEnv('OPENAI_BODY_COMPOSITION_MODEL'),
@@ -341,6 +367,8 @@ Return only the schema-constrained result.`,
     })
     providerUsage = providerResponse.usage
     assertBodyCompositionExtraction(providerResponse.parsed)
+    const outputSafety = await screenAiText(canonicalJson(providerResponse.parsed))
+    if (outputSafety) throw safetyHttpError('output', outputSafety)
     const metrics = normalizeBodyCompositionMetrics(providerResponse.parsed)
     if (Object.values(metrics).every((value) => value === null)) {
       throw new HttpError(
@@ -382,7 +410,12 @@ Return only the schema-constrained result.`,
     }
     if (admin && reservation && !extractionPersisted) {
       try {
-        await finalizeAiUsage(admin, reservation, 'failed', providerUsage)
+        await finalizeAiUsage(
+          admin,
+          reservation,
+          isOutputSafetyDenial(error) ? 'released' : 'failed',
+          providerUsage,
+        )
       } catch {
         // Reserved usage remains quota-counted until reconciliation.
       }
