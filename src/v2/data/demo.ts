@@ -89,12 +89,19 @@ export const demoPlan: MomentumPlanView = {
       { fa: 'پالوف پرس · ۳ × ۱۲', en: 'Pallof press · 3 × 12' },
       { fa: 'سردکردن تنفسی · ۴ دقیقه', en: 'Breathing cooldown · 4 min' },
     ],
+    equipment: [
+      { fa: 'دمبل ۱۲ کیلوگرمی', en: '12 kg dumbbell' },
+      { fa: 'کش تمرینی', en: 'Resistance band' },
+      { fa: 'نیمکت', en: 'Bench' },
+    ],
+    warmup: [{ fa: 'حرکت نرم و آماده‌سازی مفاصل · ۸ دقیقه', en: 'Mobility and joint preparation · 8 min' }],
+    cooldown: [{ fa: 'تنفس و کشش ملایم · ۴ دقیقه', en: 'Breathing and gentle stretches · 4 min' }],
     exerciseDetails: [
-      { key: 'goblet-squat', name: { fa: 'اسکوات جام', en: 'Goblet squat' }, sets: 4, reps: '8', restSeconds: 90, substitution: { fa: 'اسکوات با وزن بدن', en: 'Bodyweight squat' } },
-      { key: 'romanian-deadlift', name: { fa: 'ددلیفت رومانیایی', en: 'Romanian deadlift' }, sets: 3, reps: '10', restSeconds: 90, substitution: { fa: 'پل باسن', en: 'Glute bridge' } },
+      { key: 'goblet-squat', name: { fa: 'اسکوات جام', en: 'Goblet squat' }, sets: 4, reps: '8', restSeconds: 90, substitution: { fa: 'اسکوات با وزن بدن', en: 'Bodyweight squat' }, equipment: [{ fa: 'دمبل ۱۲ کیلوگرمی', en: '12 kg dumbbell' }], adaptation: { fa: 'اگر دمبل ۱۲ کیلوگرمی نداری، دامنه ۸ تا ۱۴ کیلوگرم یا نسخه وزن بدن را انتخاب کن.', en: 'If a 12 kg dumbbell is unavailable, choose 8–14 kg or the bodyweight version.' } },
+      { key: 'romanian-deadlift', name: { fa: 'ددلیفت رومانیایی', en: 'Romanian deadlift' }, sets: 3, reps: '10', restSeconds: 90, substitution: { fa: 'پل باسن', en: 'Glute bridge' }, equipment: [{ fa: 'دمبل ۱۲ کیلوگرمی', en: '12 kg dumbbell' }] },
       { key: 'split-squat', name: { fa: 'اسپلیت اسکوات', en: 'Split squat' }, sets: 3, reps: '8/side', restSeconds: 75, substitution: { fa: 'لانج معکوس', en: 'Reverse lunge' } },
-      { key: 'hip-thrust', name: { fa: 'هیپ تراست', en: 'Hip thrust' }, sets: 3, reps: '12', restSeconds: 75, substitution: { fa: 'پل باسن', en: 'Glute bridge' } },
-      { key: 'pallof-press', name: { fa: 'پالوف پرس', en: 'Pallof press' }, sets: 3, reps: '12', restSeconds: 60, substitution: { fa: 'پلانک', en: 'Plank' } },
+      { key: 'hip-thrust', name: { fa: 'هیپ تراست', en: 'Hip thrust' }, sets: 3, reps: '12', restSeconds: 75, substitution: { fa: 'پل باسن', en: 'Glute bridge' }, equipment: [{ fa: 'نیمکت', en: 'Bench' }] },
+      { key: 'pallof-press', name: { fa: 'پالوف پرس', en: 'Pallof press' }, sets: 3, reps: '12', restSeconds: 60, substitution: { fa: 'پلانک', en: 'Plank' }, equipment: [{ fa: 'کش تمرینی', en: 'Resistance band' }] },
       { key: 'breathing-cooldown', name: { fa: 'سردکردن تنفسی', en: 'Breathing cooldown' }, sets: 1, reps: '4 min', restSeconds: 0, substitution: null },
     ],
   },
@@ -150,3 +157,33 @@ demoPlan.days = demoDates.map((localDate, index) => {
     workout: restDay ? null : demoPlan.workout,
   }
 })
+
+demoPlan.version = {
+  id: 'demo-plan-v2',
+  label: 'v2',
+  cycle: 2,
+  validFrom: demoDates[0],
+  validTo: demoIsoDate(30),
+  readyAt: `${demoDates[0]}T08:42:00.000Z`,
+  source: { fa: 'چرخه دوم تأییدشده', en: 'Confirmed second cycle' },
+  active: true,
+  changes: [
+    { label: { fa: 'تمرین‌ها از ۲ به ۳ روز افزایش یافت', en: 'Training increased from 2 to 3 days' }, detail: { fa: 'بر اساس پایبندی و زمان اعلام‌شده دوره قبل', en: 'Based on prior adherence and confirmed availability' } },
+    { label: { fa: 'زمان هر جلسه با هدف ۴۸ دقیقه هماهنگ شد', en: 'Session duration aligned to 48 minutes' }, detail: { fa: 'تغییر صریح کاربر پیش از درخواست', en: 'Explicit user change before the request' } },
+    { label: { fa: 'گزینه‌های ناهار بیشتر شد', en: 'More lunch options' }, detail: { fa: 'بدون تغییر در حساسیت‌ها', en: 'Allergy constraints unchanged' } },
+  ],
+}
+
+demoPlan.history = [
+  demoPlan.version,
+  {
+    id: 'demo-plan-v1',
+    label: 'v1',
+    cycle: 1,
+    validFrom: demoIsoDate(-30),
+    validTo: demoIsoDate(-1),
+    source: { fa: 'چرخه اول · هدیه برنامه', en: 'First cycle · gifted plan' },
+    active: false,
+    changes: [],
+  },
+]

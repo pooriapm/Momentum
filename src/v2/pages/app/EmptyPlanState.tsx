@@ -9,7 +9,7 @@ import '../../../styles/today.css'
 export function EmptyPlanState({ locale }: { locale: AppLocale }) {
   const fa = locale === 'fa'
   return (
-    <ContentCard className="empty-plan-state">
+    <ContentCard className="empty-plan-state" data-inventory="PLAN-07">
       <OrbitMark animated size={64} />
       <h2>{fa ? 'هنوز برنامه‌ای فعال نیست' : 'No active plan'}</h2>
       <p>{fa ? 'راه‌اندازی یا دسترسی را کامل کن تا پس از تأیید، یک برنامه یک‌ماهه ساخته شود. اطلاعاتت ذخیره می‌ماند.' : 'Complete setup or access requirements so one monthly plan can be created after eligibility is confirmed. Your information is saved.'}</p>

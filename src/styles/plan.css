@@ -1,0 +1,252 @@
+.plan-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.plan-page .shopping-grid,
+.plan-page .workout-detail-card,
+.plan-grocery {
+  font-family: var(--font-app);
+}
+
+.plan-heading-aside {
+  align-items: flex-end;
+  display: grid;
+  gap: .45rem;
+  justify-items: end;
+}
+
+.plan-stack,
+.plan-overview-grid,
+.plan-grocery {
+  display: grid;
+  gap: 1rem;
+}
+
+.plan-overview-grid,
+.plan-grocery {
+  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+}
+
+.plan-overview-card h2,
+.plan-grocery h2,
+.plan-calendar-card h2 {
+  margin: .55rem 0 .2rem;
+}
+
+.plan-week {
+  display: grid;
+  gap: .55rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.plan-week__day {
+  align-items: flex-start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: .35rem;
+  min-height: 4.6rem;
+  padding: .7rem .65rem;
+  text-align: start;
+}
+
+.plan-week__day.is-active {
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+}
+
+.plan-week__day small {
+  color: var(--color-text-muted);
+  font-size: .68rem;
+}
+
+.plan-pattern-list {
+  display: grid;
+  gap: .65rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.plan-pattern-list li {
+  align-items: flex-start;
+  display: flex;
+  gap: .65rem;
+}
+
+.plan-pattern-list strong,
+.plan-pattern-list small {
+  display: block;
+}
+
+.plan-pattern-list small {
+  color: var(--color-text-secondary);
+  font-size: .72rem;
+  margin-top: .15rem;
+}
+
+.plan-pattern-list svg {
+  color: var(--color-brand);
+  flex: none;
+  margin-top: .15rem;
+}
+
+.plan-grocery__list .shopping-grid {
+  margin-top: .85rem;
+}
+
+.plan-calendar-card__heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.plan-calendar {
+  display: grid;
+  gap: .35rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.plan-calendar strong {
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  text-align: center;
+}
+
+.plan-calendar__cell {
+  aspect-ratio: 1;
+  background: var(--color-surface-muted);
+  border: 1px solid transparent;
+  border-radius: .75rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.plan-calendar__cell.is-period {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.plan-calendar__cell.is-workout {
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+}
+
+.plan-calendar__cell.is-selected {
+  box-shadow: 0 0 0 2px var(--color-brand);
+}
+
+.plan-calendar__cell.is-outside {
+  opacity: .35;
+}
+
+.plan-status-card,
+.plan-page--loading {
+  display: grid;
+  gap: .85rem;
+}
+
+.plan-status-card {
+  justify-items: start;
+  max-width: 36rem;
+  padding: 1.4rem;
+}
+
+.plan-status-card h1,
+.plan-status-card p {
+  margin: 0;
+}
+
+.plan-status-card p {
+  color: var(--color-text-secondary);
+}
+
+.plan-status-card__icon {
+  align-items: center;
+  background: var(--color-energy-soft);
+  border-radius: 1rem;
+  display: flex;
+  height: 3.2rem;
+  justify-content: center;
+  width: 3.2rem;
+}
+
+.plan-status-card__icon.is-warning {
+  background: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface));
+  color: var(--color-danger);
+}
+
+.plan-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.plan-skeleton-tabs,
+.plan-skeleton-day,
+.plan-skeleton-card {
+  background: var(--color-surface-muted);
+  border-radius: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.plan-skeleton-tabs,
+.plan-skeleton-day,
+.plan-skeleton-card::after {
+  animation: plan-shimmer 1.5s ease-in-out infinite;
+}
+
+.plan-skeleton-tabs {
+  height: 3.15rem;
+}
+
+.plan-skeleton-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+}
+
+.plan-skeleton-card {
+  min-height: 8.5rem;
+}
+
+.plan-skeleton-card--wide {
+  min-height: 10rem;
+}
+
+.plan-skeleton-note {
+  color: var(--color-text-muted);
+  font-size: .78rem;
+}
+
+@keyframes plan-shimmer {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.08); }
+  100% { filter: brightness(1); }
+}
+
+@media (max-width: 760px) {
+  .plan-overview-grid,
+  .plan-grocery,
+  .plan-skeleton-grid,
+  .plan-week {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-week {
+    grid-auto-flow: column;
+    grid-template-columns: repeat(7, minmax(4.6rem, 1fr));
+    overflow-x: auto;
+  }
+
+  .plan-heading-aside {
+    justify-items: start;
+  }
+}

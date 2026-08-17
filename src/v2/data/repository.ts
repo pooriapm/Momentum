@@ -154,8 +154,12 @@ function mapPlanDay(day: DashboardPlanDay, planId: string, locale: AppLocale): M
         reps: exercise.reps,
         restSeconds: exercise.rest_seconds,
         substitution: exercise.substitution ? localized(exercise.substitution) : null,
+        equipment: exercise.equipment.map(localized),
       })),
       intensity: day.workout.intensity,
+      equipment: [...new Set(day.workout.exercises.flatMap((exercise) => exercise.equipment))].map(localized),
+      warmup: day.workout.warmup.map(localized),
+      cooldown: day.workout.cooldown.map(localized),
     } : null,
   }
 }
@@ -228,6 +232,28 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       })),
     },
     days: plan.days.map((day) => mapPlanDay(day, plan.id, locale)),
+    version: {
+      id: plan.version_id,
+      label: /v2/i.test(plan.schema_version) ? 'v2' : plan.schema_version,
+      cycle: Math.max(1, dashboard.entitlement_usage?.plan_generation.used ?? 1),
+      validFrom: plan.valid_from,
+      validTo: plan.valid_to,
+      readyAt: dashboard.entitlement_usage?.entitlement.period_start,
+      source: localized(plan.name),
+      active: true,
+      changes: [],
+    },
+    history: [{
+      id: plan.version_id,
+      label: /v2/i.test(plan.schema_version) ? 'v2' : plan.schema_version,
+      cycle: Math.max(1, dashboard.entitlement_usage?.plan_generation.used ?? 1),
+      validFrom: plan.valid_from,
+      validTo: plan.valid_to,
+      readyAt: dashboard.entitlement_usage?.entitlement.period_start,
+      source: localized(plan.name),
+      active: true,
+      changes: [],
+    }],
   }
 }
 

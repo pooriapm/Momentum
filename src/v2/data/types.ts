@@ -40,6 +40,17 @@ export interface MealSlot {
   options: MealChoice[]
 }
 
+export interface WorkoutExerciseDetail {
+  key: string
+  name: LocalizedText
+  sets: number
+  reps: string
+  restSeconds: number
+  substitution: LocalizedText | null
+  equipment?: LocalizedText[]
+  adaptation?: LocalizedText | null
+}
+
 export interface WorkoutBlock {
   id: string
   name: LocalizedText
@@ -47,15 +58,28 @@ export interface WorkoutBlock {
   durationMinutes: number
   exercises: number
   exerciseItems: LocalizedText[]
-  exerciseDetails: Array<{
-    key: string
-    name: LocalizedText
-    sets: number
-    reps: string
-    restSeconds: number
-    substitution: LocalizedText | null
-  }>
+  exerciseDetails: WorkoutExerciseDetail[]
   intensity: 'low' | 'moderate' | 'high'
+  equipment?: LocalizedText[]
+  warmup?: LocalizedText[]
+  cooldown?: LocalizedText[]
+}
+
+export interface PlanChange {
+  label: LocalizedText
+  detail: LocalizedText
+}
+
+export interface PlanVersionMeta {
+  id: string
+  label: string
+  cycle: number
+  validFrom: string
+  validTo: string
+  readyAt?: string
+  source: LocalizedText
+  active?: boolean
+  changes: PlanChange[]
 }
 
 export interface ShoppingGroup {
@@ -99,6 +123,8 @@ export interface MomentumPlanView {
   workout: WorkoutBlock | null
   shoppingGroups: ShoppingGroup[]
   days?: MomentumPlanDayView[]
+  version?: PlanVersionMeta
+  history?: PlanVersionMeta[]
   progress: {
     currentWeight: number
     startWeight: number

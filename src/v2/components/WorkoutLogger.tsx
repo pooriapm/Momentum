@@ -73,6 +73,7 @@ export function WorkoutLogger({
   const [error, setError] = useState('')
   const [paused, setPaused] = useState(false)
   const [painCaution, setPainCaution] = useState(false)
+  const [substitutingKey, setSubstitutingKey] = useState('')
 
   useEffect(() => {
     let active = true
@@ -179,7 +180,16 @@ export function WorkoutLogger({
                 return <div className={set.status === 'completed' ? 'workout-set-row is-complete' : 'workout-set-row'} key={set.id}><strong>{locale === 'fa' ? `ست ${set.set_number}` : `Set ${set.set_number}`}</strong>{field('weight', locale === 'fa' ? 'کیلو' : 'kg', 0, 1000, .25)}{field('reps', locale === 'fa' ? 'تکرار' : 'reps', 0, 1000)}{field('rpe', 'RPE', 1, 10, .5)}{field('rest', locale === 'fa' ? 'استراحت (ث)' : 'rest (s)', 0, 3600)}<Button disabled={closed || exercise.status === 'skipped'} loading={busy === set.id} onClick={() => void mutate(set.id, { action: 'update_set', exerciseKey: exercise.exercise_key, setNumber: set.set_number, values: { completed: set.status !== 'completed', weight_kg: numberOrNull(draft.weight), reps: numberOrNull(draft.reps), rpe: numberOrNull(draft.rpe), rest_seconds: numberOrNull(draft.rest) } })} variant={set.status === 'completed' ? 'secondary' : 'primary'}><Check size={15} />{set.status === 'completed' ? (locale === 'fa' ? 'بازکردن' : 'Undo') : (locale === 'fa' ? 'ثبت ست' : 'Log set')}</Button></div>
               })}
             </div>
-            {!closed && exercise.status !== 'skipped' ? <div className="workout-exercise-log__actions"><Button disabled={!exercise.sets.some((set) => set.status === 'completed')} onClick={() => void mutate(`complete-${exercise.id}`, { action: 'complete_exercise', exerciseKey: exercise.exercise_key })} variant="secondary"><Check size={16} />{locale === 'fa' ? 'پایان حرکت' : 'Complete exercise'}</Button><Button onClick={() => { const name = window.prompt(locale === 'fa' ? 'نام حرکت جایگزین' : 'Substitute exercise name', planned?.substitution ? localize(planned.substitution, locale) : ''); if (name?.trim()) void mutate(`sub-${exercise.id}`, { action: 'substitute_exercise', exerciseKey: exercise.exercise_key, values: { name: name.trim() } }) }} variant="ghost">{locale === 'fa' ? 'جایگزین' : 'Substitute'}</Button><Button onClick={() => { const reason = window.prompt(locale === 'fa' ? 'دلیل ردکردن حرکت' : 'Why are you skipping this exercise?'); if (reason?.trim()) void mutate(`skip-${exercise.id}`, { action: 'skip_exercise', exerciseKey: exercise.exercise_key, values: { reason: reason.trim() } }) }} variant="ghost"><SkipForward size={15} />{locale === 'fa' ? 'رد کردن' : 'Skip'}</Button></div> : null}
+            {!closed && exercise.status !== 'skipped' ? <div className="workout-exercise-log__actions"><Button disabled={!exercise.sets.some((set) => set.status === 'completed')} onClick={() => void mutate(`complete-${exercise.id}`, { action: 'complete_exercise', exerciseKey: exercise.exercise_key })} variant="secondary"><Check size={16} />{locale === 'fa' ? 'پایان حرکت' : 'Complete exercise'}</Button><Button onClick={() => setSubstitutingKey(exercise.exercise_key)} variant="ghost">{locale === 'fa' ? 'جایگزین' : 'Substitute'}</Button><Button onClick={() => { const reason = window.prompt(locale === 'fa' ? 'دلیل ردکردن حرکت' : 'Why are you skipping this exercise?'); if (reason?.trim()) void mutate(`skip-${exercise.id}`, { action: 'skip_exercise', exerciseKey: exercise.exercise_key, values: { reason: reason.trim() } }) }} variant="ghost"><SkipForward size={15} />{locale === 'fa' ? 'رد کردن' : 'Skip'}</Button></div> : null}
+            {substitutingKey === exercise.exercise_key ? (
+              <div className="workout-substitute-panel" role="region">
+                <p>{locale === 'fa' ? 'این تغییر فقط همین جلسه را عوض می‌کند و برنامه ماهانه بازتولید نمی‌شود.' : 'This changes only this session and does not regenerate the monthly plan.'}</p>
+                {planned?.substitution ? (
+                  <Button onClick={() => { void mutate(`sub-${exercise.id}`, { action: 'substitute_exercise', exerciseKey: exercise.exercise_key, values: { name: localize(planned.substitution!, locale) } }); setSubstitutingKey('') }}>{locale === 'fa' ? `انتخاب ${localize(planned.substitution, locale)}` : `Choose ${localize(planned.substitution, locale)}`}</Button>
+                ) : <p>{locale === 'fa' ? 'جایگزین کاتالوگ برای این حرکت تعریف نشده است.' : 'No catalog substitute is defined for this movement.'}</p>}
+                <Button onClick={() => setSubstitutingKey('')} variant="secondary">{locale === 'fa' ? 'انصراف' : 'Cancel'}</Button>
+              </div>
+            ) : null}
           </ContentCard>
         )
       })}
