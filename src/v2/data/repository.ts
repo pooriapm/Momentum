@@ -4,10 +4,7 @@ import { assertOnline } from '../../platform/pwa/network'
 import {
   accountDeleteResponseSchema,
   accountExportResponseSchema,
-  coachEdgeResponseSchema,
-  coachHistoryRowsSchema,
   dashboardResponseSchema,
-  planRevisionResponseSchema,
   type DashboardResponse,
 } from './contracts'
 import type { LocalizedText, MealChoice, MomentumPlanDayView, MomentumPlanView } from './types'
@@ -178,7 +175,6 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
     const selectedKey = meal.selected_option_key ?? meal.default_option_key
     return sum + (meal.options.find((option) => option.option_key === selectedKey)?.nutrition.calories ?? 0)
   }, 0)
-  const usage = dashboard.entitlement_usage?.coach_message
   const readiness = scoreFromCheckIn(checkin)
 
   return {
@@ -189,7 +185,7 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       ? localized(dashboard.profile.display_name)
       : { fa: 'همراه Momentum', en: 'Momentum member' },
     dateLabel: currentDay.dateLabel,
-    coachBrief: localized(plan.summary ?? (locale === 'fa' ? 'برنامه امروز آماده است.' : 'Today’s plan is ready.')),
+    monthlyPlanBrief: localized(plan.summary ?? (locale === 'fa' ? 'برنامه این ماه آماده است.' : 'This month’s plan is ready.')),
     adjustmentReason: currentDay.adjustmentReason,
     targets: currentDay.targets,
     targetStrategy: currentDay.targetStrategy,
@@ -211,10 +207,8 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       loggedCalories,
       sleepMinutes: checkin?.sleep_minutes ?? 0,
       energyScore: checkin?.energy_score ?? 0,
-      coachMessagesUsed: usage?.used ?? 0,
-      coachMessagesLimit: Math.max(1, usage?.limit ?? 1),
-      entitlementLabel: dashboard.entitlement_usage?.entitlement.source === 'trial'
-        ? { fa: 'نسخه آزمایشی', en: 'Trial' }
+      entitlementLabel: dashboard.entitlement_usage?.entitlement.source === 'gift'
+        ? { fa: 'هدیه برنامه اول', en: 'First-plan gift' }
         : { fa: 'عضویت Momentum', en: 'Momentum membership' },
       recentCheckIns: dashboard.recent_checkins.slice(0, 7).map((item) => ({
         date: localized(formatLocalDate(item.local_date, locale)),
@@ -275,64 +269,6 @@ export async function completeMeal(date: string, slotKey: string, optionKey: str
   if (error) throw error
 }
 
-export interface PlanRevisionState {
-  id: string
-  status: 'preview' | 'active' | 'cancelled' | 'expired' | 'rolled_back'
-  rationale: string
-  mode: string
-  changedWorkouts: number
-  changedExercises: number
-  nutritionChanged: boolean
-  expiresAt?: string
-}
-
-function mapPlanRevision(data: unknown): PlanRevisionState | null {
-  const parsed = planRevisionResponseSchema.parse(data).revision
-  if (!parsed) return null
-  const id = parsed.id ?? parsed.revision_id
-  if (!id) throw new Error('invalid_plan_revision_response')
-  return {
-    id,
-    status: parsed.status,
-    rationale: parsed.change_reason?.rationale ?? '',
-    mode: parsed.diff?.mode ?? parsed.change_reason?.code ?? 'stabilize',
-    changedWorkouts: parsed.diff?.changed_workouts ?? 0,
-    changedExercises: parsed.diff?.changed_exercises ?? 0,
-    nutritionChanged: parsed.diff?.nutrition_changed ?? false,
-    expiresAt: parsed.expires_at,
-  }
-}
-
-async function invokePlanRevision(
-  body: Record<string, unknown>,
-  mutation = false,
-): Promise<PlanRevisionState | null> {
-  if (mutation) assertOnline()
-  const client = requireSupabase()
-  const { data, error } = await client.functions.invoke('plan-revisions', {
-    body,
-    headers: mutation ? { 'Idempotency-Key': crypto.randomUUID() } : undefined,
-  })
-  if (error) throw error
-  return mapPlanRevision(data)
-}
-
-export function loadPlanRevisionStatus() {
-  return invokePlanRevision({ action: 'status' })
-}
-
-export function previewPlanRecalibration(reason?: string) {
-  return invokePlanRevision({ action: 'preview', reason: reason?.trim() || undefined }, true)
-}
-
-export function confirmPlanRecalibration(revisionId: string) {
-  return invokePlanRevision({ action: 'confirm', revision_id: revisionId }, true)
-}
-
-export function rollbackPlanRecalibration(revisionId: string) {
-  return invokePlanRevision({ action: 'rollback', revision_id: revisionId }, true)
-}
-
 export async function exportAccountData() {
   assertOnline()
   const client = requireSupabase()
@@ -353,91 +289,6 @@ export async function deleteAccount() {
   if (error) throw error
   accountDeleteResponseSchema.parse(data)
   await client.auth.signOut({ scope: 'local' }).catch(() => undefined)
-}
-
-export async function sendCoachMessage(
-  message: string,
-  locale: AppLocale,
-  threadId?: string,
-  idempotencyKey: string = crypto.randomUUID(),
-) {
-  assertOnline()
-  const client = requireSupabase()
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const { data, error } = await client.functions.invoke('coach', {
-      body: {
-        message,
-        locale: locale === 'fa' ? 'fa-IR' : 'en-US',
-        thread_id: threadId,
-      },
-      headers: { 'Idempotency-Key': idempotencyKey },
-    })
-    if (error) throw error
-    const parsed = coachEdgeResponseSchema.parse(data)
-    if ('message' in parsed) {
-      return {
-        messageId: parsed.message.id,
-        message: parsed.message.content,
-        threadId: parsed.thread_id,
-        safety: parsed.safety,
-        suggestedActions: parsed.suggested_actions ?? [],
-      }
-    }
-    await new Promise((resolve) => window.setTimeout(resolve, 1_000))
-  }
-  throw new Error('coach_response_still_processing')
-}
-
-export async function reportAiSafetyIssue(
-  surface: 'coach' | 'plan' | 'body_extraction',
-  referenceId: string,
-  reasonCode: 'unsafe_or_inappropriate' | 'medical_advice' | 'eating_disorder' | 'unsafe_exercise' | 'body_shame' | 'self_harm' | 'privacy' | 'incorrect_output' | 'other' = 'unsafe_or_inappropriate',
-  details?: string,
-) {
-  assertOnline()
-  const client = requireSupabase()
-  const { data, error } = await client.rpc('submit_ai_safety_report', {
-    p_surface: surface,
-    p_reference_id: referenceId,
-    p_reason_code: reasonCode,
-    p_details: details?.trim() || null,
-  })
-  if (error) throw error
-  return data
-}
-
-export async function loadCoachHistory(locale: AppLocale) {
-  const client = requireSupabase()
-  const { data: thread, error: threadError } = await client
-    .from('coach_threads')
-    .select('id')
-    .eq('status', 'active')
-    .eq('locale', locale === 'fa' ? 'fa-IR' : 'en-US')
-    .order('updated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  if (threadError) throw threadError
-  if (!thread) return { threadId: undefined, messages: [], suggestedActions: [] as string[] }
-
-  const { data: rows, error: messageError } = await client
-    .from('coach_messages')
-    .select('id,role,content,safety_level,suggested_actions,created_at')
-    .eq('thread_id', thread.id)
-    .order('created_at', { ascending: true })
-    .limit(100)
-  if (messageError) throw messageError
-  const messages = coachHistoryRowsSchema.parse(rows ?? [])
-  const lastAssistant = [...messages].reverse().find((message) => message.role === 'assistant')
-  return {
-    threadId: thread.id,
-    messages: messages.map((message) => ({
-      id: message.id,
-      role: message.role,
-      content: message.content,
-      safetyLevel: message.safety_level,
-    })),
-    suggestedActions: lastAssistant?.suggested_actions ?? [],
-  }
 }
 
 export const currentLocalDate = localIsoDate

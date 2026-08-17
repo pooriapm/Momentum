@@ -16,7 +16,7 @@ export const demoPlan: MomentumPlanView = {
   contentLocale: 'fa',
   userName: { fa: 'آوا', en: 'Ava' },
   dateLabel: { fa: 'روز قدرت · هفته سوم', en: 'Strength day · Week 3' },
-  coachBrief: {
+  monthlyPlanBrief: {
     fa: 'خوابت کمی کمتر از میانگین بود؛ برنامه را نگه داشتم اما بخش پایانی تمرین را کوتاه‌تر کردم.',
     en: 'Sleep was slightly below your average. I kept the plan but shortened the workout finisher.',
   },
@@ -111,7 +111,8 @@ export const demoPlan: MomentumPlanView = {
   ],
   progress: {
     currentWeight: 72.8, startWeight: 76.2, targetWeight: 69, weeklyAdherence: 84, readiness: 82, recovery: 76, streak: 12,
-    loggedCalories: 820, sleepMinutes: 425, energyScore: 4, coachMessagesUsed: 18, coachMessagesLimit: 100,
+    loggedCalories: 820, sleepMinutes: 425, energyScore: 4,
+    entitlementLabel: { fa: 'عضویت Momentum', en: 'Momentum membership' },
     recentCheckIns: [
       { date: { fa: 'امروز', en: 'Today' }, score: 82, note: { fa: 'انرژی خوب', en: 'Good energy' }, weight: 72.8 },
       { date: { fa: 'دیروز', en: 'Yesterday' }, score: 74, note: { fa: 'خواب کوتاه', en: 'Short sleep' }, weight: 73.1 },

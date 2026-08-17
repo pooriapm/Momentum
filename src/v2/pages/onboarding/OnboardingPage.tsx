@@ -6,7 +6,6 @@ import {
   FileCheck2,
   HeartPulse,
   LockKeyhole,
-  ShieldAlert,
   Sparkles,
   UploadCloud,
 } from 'lucide-react'
@@ -25,7 +24,6 @@ import { BrandLockup } from '../../ui/OrbitMark'
 import { Button, ContentCard, PageSkeleton, StatusPill } from '../../ui/primitives'
 import {
   loadOnboardingDraft,
-  analyzeBodyComposition,
   completeOnboarding,
   confirmBodyComposition,
   deleteOnboardingDraft,
@@ -38,11 +36,14 @@ import {
 import {
   isFieldVisible,
   onboardingDefaultValues,
+  onboardingOptionLabelKey,
   onboardingSections,
   type OnboardingField,
   type OnboardingStepKey,
   validateSection,
 } from '../../onboarding/schema'
+import { countryName } from '../../onboarding/countries'
+import { formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { loadPricingContext } from '../../data/pricing'
 
@@ -69,12 +70,6 @@ const bodyMetricSpecs = [
   { key: 'waist', column: 'waist_cm', fa: 'دور کمر', en: 'Waist', unit: 'cm' },
   { key: 'basal_metabolic_rate', column: 'basal_metabolic_rate_kcal', fa: 'سوخت‌وساز پایه', en: 'Basal metabolism', unit: 'kcal/day' },
 ] as const
-
-function canonicalMetricValue(value: number, unit: string | null) {
-  if (unit === 'lb') return Math.round(value * 0.45359237 * 100) / 100
-  if (unit === 'in') return Math.round(value * 2.54 * 100) / 100
-  return value
-}
 
 export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   const { t } = useTranslation()
@@ -138,7 +133,6 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
       values.highRiskCondition === 'yes',
     [values],
   )
-  const regionBlocked = values.country === 'IR'
   const visibleFields = section.fields.filter((field) => isFieldVisible(field, values))
 
   if (status === 'loading' || draftQuery.isLoading) {
@@ -271,25 +265,6 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
         return
       }
 
-      if (values.bodyReportId && !bodyExtraction) {
-        const analysis = await analyzeBodyComposition(values.bodyReportId, `${onboardingFlowId}:body:${values.bodyReportId}`)
-        const metrics = bodyMetricSpecs.flatMap((spec) => {
-          const observation = analysis.extraction_result.measurements[spec.key]
-          if (!observation || observation.value === null) return []
-          return [{
-            column: spec.column,
-            confidence: observation.confidence,
-            evidence: observation.evidence,
-            key: spec.key,
-            value: String(canonicalMetricValue(observation.value, observation.unit)),
-          }]
-        })
-        if (metrics.length === 0) throw new Error('no_body_metrics')
-        setBodyExtraction({ id: analysis.id, metrics })
-        setPageNotice(locale === 'fa' ? 'مقادیر خوانا استخراج شد. لطفاً آن‌ها را بررسی و در صورت نیاز اصلاح کن؛ سپس تأیید و ساخت برنامه را بزن.' : 'Readable values were extracted. Review and correct them if needed, then confirm and generate your plan.')
-        return
-      }
-
       if (bodyExtraction) {
         const normalized = Object.fromEntries(bodyExtraction.metrics.map((metric) => {
           const value = Number(metric.value)
@@ -370,7 +345,6 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               <ReviewGrid locale={locale} values={values} />
               {bodyExtraction ? <BodyExtractionReview extraction={bodyExtraction} locale={locale} onChange={(key, value) => setBodyExtraction((current) => current ? { ...current, metrics: current.metrics.map((metric) => metric.key === key ? { ...metric, value: sanitizeLocalizedNumberInput(value, true) } : metric) } : current)} /> : null}
               {safetyBlocked ? <div className="inline-notice inline-notice--warning"><HeartPulse size={18} />{locale === 'fa' ? 'برای این شرایط، برنامه‌ریزی خودکار مناسب نیست. Momentum فقط اطلاعات عمومی ارائه می‌کند و پیشنهاد می‌کنیم با متخصص واجد شرایط صحبت کنی.' : 'Automated planning is not appropriate for the selected health context. Momentum will only provide general information and recommends a qualified professional.'}</div> : null}
-              {regionBlocked ? <div className="inline-notice inline-notice--warning"><ShieldAlert size={18} />{t('onboarding.iranUnavailable')}</div> : null}
               <Button block disabled={!online} loading={saving} onClick={generate}>
                 <Sparkles size={18} />{bodyExtraction ? (locale === 'fa' ? 'تأیید گزارش و ساخت برنامه' : 'Confirm report & generate') : t('onboarding.generate')}
               </Button>
@@ -499,22 +473,30 @@ function BodyExtractionReview({ extraction, locale, onChange }: { extraction: { 
   )
 }
 
-function aiAccessMessage(state: 'ready' | 'pending_verification' | 'region_blocked' | 'disabled' | 'safety_blocked', locale: AppLocale) {
+function aiAccessMessage(state: 'ready' | 'pending_verification' | 'disabled' | 'safety_blocked', locale: AppLocale) {
   const fa = locale === 'fa'
-  if (state === 'region_blocked') return fa ? 'حساب ذخیره شد. قابلیت AI برای این کشور صورتحساب فعلاً عرضه نمی‌شود؛ Preview در دسترس است.' : 'Your account was saved. AI is not currently offered for this billing country; preview remains available.'
   if (state === 'disabled') return fa ? 'حساب ذخیره شد. ساخت برنامه در این محیط فعلاً توسط اپراتور متوقف است.' : 'Your account was saved. Plan generation is currently disabled by the operator.'
   if (state === 'safety_blocked') return fa ? 'برای شرایط ثبت‌شده برنامه‌ریزی خودکار فعال نمی‌شود. با متخصص واجد شرایط گفتگو کن.' : 'Automated planning is not enabled for the recorded health context. Speak with a qualified professional.'
-  return fa ? 'حساب ذخیره شد. کشور صورتحساب باید از مسیر قابل‌اعتماد تأیید شود؛ در نسخه آلفا این مرحله مدیریتی است.' : 'Your account was saved. Billing country must be verified through a trusted path; this is admin-only during alpha.'
+  return fa ? 'حساب ذخیره شد. دسترسی ساخت برنامه هنوز آماده نیست؛ کمی بعد دوباره تلاش کن.' : 'Your account was saved. Plan generation is not ready yet; try again shortly.'
 }
 
 function ReviewGrid({ locale, values }: { locale: AppLocale; values: Record<string, string> }) {
+  const { t } = useTranslation()
+  const weight = Number(values.weightKg)
+
+  function optionLabel(fieldKey: string, value: string) {
+    if (!value) return '—'
+    const labelKey = onboardingOptionLabelKey(fieldKey, value)
+    return labelKey ? t(labelKey) : value
+  }
+
   const items = [
-    [locale === 'fa' ? 'هدف' : 'Goal', values.goalType || '—'],
-    [locale === 'fa' ? 'وزن فعلی' : 'Current weight', values.weightKg ? `${values.weightKg} kg` : '—'],
-    [locale === 'fa' ? 'سبک غذایی' : 'Diet', values.dietStyle || '—'],
-    [locale === 'fa' ? 'روز تمرین' : 'Training days', values.trainingDays || '0'],
+    [locale === 'fa' ? 'هدف' : 'Goal', optionLabel('goalType', values.goalType)],
+    [locale === 'fa' ? 'وزن فعلی' : 'Current weight', Number.isFinite(weight) && values.weightKg ? `${formatNumber(weight, locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'کیلوگرم' : 'kg'}` : '—'],
+    [locale === 'fa' ? 'سبک غذایی' : 'Diet', optionLabel('dietStyle', values.dietStyle)],
+    [locale === 'fa' ? 'روز تمرین' : 'Training days', values.trainingDays ? formatNumber(Number(values.trainingDays), locale) : '0'],
     [locale === 'fa' ? 'گزارش بدن' : 'Body report', values.bodyReportPath ? '✓' : '—'],
-    [locale === 'fa' ? 'منطقه' : 'Region', values.country || '—'],
+    [locale === 'fa' ? 'منطقه' : 'Region', values.country ? countryName(values.country, locale) : '—'],
   ]
   return <dl className="review-grid">{items.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
 }

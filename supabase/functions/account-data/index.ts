@@ -39,7 +39,10 @@ const EXPORT_TABLES = [
   'ai_generation_jobs',
   'plans',
   'plan_versions',
-  'plan_recalibrations',
+  'gift_reservations',
+  'monthly_plan_periods',
+  'monthly_plan_snapshots',
+  'next_cycle_inputs',
   'daily_checkins',
   'weekly_checkins',
   'daily_meal_status',
@@ -48,8 +51,6 @@ const EXPORT_TABLES = [
   'workout_exercise_logs',
   'workout_set_logs',
   'ai_safety_reports',
-  'coach_threads',
-  'coach_messages',
 ] as const
 
 const EXPORT_PAGE_SIZE = 500
@@ -302,7 +303,7 @@ function projectPlanAiAccess(
   profile: Record<string, unknown> | null,
   emailConfirmed: boolean,
 ): {
-  state: 'ready' | 'pending_verification' | 'region_blocked' | 'disabled' | 'safety_blocked'
+  state: 'ready' | 'pending_verification' | 'disabled' | 'safety_blocked'
   reason: string
 } {
   if (profile?.onboarding_status === 'automation_blocked') {
@@ -316,28 +317,6 @@ function projectPlanAiAccess(
     optionalEnv('AI_PLAN_ENABLED')?.toLowerCase() !== 'true'
   ) {
     return { state: 'disabled', reason: 'feature_switch_off' }
-  }
-  const country = typeof profile?.ai_billing_country_code === 'string'
-    ? profile.ai_billing_country_code.toUpperCase()
-    : ''
-  const verified = Boolean(
-    /^[A-Z]{2}$/.test(country) &&
-      profile?.ai_country_verified_at &&
-      ['payment_provider', 'admin_review'].includes(
-        String(profile?.ai_country_verification_method),
-      ),
-  )
-  if (!verified) {
-    return { state: 'pending_verification', reason: 'trusted_billing_country_required' }
-  }
-  const allowed = new Set(
-    (optionalEnv('AI_ALLOWED_BILLING_COUNTRIES') ?? '')
-      .split(',')
-      .map((item) => item.trim().toUpperCase())
-      .filter((item) => /^[A-Z]{2}$/.test(item)),
-  )
-  if (country === 'IR' || !allowed.has(country)) {
-    return { state: 'region_blocked', reason: 'billing_region_not_supported' }
   }
   return { state: 'ready', reason: 'eligible' }
 }
@@ -608,7 +587,7 @@ async function loadDashboard(
     admin
       .from('profiles')
       .select(
-        'display_name,date_of_birth,sex,height_cm,locale,timezone,country_code,pricing_market,unit_system,onboarding_status,automation_block_reason,ai_billing_country_code,ai_country_verified_at,ai_country_verification_method',
+        'display_name,date_of_birth,sex,height_cm,locale,timezone,country_code,pricing_market,product_region,unit_system,onboarding_status,automation_block_reason,ai_billing_country_code,ai_country_verified_at,ai_country_verification_method',
       )
       .eq('user_id', userId)
       .single(),
@@ -650,10 +629,10 @@ async function loadDashboard(
     admin
       .from('entitlements')
       .select(
-        'id,source,status,period_start,period_end,plan_generation_limit,coach_message_limit,body_composition_extraction_limit',
+        'id,source,status,period_start,period_end,plan_generation_limit',
       )
       .eq('user_id', userId)
-      .in('status', ['trial', 'active'])
+      .eq('status', 'active')
       .lte('period_start', now)
       .gt('period_end', now)
       .order('period_end', { ascending: false })
@@ -732,9 +711,7 @@ async function loadDashboard(
   const usageRows = (usageResult.data ?? []).filter((row) =>
     entitlement && row.entitlement_id === entitlement.id
   )
-  const used = (
-    feature: 'plan_generation' | 'coach_message' | 'body_composition_extraction',
-  ): number =>
+  const used = (feature: 'plan_generation'): number =>
     usageRows
       .filter((row) => row.feature === feature)
       .reduce((sum, row) => sum + Number(row.units ?? 0), 0)
@@ -755,23 +732,6 @@ async function loadDashboard(
           Number(entitlement.plan_generation_limit) - used('plan_generation'),
         ),
       },
-      coach_message: {
-        used: used('coach_message'),
-        limit: entitlement.coach_message_limit,
-        remaining: Math.max(
-          0,
-          Number(entitlement.coach_message_limit) - used('coach_message'),
-        ),
-      },
-      body_composition_extraction: {
-        used: used('body_composition_extraction'),
-        limit: entitlement.body_composition_extraction_limit,
-        remaining: Math.max(
-          0,
-          Number(entitlement.body_composition_extraction_limit) -
-            used('body_composition_extraction'),
-        ),
-      },
     }
     : null
 
@@ -787,6 +747,9 @@ async function loadDashboard(
         timezone: profileResult.data.timezone,
         country_code: profileResult.data.country_code,
         pricing_market: profileResult.data.pricing_market,
+        product_region: profileResult.data.product_region ?? (
+          profileResult.data.pricing_market === 'ir' ? 'ir' : 'intl'
+        ),
         unit_system: profileResult.data.unit_system,
         onboarding_status: profileResult.data.onboarding_status,
         automation_block_reason: profileResult.data.automation_block_reason,

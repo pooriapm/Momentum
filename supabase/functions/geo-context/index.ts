@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { optionalEnv, requiredEnv } from '../_shared/config.ts'
+import { requiredEnv } from '../_shared/config.ts'
 import {
   assertAllowedOrigin,
   errorResponse,
@@ -7,6 +7,7 @@ import {
   jsonResponse,
   optionsResponse,
 } from '../_shared/http.ts'
+import { productRegionFromCountry } from '../_shared/jurisdiction.ts'
 
 const COUNTRY_PATTERN = /^[A-Z]{2}$/
 
@@ -15,18 +16,9 @@ function validCountry(value: string | null): string | undefined {
   return normalized && COUNTRY_PATTERN.test(normalized) ? normalized : undefined
 }
 
-function preferredLocale(request: Request, country: string): 'fa-IR' | 'en-US' {
-  if (country === 'IR') return 'fa-IR'
+function preferredLocale(request: Request, region: 'ir' | 'intl'): 'fa-IR' | 'en-US' {
+  if (region === 'ir') return 'fa-IR'
   return request.headers.get('accept-language')?.toLowerCase().includes('fa') ? 'fa-IR' : 'en-US'
-}
-
-function configuredAiCountries(): Set<string> {
-  return new Set(
-    (optionalEnv('AI_ALLOWED_BILLING_COUNTRIES') ?? '')
-      .split(',')
-      .map((item) => item.trim().toUpperCase())
-      .filter((item) => COUNTRY_PATTERN.test(item) && item !== 'IR'),
-  )
 }
 
 Deno.serve(async (request) => {
@@ -47,10 +39,10 @@ Deno.serve(async (request) => {
     )
     const country = manualCountry ?? edgeCountry ?? 'US'
     const source = manualCountry ? 'manual' : edgeCountry ? 'edge_hint' : 'fallback'
-    const market = country === 'IR' ? 'ir' : 'global'
+    const productRegion = productRegionFromCountry(country)
+    const market = productRegion === 'ir' ? 'ir' : 'global'
     const currency = market === 'ir' ? 'IRR' : 'USD'
-    const locale = preferredLocale(request, country)
-    const aiServiceAvailable = configuredAiCountries().has(country)
+    const locale = preferredLocale(request, productRegion)
 
     const admin = createClient(
       requiredEnv('SUPABASE_URL'),
@@ -66,12 +58,13 @@ Deno.serve(async (request) => {
     const { data: prices, error } = await admin
       .from('product_prices')
       .select(
-        'id,product_code,market,currency,billing_interval,amount_minor,included_plan_generations,included_coach_messages,included_body_composition_extractions,metadata',
+        'id,product_code,market,currency,billing_interval,amount_minor,included_plan_generations,metadata',
       )
-      .eq('market', aiServiceAvailable ? market : '__disabled__')
+      .eq('market', market)
       .eq('currency', currency)
       .eq('active', true)
-      .order('billing_interval')
+      .eq('billing_interval', 'month')
+      .order('product_code')
 
     if (error) {
       throw new HttpError(503, 'pricing_unavailable', 'Pricing is temporarily unavailable.')
@@ -84,9 +77,10 @@ Deno.serve(async (request) => {
         source,
         suggested_locale: locale,
         suggested_market: market,
+        suggested_product_region: productRegion,
         suggested_currency: currency,
         suggested_cuisine_region: country === 'IR' ? 'iran' : 'international',
-        ai_service_available: aiServiceAvailable,
+        ai_service_available: true,
         prices: prices ?? [],
         authoritative_for_checkout: false,
       },

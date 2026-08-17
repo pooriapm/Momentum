@@ -2,7 +2,6 @@ import { requireSupabase } from '../../platform/data/supabase'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { assertOnline } from '../../platform/pwa/network'
 import {
-  bodyCompositionAnalysisSchema,
   bodyCompositionConfirmationSchema,
   generationResponseSchema,
   onboardingCompletionSchema,
@@ -139,8 +138,8 @@ export async function requestPlanGeneration(locale: AppLocale, idempotencyKey: s
   assertOnline()
   const client = requireSupabase()
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const { data, error } = await client.functions.invoke('generate-plan', {
-      body: { locale: locale === 'fa' ? 'fa-IR' : 'en-US', days: 7 },
+    const { data, error } = await client.functions.invoke('generate-monthly-plan', {
+      body: { locale: locale === 'fa' ? 'fa-IR' : 'en-US' },
       headers: { 'Idempotency-Key': idempotencyKey },
     })
     if (error) throw error
@@ -149,22 +148,6 @@ export async function requestPlanGeneration(locale: AppLocale, idempotencyKey: s
     await new Promise((resolve) => window.setTimeout(resolve, 1_200))
   }
   throw new Error('plan_generation_still_processing')
-}
-
-export async function analyzeBodyComposition(measurementId: string, idempotencyKey: string) {
-  assertOnline()
-  const client = requireSupabase()
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const { data, error } = await client.functions.invoke('analyze-body-composition', {
-      body: { measurement_id: measurementId },
-      headers: { 'Idempotency-Key': idempotencyKey },
-    })
-    if (error) throw error
-    const parsed = bodyCompositionAnalysisSchema.parse(data)
-    if ('measurement' in parsed) return parsed.measurement
-    await new Promise((resolve) => window.setTimeout(resolve, 1_000))
-  }
-  throw new Error('body_analysis_still_processing')
 }
 
 export async function confirmBodyComposition(measurementId: string, idempotencyKey: string) {

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(9);
+select extensions.plan(12);
 
 insert into auth.users(
   id, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
@@ -11,7 +11,7 @@ insert into auth.users(
     '{}'::jsonb, '{"locale":"en-US","country_code":"US"}'::jsonb,
     statement_timestamp(), statement_timestamp(), false, false),
   ('77777777-7777-4777-8777-777777777777', 'security-b@example.com', statement_timestamp(),
-    '{}'::jsonb, '{"locale":"en-US","country_code":"US"}'::jsonb,
+    '{}'::jsonb, '{"locale":"fa-IR","country_code":"IR","product_region":"ir"}'::jsonb,
     statement_timestamp(), statement_timestamp(), false, false);
 
 insert into public.goals(
@@ -30,12 +30,26 @@ select extensions.ok(
   'raw immutable plan documents are not exposed to clients'
 );
 select extensions.ok(
+  not has_table_privilege('authenticated', 'public.first_plan_campaigns', 'SELECT'),
+  'campaign budget internals are not exposed to clients'
+);
+select extensions.ok(
   not has_function_privilege(
     'authenticated',
-    'public.create_plan_recalibration_preview(uuid,uuid,uuid,jsonb,text,jsonb,jsonb,jsonb,text,text,text)',
+    'public.reserve_ai_request(uuid,text,text,text)',
     'EXECUTE'
   ),
-  'clients cannot bypass the recalibration service RPC'
+  'clients cannot reserve AI usage directly'
+);
+select extensions.is(
+  (select product_region from public.profiles where user_id = '77777777-7777-4777-8777-777777777777'),
+  'ir',
+  'Iranian signup metadata locks product_region=ir'
+);
+select extensions.is(
+  (select count(*)::integer from public.product_prices where active and product_code = 'membership'),
+  2,
+  'one monthly membership SKU is listed for both served markets'
 );
 
 set local role authenticated;

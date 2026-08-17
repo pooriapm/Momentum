@@ -1,8 +1,14 @@
-# Momentum Supabase backend
+# Momentum Supabase target backend
+
+Status: pre-development contract. Existing migrations/functions may still
+represent the superseded alpha and must not be deployed as the target product.
+Use [Implementation Blueprint](../docs/IMPLEMENTATION-BLUEPRINT.md) and
+[Traceability](../docs/TRACEABILITY.md) as the migration entry point.
 
 This directory is the backend source of truth for authenticated Momentum data.
 The browser may retain theme/locale and an authentication session, but must not
-persist profiles, health context, plans, logs, prompts, or AI responses.
+persist profiles, health context, plans, logs, next-cycle notes, prompts, or
+provider responses.
 
 ## Prerequisites
 
@@ -30,7 +36,8 @@ migration creates:
 
 - account, goal, preference, health, measurement and training tables;
 - immutable plan versions plus relational daily tracking;
-- AI job, coach, entitlement and usage-ledger tables;
+- monthly plan period/snapshot, subscription, gift reservation, generation job,
+  entitlement and usage-ledger tables;
 - RLS/column policies, owner-scoped indexes and atomic onboarding, meal and
   body-confirmation service RPCs;
 - the private `body-composition` Storage bucket;
@@ -41,20 +48,23 @@ migration creates:
 | Function | Auth | Purpose |
 | --- | --- | --- |
 | `geo-context` | public | Suggests locale, cuisine region and preview prices; never authorizes checkout |
-| `generate-plan` | JWT | Loads server-owned context, reserves quota, calls Responses API and persists a validated immutable plan |
-| `coach` | JWT | Uses compact server context and persists a structured coaching reply |
-| `analyze-body-composition` | JWT | Reads a private report server-side, extracts explicit values and saves `needs_confirmation` output |
-| `account-data` | JWT | Safe dashboard plus idempotent onboarding, body confirmation and meal select/complete mutations |
+| `generate-monthly-plan` | JWT | The only provider route: reserves one cycle execution and imports one validated combined workout-and-nutrition plan |
+| `account-data` | JWT | Safe dashboard plus idempotent onboarding, confirmed body-value and meal select/complete mutations |
 
-AI functions require an `Idempotency-Key` header. The usage reservation stores
+There is no target `coach`, chat/message, `analyze-body-composition`, plan-
+revision or on-demand regeneration function. Body values are entered manually or
+read non-generatively and explicitly confirmed before the monthly request.
+
+The monthly generation function requires an `Idempotency-Key` header. The usage reservation stores
 a request SHA-256 and attempt token. Reusing a key with different input is
-rejected; concurrent replays do not make a second provider call.
+rejected; concurrent replays do not make a second provider call. After provider
+execution begins, failure is terminal for that cycle and a new key cannot invoke
+the provider again.
 
-AI is disabled by default. Before enabling a feature, configure a confirmed
-email flow, the three `CURRENT_*_VERSION` secrets, exact origins, the AI country
-allowlist, a service process that sets the protected billing-country verification
-fields, the master/feature switches and the global request circuit breaker. IP,
-manual and onboarding country values do not authorize AI; IR is always denied.
+AI is disabled by default. Before enabling monthly generation, configure a confirmed
+email flow, the required `CURRENT_*_VERSION` secrets, exact origins, the master/feature
+switches and the global request circuit breaker. Sticky `product_region` (`ir` or
+`intl`) is locale and list-currency, not an AI geo-block. Iran is a served version.
 
 Dashboard projection (no raw `plan_versions.content` is exposed to clients):
 
@@ -126,22 +136,20 @@ Onboarding completion requires a confirmed email and an idempotency header:
 ```
 
 The RPC validates and normalizes the server-loaded draft, stores the configured
-consent versions, blocks minor/high-risk automation, conditionally creates the
-7-day non-IR trial, deletes the draft and returns:
+consent versions, blocks minor/high-risk automation, attempts an atomic first-
+plan gift reservation when campaign/market/budget policy permits, deletes the
+draft and returns:
 
 ```text
 { onboarding: { status, automation_block_reason, goal_id, country_code,
                 ai_country_verified, consent_versions } }
 ```
 
-Body reports are uploaded to `body-composition/{user_id}/...` and inserted as
-`pending`. Invoke `analyze-body-composition` with
-`{"measurement_id":"<uuid>"}` and an idempotency header. A successful response
-is `{measurement:{id,extraction_status:"needs_confirmation",extraction_result}}`.
-Then call `account-data` with
-`{"action":"confirm-body-composition","measurement_id":"<uuid>"}`; it returns
-`{body_composition:{... extraction_status:"confirmed"}}` without accepting
-client-supplied metrics.
+Body-report evidence, when enabled, is uploaded to the owner's private
+`body-composition/{user_id}/...` prefix. Confirmed normalized values are saved
+through an owner-bound service mutation with range, unit and source validation.
+There is no generative extraction step and unconfirmed values never enter a
+monthly snapshot.
 
 ## Hosted deployment
 
@@ -151,9 +159,7 @@ Set secrets only in Supabase, never in frontend build variables:
 supabase secrets set --env-file /absolute/path/to/momentum.production.env
 supabase db push
 supabase functions deploy geo-context
-supabase functions deploy generate-plan
-supabase functions deploy coach
-supabase functions deploy analyze-body-composition
+supabase functions deploy generate-monthly-plan
 supabase functions deploy account-data
 ```
 
@@ -169,9 +175,7 @@ supabase db reset
 deno fmt --check supabase/functions
 deno lint supabase/functions
 deno check supabase/functions/geo-context/index.ts
-deno check supabase/functions/generate-plan/index.ts
-deno check supabase/functions/coach/index.ts
-deno check supabase/functions/analyze-body-composition/index.ts
+deno check supabase/functions/generate-monthly-plan/index.ts
 deno check supabase/functions/account-data/index.ts
 ```
 

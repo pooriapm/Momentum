@@ -50,7 +50,7 @@ export async function enforceRateLimit(
 export async function reserveAiUsage(
   admin: SupabaseClient,
   userId: string,
-  feature: 'plan_generation' | 'coach_message' | 'body_composition_extraction',
+  feature: 'plan_generation',
   idempotencyKey: string,
   requestSha256: string,
 ): Promise<AiReservation> {

@@ -1,29 +1,25 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { requireIdempotencyKey } from '../supabase/functions/_shared/http.ts'
-import { assertAiJurisdiction } from '../supabase/functions/_shared/jurisdiction.ts'
-
-beforeEach(() => {
-  vi.stubGlobal('Deno', {
-    env: {
-      get: (name: string) => name === 'AI_ALLOWED_BILLING_COUNTRIES' ? 'US,CA' : undefined,
-    },
-  })
-})
+import {
+  assertAiJurisdiction,
+  productRegionFromCountry,
+} from '../supabase/functions/_shared/jurisdiction.ts'
 
 describe('jurisdiction and idempotency boundaries', () => {
-  it('denies Iran even when verification fields are otherwise complete', () => {
+  it('treats Iran as a served product region, not a geo-block', () => {
+    expect(productRegionFromCountry('IR')).toBe('ir')
     expect(() => assertAiJurisdiction('IR', '2026-08-09T00:00:00.000Z', 'admin_review'))
-      .toThrow(expect.objectContaining({ code: 'ai_unavailable_in_region', status: 403 }))
-  })
-
-  it('denies a verified but unsupported billing country', () => {
-    expect(() => assertAiJurisdiction('GB', '2026-08-09T00:00:00.000Z', 'admin_review'))
-      .toThrow(expect.objectContaining({ code: 'ai_unavailable_in_region', status: 403 }))
-  })
-
-  it('accepts only configured, verified billing countries', () => {
-    expect(() => assertAiJurisdiction('US', '2026-08-09T00:00:00.000Z', 'payment_provider'))
       .not.toThrow()
+  })
+
+  it('maps every other ISO country to the international product version', () => {
+    expect(productRegionFromCountry('US')).toBe('intl')
+    expect(productRegionFromCountry('GB')).toBe('intl')
+  })
+
+  it('still requires a complete billing-country verification tuple', () => {
+    expect(() => assertAiJurisdiction('US', null, 'payment_provider'))
+      .toThrow(expect.objectContaining({ code: 'verified_country_required', status: 409 }))
   })
 
   it('rejects missing, short, or unsafe idempotency keys', () => {

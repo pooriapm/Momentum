@@ -130,6 +130,7 @@ export const dashboardResponseSchema = z.object({
       timezone: z.string(),
       country_code: z.string().length(2).nullable(),
       pricing_market: z.enum(['ir', 'global']),
+      product_region: z.enum(['ir', 'intl']).optional(),
       unit_system: z.string(),
       onboarding_status: z.string(),
       automation_block_reason: z.string().nullable(),
@@ -159,48 +160,16 @@ export const dashboardResponseSchema = z.object({
         id: z.string().uuid(), source: z.string(), status: z.string(), period_start: z.string(), period_end: z.string(),
       }),
       plan_generation: z.object({ used: z.number(), limit: z.number(), remaining: z.number() }),
-      coach_message: z.object({ used: z.number(), limit: z.number(), remaining: z.number() }),
-      body_composition_extraction: z.object({ used: z.number(), limit: z.number(), remaining: z.number() }),
     }).nullable(),
     ai_access: z.object({
       plan: z.object({
-        state: z.enum(['ready', 'pending_verification', 'region_blocked', 'disabled', 'safety_blocked']),
+        state: z.enum(['ready', 'pending_verification', 'disabled', 'safety_blocked']),
         reason: z.string(),
       }),
     }),
     plan: dashboardPlanSchema.nullable(),
   }),
 })
-
-export const coachHistoryRowsSchema = z.array(z.object({
-  id: z.string().uuid(),
-  role: z.enum(['assistant', 'user']),
-  content: z.string().min(1).max(8_000),
-  safety_level: z.enum(['normal', 'caution', 'urgent']),
-  suggested_actions: z.array(z.string()).max(4),
-  created_at: z.string(),
-})).max(100)
-
-const coachCompletedResponseSchema = z.object({
-  thread_id: z.string().uuid(),
-  message: z.object({
-    id: z.string().uuid(),
-    thread_id: z.string().uuid(),
-    content: z.string().min(1).max(8_000),
-    safety_level: z.string(),
-    created_at: z.string(),
-  }),
-  suggested_actions: z.array(z.string()).optional(),
-  safety: z.object({ level: z.string(), reason: z.string().nullable() }).optional(),
-})
-
-export const coachEdgeResponseSchema = z.union([
-  coachCompletedResponseSchema,
-  z.object({
-    status: z.literal('in_progress'),
-    idempotent_replay: z.literal(true),
-  }),
-])
 
 export const onboardingCompletionSchema = z.object({
   onboarding: z.object({
@@ -209,6 +178,7 @@ export const onboardingCompletionSchema = z.object({
     goal_id: z.string().uuid(),
     country_code: z.string().length(2),
     ai_country_verified: z.boolean(),
+    product_region: z.enum(['ir', 'intl']).optional(),
   }),
 })
 
@@ -225,27 +195,6 @@ export const generationResponseSchema = z.union([
     }),
     idempotent_replay: z.literal(true),
   }),
-])
-
-const extractionObservationSchema = z.object({
-  value: z.number().nullable(),
-  unit: z.string().nullable(),
-  confidence: z.number().min(0).max(1),
-  evidence: z.string().nullable(),
-})
-
-export const bodyCompositionAnalysisSchema = z.union([
-  z.object({
-    measurement: z.object({
-      id: z.string().uuid(),
-      extraction_status: z.enum(['needs_confirmation', 'confirmed']),
-      extraction_result: z.object({
-        measurements: z.record(z.string(), extractionObservationSchema),
-      }),
-    }),
-    idempotent_replay: z.boolean().optional(),
-  }),
-  z.object({ status: z.literal('processing'), idempotent_replay: z.literal(true) }),
 ])
 
 export const bodyCompositionConfirmationSchema = z.object({
@@ -266,33 +215,5 @@ export const accountExportResponseSchema = z.object({
 })
 
 export const accountDeleteResponseSchema = z.object({ deleted: z.literal(true) })
-
-export const planRevisionResponseSchema = z.object({
-  revision: z.object({
-    id: z.string().uuid().optional(),
-    revision_id: z.string().uuid().optional(),
-    status: z.enum(['preview', 'active', 'cancelled', 'expired', 'rolled_back']),
-    plan_id: z.string().uuid().optional(),
-    from_version_id: z.string().uuid().optional(),
-    candidate_version_id: z.string().uuid().optional(),
-    active_version_id: z.string().uuid().optional(),
-    change_reason: z.object({
-      code: z.string().optional(),
-      rationale: z.string().optional(),
-      user_reason: z.string().nullable().optional(),
-    }).passthrough().optional(),
-    diff: z.object({
-      mode: z.string().optional(),
-      changed_workouts: z.number().int().nonnegative().optional(),
-      changed_exercises: z.number().int().nonnegative().optional(),
-      nutrition_changed: z.boolean().optional(),
-      operations: z.array(z.unknown()).optional(),
-    }).passthrough().optional(),
-    expires_at: z.string().optional(),
-    confirmed_at: z.string().nullable().optional(),
-    rolled_back_at: z.string().nullable().optional(),
-    created_at: z.string().optional(),
-  }).passthrough().nullable(),
-})
 
 export type DashboardResponse = z.infer<typeof dashboardResponseSchema>
