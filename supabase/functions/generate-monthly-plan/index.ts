@@ -77,6 +77,7 @@ Deno.serve(async (request) => {
       idempotencyKey,
       locale,
       store,
+      admin: auth.admin,
     })
     return jsonResponse(request, result.body, result.httpStatus)
   } catch (error) {

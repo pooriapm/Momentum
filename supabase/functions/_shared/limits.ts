@@ -85,6 +85,13 @@ export async function reserveAiUsage(
     if (error.message.includes('entitlement_required')) {
       throw new HttpError(402, 'entitlement_required', 'An active entitlement is required.')
     }
+    if (error.message.includes('PAYMENT_METHOD_REQUIRED')) {
+      throw new HttpError(
+        402,
+        'PAYMENT_METHOD_REQUIRED',
+        'Add a payment method before generating a plan.',
+      )
+    }
     throw new HttpError(503, 'usage_reservation_failed', 'AI usage could not be reserved.')
   }
 

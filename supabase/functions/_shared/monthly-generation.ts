@@ -1,7 +1,7 @@
 import { assertAiFeatureEnabled } from './ai-gate.ts'
 import { deterministicSafetyDecision } from './ai-safety.ts'
 import { assertCatalogGenerationGate } from './catalog-gate.ts'
-import { assertCurrentConsents } from './consent.ts'
+import { assertCurrentConsents, type ConsentAdminClient } from './consent.ts'
 import { canonicalJson, sha256 } from './crypto.ts'
 import { HttpError } from './http.ts'
 import type { AiReservation, ProviderUsage } from './limits.ts'
@@ -159,6 +159,7 @@ export async function runMonthlyGeneration(input: {
   idempotencyKey: string
   locale?: 'fa-IR' | 'en-US'
   store: GenerationStore
+  admin?: ConsentAdminClient | null
   invalidStub?: boolean
 }): Promise<GenerationSuccess> {
   assertAiFeatureEnabled('AI_PLAN_ENABLED')
@@ -173,14 +174,14 @@ export async function runMonthlyGeneration(input: {
   if (profile.onboardingStatus !== 'complete') {
     throw new HttpError(409, 'CONSENT_REQUIRED', 'Complete onboarding before generating a plan.')
   }
-  assertCurrentConsents({
+  await assertCurrentConsents({
     terms_accepted_at: profile.termsAcceptedAt,
     terms_version: profile.termsVersion,
     privacy_accepted_at: profile.privacyAcceptedAt,
     privacy_version: profile.privacyVersion,
     health_data_consent_at: profile.healthDataConsentAt,
     health_consent_version: profile.healthConsentVersion,
-  })
+  }, input.admin)
 
   const locale = input.locale ?? profile.locale
   if (locale !== 'fa-IR' && locale !== 'en-US') {
@@ -251,6 +252,13 @@ export async function runMonthlyGeneration(input: {
         402,
         'ENTITLEMENT_REQUIRED',
         'A reserved gift or active membership is required.',
+      )
+    }
+    if (error instanceof HttpError && error.code === 'PAYMENT_METHOD_REQUIRED') {
+      throw new HttpError(
+        402,
+        'PAYMENT_METHOD_REQUIRED',
+        'Add a payment method before generating a plan.',
       )
     }
     throw error

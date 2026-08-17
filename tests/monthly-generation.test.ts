@@ -4,6 +4,10 @@ import {
   isApprovedGenerationCatalog,
   REQUIRED_PLAN_CATALOG_RELEASE,
 } from '../supabase/functions/_shared/catalog-gate.ts'
+import {
+  assertCurrentConsents,
+  loadRequiredConsentVersions,
+} from '../supabase/functions/_shared/consent.ts'
 import { reserveGiftBudget, type GiftCampaignState } from '../supabase/functions/_shared/gift-campaign.ts'
 import { HttpError } from '../supabase/functions/_shared/http.ts'
 import type { AiReservation } from '../supabase/functions/_shared/limits.ts'
@@ -452,5 +456,81 @@ describe('monthly generation pipeline', () => {
     const plan = buildMonthlyStubPlan(catalog, 7, 'en-US')
     const days = plan.days as Array<{ meals: Array<{ options: Array<{ food_id: string }> }> }>
     expect(days[0]?.meals[0]?.options[0]?.food_id).toBe('food:banana-almonds@v2')
+  })
+
+  it('loads consent versions from the server table when available', async () => {
+    const admin = {
+      rpc: vi.fn(async () => ({
+        data: {
+          terms: '2026-08-01-alpha',
+          privacy: '2026-08-01-alpha',
+          health: '2026-08-01-alpha',
+        },
+        error: null,
+      })),
+    }
+    await expect(assertCurrentConsents({
+      terms_accepted_at: '2026-08-01T00:00:00Z',
+      terms_version: '2026-08-01-alpha',
+      privacy_accepted_at: '2026-08-01T00:00:00Z',
+      privacy_version: '2026-08-01-alpha',
+      health_data_consent_at: '2026-08-01T00:00:00Z',
+      health_consent_version: '2026-08-01-alpha',
+    }, admin)).resolves.toBeUndefined()
+    expect(admin.rpc).toHaveBeenCalledWith('current_legal_document_versions')
+  })
+
+  it('rejects stale consent when server versions differ', async () => {
+    const admin = {
+      rpc: vi.fn(async () => ({
+        data: {
+          terms: '2026-09-01-beta',
+          privacy: '2026-08-01-alpha',
+          health: '2026-08-01-alpha',
+        },
+        error: null,
+      })),
+    }
+    await expect(assertCurrentConsents({
+      terms_accepted_at: '2026-08-01T00:00:00Z',
+      terms_version: CONSENT_VERSION,
+      privacy_accepted_at: '2026-08-01T00:00:00Z',
+      privacy_version: CONSENT_VERSION,
+      health_data_consent_at: '2026-08-01T00:00:00Z',
+      health_consent_version: CONSENT_VERSION,
+    }, admin)).rejects.toMatchObject({ code: 'consent_update_required' })
+  })
+
+  it('falls back to env consent versions when the table is unreachable', async () => {
+    stubEnv({
+      CURRENT_TERMS_VERSION: CONSENT_VERSION,
+      CURRENT_PRIVACY_VERSION: CONSENT_VERSION,
+      CURRENT_HEALTH_CONSENT_VERSION: CONSENT_VERSION,
+    })
+    const admin = {
+      rpc: vi.fn(async () => ({
+        data: null,
+        error: { message: 'connection refused' },
+      })),
+    }
+    await expect(loadRequiredConsentVersions(admin)).resolves.toEqual({
+      terms: CONSENT_VERSION,
+      privacy: CONSENT_VERSION,
+      health: CONSENT_VERSION,
+    })
+  })
+
+  it('blocks generation when payment method is not collected', async () => {
+    const store = new MemoryGenerationStore()
+    store.reserveUsage = async () => {
+      throw new HttpError(402, 'PAYMENT_METHOD_REQUIRED', 'Add a payment method before generating a plan.')
+    }
+    await expect(runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-key-payment',
+      store,
+    })).rejects.toMatchObject({ code: 'PAYMENT_METHOD_REQUIRED' })
+    expect(store.importedPlans).toHaveLength(0)
   })
 })
