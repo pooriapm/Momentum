@@ -152,7 +152,7 @@ async function loadSettings(
 ) {
   const [profile, goal, dietary, schedule] = await Promise.all([
     admin.from('profiles').select(
-      'display_name,date_of_birth,sex,height_cm,locale,timezone,unit_system,country_code,pricing_market,ai_country_verified_at,health_data_consent_at,health_consent_version',
+      'display_name,date_of_birth,sex,height_cm,locale,timezone,unit_system,country_code,pricing_market,ai_country_verified_at,health_data_consent_at,health_consent_version,terms_version,privacy_version,payment_method_status,product_region',
     ).eq('user_id', userId).single(),
     admin.from('goals').select('goal_type,custom_goal,start_weight_kg,target_weight_kg').eq(
       'user_id',
@@ -169,7 +169,11 @@ async function loadSettings(
     throw new HttpError(503, 'settings_unavailable', 'Account settings are unavailable.')
   }
   return {
-    profile: { ...profile.data, ai_country_verified: Boolean(profile.data.ai_country_verified_at) },
+    profile: {
+      ...profile.data,
+      ai_country_verified: Boolean(profile.data.ai_country_verified_at),
+      payment_method_status: profile.data.payment_method_status ?? 'not_collected',
+    },
     goal: goal.data,
     dietary: dietary.data,
     schedule: schedule.data ?? [],

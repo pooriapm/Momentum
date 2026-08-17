@@ -37,9 +37,17 @@ vi.mock('../data/supabase', () => {
     resetPasswordForEmail: vi.fn(),
     updateUser: vi.fn(),
   }
+  const rpc = vi.fn().mockResolvedValue({
+    data: {
+      terms: '2026-08-01-alpha',
+      privacy: '2026-08-01-alpha',
+      health: '2026-08-01-alpha',
+    },
+    error: null,
+  })
   return {
-    supabase: { auth },
-    requireSupabase: () => ({ auth }),
+    supabase: { auth, rpc },
+    requireSupabase: () => ({ auth, rpc }),
   }
 })
 
@@ -104,6 +112,7 @@ describe('AuthProvider signup lock and resend', { timeout: 15_000 }, () => {
           country_code: 'IR',
           terms_version: '2026-08-01-alpha',
           privacy_version: '2026-08-01-alpha',
+          health_consent_version: '2026-08-01-alpha',
         },
         emailRedirectTo: `${window.location.origin}/fa/auth/verify`,
       },

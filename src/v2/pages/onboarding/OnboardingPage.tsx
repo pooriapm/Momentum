@@ -16,6 +16,11 @@ import {
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'wouter'
+import {
+  FALLBACK_LEGAL_DOCUMENT_VERSIONS,
+  loadLegalDocumentVersions,
+  type LegalDocumentVersions,
+} from '../../../config/legal'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useAuth } from '../../../platform/auth/auth-context'
 import { sanitizeLocalizedNumberInput } from '../../../lib/numbers/localized-number'
@@ -94,6 +99,14 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
     enabled: Boolean(user),
     staleTime: 30 * 60 * 1000,
   })
+
+  const legalQuery = useQuery({
+    queryKey: ['legal-document-versions'],
+    queryFn: loadLegalDocumentVersions,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: FALLBACK_LEGAL_DOCUMENT_VERSIONS,
+  })
+  const legalVersions = legalQuery.data ?? FALLBACK_LEGAL_DOCUMENT_VERSIONS
 
   const values = useMemo<Record<string, string>>(
     () => ({
@@ -351,6 +364,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                   error={errors[field.key]}
                   field={field}
                   key={field.key}
+                  legalVersions={legalVersions}
                   locale={locale}
                   onChange={(value) => updateValue(field, value)}
                   suggested={field.key === 'country' && countrySuggested}
@@ -391,7 +405,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               <span className="onboarding-review__mark"><Sparkles size={28} /></span>
               <h3>{t('onboarding.review')}</h3>
               <p>{t('onboarding.reviewCopy')}</p>
-              <ReviewGrid locale={locale} values={values} />
+              <ReviewGrid legalVersions={legalVersions} locale={locale} values={values} />
               <div className="inline-notice"><WalletCards size={18} />{t('entitlement.addPayment')}</div>
               <div className="inline-notice"><LockKeyhole size={18} />{t('entitlement.checking')}</div>
               {productRegion === 'ir' ? <div className="inline-notice"><LockKeyhole size={18} />{t('entitlement.irVersion')}</div> : <div className="inline-notice"><LockKeyhole size={18} />{t('onboarding.regionLocked')}</div>}
@@ -512,7 +526,29 @@ function BodyStep({
   )
 }
 
-function DynamicField({ field, value, error, onChange, suggested, locale }: { field: OnboardingField; value: string; error?: string; onChange: (value: string) => void; suggested?: boolean; locale: AppLocale }) {
+function consentVersionForField(fieldKey: string, versions: LegalDocumentVersions) {
+  if (fieldKey === 'termsAccepted') return versions.terms
+  if (fieldKey === 'privacyAccepted') return versions.privacy
+  return versions.health
+}
+
+function DynamicField({
+  field,
+  value,
+  error,
+  onChange,
+  suggested,
+  locale,
+  legalVersions,
+}: {
+  field: OnboardingField
+  value: string
+  error?: string
+  onChange: (value: string) => void
+  suggested?: boolean
+  locale: AppLocale
+  legalVersions: LegalDocumentVersions
+}) {
   const { t } = useTranslation()
   if (field.kind === 'date') {
     return <LocalizedDatePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} purpose={field.key === 'birthDate' ? 'birth' : 'report'} value={value} />
@@ -536,7 +572,7 @@ function DynamicField({ field, value, error, onChange, suggested, locale }: { fi
         <input checked={value === 'yes'} onChange={(event) => onChange(event.target.checked ? 'yes' : '')} type="checkbox" />
         <span><Check size={16} /></span>
         <strong>{t(field.labelKey)}</strong>
-        <small className="onboarding-checkbox__version">{t('onboarding.consentVersion')}</small>
+        <small className="onboarding-checkbox__version">{consentVersionForField(field.key, legalVersions)}</small>
         <Link className="onboarding-checkbox__policy" href={localizedPath(locale, policyPath)} onClick={(event) => event.stopPropagation()} target="_blank">{locale === 'fa' ? 'مطالعه متن' : 'Read notice'}</Link>
         {error ? <small>{error}</small> : null}
       </label>
@@ -592,7 +628,15 @@ function DynamicField({ field, value, error, onChange, suggested, locale }: { fi
   )
 }
 
-function ReviewGrid({ locale, values }: { locale: AppLocale; values: Record<string, string> }) {
+function ReviewGrid({
+  locale,
+  values,
+  legalVersions,
+}: {
+  locale: AppLocale
+  values: Record<string, string>
+  legalVersions: LegalDocumentVersions
+}) {
   const { t } = useTranslation()
   const weight = Number(values.weightKg)
 
@@ -609,7 +653,7 @@ function ReviewGrid({ locale, values }: { locale: AppLocale; values: Record<stri
     { step: 'training' as const, label: locale === 'fa' ? 'روز تمرین' : 'Training days', value: values.trainingDays ? formatNumber(Number(values.trainingDays), locale) : '0' },
     { step: 'body' as const, label: locale === 'fa' ? 'اطلاعات بدن' : 'Body', value: values.bodySkipped === 'yes' ? t('onboarding.skip') : values.bodyReportPath || values.bodyFatPercent || values.waistCm ? '✓' : '—' },
     { step: 'basics' as const, label: locale === 'fa' ? 'کشور' : 'Country', value: values.country ? countryName(values.country, locale) : '—' },
-    { step: 'consent' as const, label: locale === 'fa' ? 'رضایت‌ها' : 'Consents', value: values.termsAccepted === 'yes' && values.privacyAccepted === 'yes' && values.healthDataConsent === 'yes' ? t('onboarding.consentVersion') : '—' },
+    { step: 'consent' as const, label: locale === 'fa' ? 'رضایت‌ها' : 'Consents', value: values.termsAccepted === 'yes' && values.privacyAccepted === 'yes' && values.healthDataConsent === 'yes' ? legalVersions.health : '—' },
     { step: 'basics' as const, label: locale === 'fa' ? 'وزن فعلی' : 'Current weight', value: Number.isFinite(weight) && values.weightKg ? `${formatNumber(weight, locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'کیلوگرم' : 'kg'}` : '—' },
   ]
   return (

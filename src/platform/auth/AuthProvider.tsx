@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { LEGAL_DOCUMENT_VERSION } from '../../config/legal'
+import { loadLegalDocumentVersions } from '../../config/legal'
 import { runtimeConfig } from '../config/runtime'
 import { requireSupabase, supabase } from '../data/supabase'
 import { assertOnline } from '../pwa/network'
@@ -68,6 +68,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     assertOnline()
     const client = requireSupabase()
     const region = await resolveSignupRegion(locale)
+    const versions = await loadLegalDocumentVersions()
     const { data, error } = await client.auth.signUp({
       email,
       password,
@@ -77,8 +78,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
           product_region: region.productRegion,
           product_region_source: region.source,
           ...(region.countryCode ? { country_code: region.countryCode } : {}),
-          terms_version: LEGAL_DOCUMENT_VERSION,
-          privacy_version: LEGAL_DOCUMENT_VERSION,
+          terms_version: versions.terms,
+          privacy_version: versions.privacy,
+          health_consent_version: versions.health,
         },
         emailRedirectTo: `${window.location.origin}/${locale}/auth/verify`,
       },

@@ -58,6 +58,9 @@ export const accountSettingsResponseSchema = z.object({
       ai_country_verified: z.boolean(),
       health_data_consent_at: z.string().nullable(),
       health_consent_version: z.string().nullable(),
+      terms_version: z.string().nullable().optional(),
+      privacy_version: z.string().nullable().optional(),
+      payment_method_status: z.literal('not_collected').optional(),
     }),
     goal: z.object({
       goal_type: z.string(),

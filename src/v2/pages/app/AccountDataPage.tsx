@@ -2,7 +2,14 @@ import { Download, LockKeyhole, ShieldAlert, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
-import { deleteAccount, exportAccountData } from '../../data/repository'
+import {
+  deleteAccount,
+  downloadAccountExport,
+  exportAccountData,
+  loadAccountDeletionStatus,
+  loadAccountExportStatus,
+} from '../../data/repository'
+import type { AccountExportResponse } from '../../data/contracts'
 import { localizedPath } from '../../router/route-utils'
 import { Input } from '../../ui/FormControls'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
@@ -10,6 +17,29 @@ import { ModalShell } from '../../components/ModalShell'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { EXPORT_TTL_MS, type DeleteStatus, type ExportStatus } from './me-state'
 import '../../../styles/me.css'
+
+function exportStatusFromRequest(result: AccountExportResponse | { export_request: AccountExportResponse['export_request'] | null }): ExportStatus {
+  const row = result.export_request
+  if (!row) return 'idle'
+  if (row.status === 'ready' && row.expires_at && Date.parse(row.expires_at) <= Date.now()) return 'expired'
+  return row.status
+}
+
+function applyExportPayload(
+  payload: AccountExportResponse['export'] | null | undefined,
+  urlRef: { current: string },
+  setDownloadUrl: (url: string) => void,
+  setReadyAt: (value: number) => void,
+) {
+  if (!payload) return false
+  if (urlRef.current) URL.revokeObjectURL(urlRef.current)
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  urlRef.current = url
+  setDownloadUrl(url)
+  setReadyAt(Date.parse(payload.generated_at) || Date.now())
+  return true
+}
 
 export function AccountDataPage({
   locale,
@@ -37,6 +67,25 @@ export function AccountDataPage({
   const urlRef = useRef('')
 
   useEffect(() => {
+    if (preview) return
+    let cancelled = false
+    void Promise.all([
+      loadAccountExportStatus(),
+      loadAccountDeletionStatus(),
+    ]).then(([exportResult, deletionResult]) => {
+      if (cancelled) return
+      const nextExport = exportStatusFromRequest(exportResult)
+      setExportStatus(nextExport)
+      if (exportResult.export_request?.ready_at) {
+        setReadyAt(Date.parse(exportResult.export_request.ready_at))
+      }
+      if (deletionResult.deletion_request?.status === 'pending') setDeleteStatus('pending')
+      if (deletionResult.deletion_request?.status === 'failed') setDeleteStatus('failed')
+    }).catch(() => undefined)
+    return () => { cancelled = true }
+  }, [preview])
+
+  useEffect(() => {
     if (exportStatus !== 'ready' || readyAt == null) return
     const remaining = Math.max(1, EXPORT_TTL_MS - (Date.now() - readyAt))
     const timer = window.setTimeout(() => setExportStatus('expired'), remaining)
@@ -59,26 +108,36 @@ export function AccountDataPage({
     setExportStatus('pending')
     setError('')
     try {
-      const payload = await exportAccountData()
-      if (urlRef.current) URL.revokeObjectURL(urlRef.current)
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      urlRef.current = url
-      setDownloadUrl(url)
-      setReadyAt(Date.now())
-      setExportStatus('ready')
+      const result = await exportAccountData()
+      const next = exportStatusFromRequest(result)
+      if (next === 'ready') applyExportPayload(result.export, urlRef, setDownloadUrl, setReadyAt)
+      setExportStatus(next)
     } catch {
       setExportStatus('failed')
       setError(fa ? 'آماده‌سازی خروجی انجام نشد. دوباره تلاش کن. هیچ داده‌ای حذف نشده است.' : 'The export could not be prepared. Try again. No account data was deleted.')
     }
   }
 
-  function downloadReady() {
-    if (!downloadUrl) return
-    const anchor = document.createElement('a')
-    anchor.href = downloadUrl
-    anchor.download = `momentum-account-export-${new Date().toISOString().slice(0, 10)}.json`
-    anchor.click()
+  async function downloadReady() {
+    if (downloadUrl) {
+      const anchor = document.createElement('a')
+      anchor.href = downloadUrl
+      anchor.download = `momentum-account-export-${new Date().toISOString().slice(0, 10)}.json`
+      anchor.click()
+      return
+    }
+    if (preview) return
+    try {
+      const result = await downloadAccountExport()
+      if (!applyExportPayload(result.export, urlRef, setDownloadUrl, setReadyAt) || !urlRef.current) return
+      const anchor = document.createElement('a')
+      anchor.href = urlRef.current
+      anchor.download = `momentum-account-export-${new Date().toISOString().slice(0, 10)}.json`
+      anchor.click()
+    } catch {
+      setExportStatus('failed')
+      setError(fa ? 'آماده‌سازی خروجی انجام نشد. دوباره تلاش کن. هیچ داده‌ای حذف نشده است.' : 'The export could not be prepared. Try again. No account data was deleted.')
+    }
   }
 
   async function removeAccount() {

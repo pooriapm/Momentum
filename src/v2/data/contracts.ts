@@ -136,6 +136,13 @@ export const dashboardResponseSchema = z.object({
       automation_block_reason: z.string().nullable(),
       ai_country_verified: z.boolean().optional(),
       email_confirmed: z.boolean().optional(),
+      payment_method_status: z.literal('not_collected').optional(),
+      consent_versions: z.object({
+        terms: z.string().nullable(),
+        privacy: z.string().nullable(),
+        health: z.string().nullable(),
+      }).optional(),
+      health_data_consent_at: z.string().nullable().optional(),
     }),
     active_goal: z.object({
       id: z.string().uuid(),
@@ -179,6 +186,11 @@ export const onboardingCompletionSchema = z.object({
     country_code: z.string().length(2),
     ai_country_verified: z.boolean(),
     product_region: z.enum(['ir', 'intl']).optional(),
+    consent_versions: z.object({
+      terms: z.string(),
+      privacy: z.string(),
+      health: z.string(),
+    }).optional(),
   }),
 })
 
@@ -204,16 +216,52 @@ export const bodyCompositionConfirmationSchema = z.object({
   }).passthrough(),
 })
 
-export const accountExportResponseSchema = z.object({
-  export: z.object({
-    schema_version: z.literal('momentum-account-export-v1'),
-    generated_at: z.string(),
-    account: z.object({ id: z.string().uuid(), email: z.string().email().nullable() }),
-    data: z.record(z.string(), z.array(z.unknown())),
-    note: z.string(),
-  }),
+const exportPayloadSchema = z.object({
+  schema_version: z.literal('momentum-account-export-v1'),
+  generated_at: z.string(),
+  account: z.object({ id: z.string().uuid(), email: z.string().email().nullable() }),
+  data: z.record(z.string(), z.array(z.unknown())),
+  note: z.string(),
+}).passthrough()
+
+export const exportRequestSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['pending', 'ready', 'expired', 'failed']),
+  requested_at: z.string(),
+  ready_at: z.string().nullable(),
+  expires_at: z.string().nullable(),
+  error_code: z.string().nullable().optional(),
 })
 
-export const accountDeleteResponseSchema = z.object({ deleted: z.literal(true) })
+export const accountExportResponseSchema = z.object({
+  export_request: exportRequestSchema,
+  export: exportPayloadSchema.nullable().optional(),
+})
+
+export const accountExportStatusResponseSchema = z.object({
+  export_request: exportRequestSchema.nullable(),
+  export: exportPayloadSchema.nullable().optional(),
+})
+
+export const deletionRequestSchema = z.object({
+  id: z.string().uuid().optional(),
+  status: z.enum(['pending', 'completed', 'failed']),
+  requested_at: z.string().optional(),
+  confirmed_at: z.string().nullable().optional(),
+  completed_at: z.string().nullable().optional(),
+  sessions_revoked_at: z.string().nullable().optional(),
+  error_code: z.string().nullable().optional(),
+})
+
+export const accountDeleteResponseSchema = z.object({
+  deleted: z.literal(true),
+  deletion_request: deletionRequestSchema.optional(),
+})
+
+export const accountDeletionStatusResponseSchema = z.object({
+  deletion_request: deletionRequestSchema.nullable(),
+})
 
 export type DashboardResponse = z.infer<typeof dashboardResponseSchema>
+export type AccountExportResponse = z.infer<typeof accountExportResponseSchema>
+export type ExportRequest = z.infer<typeof exportRequestSchema>

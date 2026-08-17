@@ -1,5 +1,5 @@
 import { authenticate } from '../_shared/auth.ts'
-import { integerEnv, optionalEnv, requiredEnv } from '../_shared/config.ts'
+import { integerEnv, optionalEnv } from '../_shared/config.ts'
 import { canonicalJson, sha256 } from '../_shared/crypto.ts'
 import {
   assertAllowedOrigin,
@@ -11,6 +11,20 @@ import {
   requireIdempotencyKey,
 } from '../_shared/http.ts'
 import { enforceRateLimit } from '../_shared/limits.ts'
+import {
+  accountHash,
+  beginDeletionRow,
+  failDeletionRow,
+  failExportRow,
+  finalizeExportRow,
+  getDeletionRow,
+  getExportRow,
+  loadCurrentLegalVersions,
+  markDeletionSessionsRevoked,
+  recordDeletionReceipt,
+  requestExportRow,
+  revokeAccountSessions,
+} from './privacy.ts'
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const KEY_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/
@@ -51,6 +65,8 @@ const EXPORT_TABLES = [
   'workout_exercise_logs',
   'workout_set_logs',
   'ai_safety_reports',
+  'export_requests',
+  'deletion_requests',
 ] as const
 
 const EXPORT_PAGE_SIZE = 500
@@ -161,7 +177,7 @@ async function exportAccountData(
   }
 }
 
-async function deleteAccount(
+async function deleteAccountStorageAndIdentity(
   admin: Awaited<ReturnType<typeof authenticate>>['admin'],
   userId: string,
 ): Promise<void> {
@@ -182,6 +198,27 @@ async function deleteAccount(
   if (error) {
     throw new HttpError(503, 'account_delete_failed', 'Account deletion could not be completed.')
   }
+}
+
+async function completeAccountDeletion(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+): Promise<void> {
+  const hash = await accountHash(userId)
+  try {
+    await revokeAccountSessions(admin, userId)
+    await markDeletionSessionsRevoked(admin, userId)
+    await deleteAccountStorageAndIdentity(admin, userId)
+  } catch (error) {
+    await failDeletionRow(
+      admin,
+      userId,
+      error instanceof HttpError ? error.code : 'account_delete_failed',
+    ).catch(() => undefined)
+    await recordDeletionReceipt(admin, hash, 'failed').catch(() => undefined)
+    throw error
+  }
+  await recordDeletionReceipt(admin, hash, 'completed')
 }
 
 interface DashboardInput {
@@ -467,9 +504,12 @@ function projectPlanDay(options: {
   if (!isRecord(content) || !Array.isArray(content.days)) return null
   if (content.content_locale !== 'fa-IR' && content.content_locale !== 'en-US') return null
   if (typeof options.plan.valid_from !== 'string') return null
-  const dayIndex = differenceInDays(options.plan.valid_from, options.localDate)
+  const dayOffset = differenceInDays(options.plan.valid_from, options.localDate)
+  if (dayOffset < 0) return null
+  const templateLength = content.days.length
+  const wrappedIndex = templateLength > 0 ? dayOffset % templateLength : dayOffset
   const rawDay = content.days.find(
-    (item) => isRecord(item) && item.day_index === dayIndex,
+    (item) => isRecord(item) && item.day_index === wrappedIndex,
   )
   if (!isRecord(rawDay) || !Array.isArray(rawDay.meals)) return null
   const statuses = new Map(
@@ -548,7 +588,7 @@ function projectPlanDay(options: {
       : [],
     day: {
       local_date: options.localDate,
-      day_index: dayIndex,
+      day_index: dayOffset,
       title: typeof rawDay.title === 'string' ? rawDay.title : null,
       training_type: typeof rawDay.training_type === 'string' ? rawDay.training_type : 'rest',
       target_strategy: isRecord(rawDay.target_strategy) &&
@@ -587,7 +627,7 @@ async function loadDashboard(
     admin
       .from('profiles')
       .select(
-        'display_name,date_of_birth,sex,height_cm,locale,timezone,country_code,pricing_market,product_region,unit_system,onboarding_status,automation_block_reason,ai_billing_country_code,ai_country_verified_at,ai_country_verification_method',
+        'display_name,date_of_birth,sex,height_cm,locale,timezone,country_code,pricing_market,product_region,unit_system,onboarding_status,automation_block_reason,ai_billing_country_code,ai_country_verified_at,ai_country_verification_method,payment_method_status,terms_version,privacy_version,health_consent_version,health_data_consent_at',
       )
       .eq('user_id', userId)
       .single(),
@@ -759,6 +799,13 @@ async function loadDashboard(
             profileResult.data.ai_country_verified_at &&
             profileResult.data.ai_country_verification_method,
         ),
+        payment_method_status: profileResult.data.payment_method_status ?? 'not_collected',
+        consent_versions: {
+          terms: profileResult.data.terms_version ?? null,
+          privacy: profileResult.data.privacy_version ?? null,
+          health: profileResult.data.health_consent_version ?? null,
+        },
+        health_data_consent_at: profileResult.data.health_data_consent_at ?? null,
       }
       : null,
     active_goal: goalResult.data,
@@ -806,9 +853,55 @@ Deno.serve(async (request) => {
       return jsonResponse(request, { dashboard })
     }
 
-    if (body.action === 'export-account') {
+    if (body.action === 'legal-versions') {
       return jsonResponse(request, {
-        export: await exportAccountData(auth.admin, auth.user.id, auth.user.email),
+        legal_document_versions: await loadCurrentLegalVersions(auth.admin),
+      })
+    }
+
+    if (body.action === 'export-status') {
+      return jsonResponse(request, await getExportRow(auth.admin, auth.user.id, false))
+    }
+
+    if (body.action === 'export-download') {
+      const current = await getExportRow(auth.admin, auth.user.id, true)
+      if (!current.export_request || current.export_request.status === 'pending') {
+        throw new HttpError(409, 'export_pending', 'The export is still being prepared.')
+      }
+      if (current.export_request.status !== 'ready' || !current.export) {
+        throw new HttpError(409, 'export_not_ready', 'The export is not ready to download.')
+      }
+      return jsonResponse(request, current)
+    }
+
+    if (body.action === 'export-account') {
+      const requested = await requestExportRow(auth.admin, auth.user.id)
+      if (requested.status === 'ready') {
+        return jsonResponse(request, await getExportRow(auth.admin, auth.user.id, true))
+      }
+      try {
+        const payload = await exportAccountData(auth.admin, auth.user.id, auth.user.email)
+        const exportRequest = await finalizeExportRow(
+          auth.admin,
+          auth.user.id,
+          requested.id,
+          payload,
+        )
+        return jsonResponse(request, { export_request: exportRequest, export: payload })
+      } catch (error) {
+        await failExportRow(
+          auth.admin,
+          auth.user.id,
+          requested.id,
+          error instanceof HttpError ? error.code : 'account_export_failed',
+        ).catch(() => undefined)
+        throw error
+      }
+    }
+
+    if (body.action === 'deletion-status') {
+      return jsonResponse(request, {
+        deletion_request: await getDeletionRow(auth.admin, auth.user.id),
       })
     }
 
@@ -831,8 +924,11 @@ Deno.serve(async (request) => {
           'Sign in again before deleting your account.',
         )
       }
-      await deleteAccount(auth.admin, auth.user.id)
-      return jsonResponse(request, { deleted: true })
+      const deletion = await beginDeletionRow(auth.admin, auth.user.id, 'DELETE')
+      if (deletion.status === 'pending') {
+        await completeAccountDeletion(auth.admin, auth.user.id)
+      }
+      return jsonResponse(request, { deleted: true, deletion_request: { status: 'completed' } })
     }
     if (body.action === 'complete-onboarding') {
       if (!auth.user.email_confirmed_at) {
@@ -842,12 +938,13 @@ Deno.serve(async (request) => {
           'Confirm your email before completing onboarding.',
         )
       }
+      const versions = await loadCurrentLegalVersions(auth.admin)
       const { data, error } = await auth.admin.rpc('complete_onboarding', {
         p_user_id: auth.user.id,
         p_idempotency_key: idempotencyKey,
-        p_terms_version: requiredEnv('CURRENT_TERMS_VERSION'),
-        p_privacy_version: requiredEnv('CURRENT_PRIVACY_VERSION'),
-        p_health_consent_version: requiredEnv('CURRENT_HEALTH_CONSENT_VERSION'),
+        p_terms_version: versions.terms,
+        p_privacy_version: versions.privacy,
+        p_health_consent_version: versions.health,
       })
       if (error) {
         if (error.message.includes('idempotency_key_reused')) {
@@ -865,6 +962,13 @@ Deno.serve(async (request) => {
             403,
             'email_confirmation_required',
             'Confirm your email before completing onboarding.',
+          )
+        }
+        if (error.message.includes('consent_version_stale')) {
+          throw new HttpError(
+            409,
+            'consent_update_required',
+            'Current terms, privacy policy, and health-data consent must be accepted.',
           )
         }
         if (

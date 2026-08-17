@@ -2,7 +2,7 @@ import { ArrowRight, Check, Cloud, LockKeyhole, Mail, ShieldCheck } from 'lucide
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'wouter'
-import { LEGAL_DOCUMENT_VERSION } from '../../../config/legal'
+import { FALLBACK_LEGAL_DOCUMENT_VERSIONS, loadLegalDocumentVersions } from '../../../config/legal'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useAuth } from '../../../platform/auth/auth-context'
 import { classifyAuthError } from '../../../platform/auth/auth-errors'
@@ -48,6 +48,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cooldown, setCooldown] = useState(0)
   const [needsResend, setNeedsResend] = useState(false)
+  const [legalVersions, setLegalVersions] = useState(FALLBACK_LEGAL_DOCUMENT_VERSIONS)
   const isSignUp = mode === 'sign-up'
   const isRecover = mode === 'recover'
   const isUpdatePassword = mode === 'update-password'
@@ -61,6 +62,10 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
     const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000)
     return () => window.clearInterval(timer)
   }, [cooldown])
+
+  useEffect(() => {
+    void loadLegalDocumentVersions().then(setLegalVersions)
+  }, [])
 
   function failureMessage(kind: ReturnType<typeof classifyAuthError>) {
     if (kind === 'offline') return t('auth.offline')
@@ -240,14 +245,14 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                     <input checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} type="checkbox" />
                     <span><Check size={16} /></span>
                     <strong>{t('onboarding.termsConsent')}</strong>
-                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {LEGAL_DOCUMENT_VERSION}</Link>
+                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {legalVersions.terms}</Link>
                     {fieldErrors.terms ? <small>{fieldErrors.terms}</small> : null}
                   </label>
                   <label className={`onboarding-checkbox ${fieldErrors.privacy ? 'has-error' : ''}`}>
                     <input checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} type="checkbox" />
                     <span><Check size={16} /></span>
                     <strong>{t('onboarding.privacyConsent')}</strong>
-                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {LEGAL_DOCUMENT_VERSION}</Link>
+                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {legalVersions.privacy}</Link>
                     {fieldErrors.privacy ? <small>{fieldErrors.privacy}</small> : null}
                   </label>
                 </div>

@@ -3,8 +3,11 @@ import { requireSupabase } from '../../platform/data/supabase'
 import { assertOnline } from '../../platform/pwa/network'
 import {
   accountDeleteResponseSchema,
+  accountDeletionStatusResponseSchema,
   accountExportResponseSchema,
+  accountExportStatusResponseSchema,
   dashboardResponseSchema,
+  type AccountExportResponse,
   type DashboardResponse,
 } from './contracts'
 import { mapEntitlementStatus, type MembershipStatus } from '../entitlement'
@@ -309,14 +312,42 @@ export async function completeMeal(date: string, slotKey: string, optionKey: str
   if (error) throw error
 }
 
-export async function exportAccountData() {
+export async function exportAccountData(): Promise<AccountExportResponse> {
   assertOnline()
   const client = requireSupabase()
   const { data, error } = await client.functions.invoke('account-data', {
     body: { action: 'export-account' },
   })
   if (error) throw error
-  return accountExportResponseSchema.parse(data).export
+  return accountExportResponseSchema.parse(data)
+}
+
+export async function loadAccountExportStatus() {
+  const client = requireSupabase()
+  const { data, error } = await client.functions.invoke('account-data', {
+    body: { action: 'export-status' },
+  })
+  if (error) throw error
+  return accountExportStatusResponseSchema.parse(data)
+}
+
+export async function downloadAccountExport(): Promise<AccountExportResponse> {
+  assertOnline()
+  const client = requireSupabase()
+  const { data, error } = await client.functions.invoke('account-data', {
+    body: { action: 'export-download' },
+  })
+  if (error) throw error
+  return accountExportResponseSchema.parse(data)
+}
+
+export async function loadAccountDeletionStatus() {
+  const client = requireSupabase()
+  const { data, error } = await client.functions.invoke('account-data', {
+    body: { action: 'deletion-status' },
+  })
+  if (error) throw error
+  return accountDeletionStatusResponseSchema.parse(data)
 }
 
 export async function deleteAccount() {
