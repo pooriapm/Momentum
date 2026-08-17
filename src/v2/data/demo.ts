@@ -113,6 +113,8 @@ export const demoPlan: MomentumPlanView = {
     currentWeight: 72.8, startWeight: 76.2, targetWeight: 69, weeklyAdherence: 84, readiness: 82, recovery: 76, streak: 12,
     loggedCalories: 820, sleepMinutes: 425, energyScore: 4,
     entitlementLabel: { fa: 'عضویت Momentum', en: 'Momentum membership' },
+    entitlementStatus: 'active',
+    productRegion: 'intl',
     recentCheckIns: [
       { date: { fa: 'امروز', en: 'Today' }, score: 82, note: { fa: 'انرژی خوب', en: 'Good energy' }, weight: 72.8 },
       { date: { fa: 'دیروز', en: 'Yesterday' }, score: 74, note: { fa: 'خواب کوتاه', en: 'Short sleep' }, weight: 73.1 },

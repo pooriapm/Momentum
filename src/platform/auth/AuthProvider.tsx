@@ -100,9 +100,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (error) throw error
   }, [])
 
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (options?: { scope?: 'local' | 'global' }) => {
     const client = requireSupabase()
-    const { error } = await client.auth.signOut()
+    const { error } = await client.auth.signOut({ scope: options?.scope ?? 'global' })
     if (error) {
       throw error
     }

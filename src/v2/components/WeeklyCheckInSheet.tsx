@@ -83,8 +83,9 @@ export function WeeklyCheckInSheet({
     const trend = result.checkin.trend_summary
     const urgent = result.safety.level === 'urgent'
     const caution = result.safety.level === 'caution'
+    const referral = result.safety.reasons.includes('professional_referral')
     return (
-      <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-result-title" onClose={onClose}>
+      <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-result-title" material="content" onClose={onClose}>
         <header>
           <div><p className="orbit-eyebrow"><BarChart3 size={15} />{fa ? 'مقایسه هفتگی' : 'Weekly comparison'}</p><h2 id="weekly-result-title">{fa ? 'چک‌این هفتگی ذخیره شد' : 'Weekly check-in saved'}</h2></div>
           <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
@@ -98,14 +99,14 @@ export function WeeklyCheckInSheet({
         <p className="weekly-trend-summary__coverage">{fa
           ? `${formatNumber(trend.current_daily_count, locale)} ثبت روزانه این هفته با ${formatNumber(trend.previous_daily_count, locale)} ثبت هفته قبل مقایسه شد.`
           : `${trend.current_daily_count} daily logs this week were compared with ${trend.previous_daily_count} from the prior week.`}</p>
-        {urgent || caution ? <div className={`check-in-safety-result check-in-safety-result--${result.safety.level}`} role="alert"><AlertTriangle size={25} /><div><strong>{urgent ? (fa ? 'فعلاً فعالیت را متوقف کن.' : 'Stop activity for now.') : (fa ? 'این هفته با احتیاط پیش برو.' : 'Take extra care this week.')}</strong><p>{urgent ? (fa ? 'اگر علائم شدید، ناگهانی یا ادامه‌دار هستند همین حالا با اورژانس محلی یا متخصص واجد شرایط تماس بگیر. Momentum سرویس اورژانسی نیست.' : 'If symptoms are severe, sudden, or ongoing, contact local emergency services or a qualified clinician now. Momentum is not an emergency service.') : (fa ? 'با بدترشدن درد یا شرایط، تمرین را متوقف کن و با متخصص واجد شرایط گفتگو کن.' : 'If pain or symptoms worsen, stop training and speak with a qualified clinician.')}</p></div></div> : null}
+        {referral ? <div className="check-in-safety-result check-in-safety-result--caution" role="status"><AlertTriangle size={25} /><div><strong>{fa ? 'پیش از ادامه با یک متخصص صحبت کن.' : 'Talk with a qualified professional before continuing.'}</strong><p>{fa ? 'این تشخیص یا وضعیت فوری نیست. برنامه ماه بازتولید نمی‌شود.' : 'This is not a diagnosis or emergency. The monthly plan is not regenerated.'}</p></div></div> : urgent || caution ? <div className={`check-in-safety-result check-in-safety-result--${result.safety.level}`} role="alert"><AlertTriangle size={25} /><div><strong>{urgent ? (fa ? 'فعلاً فعالیت را متوقف کن.' : 'Stop activity for now.') : (fa ? 'این هفته با احتیاط پیش برو.' : 'Take extra care this week.')}</strong><p>{urgent ? (fa ? 'اگر علائم شدید، ناگهانی یا ادامه‌دار هستند همین حالا با اورژانس محلی یا متخصص واجد شرایط تماس بگیر. Momentum سرویس اورژانسی نیست.' : 'If symptoms are severe, sudden, or ongoing, contact local emergency services or a qualified clinician now. Momentum is not an emergency service.') : (fa ? 'با بدترشدن درد یا شرایط، تمرین را متوقف کن و با متخصص واجد شرایط گفتگو کن.' : 'If pain or symptoms worsen, stop training and speak with a qualified clinician.')}</p></div></div> : null}
         <Button block onClick={onClose} type="button"><Check size={18} />{fa ? 'تمام' : 'Done'}</Button>
       </ModalShell>
     )
   }
 
   return (
-    <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-check-in-title" onClose={onClose}>
+    <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-check-in-title" material="content" onClose={onClose}>
       <header>
         <div><p className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'مرور ۷ روز گذشته' : 'Review the past 7 days'}</p><h2 id="weekly-check-in-title">{fa ? 'چک‌این هفتگی' : 'Weekly check-in'}</h2></div>
         <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>

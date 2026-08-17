@@ -52,6 +52,7 @@ export const accountSettingsResponseSchema = z.object({
       locale: z.enum(['fa-IR', 'en-US']),
       timezone: z.string(),
       unit_system: z.enum(['metric', 'imperial']),
+      product_region: z.enum(['ir', 'intl']).optional(),
       country_code: z.string().length(2).nullable(),
       pricing_market: z.string(),
       ai_country_verified: z.boolean(),

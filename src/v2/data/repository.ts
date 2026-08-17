@@ -61,6 +61,15 @@ function consecutiveDays(checkins: Dashboard['recent_checkins'], today: string) 
   return streak
 }
 
+function mapEntitlementStatus(usage: Dashboard['entitlement_usage']): NonNullable<MomentumPlanView['progress']['entitlementStatus']> {
+  if (!usage) return 'none'
+  const status = usage.entitlement.status
+  if (usage.entitlement.source === 'gift' && status !== 'expired' && status !== 'cancelled' && status !== 'canceled') return 'gift'
+  if (status === 'past_due' || status === 'pending' || status === 'incomplete' || status === 'grace') return 'pending'
+  if (status === 'canceled' || status === 'cancelled' || status === 'expired' || status === 'unpaid') return 'expired'
+  return 'active'
+}
+
 function strategyName(mode: string, locale: AppLocale) {
   const labels: Record<string, Record<AppLocale, string>> = {
     balanced: { fa: 'روز متعادل', en: 'Balanced day' },
@@ -210,6 +219,9 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       entitlementLabel: dashboard.entitlement_usage?.entitlement.source === 'gift'
         ? { fa: 'هدیه برنامه اول', en: 'First-plan gift' }
         : { fa: 'عضویت Momentum', en: 'Momentum membership' },
+      entitlementStatus: mapEntitlementStatus(dashboard.entitlement_usage),
+      entitlementPeriodEnd: dashboard.entitlement_usage?.entitlement.period_end,
+      productRegion: dashboard.profile.product_region,
       recentCheckIns: dashboard.recent_checkins.slice(0, 7).map((item) => ({
         date: localized(formatLocalDate(item.local_date, locale)),
         score: scoreFromCheckIn(item),

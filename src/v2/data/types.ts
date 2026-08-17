@@ -74,13 +74,24 @@ export interface MomentumPlanDayView {
   workout: WorkoutBlock | null
 }
 
+export interface WeeklyProgressPoint {
+  week: number
+  workoutsCompleted: number
+  workoutsPlanned: number
+  mealsCompleted: number
+  mealsPlanned: number
+  energy: number
+  adherence: number
+  partial?: boolean
+}
+
 export interface MomentumPlanView {
   localDate?: string
   timezone?: string
   contentLocale?: 'fa' | 'en'
   userName: LocalizedText
   dateLabel: LocalizedText
-  coachBrief: LocalizedText
+  monthlyPlanBrief: LocalizedText
   adjustmentReason: LocalizedText
   targets: NutritionSummary
   targetStrategy: LocalizedText
@@ -99,9 +110,13 @@ export interface MomentumPlanView {
     loggedCalories: number
     sleepMinutes: number
     energyScore: number
-    coachMessagesUsed: number
-    coachMessagesLimit: number
     entitlementLabel?: LocalizedText
+    entitlementStatus?: 'gift' | 'active' | 'pending' | 'expired' | 'none'
+    entitlementPeriodEnd?: string
+    productRegion?: 'ir' | 'intl'
+    cycleEnding?: boolean
+    safetyPaused?: boolean
+    weeklySeries?: WeeklyProgressPoint[]
     recentCheckIns: Array<{
       date: LocalizedText
       score: number

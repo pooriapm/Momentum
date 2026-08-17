@@ -13,7 +13,7 @@ export interface AuthContextValue {
   resendConfirmation: (email: string, locale: 'fa' | 'en') => Promise<void>
   requestPasswordReset: (email: string, locale: 'fa' | 'en') => Promise<void>
   updatePassword: (password: string) => Promise<void>
-  signOut: () => Promise<void>
+  signOut: (options?: { scope?: 'local' | 'global' }) => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
