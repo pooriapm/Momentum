@@ -1,4 +1,13 @@
-# Migration order from local-only Momentum
+# Target migration order after design approval
+
+## 0. Production lock and design handoff
+
+- Complete [design/HANDOFF.md](../design/HANDOFF.md) Step 4 Storybook evidence is closed with documented exceptions. Step 5 is signed: [design/STEP-5-FREEZE.md](../design/STEP-5-FREEZE.md).
+- Production rewrite follows [AGENT-DEVELOPMENT-PLAN.md](../AGENT-DEVELOPMENT-PLAN.md). Phase 4 generation and live Stripe remain gated.
+- Verify all 132 canonical state IDs across Penpot/Storybook and all eight
+  prototype flows against the Design Complete gate.
+- Rewrite against D1–D13, not leftover alpha (7-day trial, Core/Pro, weekly
+  `generate-plan`, body-extraction AI).
 
 ## 1. Backend contract and launch guardrails
 
@@ -42,17 +51,18 @@ in an imported or model-generated plan.
 ## 5. AI cutover
 
 - Configure trusted billing-country verification and current consent versions.
-- Keep all AI switches off, then enable master/body/plan/coach individually for
-  an internal eligible-country cohort.
+- Keep all AI switches off, then enable the master and monthly-plan switches for
+  an internal eligible-country cohort. No coach/chat or body-analysis AI switch exists.
 - Run schema, nutrition, allergy, regional-food and urgent-safety evals.
-- Enable `coach` only after safety review and monitoring are live.
+- Enable `monthly-plan` only after safety review, subscription verification,
+  period-level idempotency, automatic import, and monitoring are live.
 - Compare actual provider usage with seeded allowance and pricing assumptions.
 - Exercise the global request circuit breaker and emergency master kill switch.
 
-## 6. Redesign, bilingual and native readiness
+## 6. Design-conformant bilingual implementation and native readiness
 
-- Redesign against authenticated loading/error/empty/quota states, not the old
-  synchronous local blob.
+- Implement the approved Inventory/Penpot/Storybook loading, error, empty,
+  offline, blocked and lifecycle states; do not redesign from the old local blob.
 - Move all copy to fa/en resources and derive document direction from locale.
 - Keep API contracts platform-neutral; isolate DOM/PWA/download code from shared
   domain calculations so Expo can consume the same API later.
