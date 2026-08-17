@@ -1,0 +1,23 @@
+.mo-onboarding-story {
+  overflow-x: clip;
+}
+
+.mo-onboarding-story :where(.onboarding-header > span, .orbit-eyebrow, .inline-notice) > svg,
+.mo-onboarding-story :where(.body-upload, .onboarding-actions .orbit-button) > svg {
+  flex: 0 0 auto;
+}
+
+.mo-onboarding-story :where(.review-grid dd, input[type='time']) {
+  unicode-bidi: plaintext;
+}
+
+@media (max-width: 35rem) {
+  .mo-onboarding-story .onboarding-actions {
+    gap: var(--space-3);
+  }
+
+  .mo-onboarding-story .onboarding-actions .orbit-button {
+    min-width: 0;
+    padding-inline: var(--space-3);
+  }
+}

@@ -1,0 +1,70 @@
+.onboarding-multiselect label.is-blocked {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.onboarding-checkbox__version {
+  color: var(--color-text-muted);
+  font-size: .62rem;
+  grid-column: 2;
+}
+
+.onboarding-actions__stop,
+.onboarding-body-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+.onboarding-stop {
+  display: grid;
+  gap: .55rem;
+  justify-items: start;
+  margin: 1rem 0;
+  text-align: start;
+}
+
+.onboarding-stop h3 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.onboarding-stop p {
+  color: var(--color-text-secondary);
+  font-size: .82rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.onboarding-stop--urgent {
+  color: var(--color-danger);
+}
+
+.onboarding-resume {
+  display: grid;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 40rem;
+}
+
+.onboarding-resume__trust {
+  display: grid;
+  gap: .45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.onboarding-resume__trust li {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: flex;
+  font-size: .82rem;
+  gap: .45rem;
+}
+
+.review-grid__edit {
+  color: var(--color-brand);
+  font-size: .65rem;
+  font-weight: 750;
+}

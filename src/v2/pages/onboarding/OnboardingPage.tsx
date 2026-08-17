@@ -1,13 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import {
+  AlertOctagon,
   ArrowLeft,
   ArrowRight,
   Check,
   FileCheck2,
   HeartPulse,
   LockKeyhole,
+  ShieldCheck,
   Sparkles,
   UploadCloud,
+  WalletCards,
+  WifiOff,
 } from 'lucide-react'
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -15,7 +19,6 @@ import { Link, useLocation } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useAuth } from '../../../platform/auth/auth-context'
 import { sanitizeLocalizedNumberInput } from '../../../lib/numbers/localized-number'
-import { loadAccountDashboard } from '../../data/repository'
 import { localizedPath } from '../../router/route-utils'
 import { Input, Select, Textarea } from '../../ui/FormControls'
 import { CountryCombobox } from '../../ui/CountryCombobox'
@@ -25,12 +28,9 @@ import { Button, ContentCard, PageSkeleton, StatusPill } from '../../ui/primitiv
 import {
   loadOnboardingDraft,
   completeOnboarding,
-  confirmBodyComposition,
   deleteOnboardingDraft,
   discardBodyReport,
-  requestPlanGeneration,
   saveOnboardingDraft,
-  updateBodyCompositionValues,
   uploadBodyReport,
 } from '../../onboarding/repository'
 import {
@@ -40,36 +40,30 @@ import {
   onboardingSections,
   type OnboardingField,
   type OnboardingStepKey,
+  UNMAPPED_ALLERGEN,
   validateSection,
+  weekdayOptionsForLocale,
 } from '../../onboarding/schema'
+import {
+  canVisitStep,
+  earliestIncompleteStep,
+  generationBlockedReason,
+  healthScreeningOutcome,
+  isHealthCollectingStopped,
+  nextOnboardingStep,
+  prepareCompletionValues,
+  previousOnboardingStep,
+} from '../../onboarding/onboarding-state'
 import { countryName } from '../../onboarding/countries'
 import { formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { loadPricingContext } from '../../data/pricing'
+import './onboarding.css'
 
 interface OnboardingPageProps {
   locale: AppLocale
   step: OnboardingStepKey
 }
-
-interface ExtractedMetric {
-  column: string
-  confidence: number
-  evidence: string | null
-  key: string
-  value: string
-}
-
-const bodyMetricSpecs = [
-  { key: 'weight', column: 'weight_kg', fa: 'وزن', en: 'Weight', unit: 'kg' },
-  { key: 'body_fat', column: 'body_fat_percent', fa: 'درصد چربی', en: 'Body fat', unit: '%' },
-  { key: 'fat_mass', column: 'fat_mass_kg', fa: 'توده چربی', en: 'Fat mass', unit: 'kg' },
-  { key: 'lean_mass', column: 'lean_mass_kg', fa: 'توده بدون چربی', en: 'Lean mass', unit: 'kg' },
-  { key: 'skeletal_muscle_mass', column: 'skeletal_muscle_mass_kg', fa: 'عضله اسکلتی', en: 'Skeletal muscle', unit: 'kg' },
-  { key: 'visceral_fat_rating', column: 'visceral_fat_rating', fa: 'چربی احشایی', en: 'Visceral fat', unit: 'score' },
-  { key: 'waist', column: 'waist_cm', fa: 'دور کمر', en: 'Waist', unit: 'cm' },
-  { key: 'basal_metabolic_rate', column: 'basal_metabolic_rate_kcal', fa: 'سوخت‌وساز پایه', en: 'Basal metabolism', unit: 'kcal/day' },
-] as const
 
 export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   const { t } = useTranslation()
@@ -82,11 +76,10 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [pageError, setPageError] = useState('')
-  const [pageNotice, setPageNotice] = useState('')
-  const [report, setReport] = useState<File | null>(null)
-  const [reportUploaded, setReportUploaded] = useState(false)
-  const [bodyExtraction, setBodyExtraction] = useState<{ id: string; metrics: ExtractedMetric[] } | null>(null)
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'error' | 'success'>('idle')
+  const [reportName, setReportName] = useState('')
   const flowIdRef = useRef(crypto.randomUUID())
+  const uploadCancelled = useRef(false)
 
   const draftQuery = useQuery({
     queryKey: ['onboarding-draft', user?.id],
@@ -112,28 +105,22 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   )
   const countrySuggested = Boolean(geoQuery.data?.country && !draftQuery.data?.values?.country && !valueEdits.country)
   const onboardingFlowId = values.onboardingFlowId || flowIdRef.current
-  const missingPrerequisite = useMemo(
-    () => onboardingSections
-      .slice(0, currentIndex)
-      .find((candidate) => Object.keys(validateSection(candidate, values, locale)).length > 0),
-    [currentIndex, locale, values],
-  )
+  const healthOutcome = healthScreeningOutcome(values)
+  const blockedReason = generationBlockedReason(values, locale)
+  const resumeStep = earliestIncompleteStep(values, locale)
 
   useEffect(() => {
-    if (!draftQuery.isLoading && !draftQuery.isError && missingPrerequisite) {
-      navigate(localizedPath(locale, `/onboarding/${missingPrerequisite.key}`), { replace: true })
+    if (!draftQuery.isLoading && !draftQuery.isError && !canVisitStep(step, values, locale)) {
+      navigate(localizedPath(locale, `/onboarding/${resumeStep}`), { replace: true })
     }
-  }, [draftQuery.isError, draftQuery.isLoading, locale, missingPrerequisite, navigate])
+  }, [draftQuery.isError, draftQuery.isLoading, locale, navigate, resumeStep, step, values])
 
-  const safetyBlocked = useMemo(
-    () =>
-      values.adultConfirmed === 'no' ||
-      values.pregnancyOrBreastfeeding === 'yes' ||
-      values.eatingDisorderHistory === 'yes' ||
-      values.highRiskCondition === 'yes',
-    [values],
-  )
-  const visibleFields = section.fields.filter((field) => isFieldVisible(field, values))
+  const visibleFields = section.fields.filter((field) => {
+    if (section.key === 'health' && isHealthCollectingStopped(values) && ['medications', 'medicalNotes', 'supplements'].includes(field.key) && !values[field.key]) {
+      return false
+    }
+    return isFieldVisible(field, values)
+  })
 
   if (status === 'loading' || draftQuery.isLoading) {
     return <PageSkeleton />
@@ -159,7 +146,12 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
 
   function updateValue(field: OnboardingField, value: string) {
     const nextValue = field.kind === 'number' ? sanitizeLocalizedNumberInput(value, field.step !== 1) : value
-    setValueEdits((current) => ({ ...current, [field.key]: nextValue }))
+    setValueEdits((current) => {
+      const next = { ...current, [field.key]: nextValue }
+      if (field.key === 'trainingDurationPreset' && value !== 'custom') next.trainingDuration = value
+      if (field.key === 'bodyFatPercent' || field.key === 'waistCm' || field.key === 'bodySource') next.bodySkipped = ''
+      return next
+    })
     setErrors((current) => {
       const next = { ...current }
       delete next[field.key]
@@ -167,13 +159,13 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
     })
   }
 
-  async function persist(nextStep: OnboardingStepKey) {
+  async function persist(nextStep: OnboardingStepKey, extra: Record<string, string> = {}) {
     setSaving(true)
     setPageError('')
-    setPageNotice('')
     try {
       await saveOnboardingDraft(user!.id, nextStep, {
         ...values,
+        ...extra,
         onboardingFlowId,
         locale: locale === 'fa' ? 'fa-IR' : 'en-US',
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
@@ -188,101 +180,132 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   }
 
   async function next() {
+    if (section.key === 'health' && isHealthCollectingStopped(values)) return
     const nextErrors = validateSection(section, values, locale)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       return
     }
-    const nextStep = onboardingSections[Math.min(currentIndex + 1, onboardingSections.length - 1)].key
-    if (await persist(nextStep)) {
-      navigate(localizedPath(locale, `/onboarding/${nextStep}`))
-    }
+    const nextStep = nextOnboardingStep(section.key)
+    if (await persist(nextStep)) navigate(localizedPath(locale, `/onboarding/${nextStep}`))
   }
 
   async function previous() {
-    const previousStep = onboardingSections[Math.max(0, currentIndex - 1)].key
-    if (await persist(previousStep)) {
-      navigate(localizedPath(locale, `/onboarding/${previousStep}`))
+    const previousStep = previousOnboardingStep(section.key)
+    if (await persist(previousStep)) navigate(localizedPath(locale, `/onboarding/${previousStep}`))
+  }
+
+  async function skipBody() {
+    if (await persist('review', { bodySkipped: 'yes' })) {
+      setValueEdits((current) => ({ ...current, bodySkipped: 'yes' }))
+      navigate(localizedPath(locale, '/onboarding/review'))
     }
   }
 
   async function handleReportChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     setPageError('')
-    setReportUploaded(false)
+    setUploadState('idle')
     if (!file) return
     if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      setUploadState('error')
       setPageError(locale === 'fa' ? 'فایل باید PDF، JPG، PNG یا WebP و کوچک‌تر از ۱۰ مگابایت باشد.' : 'Use a PDF, JPG, PNG, or WebP file under 10 MB.')
       return
     }
-    setReport(file)
+    uploadCancelled.current = false
+    setReportName(file.name)
+    setUploadState('uploading')
     setSaving(true)
     try {
       const uploaded = await uploadBodyReport(user!.id, file, values.bodyReportDate)
+      if (uploadCancelled.current) {
+        await discardBodyReport(uploaded.id, uploaded.path)
+        setUploadState('idle')
+        setReportName('')
+        return
+      }
       const uploadedValues = {
-        ...values,
-        onboardingFlowId,
         bodyReportId: uploaded.id,
         bodyReportPath: uploaded.path,
-        locale: locale === 'fa' ? 'fa-IR' : 'en-US',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        bodySource: 'report',
+        bodySkipped: '',
       }
       try {
-        await saveOnboardingDraft(user!.id, 'body', uploadedValues)
+        await saveOnboardingDraft(user!.id, 'body', {
+          ...values,
+          ...uploadedValues,
+          onboardingFlowId,
+          locale: locale === 'fa' ? 'fa-IR' : 'en-US',
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        })
       } catch (error) {
         await discardBodyReport(uploaded.id, uploaded.path)
         throw error
       }
       setValueEdits((current) => ({ ...current, ...uploadedValues }))
-      setReportUploaded(true)
+      setUploadState('success')
     } catch {
-      setPageError(locale === 'fa' ? 'آپلود گزارش انجام نشد. دوباره تلاش کن.' : 'The report could not be uploaded. Try again.')
-      setReport(null)
+      setUploadState('error')
+      setPageError(t('onboarding.uploadError'))
     } finally {
       setSaving(false)
     }
   }
 
-  async function generate() {
+  async function cancelUpload() {
+    uploadCancelled.current = true
+    setUploadState('idle')
+    setReportName('')
+    setSaving(false)
+  }
+
+  async function removeReport() {
+    if (values.bodyReportId && values.bodyReportPath) {
+      try {
+        await discardBodyReport(values.bodyReportId, values.bodyReportPath)
+      } catch {
+        /* keep local values even if remote delete fails */
+      }
+    }
+    setValueEdits((current) => ({ ...current, bodyReportId: '', bodyReportPath: '', bodySource: current.bodySource === 'report' ? 'manual' : current.bodySource }))
+    setUploadState('idle')
+    setReportName('')
+    setPageError('')
+  }
+
+  async function finishSetup() {
+    if (!online) {
+      setPageError(t('onboarding.offlineReview'))
+      return
+    }
     setSaving(true)
     setPageError('')
-    setPageNotice('')
     try {
-      await saveOnboardingDraft(user!.id, 'review', {
+      const payload = prepareCompletionValues({
         ...values,
         onboardingFlowId,
         locale: locale === 'fa' ? 'fa-IR' : 'en-US',
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       })
+      await saveOnboardingDraft(user!.id, 'review', payload)
       const completion = await completeOnboarding(`${onboardingFlowId}:complete`)
       if (completion.status === 'automation_blocked') {
-        setPageError(locale === 'fa' ? 'اطلاعات حساب ذخیره شد، اما برنامه‌ریزی خودکار برای شرایط انتخاب‌شده مناسب نیست. می‌توانی Preview را ببینی یا با متخصص واجد شرایط گفتگو کنی.' : 'Your account was saved, but automated planning is not appropriate for the selected health context. You can view the preview or speak with a qualified professional.')
+        setPageError(blockedReason || (locale === 'fa'
+          ? 'اطلاعات حساب ذخیره شد، اما برنامه‌ریزی خودکار برای شرایط انتخاب‌شده مناسب نیست.'
+          : 'Your account was saved, but automated planning is not appropriate for the selected health context.'))
         return
       }
-      const account = await loadAccountDashboard(locale)
-      if (account.aiPlanAccess.state !== 'ready') {
-        setPageError(aiAccessMessage(account.aiPlanAccess.state, locale))
-        return
-      }
-
-      if (bodyExtraction) {
-        const normalized = Object.fromEntries(bodyExtraction.metrics.map((metric) => {
-          const value = Number(metric.value)
-          if (!Number.isFinite(value) || value < 0) throw new Error('invalid_body_metric')
-          return [metric.column, value]
-        }))
-        await updateBodyCompositionValues(bodyExtraction.id, normalized)
-        await confirmBodyComposition(bodyExtraction.id, `${onboardingFlowId}:confirm:${bodyExtraction.id}`)
-      }
-      await requestPlanGeneration(locale, `${onboardingFlowId}:plan`)
       await deleteOnboardingDraft(user!.id)
-      navigate(localizedPath(locale, '/app/today?generating=1'))
+      navigate(localizedPath(locale, '/app/today'))
     } catch {
-      setPageError(locale === 'fa' ? 'ساخت برنامه شروع نشد. چند لحظه دیگر دوباره تلاش کن.' : 'Generation could not start. Try again in a moment.')
+      setPageError(t('onboarding.saveConflict'))
     } finally {
       setSaving(false)
     }
   }
+
+  const healthStopped = section.key === 'health' && isHealthCollectingStopped(values)
+  const showContinue = section.key !== 'review' && !healthStopped
 
   return (
     <div className="onboarding-page">
@@ -292,7 +315,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
       </header>
       <main className="onboarding-layout">
         <aside className="onboarding-sidebar">
-          <p className="orbit-eyebrow"><Sparkles size={15} />Adaptive onboarding</p>
+          <p className="orbit-eyebrow"><Sparkles size={15} />{t('onboarding.setupEyebrow')}</p>
           <h1>{t('onboarding.title')}</h1>
           <p>{t('onboarding.subtitle')}</p>
           <ol>
@@ -309,6 +332,9 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
             <span>{String(currentIndex + 1).padStart(2, '0')} / {String(onboardingSections.length).padStart(2, '0')}</span>
             <h2>{t(section.titleKey)}</h2>
           </div>
+          {section.key === 'basics' ? <div className="inline-notice"><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</div> : null}
+          {section.key === 'consent' ? <div className="inline-notice"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</div> : null}
+          {section.key === 'food' ? <div className="inline-notice inline-notice--success"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</div> : null}
           {visibleFields.length > 0 ? (
             <div className="onboarding-fields">
               {visibleFields.map((field) => (
@@ -316,6 +342,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                   error={errors[field.key]}
                   field={field}
                   key={field.key}
+                  locale={locale}
                   onChange={(value) => updateValue(field, value)}
                   suggested={field.key === 'country' && countrySuggested}
                   value={values[field.key] ?? ''}
@@ -323,19 +350,32 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               ))}
             </div>
           ) : null}
+          {section.key === 'health' ? <HealthOutcome outcome={healthOutcome} /> : null}
+          {section.key === 'food' && values.allergies?.includes(UNMAPPED_ALLERGEN) ? (
+            <div className="inline-notice inline-notice--warning" role="status">{t('onboarding.allergenOtherBlock')}</div>
+          ) : null}
+          {section.key === 'training' && values.trainingLocation === 'outdoor' ? (
+            <div className="inline-notice">{t('onboarding.outdoorEquipmentHidden')}</div>
+          ) : null}
+          {section.key === 'training' && values.trainingLocation === 'home' ? (
+            <div className="inline-notice">{t('onboarding.homeEquipmentHint')}</div>
+          ) : null}
+          {section.key === 'training' && values.trainingLocation === 'gym' ? (
+            <div className="inline-notice">{t('onboarding.gymEquipmentHint')}</div>
+          ) : null}
           {section.key === 'body' ? (
-            <div className="body-upload-step">
-              <span className="body-upload-step__icon"><UploadCloud size={31} /></span>
-              <StatusPill tone="neutral">{t('onboarding.bodyOptional')}</StatusPill>
-              <h3>{t('onboarding.upload')}</h3>
-              <p>{t('onboarding.bodyCopy')}</p>
-              <label className={`body-upload ${reportUploaded || values.bodyReportPath ? 'body-upload--success' : ''}`}>
-                {reportUploaded || values.bodyReportPath ? <FileCheck2 size={22} /> : <UploadCloud size={22} />}
-                <span>{reportUploaded || values.bodyReportPath ? (locale === 'fa' ? 'گزارش امن آپلود شد' : 'Report uploaded securely') : report?.name ?? t('onboarding.upload')}</span>
-                <input accept=".pdf,image/jpeg,image/png,image/webp" disabled={saving || !online} onChange={handleReportChange} type="file" />
-              </label>
-              <small>{locale === 'fa' ? 'استخراج خودکار فقط مقادیر خوانا را پیشنهاد می‌دهد؛ قبل از استفاده باید تأییدشان کنی.' : 'Extraction only proposes clearly readable values; you must verify them before use.'}</small>
-            </div>
+            <BodyStep
+              locale={locale}
+              onCancelUpload={() => void cancelUpload()}
+              onRemove={() => void removeReport()}
+              onReportChange={handleReportChange}
+              onSkip={() => void skipBody()}
+              online={online}
+              reportName={reportName}
+              saving={saving}
+              skipped={values.bodySkipped === 'yes'}
+              uploadState={values.bodyReportPath ? 'success' : uploadState}
+            />
           ) : null}
           {section.key === 'review' ? (
             <div className="onboarding-review">
@@ -343,17 +383,25 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               <h3>{t('onboarding.review')}</h3>
               <p>{t('onboarding.reviewCopy')}</p>
               <ReviewGrid locale={locale} values={values} />
-              {bodyExtraction ? <BodyExtractionReview extraction={bodyExtraction} locale={locale} onChange={(key, value) => setBodyExtraction((current) => current ? { ...current, metrics: current.metrics.map((metric) => metric.key === key ? { ...metric, value: sanitizeLocalizedNumberInput(value, true) } : metric) } : current)} /> : null}
-              {safetyBlocked ? <div className="inline-notice inline-notice--warning"><HeartPulse size={18} />{locale === 'fa' ? 'برای این شرایط، برنامه‌ریزی خودکار مناسب نیست. Momentum فقط اطلاعات عمومی ارائه می‌کند و پیشنهاد می‌کنیم با متخصص واجد شرایط صحبت کنی.' : 'Automated planning is not appropriate for the selected health context. Momentum will only provide general information and recommends a qualified professional.'}</div> : null}
-              <Button block disabled={!online} loading={saving} onClick={generate}>
-                <Sparkles size={18} />{bodyExtraction ? (locale === 'fa' ? 'تأیید گزارش و ساخت برنامه' : 'Confirm report & generate') : t('onboarding.generate')}
-              </Button>
-              <Link className="orbit-button orbit-button--secondary orbit-button--block" href={localizedPath(locale, '/app/today?preview=1')}>{t('common.preview')}</Link>
+              <div className="inline-notice"><WalletCards size={18} />{t('onboarding.reviewPayment')}</div>
+              <div className="inline-notice"><LockKeyhole size={18} />{t('onboarding.regionLocked')} · {t('onboarding.entitlementPending')}</div>
+              {blockedReason ? <div className="inline-notice inline-notice--warning"><HeartPulse size={18} />{blockedReason}</div> : null}
+              {!online ? <div className="inline-notice"><WifiOff size={18} />{t('onboarding.offlineReview')}</div> : null}
+              <Button block disabled={!online} loading={saving} onClick={finishSetup}>{t('onboarding.reviewFinish')}</Button>
+              <Link className="orbit-button orbit-button--secondary orbit-button--block" href={localizedPath(locale, '/pricing')}>{t('onboarding.paymentMethodLater')}</Link>
+              <Link className="orbit-button orbit-button--ghost orbit-button--block" href={localizedPath(locale, '/app/today?preview=1')}>{t('common.preview')}</Link>
             </div>
           ) : null}
-          {pageNotice ? <div className="inline-notice inline-notice--success" role="status">{pageNotice}</div> : null}
           {pageError ? <div className="inline-notice inline-notice--error" role="alert">{pageError}</div> : null}
-          {section.key !== 'review' ? (
+          {healthStopped ? (
+            <div className="onboarding-actions">
+              <Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
+              <div className="onboarding-actions__stop">
+                <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today')}>{t('onboarding.saveAndExit')}</Link>
+                <Link className="orbit-button orbit-button--danger" href={localizedPath(locale, '/safety')}>{t('onboarding.safetyGuidance')}</Link>
+              </div>
+            </div>
+          ) : showContinue ? (
             <div className="onboarding-actions">
               <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
               <Button disabled={!online} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
@@ -367,9 +415,92 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   )
 }
 
-function DynamicField({ field, value, error, onChange, suggested }: { field: OnboardingField; value: string; error?: string; onChange: (value: string) => void; suggested?: boolean }) {
-  const { t, i18n } = useTranslation()
-  const locale: AppLocale = i18n.resolvedLanguage === 'en' ? 'en' : 'fa'
+function HealthOutcome({ outcome }: { outcome: ReturnType<typeof healthScreeningOutcome> }) {
+  const { t } = useTranslation()
+  if (outcome === 'eligible') {
+    return <div className="inline-notice inline-notice--success" role="status"><ShieldCheck size={18} /><span><strong>{t('onboarding.healthEligible')}</strong><br />{t('onboarding.healthEligibleCopy')}</span></div>
+  }
+  if (outcome === 'blocked') {
+    return (
+      <div className="onboarding-stop" role="alert">
+        <AlertOctagon size={28} />
+        <h3>{t('onboarding.healthBlocked')}</h3>
+        <p>{t('onboarding.healthBlockedCopy')}</p>
+        <p>{t('onboarding.noMedicalClaim')}</p>
+      </div>
+    )
+  }
+  if (outcome === 'urgent') {
+    return (
+      <div className="onboarding-stop onboarding-stop--urgent" role="alert">
+        <AlertOctagon size={28} />
+        <h3>{t('onboarding.healthUrgent')}</h3>
+        <p>{t('onboarding.healthUrgentCopy')}</p>
+      </div>
+    )
+  }
+  return null
+}
+
+function BodyStep({
+  locale,
+  skipped,
+  uploadState,
+  reportName,
+  saving,
+  online,
+  onReportChange,
+  onSkip,
+  onCancelUpload,
+  onRemove,
+}: {
+  locale: AppLocale
+  skipped: boolean
+  uploadState: 'idle' | 'uploading' | 'error' | 'success'
+  reportName: string
+  saving: boolean
+  online: boolean
+  onReportChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onSkip: () => void
+  onCancelUpload: () => void
+  onRemove: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="body-upload-step">
+      <span className="body-upload-step__icon"><UploadCloud size={31} /></span>
+      <StatusPill tone="neutral">{t('onboarding.bodyOptional')}</StatusPill>
+      <h3>{t('onboarding.upload')}</h3>
+      <p>{t('onboarding.bodyManualCopy')}</p>
+      {skipped ? <div className="inline-notice">{t('onboarding.bodySkipConfirm')}</div> : null}
+      {uploadState === 'uploading' ? (
+        <div className="inline-notice" role="status">
+          {t('onboarding.uploadProgress')}
+          <Button onClick={onCancelUpload} variant="ghost">{t('onboarding.uploadCancel')}</Button>
+        </div>
+      ) : null}
+      {uploadState === 'error' ? (
+        <div className="inline-notice inline-notice--error" role="alert">
+          {t('onboarding.uploadError')}
+          <Button onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button>
+        </div>
+      ) : null}
+      <label className={`body-upload ${uploadState === 'success' ? 'body-upload--success' : ''}`}>
+        {uploadState === 'success' ? <FileCheck2 size={22} /> : <UploadCloud size={22} />}
+        <span>{uploadState === 'success' ? (locale === 'fa' ? 'گزارش امن آپلود شد' : 'Report uploaded securely') : reportName || t('onboarding.upload')}</span>
+        <input accept=".pdf,image/jpeg,image/png,image/webp" disabled={saving || !online || uploadState === 'uploading'} onChange={onReportChange} type="file" />
+      </label>
+      <small>{t('onboarding.noMedicalClaim')}</small>
+      <div className="onboarding-body-actions">
+        {uploadState === 'success' ? <Button onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button> : null}
+        <Button onClick={onSkip} variant="secondary">{t('onboarding.skipConfirm')}</Button>
+      </div>
+    </div>
+  )
+}
+
+function DynamicField({ field, value, error, onChange, suggested, locale }: { field: OnboardingField; value: string; error?: string; onChange: (value: string) => void; suggested?: boolean; locale: AppLocale }) {
+  const { t } = useTranslation()
   if (field.kind === 'date') {
     return <LocalizedDatePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} purpose={field.key === 'birthDate' ? 'birth' : 'report'} value={value} />
   }
@@ -392,21 +523,24 @@ function DynamicField({ field, value, error, onChange, suggested }: { field: Onb
         <input checked={value === 'yes'} onChange={(event) => onChange(event.target.checked ? 'yes' : '')} type="checkbox" />
         <span><Check size={16} /></span>
         <strong>{t(field.labelKey)}</strong>
+        <small className="onboarding-checkbox__version">{t('onboarding.consentVersion')}</small>
         <Link className="onboarding-checkbox__policy" href={localizedPath(locale, policyPath)} onClick={(event) => event.stopPropagation()} target="_blank">{locale === 'fa' ? 'مطالعه متن' : 'Read notice'}</Link>
         {error ? <small>{error}</small> : null}
       </label>
     )
   }
   if (field.kind === 'multiselect') {
+    const options = field.key === 'trainingWeekdays' ? weekdayOptionsForLocale(locale) : field.options
     const selected = new Set(value.split(',').filter(Boolean))
     return (
       <fieldset className={`onboarding-multiselect ${error ? 'has-error' : ''}`}>
         <legend>{t(field.labelKey)}</legend>
         <div>
-          {field.options?.map((option) => {
+          {options?.map((option) => {
             const checked = selected.has(option.value)
+            const blocked = option.value === UNMAPPED_ALLERGEN && checked
             return (
-              <label className={checked ? 'is-selected' : ''} key={option.value}>
+              <label className={`${checked ? 'is-selected' : ''} ${blocked ? 'is-blocked' : ''}`} key={option.value}>
                 <input
                   checked={checked}
                   onChange={() => {
@@ -445,41 +579,6 @@ function DynamicField({ field, value, error, onChange, suggested }: { field: Onb
   )
 }
 
-function BodyExtractionReview({ extraction, locale, onChange }: { extraction: { metrics: ExtractedMetric[] }; locale: AppLocale; onChange: (key: string, value: string) => void }) {
-  return (
-    <section className="body-extraction-review" aria-labelledby="body-extraction-title">
-      <div>
-        <h4 id="body-extraction-title">{locale === 'fa' ? 'تأیید مقادیر گزارش' : 'Verify report values'}</h4>
-        <p>{locale === 'fa' ? 'فقط داده‌هایی نمایش داده می‌شوند که از گزارش خوانده شده‌اند. مقدار اشتباه را قبل از تأیید اصلاح کن.' : 'Only values read from the report are shown. Correct any mistake before confirming.'}</p>
-      </div>
-      <div className="body-extraction-review__grid">
-        {extraction.metrics.map((metric) => {
-          const spec = bodyMetricSpecs.find((item) => item.key === metric.key)!
-          return (
-            <Input
-              hint={`${spec.unit} · ${Math.round(metric.confidence * 100)}%${metric.evidence ? ` · ${metric.evidence}` : ''}`}
-              inputMode="decimal"
-              key={metric.key}
-              label={locale === 'fa' ? spec.fa : spec.en}
-              onChange={(event) => onChange(metric.key, event.target.value)}
-              required
-              type="text"
-              value={metric.value}
-            />
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-function aiAccessMessage(state: 'ready' | 'pending_verification' | 'disabled' | 'safety_blocked', locale: AppLocale) {
-  const fa = locale === 'fa'
-  if (state === 'disabled') return fa ? 'حساب ذخیره شد. ساخت برنامه در این محیط فعلاً توسط اپراتور متوقف است.' : 'Your account was saved. Plan generation is currently disabled by the operator.'
-  if (state === 'safety_blocked') return fa ? 'برای شرایط ثبت‌شده برنامه‌ریزی خودکار فعال نمی‌شود. با متخصص واجد شرایط گفتگو کن.' : 'Automated planning is not enabled for the recorded health context. Speak with a qualified professional.'
-  return fa ? 'حساب ذخیره شد. دسترسی ساخت برنامه هنوز آماده نیست؛ کمی بعد دوباره تلاش کن.' : 'Your account was saved. Plan generation is not ready yet; try again shortly.'
-}
-
 function ReviewGrid({ locale, values }: { locale: AppLocale; values: Record<string, string> }) {
   const { t } = useTranslation()
   const weight = Number(values.weightKg)
@@ -491,12 +590,24 @@ function ReviewGrid({ locale, values }: { locale: AppLocale; values: Record<stri
   }
 
   const items = [
-    [locale === 'fa' ? 'هدف' : 'Goal', optionLabel('goalType', values.goalType)],
-    [locale === 'fa' ? 'وزن فعلی' : 'Current weight', Number.isFinite(weight) && values.weightKg ? `${formatNumber(weight, locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'کیلوگرم' : 'kg'}` : '—'],
-    [locale === 'fa' ? 'سبک غذایی' : 'Diet', optionLabel('dietStyle', values.dietStyle)],
-    [locale === 'fa' ? 'روز تمرین' : 'Training days', values.trainingDays ? formatNumber(Number(values.trainingDays), locale) : '0'],
-    [locale === 'fa' ? 'گزارش بدن' : 'Body report', values.bodyReportPath ? '✓' : '—'],
-    [locale === 'fa' ? 'منطقه' : 'Region', values.country ? countryName(values.country, locale) : '—'],
+    { step: 'goal' as const, label: locale === 'fa' ? 'هدف' : 'Goal', value: optionLabel('goalType', values.goalType) },
+    { step: 'health' as const, label: locale === 'fa' ? 'سلامت' : 'Health', value: healthScreeningOutcome(values) === 'eligible' ? (locale === 'fa' ? 'مانع ایمنی ثبت نشده' : 'No safety block') : (locale === 'fa' ? 'نیاز به مسیر انسانی' : 'Human path required') },
+    { step: 'food' as const, label: locale === 'fa' ? 'سبک غذایی' : 'Diet', value: optionLabel('dietStyle', values.dietStyle) },
+    { step: 'training' as const, label: locale === 'fa' ? 'روز تمرین' : 'Training days', value: values.trainingDays ? formatNumber(Number(values.trainingDays), locale) : '0' },
+    { step: 'body' as const, label: locale === 'fa' ? 'اطلاعات بدن' : 'Body', value: values.bodySkipped === 'yes' ? t('onboarding.skip') : values.bodyReportPath || values.bodyFatPercent || values.waistCm ? '✓' : '—' },
+    { step: 'basics' as const, label: locale === 'fa' ? 'کشور' : 'Country', value: values.country ? countryName(values.country, locale) : '—' },
+    { step: 'consent' as const, label: locale === 'fa' ? 'رضایت‌ها' : 'Consents', value: values.termsAccepted === 'yes' && values.privacyAccepted === 'yes' && values.healthDataConsent === 'yes' ? t('onboarding.consentVersion') : '—' },
+    { step: 'basics' as const, label: locale === 'fa' ? 'وزن فعلی' : 'Current weight', value: Number.isFinite(weight) && values.weightKg ? `${formatNumber(weight, locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'کیلوگرم' : 'kg'}` : '—' },
   ]
-  return <dl className="review-grid">{items.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+  return (
+    <dl className="review-grid">
+      {items.map((item) => (
+        <div key={`${item.step}-${item.label}`}>
+          <dt>{item.label}</dt>
+          <dd>{item.value}</dd>
+          <Link className="review-grid__edit" href={localizedPath(locale, `/onboarding/${item.step}`)}>{t('onboarding.editSection')}</Link>
+        </div>
+      ))}
+    </dl>
+  )
 }

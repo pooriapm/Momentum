@@ -1,11 +1,19 @@
 import type { AppLocale } from '../../platform/i18n/catalog'
 
-export type OnboardingStepKey = 'basics' | 'goal' | 'health' | 'food' | 'training' | 'body' | 'consent' | 'review'
+export type OnboardingStepKey = 'basics' | 'health' | 'consent' | 'goal' | 'food' | 'training' | 'body' | 'review'
 export type FieldKind = 'text' | 'number' | 'date' | 'time' | 'select' | 'multiselect' | 'textarea' | 'checkbox'
 
 interface FieldOption {
   value: string
   labelKey: string
+}
+
+export interface FieldCondition {
+  field: string
+  equals?: string
+  notEquals?: string
+  greaterThan?: number
+  oneOf?: readonly string[]
 }
 
 export interface OnboardingField {
@@ -17,11 +25,11 @@ export interface OnboardingField {
   max?: number
   step?: number
   options?: readonly FieldOption[]
-  optionSource?: 'countries'
+  optionSource?: 'countries' | 'allergens'
   placeholder?: Record<AppLocale, string>
   defaultValue?: string
-  visibleWhen?: { field: string; equals?: string; notEquals?: string; greaterThan?: number }
-  requiredWhen?: { field: string; equals?: string; notEquals?: string; greaterThan?: number }
+  visibleWhen?: FieldCondition
+  requiredWhen?: FieldCondition
   selectionCountField?: string
 }
 
@@ -36,6 +44,33 @@ const yesNoOptions = [
   { value: 'yes', labelKey: 'onboarding.yes' },
 ] as const
 
+export const ALLERGEN_CATALOG = [
+  { value: 'milk', labelKey: 'onboarding.allergenMilk' },
+  { value: 'egg', labelKey: 'onboarding.allergenEgg' },
+  { value: 'peanut', labelKey: 'onboarding.allergenPeanut' },
+  { value: 'tree_nut', labelKey: 'onboarding.allergenTreeNut' },
+  { value: 'wheat', labelKey: 'onboarding.allergenWheat' },
+  { value: 'soy', labelKey: 'onboarding.allergenSoy' },
+  { value: 'fish', labelKey: 'onboarding.allergenFish' },
+  { value: 'shellfish', labelKey: 'onboarding.allergenShellfish' },
+  { value: 'sesame', labelKey: 'onboarding.allergenSesame' },
+  { value: 'other', labelKey: 'onboarding.allergenOther' },
+] as const
+
+export const UNMAPPED_ALLERGEN = 'other'
+
+export const TRAINING_DURATION_PRESETS = ['30', '45', '60', '75', '90', '120'] as const
+
+const weekdayOptions = [
+  { value: '0', labelKey: 'onboarding.sunday' },
+  { value: '1', labelKey: 'onboarding.monday' },
+  { value: '2', labelKey: 'onboarding.tuesday' },
+  { value: '3', labelKey: 'onboarding.wednesday' },
+  { value: '4', labelKey: 'onboarding.thursday' },
+  { value: '5', labelKey: 'onboarding.friday' },
+  { value: '6', labelKey: 'onboarding.saturday' },
+] as const
+
 export const onboardingSections: readonly OnboardingSection[] = [
   {
     key: 'basics',
@@ -43,6 +78,7 @@ export const onboardingSections: readonly OnboardingSection[] = [
     fields: [
       { key: 'firstName', labelKey: 'onboarding.firstName', kind: 'text', required: true },
       { key: 'birthDate', labelKey: 'onboarding.birthDate', kind: 'date', required: true },
+      { key: 'adultConfirmed', labelKey: 'onboarding.adultConfirm', kind: 'select', required: true, options: yesNoOptions },
       { key: 'sex', labelKey: 'onboarding.sex', kind: 'select', required: true, options: [
         { value: 'female', labelKey: 'onboarding.female' },
         { value: 'male', labelKey: 'onboarding.male' },
@@ -54,15 +90,17 @@ export const onboardingSections: readonly OnboardingSection[] = [
     ],
   },
   {
-    key: 'goal',
-    titleKey: 'onboarding.goal',
+    key: 'health',
+    titleKey: 'onboarding.health',
     fields: [
-      { key: 'goalType', labelKey: 'onboarding.goal', kind: 'select', required: true, options: [
-        { value: 'fat_loss', labelKey: 'onboarding.loss' },
-        { value: 'muscle_gain', labelKey: 'onboarding.gain' },
-        { value: 'maintenance', labelKey: 'onboarding.maintain' },
-      ] },
-      { key: 'targetWeightKg', labelKey: 'onboarding.targetWeight', kind: 'number', min: 35, max: 350, step: 0.1, visibleWhen: { field: 'goalType', notEquals: 'maintenance' }, requiredWhen: { field: 'goalType', notEquals: 'maintenance' } },
+      { key: 'pregnancyOrBreastfeeding', labelKey: 'onboarding.pregnancy', kind: 'select', required: true, options: yesNoOptions },
+      { key: 'eatingDisorderHistory', labelKey: 'onboarding.eatingDisorder', kind: 'select', required: true, options: yesNoOptions },
+      { key: 'highRiskCondition', labelKey: 'onboarding.highRisk', kind: 'select', required: true, options: yesNoOptions },
+      { key: 'urgentSymptoms', labelKey: 'onboarding.urgentSymptoms', kind: 'select', required: true, options: yesNoOptions },
+      { key: 'injuryLimitation', labelKey: 'onboarding.injury', kind: 'select', required: true, options: yesNoOptions },
+      { key: 'medications', labelKey: 'onboarding.medications', kind: 'textarea' },
+      { key: 'medicalNotes', labelKey: 'onboarding.medicalNotes', kind: 'textarea' },
+      { key: 'supplements', labelKey: 'onboarding.supplements', kind: 'textarea' },
     ],
   },
   {
@@ -75,16 +113,15 @@ export const onboardingSections: readonly OnboardingSection[] = [
     ],
   },
   {
-    key: 'health',
-    titleKey: 'onboarding.health',
+    key: 'goal',
+    titleKey: 'onboarding.goal',
     fields: [
-      { key: 'adultConfirmed', labelKey: 'onboarding.adultConfirm', kind: 'select', required: true, options: yesNoOptions },
-      { key: 'pregnancyOrBreastfeeding', labelKey: 'onboarding.pregnancy', kind: 'select', required: true, options: yesNoOptions },
-      { key: 'eatingDisorderHistory', labelKey: 'onboarding.eatingDisorder', kind: 'select', required: true, options: yesNoOptions },
-      { key: 'highRiskCondition', labelKey: 'onboarding.highRisk', kind: 'select', required: true, options: yesNoOptions },
-      { key: 'medicalNotes', labelKey: 'onboarding.medicalNotes', kind: 'textarea' },
-      { key: 'medications', labelKey: 'onboarding.medications', kind: 'textarea' },
-      { key: 'supplements', labelKey: 'onboarding.supplements', kind: 'textarea' },
+      { key: 'goalType', labelKey: 'onboarding.goal', kind: 'select', required: true, options: [
+        { value: 'fat_loss', labelKey: 'onboarding.loss' },
+        { value: 'muscle_gain', labelKey: 'onboarding.gain' },
+        { value: 'maintenance', labelKey: 'onboarding.maintain' },
+      ] },
+      { key: 'targetWeightKg', labelKey: 'onboarding.targetWeight', kind: 'number', min: 35, max: 350, step: 0.1, visibleWhen: { field: 'goalType', notEquals: 'maintenance' } },
     ],
   },
   {
@@ -95,9 +132,9 @@ export const onboardingSections: readonly OnboardingSection[] = [
         { value: 'omnivore', labelKey: 'onboarding.omnivore' },
         { value: 'vegetarian', labelKey: 'onboarding.vegetarian' },
       ] },
+      { key: 'allergies', labelKey: 'onboarding.allergies', kind: 'multiselect', optionSource: 'allergens', options: ALLERGEN_CATALOG },
       { key: 'favoriteFoods', labelKey: 'onboarding.favoriteFoods', kind: 'textarea', required: true },
       { key: 'dislikedFoods', labelKey: 'onboarding.dislikedFoods', kind: 'textarea' },
-      { key: 'allergies', labelKey: 'onboarding.allergies', kind: 'textarea' },
       { key: 'requestedMealPattern', labelKey: 'onboarding.mealPattern', kind: 'textarea', required: true },
       { key: 'preferredOptionCount', labelKey: 'onboarding.optionCount', kind: 'number', required: true, min: 1, max: 6, step: 1, defaultValue: '3' },
       { key: 'cookingConstraints', labelKey: 'onboarding.cookingConstraints', kind: 'textarea', required: true },
@@ -114,16 +151,33 @@ export const onboardingSections: readonly OnboardingSection[] = [
     titleKey: 'onboarding.training',
     fields: [
       { key: 'trainingDays', labelKey: 'onboarding.trainingDays', kind: 'number', required: true, min: 0, max: 7, step: 1 },
+      { key: 'trainingLocation', labelKey: 'onboarding.trainingLocation', kind: 'select', options: [
+        { value: 'home', labelKey: 'onboarding.locationHome' },
+        { value: 'gym', labelKey: 'onboarding.locationGym' },
+        { value: 'outdoor', labelKey: 'onboarding.locationOutdoor' },
+      ], visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
       { key: 'primaryActivity', labelKey: 'onboarding.activity', kind: 'select', options: [
         { value: 'strength', labelKey: 'onboarding.strength' }, { value: 'crossfit', labelKey: 'onboarding.crossfit' }, { value: 'cardio', labelKey: 'onboarding.cardio' }, { value: 'mixed', labelKey: 'onboarding.mixed' }, { value: 'none', labelKey: 'onboarding.notTraining' },
       ], visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
-      { key: 'trainingWeekdays', labelKey: 'onboarding.trainingWeekdays', kind: 'multiselect', options: [
-        { value: '0', labelKey: 'onboarding.sunday' }, { value: '1', labelKey: 'onboarding.monday' }, { value: '2', labelKey: 'onboarding.tuesday' }, { value: '3', labelKey: 'onboarding.wednesday' }, { value: '4', labelKey: 'onboarding.thursday' }, { value: '5', labelKey: 'onboarding.friday' }, { value: '6', labelKey: 'onboarding.saturday' },
-      ], visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 }, selectionCountField: 'trainingDays' },
+      { key: 'trainingExperience', labelKey: 'onboarding.trainingExperience', kind: 'select', options: [
+        { value: 'beginner', labelKey: 'onboarding.beginner' },
+        { value: 'intermediate', labelKey: 'onboarding.intermediate' },
+        { value: 'advanced', labelKey: 'onboarding.advanced' },
+      ], visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
+      { key: 'trainingWeekdays', labelKey: 'onboarding.trainingWeekdays', kind: 'multiselect', options: weekdayOptions, visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 }, selectionCountField: 'trainingDays' },
       { key: 'trainingStartTime', labelKey: 'onboarding.trainingStartTime', kind: 'time', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
-      { key: 'trainingDuration', labelKey: 'onboarding.trainingDuration', kind: 'number', min: 10, max: 300, step: 5, defaultValue: '60', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
+      { key: 'trainingDurationPreset', labelKey: 'onboarding.durationPreset', kind: 'select', options: [
+        { value: '30', labelKey: 'onboarding.duration30' },
+        { value: '45', labelKey: 'onboarding.duration45' },
+        { value: '60', labelKey: 'onboarding.duration60' },
+        { value: '75', labelKey: 'onboarding.duration75' },
+        { value: '90', labelKey: 'onboarding.duration90' },
+        { value: '120', labelKey: 'onboarding.duration120' },
+        { value: 'custom', labelKey: 'onboarding.durationCustom' },
+      ], defaultValue: '60', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
+      { key: 'trainingDuration', labelKey: 'onboarding.trainingDuration', kind: 'number', min: 15, max: 120, step: 5, defaultValue: '60', visibleWhen: { field: 'trainingDurationPreset', equals: 'custom' }, requiredWhen: { field: 'trainingDurationPreset', equals: 'custom' } },
       { key: 'trainingAvailability', labelKey: 'onboarding.trainingAvailability', kind: 'textarea', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
-      { key: 'equipment', labelKey: 'onboarding.equipment', kind: 'textarea' },
+      { key: 'equipment', labelKey: 'onboarding.equipment', kind: 'textarea', visibleWhen: { field: 'trainingLocation', oneOf: ['home', 'gym'] } },
       { key: 'workSchedule', labelKey: 'onboarding.schedule', kind: 'textarea', required: true },
     ],
   },
@@ -131,18 +185,27 @@ export const onboardingSections: readonly OnboardingSection[] = [
     key: 'body',
     titleKey: 'onboarding.body',
     fields: [
+      { key: 'bodySource', labelKey: 'onboarding.bodySource', kind: 'select', options: [
+        { value: 'manual', labelKey: 'onboarding.sourceManual' },
+        { value: 'report', labelKey: 'onboarding.sourceReport' },
+      ] },
+      { key: 'bodyFatPercent', labelKey: 'onboarding.bodyFat', kind: 'number', min: 3, max: 60, step: 0.1 },
+      { key: 'waistCm', labelKey: 'onboarding.waist', kind: 'number', min: 40, max: 200, step: 0.1 },
       { key: 'bodyReportDate', labelKey: 'onboarding.bodyReportDate', kind: 'date' },
     ],
   },
   { key: 'review', titleKey: 'onboarding.review', fields: [] },
 ] as const
 
-function conditionMatches(condition: OnboardingField['visibleWhen'], values: Record<string, string>) {
+export const D11_STEP_ORDER: readonly OnboardingStepKey[] = onboardingSections.map((section) => section.key)
+
+function conditionMatches(condition: FieldCondition | undefined, values: Record<string, string>) {
   if (!condition) return true
   const value = values[condition.field] ?? ''
   if (condition.equals !== undefined && value !== condition.equals) return false
   if (condition.notEquals !== undefined && value === condition.notEquals) return false
   if (condition.greaterThan !== undefined && !(Number(value) > condition.greaterThan)) return false
+  if (condition.oneOf !== undefined && !condition.oneOf.includes(value)) return false
   return true
 }
 
@@ -154,11 +217,47 @@ export function isFieldRequired(field: OnboardingField, values: Record<string, s
   return Boolean(field.required || (field.requiredWhen && conditionMatches(field.requiredWhen, values)))
 }
 
+export function onboardingFieldByKey(key: string) {
+  return onboardingSections.flatMap((section) => section.fields).find((field) => field.key === key)
+}
+
+export function onboardingOptionLabelKey(fieldKey: string, value: string) {
+  return onboardingFieldByKey(fieldKey)?.options?.find((option) => option.value === value)?.labelKey
+}
+
 export const onboardingDefaultValues = Object.fromEntries(
   onboardingSections.flatMap((section) => section.fields)
     .filter((field) => field.defaultValue !== undefined)
     .map((field) => [field.key, field.defaultValue!]),
 )
+
+export function ageFromBirthDate(iso: string, now = new Date()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null
+  const [year, month, day] = iso.split('-').map(Number)
+  let age = now.getFullYear() - year
+  if (now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)) age -= 1
+  return age
+}
+
+export function selectedValues(raw: string | undefined) {
+  return raw?.split(',').map((item) => item.trim()).filter(Boolean) ?? []
+}
+
+export function hasUnmappedAllergen(values: Record<string, string>) {
+  return selectedValues(values.allergies).includes(UNMAPPED_ALLERGEN)
+}
+
+export function weekdayOptionsForLocale(locale: AppLocale) {
+  const field = onboardingFieldByKey('trainingWeekdays')
+  const options = field?.options ?? []
+  if (locale !== 'fa') return options
+  const saturdayFirst = ['6', '0', '1', '2', '3', '4', '5']
+  return [...options].sort((left, right) => saturdayFirst.indexOf(left.value) - saturdayFirst.indexOf(right.value))
+}
+
+function requiredMessage(locale: AppLocale) {
+  return locale === 'fa' ? 'تکمیل این فیلد ضروری است.' : 'This field is required.'
+}
 
 export function validateSection(section: OnboardingSection, values: Record<string, string>, locale: AppLocale = 'en') {
   const errors: Record<string, string> = {}
@@ -166,7 +265,22 @@ export function validateSection(section: OnboardingSection, values: Record<strin
     if (!isFieldVisible(field, values)) return
     const value = values[field.key]?.trim() ?? ''
     if (isFieldRequired(field, values) && !value) {
-      errors[field.key] = locale === 'fa' ? 'تکمیل این فیلد ضروری است.' : 'This field is required.'
+      errors[field.key] = requiredMessage(locale)
+      return
+    }
+    if (field.key === 'birthDate' && value) {
+      const age = ageFromBirthDate(value)
+      if (age == null || age < 18) {
+        errors[field.key] = locale === 'fa'
+          ? 'تاریخ معتبر وارد کن؛ باید حداقل ۱۸ سال داشته باشی.'
+          : 'Enter a valid date; you must be at least 18.'
+        return
+      }
+    }
+    if (field.key === 'adultConfirmed' && value === 'no') {
+      errors[field.key] = locale === 'fa'
+        ? 'این سرویس فقط برای افراد ۱۸ ساله و بالاتر است.'
+        : 'This service is only for adults aged 18 and older.'
       return
     }
     if (field.kind === 'number' && value) {
@@ -178,7 +292,7 @@ export function validateSection(section: OnboardingSection, values: Record<strin
       }
     }
     if (field.selectionCountField && value) {
-      const selectedCount = new Set(value.split(',').filter(Boolean)).size
+      const selectedCount = new Set(selectedValues(value)).size
       const expectedCount = Number(values[field.selectionCountField])
       if (selectedCount !== expectedCount) {
         errors[field.key] = locale === 'fa'
@@ -187,5 +301,13 @@ export function validateSection(section: OnboardingSection, values: Record<strin
       }
     }
   })
+  if (section.key === 'training' && values.trainingDurationPreset === 'custom') {
+    const duration = Number(values.trainingDuration)
+    if (!Number.isFinite(duration) || duration < 15 || duration > 120) {
+      errors.trainingDuration = locale === 'fa'
+        ? 'مدت باید بین ۱۵ تا ۱۲۰ دقیقه باشد.'
+        : 'Duration must be between 15 and 120 minutes.'
+    }
+  }
   return errors
 }
