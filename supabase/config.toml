@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.account-settings]
 verify_jwt = true
+
+[functions.generate-monthly-plan]
+verify_jwt = true

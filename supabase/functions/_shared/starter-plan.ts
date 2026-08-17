@@ -1,17 +1,37 @@
 import { HttpError } from './http.ts'
 import type { CatalogFood, PlanCatalogSnapshot } from './plan-catalog.ts'
 
-const STARTER_FOOD_IDS = [
+const STARTER_FOOD_IDS_V1 = [
   'food:banana-snack@v1',
   'food:chicken-rice-bowl@v1',
   'food:lentil-rice-bowl@v1',
 ] as const
 
-const STARTER_EXERCISE_IDS = [
+const STARTER_FOOD_IDS_V2 = [
+  'food:banana-almonds@v2',
+  'food:chicken-rice-bowl@v2',
+  'food:lentil-stew-rice@v2',
+] as const
+
+const STARTER_EXERCISE_IDS_V1 = [
   'exercise:bodyweight-squat@v1',
   'exercise:incline-wall-pushup@v1',
   'exercise:glute-bridge@v1',
 ] as const
+
+const STARTER_EXERCISE_IDS_V2 = [
+  'exercise:bodyweight-squat@v2',
+  'exercise:wall-pushup@v2',
+  'exercise:glute-bridge@v2',
+] as const
+
+function starterFoodIds(catalog: PlanCatalogSnapshot): readonly string[] {
+  return catalog.releaseId === 'momentum-core@v2' ? STARTER_FOOD_IDS_V2 : STARTER_FOOD_IDS_V1
+}
+
+function starterExerciseIds(catalog: PlanCatalogSnapshot): readonly string[] {
+  return catalog.releaseId === 'momentum-core@v2' ? STARTER_EXERCISE_IDS_V2 : STARTER_EXERCISE_IDS_V1
+}
 
 function requiredFood(catalog: PlanCatalogSnapshot, id: string): CatalogFood {
   const food = catalog.foods.get(id)
@@ -89,20 +109,51 @@ function exercise(
   }
 }
 
+function foodForMealType(catalog: PlanCatalogSnapshot, mealType: string, preferredId?: string) {
+  if (preferredId && catalog.foods.has(preferredId)) {
+    const preferred = requiredFood(catalog, preferredId)
+    if (preferred.meal_types.includes(mealType)) return preferred
+  }
+  const match = [...catalog.foods.values()].find((food) => food.meal_types.includes(mealType))
+  if (!match) {
+    throw new HttpError(503, 'starter_catalog_incomplete', 'Starter plan catalog is incomplete.')
+  }
+  return match
+}
+
+function exerciseIdsForStub(catalog: PlanCatalogSnapshot): string[] {
+  const preferred = starterExerciseIds(catalog).filter((id) => catalog.exercises.has(id))
+  const extras = [...catalog.exercises.keys()].filter((id) => !preferred.includes(id))
+  const ids = [...preferred, ...extras].slice(0, 3)
+  if (ids.length < 1) {
+    throw new HttpError(503, 'starter_catalog_incomplete', 'Starter plan catalog is incomplete.')
+  }
+  return ids
+}
+
 export function buildStarterPlan(
   catalog: PlanCatalogSnapshot,
   requestedDays: number,
   locale: 'fa-IR' | 'en-US',
 ): Record<string, unknown> {
+  return buildMonthlyStubPlan(catalog, requestedDays, locale)
+}
+
+export function buildMonthlyStubPlan(
+  catalog: PlanCatalogSnapshot,
+  requestedDays: number,
+  locale: 'fa-IR' | 'en-US',
+  options: { invalidCatalogId?: boolean } = {},
+): Record<string, unknown> {
   if (!Number.isInteger(requestedDays) || requestedDays < 3 || requestedDays > 14) {
     throw new HttpError(400, 'invalid_days', 'Starter plan must cover 3 to 14 days.')
   }
-  for (const id of STARTER_FOOD_IDS) requiredFood(catalog, id)
-  for (const id of STARTER_EXERCISE_IDS) {
-    if (!catalog.exercises.has(id)) {
-      throw new HttpError(503, 'starter_catalog_incomplete', 'Starter plan catalog is incomplete.')
-    }
-  }
+  const foods = starterFoodIds(catalog)
+  const breakfast = foodForMealType(catalog, 'breakfast', foods[0])
+  const lunch = foodForMealType(catalog, 'lunch', foods[1])
+  const dinner = foodForMealType(catalog, 'dinner', foods[2])
+  const exerciseIds = exerciseIdsForStub(catalog)
+  const foodIds = [breakfast.id, lunch.id, dinner.id]
 
   const labels = locale === 'fa-IR'
     ? {
@@ -137,11 +188,11 @@ export function buildStarterPlan(
     }
 
   const targets = {
-    calories: 1700,
-    protein_g: 100,
-    carbs_g: 220,
-    fat_g: 46.67,
-    fiber_g: 30,
+    calories: breakfast.nutrition.calories + lunch.nutrition.calories + dinner.nutrition.calories,
+    protein_g: breakfast.nutrition.protein_g + lunch.nutrition.protein_g + dinner.nutrition.protein_g,
+    carbs_g: breakfast.nutrition.carbs_g + lunch.nutrition.carbs_g + dinner.nutrition.carbs_g,
+    fat_g: breakfast.nutrition.fat_g + lunch.nutrition.fat_g + dinner.nutrition.fat_g,
+    fiber_g: breakfast.nutrition.fiber_g + lunch.nutrition.fiber_g + dinner.nutrition.fiber_g,
     water_ml: 2200,
   }
   const days = Array.from({ length: requestedDays }, (_, dayIndex) => ({
@@ -155,7 +206,7 @@ export function buildStarterPlan(
       duration_minutes: 30,
       intensity: 'moderate',
       warmup: [locale === 'fa-IR' ? 'پنج دقیقه راه رفتن آرام' : 'Five minutes of easy walking'],
-      exercises: STARTER_EXERCISE_IDS.map((id, index) =>
+      exercises: exerciseIds.map((id, index) =>
         exercise(catalog, id, `starter-${dayIndex}-${index}`, locale)
       ),
       cooldown: [locale === 'fa-IR' ? 'پنج دقیقه راه رفتن آرام' : 'Five minutes of easy walking'],
@@ -168,7 +219,7 @@ export function buildStarterPlan(
         title: labels.breakfast,
         scheduled_time: '08:00',
         default_option_key: `breakfast-option-${dayIndex}`,
-        options: [option(catalog, STARTER_FOOD_IDS[0], `breakfast-option-${dayIndex}`, locale)],
+        options: [option(catalog, breakfast.id, `breakfast-option-${dayIndex}`, locale)],
       },
       {
         slot_key: `lunch-${dayIndex}`,
@@ -176,7 +227,7 @@ export function buildStarterPlan(
         title: labels.lunch,
         scheduled_time: '13:00',
         default_option_key: `lunch-option-${dayIndex}`,
-        options: [option(catalog, STARTER_FOOD_IDS[1], `lunch-option-${dayIndex}`, locale)],
+        options: [option(catalog, lunch.id, `lunch-option-${dayIndex}`, locale)],
       },
       {
         slot_key: `dinner-${dayIndex}`,
@@ -184,13 +235,13 @@ export function buildStarterPlan(
         title: labels.dinner,
         scheduled_time: '19:00',
         default_option_key: `dinner-option-${dayIndex}`,
-        options: [option(catalog, STARTER_FOOD_IDS[2], `dinner-option-${dayIndex}`, locale)],
+        options: [option(catalog, dinner.id, `dinner-option-${dayIndex}`, locale)],
       },
     ],
     notes: [],
   }))
   const groceryIngredients = new Map<string, Record<string, unknown>>()
-  for (const foodId of STARTER_FOOD_IDS) {
+  for (const foodId of foodIds) {
     for (const ingredientId of requiredFood(catalog, foodId).ingredientIds) {
       const ingredient = catalog.ingredients.get(ingredientId)
       if (!ingredient) continue
@@ -204,13 +255,13 @@ export function buildStarterPlan(
     }
   }
 
-  return {
+  const plan: Record<string, unknown> = {
     content_locale: locale,
     plan_name: labels.name,
     summary: labels.summary,
     default_targets: targets,
     days,
-    emergency_options: [option(catalog, STARTER_FOOD_IDS[0], 'emergency-banana', locale)],
+    emergency_options: [option(catalog, breakfast.id, 'emergency-banana', locale)],
     restaurant_guide: [{
       title: labels.restaurant,
       order_instructions: [labels.order],
@@ -227,4 +278,12 @@ export function buildStarterPlan(
     grocery_list: [{ category: labels.grocery, items: [...groceryIngredients.values()] }],
     health_safety_notes: [{ category: 'training', level: 'caution', note: labels.note }],
   }
+
+  if (options.invalidCatalogId) {
+    const firstDay = (plan.days as Record<string, unknown>[])[0]
+    const meals = firstDay?.meals as Record<string, unknown>[] | undefined
+    const optionsList = meals?.[0]?.options as Record<string, unknown>[] | undefined
+    if (optionsList?.[0]) optionsList[0].food_id = 'food:not-in-catalog@v2'
+  }
+  return plan
 }
