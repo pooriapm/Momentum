@@ -1,50 +1,116 @@
-import { ArrowRight, Cloud, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
-import { type FormEvent, useState } from 'react'
+import { ArrowRight, Check, Cloud, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'wouter'
+import { LEGAL_DOCUMENT_VERSION } from '../../../config/legal'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useAuth } from '../../../platform/auth/auth-context'
+import { classifyAuthError } from '../../../platform/auth/auth-errors'
+import { useOnlineStatus } from '../../../platform/pwa/network'
 import { PublicHeader } from '../../components/PublicChrome'
 import { localizedPath } from '../../router/route-utils'
 import { Input } from '../../ui/FormControls'
 import { OrbitMark } from '../../ui/OrbitMark'
 import { Button, ContentCard } from '../../ui/primitives'
 
+const PENDING_EMAIL_KEY = 'momentum.pendingVerificationEmail'
+const RESEND_COOLDOWN_SECONDS = 60
+
+function readPendingEmail() {
+  try {
+    return sessionStorage.getItem(PENDING_EMAIL_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+function writePendingEmail(email: string) {
+  try {
+    sessionStorage.setItem(PENDING_EMAIL_KEY, email)
+  } catch {
+    // sessionStorage can be blocked; verification still works from the email link.
+  }
+}
+
 export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' | 'sign-up' | 'recover' | 'update-password' | 'verify' }) {
   const { t } = useTranslation()
   const [, navigate] = useLocation()
-  const { signIn, signUp, requestPasswordReset, updatePassword, isConfigured, user } = useAuth()
+  const { signIn, signUp, resendConfirmation, requestPasswordReset, updatePassword, isConfigured, user } = useAuth()
+  const online = useOnlineStatus()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [cooldown, setCooldown] = useState(0)
+  const [needsResend, setNeedsResend] = useState(false)
   const isSignUp = mode === 'sign-up'
   const isRecover = mode === 'recover'
   const isUpdatePassword = mode === 'update-password'
   const isVerify = mode === 'verify'
   const fa = locale === 'fa'
+  const verified = Boolean(user?.email_confirmed_at)
+  const pendingEmail = user?.email ?? readPendingEmail()
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000)
+    return () => window.clearInterval(timer)
+  }, [cooldown])
+
+  function failureMessage(kind: ReturnType<typeof classifyAuthError>) {
+    if (kind === 'offline') return t('auth.offline')
+    if (kind === 'rate_limited') return t('auth.rateLimited')
+    if (kind === 'unverified') return t('auth.unverified')
+    if (kind === 'invalid_link') return t('auth.invalidLink')
+    if (kind === 'invalid_credentials') return t('auth.error')
+    return t('auth.error')
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
     setMessage('')
-    if ((!isUpdatePassword && !email.includes('@')) || (!isRecover && password.length < 8)) {
-      setError(t('auth.error'))
+    setNeedsResend(false)
+    const nextFieldErrors: Record<string, string> = {}
+    if (!online) {
+      setError(t('auth.offline'))
       return
     }
+    if (!isUpdatePassword && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextFieldErrors.email = t('auth.emailInvalid')
+    }
+    if (!isRecover && !isVerify && password.length < 8) {
+      nextFieldErrors.password = t('auth.passwordHint')
+    }
+    if (isUpdatePassword && password !== passwordConfirm) {
+      nextFieldErrors.passwordConfirm = t('auth.passwordMismatch')
+    }
+    if (isSignUp && !acceptedTerms) nextFieldErrors.terms = t('auth.termsRequired')
+    if (isSignUp && !acceptedPrivacy) nextFieldErrors.privacy = t('auth.privacyRequired')
+    setFieldErrors(nextFieldErrors)
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setError(t('auth.fixFields'))
+      return
+    }
+
     setLoading(true)
     try {
       if (isRecover) {
         await requestPasswordReset(email, locale)
-        setMessage(fa ? 'اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی ارسال می‌شود.' : 'If an account exists for this email, a recovery link will be sent.')
+        setMessage(t('auth.recoverSent'))
       } else if (isUpdatePassword) {
         await updatePassword(password)
-        setMessage(fa ? 'رمز عبور تغییر کرد. حالا می‌توانی وارد شوی.' : 'Password updated. You can now sign in.')
+        setMessage(t('auth.passwordUpdated'))
       } else if (isSignUp) {
+        writePendingEmail(email)
         const outcome = await signUp(email, password, locale)
         if (outcome === 'confirmation-required') {
-          setMessage(t('auth.confirm'))
+          navigate(localizedPath(locale, '/auth/verify'))
         } else {
           navigate(localizedPath(locale, '/onboarding'))
         }
@@ -52,8 +118,30 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
         await signIn(email, password)
         navigate(localizedPath(locale, '/app/today'))
       }
-    } catch {
-      setError(t('auth.error'))
+    } catch (cause) {
+      const kind = classifyAuthError(cause)
+      setError(failureMessage(kind))
+      if (kind === 'unverified') {
+        writePendingEmail(email)
+        setNeedsResend(true)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResend() {
+    const targetEmail = pendingEmail || email
+    if (!targetEmail || cooldown > 0) return
+    setError('')
+    setMessage('')
+    setLoading(true)
+    try {
+      await resendConfirmation(targetEmail, locale)
+      setCooldown(RESEND_COOLDOWN_SECONDS)
+      setMessage(t('auth.resendSent'))
+    } catch (cause) {
+      setError(failureMessage(classifyAuthError(cause)))
     } finally {
       setLoading(false)
     }
@@ -80,31 +168,109 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
             <h2>{isVerify ? (fa ? 'وضعیت تأیید' : 'Verification status') : isRecover ? (fa ? 'ارسال لینک بازیابی' : 'Send recovery link') : isUpdatePassword ? (fa ? 'تغییر رمز عبور' : 'Update password') : isSignUp ? t('common.signUp') : t('common.signIn')}</h2>
           </div>
           {!isConfigured ? <div className="inline-notice inline-notice--warning">{t('auth.cloudMissing')}</div> : null}
-          {isVerify ? <div className="auth-verification-state"><p>{user ? (fa ? 'ایمیل تأیید شد و حساب آماده ادامه است.' : 'Email verified. Your account is ready to continue.') : (fa ? 'لینک تأیید را از ایمیل باز کن؛ اگر نشست ایجاد نشد دوباره وارد شو.' : 'Open the verification link from your email. Sign in again if a session is not created.')}</p><Link className="orbit-button orbit-button--primary orbit-button--block" href={localizedPath(locale, user ? '/onboarding' : '/auth/sign-in')}>{user ? (fa ? 'ادامه آنبوردینگ' : 'Continue onboarding') : t('common.signIn')}</Link></div> : <form onSubmit={handleSubmit}>
-            {!isUpdatePassword ? <Input
-              autoComplete="email"
-              disabled={!isConfigured}
-              label={t('auth.email')}
-              onChange={(event) => setEmail(event.target.value)}
-              type="email"
-              value={email}
-            /> : null}
-            {!isRecover ? <Input
-              autoComplete={isSignUp || isUpdatePassword ? 'new-password' : 'current-password'}
-              disabled={!isConfigured}
-              hint={t('auth.passwordHint')}
-              label={t('auth.password')}
-              minLength={8}
-              onChange={(event) => setPassword(event.target.value)}
-              type="password"
-              value={password}
-            /> : null}
-            {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
-            {message ? <div className="inline-notice inline-notice--success" role="status">{message}</div> : null}
-            <Button block disabled={!isConfigured} loading={loading} type="submit">
-              {isRecover ? (fa ? 'ارسال لینک' : 'Send link') : isUpdatePassword ? (fa ? 'ذخیره رمز تازه' : 'Save new password') : isSignUp ? t('auth.submitUp') : t('auth.submitIn')}
-            </Button>
-          </form>}
+          {!online ? <div className="inline-notice inline-notice--warning" role="status">{t('auth.offline')}</div> : null}
+          {isVerify ? (
+            <div className="auth-verification-state">
+              <p>{verified ? t('auth.verifyComplete') : t('auth.verifyWaiting')}</p>
+              {pendingEmail ? <p>{pendingEmail}</p> : null}
+              {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
+              {message ? <div className="inline-notice inline-notice--success" role="status">{message}</div> : null}
+              <Link className="orbit-button orbit-button--primary orbit-button--block" href={localizedPath(locale, verified ? '/onboarding' : '/auth/sign-in')}>
+                {verified ? t('auth.continueOnboarding') : t('common.signIn')}
+              </Link>
+              {!verified ? (
+                <Button
+                  block
+                  disabled={!isConfigured || !online || !pendingEmail || cooldown > 0}
+                  loading={loading}
+                  onClick={() => void handleResend()}
+                  type="button"
+                  variant="secondary"
+                >
+                  {cooldown > 0 ? t('auth.resendWait', { seconds: cooldown }) : t('auth.resend')}
+                </Button>
+              ) : null}
+            </div>
+          ) : isUpdatePassword && isConfigured && !user ? (
+            <div className="auth-verification-state">
+              <p>{t('auth.invalidLink')}</p>
+              <Link className="orbit-button orbit-button--primary orbit-button--block" href={localizedPath(locale, '/auth/recover')}>{t('auth.requestNewLink')}</Link>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              {!isUpdatePassword ? (
+                <Input
+                  autoComplete="email"
+                  disabled={!isConfigured}
+                  error={fieldErrors.email}
+                  label={t('auth.email')}
+                  onChange={(event) => setEmail(event.target.value)}
+                  type="email"
+                  value={email}
+                />
+              ) : null}
+              {!isRecover ? (
+                <Input
+                  autoComplete={isSignUp || isUpdatePassword ? 'new-password' : 'current-password'}
+                  disabled={!isConfigured}
+                  error={fieldErrors.password}
+                  hint={t('auth.passwordHint')}
+                  label={t('auth.password')}
+                  minLength={8}
+                  onChange={(event) => setPassword(event.target.value)}
+                  type="password"
+                  value={password}
+                />
+              ) : null}
+              {isUpdatePassword ? (
+                <Input
+                  autoComplete="new-password"
+                  disabled={!isConfigured}
+                  error={fieldErrors.passwordConfirm}
+                  label={t('auth.passwordConfirm')}
+                  minLength={8}
+                  onChange={(event) => setPasswordConfirm(event.target.value)}
+                  type="password"
+                  value={passwordConfirm}
+                />
+              ) : null}
+              {isSignUp ? (
+                <div className="auth-consent">
+                  <label className={`onboarding-checkbox ${fieldErrors.terms ? 'has-error' : ''}`}>
+                    <input checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} type="checkbox" />
+                    <span><Check size={16} /></span>
+                    <strong>{t('onboarding.termsConsent')}</strong>
+                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {LEGAL_DOCUMENT_VERSION}</Link>
+                    {fieldErrors.terms ? <small>{fieldErrors.terms}</small> : null}
+                  </label>
+                  <label className={`onboarding-checkbox ${fieldErrors.privacy ? 'has-error' : ''}`}>
+                    <input checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} type="checkbox" />
+                    <span><Check size={16} /></span>
+                    <strong>{t('onboarding.privacyConsent')}</strong>
+                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {LEGAL_DOCUMENT_VERSION}</Link>
+                    {fieldErrors.privacy ? <small>{fieldErrors.privacy}</small> : null}
+                  </label>
+                </div>
+              ) : null}
+              {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
+              {message ? <div className="inline-notice inline-notice--success" role="status">{message}</div> : null}
+              {needsResend ? (
+                <Button
+                  block
+                  disabled={!isConfigured || !online || !(pendingEmail || email) || cooldown > 0}
+                  loading={loading}
+                  onClick={() => void handleResend()}
+                  type="button"
+                  variant="secondary"
+                >
+                  {cooldown > 0 ? t('auth.resendWait', { seconds: cooldown }) : t('auth.resend')}
+                </Button>
+              ) : null}
+              <Button block disabled={!isConfigured} loading={loading} type="submit">
+                {isRecover ? (fa ? 'ارسال لینک' : 'Send link') : isUpdatePassword ? (fa ? 'ذخیره رمز تازه' : 'Save new password') : isSignUp ? t('auth.submitUp') : t('auth.submitIn')}
+              </Button>
+            </form>
+          )}
           {!isVerify ? <Link className="auth-switch" href={localizedPath(locale, mode === 'sign-in' ? '/auth/sign-up' : '/auth/sign-in')}>
             {mode === 'sign-in' ? t('auth.switchToUp') : t('auth.switchToIn')}
           </Link> : null}

@@ -10,6 +10,7 @@ export interface AuthContextValue {
   isConfigured: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, locale: 'fa' | 'en') => Promise<'authenticated' | 'confirmation-required'>
+  resendConfirmation: (email: string, locale: 'fa' | 'en') => Promise<void>
   requestPasswordReset: (email: string, locale: 'fa' | 'en') => Promise<void>
   updatePassword: (password: string) => Promise<void>
   signOut: () => Promise<void>

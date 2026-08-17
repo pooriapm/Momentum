@@ -724,6 +724,8 @@ textarea {
 .auth-card__heading h2 { font-size: 1.15rem; margin: 0; }
 .auth-card__icon { align-items: center; background: var(--color-brand-soft); border-radius: .85rem; color: var(--color-brand); display: flex; height: 2.7rem; justify-content: center; width: 2.7rem; }
 .auth-card form { display: grid; gap: 1rem; margin-top: 1rem; }
+.auth-consent,
+.auth-verification-state { display: grid; gap: .75rem; }
 .auth-switch { color: var(--color-brand); display: block; font-size: .76rem; font-weight: 700; margin: 1rem 0; text-align: center; }
 
 /* Onboarding */

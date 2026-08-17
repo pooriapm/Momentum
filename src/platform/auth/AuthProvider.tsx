@@ -8,9 +8,12 @@ import {
   useRef,
   useState,
 } from 'react'
+import { LEGAL_DOCUMENT_VERSION } from '../../config/legal'
 import { runtimeConfig } from '../config/runtime'
 import { requireSupabase, supabase } from '../data/supabase'
+import { assertOnline } from '../pwa/network'
 import { AuthContext, type AuthContextValue, type AuthStatus } from './auth-context'
+import { resolveSignupRegion } from './signup-region'
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const queryClient = useQueryClient()
@@ -52,6 +55,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [queryClient])
 
   const signIn = useCallback(async (email: string, password: string) => {
+    assertOnline()
     const client = requireSupabase()
     const { error } = await client.auth.signInWithPassword({ email, password })
     if (error) {
@@ -61,12 +65,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [queryClient])
 
   const signUp = useCallback(async (email: string, password: string, locale: 'fa' | 'en') => {
+    assertOnline()
     const client = requireSupabase()
+    const region = await resolveSignupRegion(locale)
     const { data, error } = await client.auth.signUp({
       email,
       password,
       options: {
-        data: { locale: locale === 'fa' ? 'fa-IR' : 'en-US' },
+        data: {
+          locale: locale === 'fa' ? 'fa-IR' : 'en-US',
+          product_region: region.productRegion,
+          product_region_source: region.source,
+          ...(region.countryCode ? { country_code: region.countryCode } : {}),
+          terms_version: LEGAL_DOCUMENT_VERSION,
+          privacy_version: LEGAL_DOCUMENT_VERSION,
+        },
         emailRedirectTo: `${window.location.origin}/${locale}/auth/verify`,
       },
     })
@@ -74,6 +87,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
       throw error
     }
     return data.session ? 'authenticated' : 'confirmation-required'
+  }, [])
+
+  const resendConfirmation = useCallback(async (email: string, locale: 'fa' | 'en') => {
+    assertOnline()
+    const client = requireSupabase()
+    const { error } = await client.auth.resend({
+      email,
+      type: 'signup',
+      options: { emailRedirectTo: `${window.location.origin}/${locale}/auth/verify` },
+    })
+    if (error) throw error
   }, [])
 
   const signOut = useCallback(async () => {
@@ -85,6 +109,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [])
 
   const requestPasswordReset = useCallback(async (email: string, locale: 'fa' | 'en') => {
+    assertOnline()
     const client = requireSupabase()
     const { error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/${locale}/auth/update-password`,
@@ -93,6 +118,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [])
 
   const updatePassword = useCallback(async (password: string) => {
+    assertOnline()
     const client = requireSupabase()
     const { error } = await client.auth.updateUser({ password })
     if (error) throw error
@@ -106,11 +132,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isConfigured: runtimeConfig.hasSupabase,
       signIn,
       signUp,
+      resendConfirmation,
       requestPasswordReset,
       updatePassword,
       signOut,
     }),
-    [requestPasswordReset, session, signIn, signOut, signUp, status, updatePassword],
+    [requestPasswordReset, resendConfirmation, session, signIn, signOut, signUp, status, updatePassword],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

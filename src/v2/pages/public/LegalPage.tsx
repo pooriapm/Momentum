@@ -1,9 +1,8 @@
 import { FileText, LockKeyhole, ShieldCheck } from 'lucide-react'
+import { LEGAL_DOCUMENT_VERSION } from '../../../config/legal'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { ContentCard, Eyebrow } from '../../ui/primitives'
-
-const legalVersion = '2026-08-01-alpha'
 
 export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy' | 'terms' }) {
   const privacy = kind === 'privacy'
@@ -29,7 +28,7 @@ export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy'
         <div className="simple-public-page__heading">
           <Eyebrow>{privacy ? <LockKeyhole size={15} /> : <FileText size={15} />}{fa ? 'نسخه آلفا' : 'Alpha notice'}</Eyebrow>
           <h1>{privacy ? (fa ? 'اطلاعیه حریم خصوصی' : 'Privacy notice') : (fa ? 'شرایط استفاده' : 'Terms of use')}</h1>
-          <p>{fa ? `نسخه ${legalVersion} · پیش‌نویس محصول؛ پیش از عرضه عمومی نیازمند بررسی حقوقی است.` : `Version ${legalVersion} · Product draft; legal review is required before public launch.`}</p>
+          <p>{fa ? `نسخه ${LEGAL_DOCUMENT_VERSION} · پیش‌نویس محصول؛ پیش از عرضه عمومی نیازمند بررسی حقوقی است.` : `Version ${LEGAL_DOCUMENT_VERSION} · Product draft; legal review is required before public launch.`}</p>
         </div>
         <div className="legal-sections">
           {sections.map(([title, copy]) => <ContentCard key={title}><ShieldCheck size={21} /><div><h2>{title}</h2><p>{copy}</p></div></ContentCard>)}
