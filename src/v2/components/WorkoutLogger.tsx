@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, CircleStop, Dumbbell, Play, Save, SkipForward } from 'lucide-react'
+import { AlertTriangle, Check, CircleStop, Dumbbell, Pause, Play, Save, SkipForward } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import {
@@ -10,6 +10,7 @@ import {
   type WorkoutSession,
 } from '../data/workout'
 import { localize, type WorkoutBlock } from '../data/types'
+import type { WorkoutRunStatus } from '../pages/app/today-state'
 import { Button, ContentCard, StatusPill } from '../ui/primitives'
 
 interface SetDraft { weight: string; reps: string; rpe: string; rest: string }
@@ -54,8 +55,15 @@ function numberOrNull(value: string) {
 }
 
 export function WorkoutLogger({
-  workout, localDate, locale, preview, enabled,
-}: { workout: WorkoutBlock; localDate: string; locale: AppLocale; preview: boolean; enabled: boolean }) {
+  workout, localDate, locale, preview, enabled, onStatusChange,
+}: {
+  workout: WorkoutBlock
+  localDate: string
+  locale: AppLocale
+  preview: boolean
+  enabled: boolean
+  onStatusChange?: (status: WorkoutRunStatus) => void
+}) {
   const [session, setSession] = useState<WorkoutSession | null>(null)
   const [drafts, setDrafts] = useState<Record<string, SetDraft>>({})
   const [notes, setNotes] = useState('')
@@ -63,6 +71,8 @@ export function WorkoutLogger({
   const [painSeverity, setPainSeverity] = useState('1')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
+  const [paused, setPaused] = useState(false)
+  const [painCaution, setPainCaution] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -73,6 +83,10 @@ export function WorkoutLogger({
     return () => { active = false }
   }, [enabled, localDate, locale, preview, workout.id])
 
+  useEffect(() => {
+    onStatusChange?.(paused ? 'paused' : session?.status ?? 'idle')
+  }, [onStatusChange, paused, session])
+
   const finishedExercises = useMemo(
     () => session?.exercises.filter((item) => item.status === 'completed' || item.status === 'skipped').length ?? 0,
     [session],
@@ -80,7 +94,7 @@ export function WorkoutLogger({
 
   async function begin() {
     if (!enabled) return
-    setBusy('start'); setError('')
+    setBusy('start'); setError(''); setPaused(false); setPainCaution(false)
     try {
       const value = preview
         ? createPreviewWorkoutSession(workout, localDate)
@@ -93,10 +107,12 @@ export function WorkoutLogger({
 
   async function mutate(key: string, mutation: WorkoutMutation) {
     if (!session || session.status !== 'in_progress') return
+    if (paused && mutation.action !== 'stop') return
     setBusy(key); setError('')
     try {
       const value = preview ? applyPreviewMutation(session, mutation) : await mutateWorkoutSession(session.id, mutation)
       setSession(value)
+      if (mutation.action === 'report_pain' && mutation.values.severity < 4) setPainCaution(true)
     } catch {
       setError(locale === 'fa' ? 'تغییرات ذخیره نشد. مقدارها و وضعیت حرکت را بررسی کن.' : 'Changes were not saved. Check the values and exercise status.')
     } finally { setBusy('') }
@@ -125,15 +141,31 @@ export function WorkoutLogger({
     </ContentCard>
   )
 
-  const closed = session.status !== 'in_progress'
+  const finished = session.status !== 'in_progress'
+  const closed = finished || paused
   return (
     <div className="workout-logger">
       <div className="workout-logger__status">
-        <StatusPill tone={session.status === 'completed' ? 'success' : session.status === 'stopped' ? 'neutral' : 'energy'}>
-          {session.status === 'completed' ? (locale === 'fa' ? 'تمرین تمام شد' : 'Workout completed') : session.status === 'stopped' ? (locale === 'fa' ? 'تمرین متوقف شد' : 'Workout stopped') : (locale === 'fa' ? 'در حال تمرین' : 'In progress')}
+        <StatusPill tone={session.status === 'completed' ? 'success' : session.status === 'stopped' || paused ? 'neutral' : 'energy'}>
+          {session.status === 'completed' ? (locale === 'fa' ? 'تمرین تمام شد' : 'Workout completed') : session.status === 'stopped' ? (locale === 'fa' ? 'تمرین متوقف شد' : 'Workout stopped') : paused ? (locale === 'fa' ? 'متوقف موقت' : 'Paused') : (locale === 'fa' ? 'در حال تمرین' : 'In progress')}
         </StatusPill>
         <span>{finishedExercises}/{session.exercises.length} {locale === 'fa' ? 'حرکت' : 'exercises'}</span>
       </div>
+      {paused && !finished ? (
+        <div className="inline-notice" role="status">
+          <Pause size={16} />
+          <span>{locale === 'fa' ? 'تمرین موقتاً متوقف است. پیشرفت از بین نمی‌رود.' : 'Workout is paused. Progress is kept.'}</span>
+          <Button onClick={() => setPaused(false)} variant="secondary"><Play size={16} />{locale === 'fa' ? 'ادامه' : 'Resume'}</Button>
+        </div>
+      ) : null}
+      {painCaution && !finished ? (
+        <div className="inline-notice inline-notice--warning" role="alert">
+          <AlertTriangle size={16} />
+          <span>{locale === 'fa' ? 'درد ثبت شد. شدت را کم کن یا متوقف شو. Momentum تشخیص پزشکی نمی‌دهد.' : 'Pain is logged. Reduce intensity or stop. Momentum does not diagnose.'}</span>
+          <Button onClick={() => setPainCaution(false)} variant="secondary">{locale === 'fa' ? 'ادامه با سازگاری' : 'Continue with adaptation'}</Button>
+          <Button onClick={() => void mutate('stop', { action: 'stop', values: { reason: 'pain_caution' } })} variant="danger">{locale === 'fa' ? 'توقف ایمن' : 'Stop safely'}</Button>
+        </div>
+      ) : null}
 
       {session.exercises.map((exercise) => {
         const planned = workout.exerciseDetails.find((item) => item.key === exercise.exercise_key)
@@ -159,7 +191,7 @@ export function WorkoutLogger({
 
       {!closed ? <ContentCard className="workout-safety-log"><div><AlertTriangle size={20} /><div><h3>{locale === 'fa' ? 'درد یا ناراحتی' : 'Pain or discomfort'}</h3><p>{locale === 'fa' ? 'درد شدید (۴ یا ۵) تمرین را برای ایمنی متوقف می‌کند.' : 'Severe pain (4 or 5) stops the workout for safety.'}</p></div></div><div className="workout-safety-log__fields"><label><span>{locale === 'fa' ? 'محل درد' : 'Pain area'}</span><input maxLength={160} onChange={(event) => setPainArea(event.target.value)} value={painArea} /></label><label><span>{locale === 'fa' ? 'شدت ۱ تا ۵' : 'Severity 1–5'}</span><input max={5} min={1} onChange={(event) => setPainSeverity(event.target.value)} type="number" value={painSeverity} /></label><Button disabled={!painArea.trim()} onClick={() => void mutate('pain', { action: 'report_pain', values: { area: painArea.trim(), severity: Number(painSeverity) } })} variant="danger">{locale === 'fa' ? 'ثبت درد' : 'Log pain'}</Button></div></ContentCard> : null}
 
-      {!closed ? <div className="workout-finish-actions"><Button disabled={finishedExercises !== session.exercises.length} loading={busy === 'finish'} onClick={() => void mutate('finish', { action: 'finish' })}><Check size={17} />{locale === 'fa' ? 'پایان تمرین' : 'Finish workout'}</Button><Button onClick={() => { const reason = window.prompt(locale === 'fa' ? 'چرا تمرین را متوقف می‌کنی؟' : 'Why are you stopping the workout?'); if (reason?.trim()) void mutate('stop', { action: 'stop', values: { reason: reason.trim() } }) }} variant="danger"><CircleStop size={17} />{locale === 'fa' ? 'توقف تمرین' : 'Stop workout'}</Button></div> : null}
+      {!finished ? <div className="workout-finish-actions"><Button disabled={paused || finishedExercises !== session.exercises.length} loading={busy === 'finish'} onClick={() => void mutate('finish', { action: 'finish' })}><Check size={17} />{locale === 'fa' ? 'پایان تمرین' : 'Finish workout'}</Button>{paused ? null : <Button onClick={() => setPaused(true)} variant="secondary"><Pause size={17} />{locale === 'fa' ? 'مکث' : 'Pause'}</Button>}<Button onClick={() => { const reason = window.prompt(locale === 'fa' ? 'چرا تمرین را متوقف می‌کنی؟' : 'Why are you stopping the workout?'); if (reason?.trim()) void mutate('stop', { action: 'stop', values: { reason: reason.trim() } }) }} variant="danger"><CircleStop size={17} />{locale === 'fa' ? 'توقف تمرین' : 'Stop workout'}</Button></div> : null}
       {closed && session.stop_reason ? <p className="inline-notice"><Dumbbell size={15} />{locale === 'fa' ? 'دلیل توقف: ' : 'Stop reason: '}{session.stop_reason}</p> : null}
       {error ? <p className="inline-notice inline-notice--error" role="alert">{error}</p> : null}
     </div>

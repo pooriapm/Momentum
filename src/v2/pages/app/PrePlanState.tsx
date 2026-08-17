@@ -1,14 +1,18 @@
 import { ShieldAlert, Sparkles, UserRoundCheck } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import type { AccountDashboardView } from '../../data/repository'
 import { requestPlanGeneration } from '../../onboarding/repository'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard } from '../../ui/primitives'
+import { GenerationWait } from './GenerationWait'
+import { TODAY_GENERATION_WAIT_MS } from './today-state'
+import '../../../styles/today.css'
 
 export function PrePlanState({ account, locale }: { account: AccountDashboardView; locale: AppLocale }) {
   const [generating, setGenerating] = useState(false)
+  const [timedOut, setTimedOut] = useState(false)
   const [error, setError] = useState('')
   const generationKey = useRef(crypto.randomUUID())
   const fa = locale === 'fa'
@@ -16,17 +20,36 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
   const blocked = account.onboardingStatus === 'automation_blocked'
   const ready = account.onboardingStatus === 'complete' && account.aiPlanAccess.state === 'ready'
 
+  useEffect(() => {
+    if (!generating || timedOut) return
+    const timer = window.setTimeout(() => setTimedOut(true), TODAY_GENERATION_WAIT_MS)
+    return () => window.clearTimeout(timer)
+  }, [generating, timedOut])
+
   async function generate() {
     setGenerating(true)
+    setTimedOut(false)
     setError('')
     try {
       await requestPlanGeneration(locale, generationKey.current)
       window.location.reload()
-    } catch {
-      setError(fa ? 'ساخت برنامه شروع نشد. وضعیت دسترسی یا اتصال را بررسی کن.' : 'Plan generation could not start. Check access and connectivity.')
-    } finally {
+    } catch (caught) {
+      const stillProcessing = caught instanceof Error && caught.message === 'plan_generation_still_processing'
+      if (stillProcessing) return
       setGenerating(false)
+      setError(fa ? 'ساخت برنامه شروع نشد. وضعیت دسترسی یا اتصال را بررسی کن.' : 'Plan generation could not start. Check access and connectivity.')
     }
+  }
+
+  if (generating) {
+    return (
+      <GenerationWait
+        error={error}
+        locale={locale}
+        onRetry={() => void generate()}
+        timedOut={timedOut}
+      />
+    )
   }
 
   return (

@@ -1,0 +1,169 @@
+.today-next-action {
+  margin-bottom: 1rem;
+}
+
+.today-next-action-card {
+  display: grid;
+  gap: .85rem;
+  padding: 1.15rem;
+}
+
+.today-next-action-card h2 {
+  font-size: 1.2rem;
+  margin: .15rem 0 0;
+}
+
+.today-next-action-card p {
+  color: var(--color-text-secondary);
+  font-size: .82rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.today-next-action-card__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+
+.today-checkin-quiet {
+  color: var(--color-text-secondary);
+}
+
+.today-banner {
+  margin-bottom: 1rem;
+}
+
+.today-timeline-list {
+  display: grid;
+  gap: .55rem;
+  margin-top: .85rem;
+}
+
+.today-meal-row {
+  align-items: center;
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  padding: .85rem 1rem;
+}
+
+.today-meal-row.is-complete {
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border));
+}
+
+.today-meal-row.is-next {
+  border-color: var(--color-brand);
+}
+
+.today-meal-row__time {
+  color: var(--color-text-muted);
+  font: 700 .72rem var(--font-latin);
+}
+
+.today-meal-row h3,
+.today-meal-row p {
+  margin: 0;
+}
+
+.today-meal-row h3 {
+  font-size: .92rem;
+}
+
+.today-meal-row p {
+  color: var(--color-text-secondary);
+  font-size: .72rem;
+}
+
+.today-rest-card,
+.today-status-card {
+  display: grid;
+  gap: .75rem;
+  padding: 1.2rem;
+}
+
+.today-rest-card {
+  border-color: color-mix(in srgb, var(--color-energy) 28%, var(--color-border));
+}
+
+.today-wait {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: calc(100dvh - 10rem);
+}
+
+.today-wait-card,
+.today-status-card {
+  max-width: 36rem;
+  text-align: center;
+}
+
+.today-wait-card {
+  display: grid;
+  gap: .85rem;
+  justify-items: center;
+  padding: 2rem 1.4rem;
+}
+
+.today-wait-card h1,
+.today-status-card h1 {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.today-wait-card p,
+.today-status-card p {
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.today-wait-card__icon,
+.today-status-card__icon {
+  align-items: center;
+  background: var(--color-brand-soft);
+  border-radius: 1.1rem;
+  color: var(--color-brand);
+  display: flex;
+  height: 4rem;
+  justify-content: center;
+  width: 4rem;
+}
+
+.today-status-card__icon.is-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.today-status-card__icon.is-warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.today-status-card__icon.is-success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.today-wait-card__rotating {
+  min-height: 2.8rem;
+}
+
+.today-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  justify-content: center;
+}
+
+@media (max-width: 720px) {
+  .today-meal-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .today-next-action-card__actions .orbit-button {
+    width: 100%;
+  }
+}

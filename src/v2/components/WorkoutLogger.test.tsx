@@ -33,5 +33,31 @@ describe('WorkoutLogger preview loop', () => {
     expect(await screen.findByText('Workout stopped')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /finish workout/i })).not.toBeInTheDocument()
   })
+
+  it('pauses and resumes without dropping progress', async () => {
+    render(<WorkoutLogger enabled locale="en" localDate="2026-08-09" preview workout={workout} />)
+    fireEvent.click(screen.getByRole('button', { name: /start workout/i }))
+    const firstSet = screen.getByText('Set 1').closest('.workout-set-row')
+    const controls = within(firstSet as HTMLElement)
+    fireEvent.change(controls.getByLabelText('kg'), { target: { value: '40' } })
+    fireEvent.change(controls.getByLabelText('reps'), { target: { value: '8' } })
+    fireEvent.click(controls.getByRole('button', { name: /log set/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^pause$/i }))
+    expect(screen.getByText(/workout is paused\. progress is kept/i)).toBeInTheDocument()
+    expect(controls.getByRole('button', { name: /undo/i })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: /^resume$/i }))
+    expect(controls.getByRole('button', { name: /undo/i })).toBeEnabled()
+  })
+
+  it('offers adapt or stop after a non-urgent pain log', async () => {
+    render(<WorkoutLogger enabled locale="en" localDate="2026-08-09" preview workout={workout} />)
+    fireEvent.click(screen.getByRole('button', { name: /start workout/i }))
+    fireEvent.change(screen.getByLabelText('Pain area'), { target: { value: 'right shoulder' } })
+    fireEvent.change(screen.getByLabelText('Severity 1–5'), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: /log pain/i }))
+    expect(await screen.findByText(/momentum does not diagnose/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /continue with adaptation/i }))
+    expect(screen.getByRole('button', { name: /finish workout/i })).toBeInTheDocument()
+  })
 })
 
