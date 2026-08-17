@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { runtimeConfig } from '../../platform/config/runtime'
+import { MEMBERSHIP_PRODUCT_CODE, type GiftCampaignStatus } from '../entitlement/types'
+import { giftCampaignFromUnknown } from '../entitlement/resolve'
 
 const pricingContextSchema = z.object({
   country: z.string().length(2),
@@ -11,6 +13,9 @@ const pricingContextSchema = z.object({
   suggested_cuisine_region: z.enum(['iran', 'international']),
   ai_service_available: z.boolean(),
   authoritative_for_checkout: z.literal(false),
+  gift_campaign: z.object({
+    status: z.enum(['available', 'exhausted', 'disabled']),
+  }).optional(),
   prices: z.array(z.object({
     id: z.string().uuid(),
     product_code: z.string(),
@@ -24,6 +29,7 @@ const pricingContextSchema = z.object({
 })
 
 export type PricingContext = z.infer<typeof pricingContextSchema>
+export type MembershipPrice = PricingContext['prices'][number]
 
 export async function loadPricingContext(manualCountry?: string): Promise<PricingContext | null> {
   if (!runtimeConfig.hasSupabase) return null
@@ -39,6 +45,15 @@ export async function loadPricingContext(manualCountry?: string): Promise<Pricin
   })
   if (!response.ok) throw new Error('Pricing context unavailable.')
   return pricingContextSchema.parse(await response.json())
+}
+
+export function membershipPriceFromContext(context: PricingContext | null | undefined): MembershipPrice | null {
+  return context?.prices.find((price) => price.product_code === MEMBERSHIP_PRODUCT_CODE && price.billing_interval === 'month') ?? null
+}
+
+export function giftCampaignFromContext(context: PricingContext | null | undefined): GiftCampaignStatus {
+  const metadataStatus = membershipPriceFromContext(context)?.metadata.gift_campaign
+  return giftCampaignFromUnknown(context?.gift_campaign?.status ?? metadataStatus)
 }
 
 export function formatPrice(amountMinor: number, currency: 'IRR' | 'USD', locale: 'fa' | 'en') {

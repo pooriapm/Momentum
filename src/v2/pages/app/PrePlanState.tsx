@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import type { AccountDashboardView } from '../../data/repository'
+import { isEntitledForGeneration } from '../../entitlement'
 import { requestPlanGeneration } from '../../onboarding/repository'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard } from '../../ui/primitives'
@@ -17,8 +18,15 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
   const generationKey = useRef(crypto.randomUUID())
   const fa = locale === 'fa'
   const started = account.onboardingStatus === 'started' || account.onboardingStatus === 'profile_complete'
-  const blocked = account.onboardingStatus === 'automation_blocked'
-  const ready = account.onboardingStatus === 'complete' && account.aiPlanAccess.state === 'ready'
+  const blocked = account.onboardingStatus === 'automation_blocked' || account.aiPlanAccess.state === 'safety_blocked'
+  const entitled = isEntitledForGeneration({
+    aiPlanState: account.aiPlanAccess.state,
+    automationBlocked: blocked,
+    hasSavedPlan: Boolean(account.plan),
+    membership: account.entitlementStatus ?? 'none',
+    onboardingStatus: account.onboardingStatus,
+  })
+  const ready = account.onboardingStatus === 'complete' && account.aiPlanAccess.state === 'ready' && entitled
 
   useEffect(() => {
     if (!generating || timedOut) return
@@ -61,6 +69,7 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
         {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
         {started ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/onboarding')}>{fa ? 'ادامه آنبوردینگ' : 'Continue onboarding'}</Link> : null}
         {ready ? <Button loading={generating} onClick={() => void generate()}><Sparkles size={18} />{fa ? 'ساخت برنامه' : 'Generate plan'}</Button> : null}
+        {!started && !blocked && !entitled ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/app/me')}>{fa ? 'شروع عضویت' : 'Start membership'}</Link> : null}
         {!ready ? <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today?preview=1')}>{fa ? 'دیدن Preview' : 'View preview'}</Link> : null}
       </ContentCard>
     </main>

@@ -12,7 +12,6 @@ const AppFrame = lazy(async () => ({ default: (await import('../components/AppFr
 const AccountBoundary = lazy(async () => ({ default: (await import('../components/AccountBoundary')).AccountBoundary }))
 const TodayPage = lazy(async () => ({ default: (await import('../pages/app/TodayPage')).TodayPage }))
 const PlanPage = lazy(async () => ({ default: (await import('../pages/app/PlanPage')).PlanPage }))
-const CoachPage = lazy(async () => ({ default: (await import('../pages/app/CoachPage')).CoachPage }))
 const ProgressPage = lazy(async () => ({ default: (await import('../pages/app/ProgressPage')).ProgressPage }))
 const MePage = lazy(async () => ({ default: (await import('../pages/app/MePage')).MePage }))
 const AccountDataPage = lazy(async () => ({ default: (await import('../pages/app/AccountDataPage')).AccountDataPage }))
@@ -30,7 +29,7 @@ function withLocale(localeParam: string | undefined, render: (locale: AppLocale)
   return <><DocumentLocale locale={localeParam} />{render(localeParam)}</>
 }
 
-const appTabs: readonly AppTab[] = ['today', 'plan', 'coach', 'progress', 'me']
+const appTabs: readonly AppTab[] = ['today', 'plan', 'progress', 'me']
 
 export function MomentumRouter() {
   return (
@@ -79,7 +78,6 @@ export function MomentumRouter() {
               {({ plan, preview }) => {
                 if (tab === 'today') return <TodayPage locale={locale} plan={plan} preview={preview} />
                 if (tab === 'plan') return <PlanPage locale={locale} plan={plan} preview={preview} />
-                if (tab === 'coach') return <CoachPage locale={locale} plan={plan} preview={preview} />
                 if (tab === 'progress') return <ProgressPage locale={locale} plan={plan} preview={preview} />
                 return <MePage locale={locale} plan={plan} preview={preview} />
               }}
@@ -88,7 +86,7 @@ export function MomentumRouter() {
         })}
       </Route>
       <Route path="/:locale/pricing">
-        {(params) => withLocale(params.locale, (locale) => <PricingPage locale={locale} />)}
+        {(params) => withLocale(params.locale, (locale) => <AccountBoundary><PricingPage locale={locale} /></AccountBoundary>)}
       </Route>
       <Route path="/:locale/safety">
         {(params) => withLocale(params.locale, (locale) => <SafetyPage locale={locale} />)}

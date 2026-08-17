@@ -16,6 +16,7 @@ const readyAccount: AccountDashboardView = {
   aiPlanAccess: { reason: 'eligible', state: 'ready' },
   automationBlockReason: null,
   countryCode: 'DE',
+  entitlementStatus: 'gift',
   onboardingStatus: 'complete',
   plan: null,
 }
@@ -46,5 +47,11 @@ describe('PrePlanState generation wait', () => {
     fireEvent.click(screen.getByText('Try again'))
     expect(generate).toHaveBeenCalledTimes(2)
     expect(generate.mock.calls[0]?.[1]).toBe(generate.mock.calls[1]?.[1])
+  })
+
+  it('blocks generation until gift or paid membership is present', () => {
+    render(<PrePlanState account={{ ...readyAccount, entitlementStatus: 'none' }} locale="en" />)
+    expect(screen.queryByRole('button', { name: /generate plan/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/app/me')
   })
 })

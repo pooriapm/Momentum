@@ -20,6 +20,8 @@ import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useAuth } from '../../../platform/auth/auth-context'
 import { sanitizeLocalizedNumberInput } from '../../../lib/numbers/localized-number'
 import { localizedPath } from '../../router/route-utils'
+import { loadPricingContext } from '../../data/pricing'
+import { giftCampaignFromUnknown, postOnboardingPath, reviewInventoryIds } from '../../entitlement'
 import { Input, Select, Textarea } from '../../ui/FormControls'
 import { CountryCombobox } from '../../ui/CountryCombobox'
 import { LocalizedDatePicker } from '../../ui/LocalizedDatePicker'
@@ -57,7 +59,6 @@ import {
 import { countryName } from '../../onboarding/countries'
 import { formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
-import { loadPricingContext } from '../../data/pricing'
 import './onboarding.css'
 
 interface OnboardingPageProps {
@@ -296,7 +297,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
         return
       }
       await deleteOnboardingDraft(user!.id)
-      navigate(localizedPath(locale, '/app/today'))
+      navigate(postOnboardingPath(locale))
     } catch {
       setPageError(t('onboarding.saveConflict'))
     } finally {
@@ -306,6 +307,14 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
 
   const healthStopped = section.key === 'health' && isHealthCollectingStopped(values)
   const showContinue = section.key !== 'review' && !healthStopped
+  const productRegion = geoQuery.data?.suggested_product_region ?? (values.country === 'IR' ? 'ir' : undefined)
+  const giftCampaign = giftCampaignFromUnknown(geoQuery.data?.gift_campaign?.status)
+  const reviewIds = reviewInventoryIds({
+    automationBlocked: Boolean(blockedReason),
+    giftCampaign,
+    membership: 'none',
+    productRegion,
+  })
 
   return (
     <div className="onboarding-page">
@@ -378,13 +387,17 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
             />
           ) : null}
           {section.key === 'review' ? (
-            <div className="onboarding-review">
+            <div className="onboarding-review" data-inventory={reviewIds.join(' ')}>
               <span className="onboarding-review__mark"><Sparkles size={28} /></span>
               <h3>{t('onboarding.review')}</h3>
               <p>{t('onboarding.reviewCopy')}</p>
               <ReviewGrid locale={locale} values={values} />
-              <div className="inline-notice"><WalletCards size={18} />{t('onboarding.reviewPayment')}</div>
-              <div className="inline-notice"><LockKeyhole size={18} />{t('onboarding.regionLocked')} · {t('onboarding.entitlementPending')}</div>
+              <div className="inline-notice"><WalletCards size={18} />{t('entitlement.addPayment')}</div>
+              <div className="inline-notice"><LockKeyhole size={18} />{t('entitlement.checking')}</div>
+              {productRegion === 'ir' ? <div className="inline-notice"><LockKeyhole size={18} />{t('entitlement.irVersion')}</div> : <div className="inline-notice"><LockKeyhole size={18} />{t('onboarding.regionLocked')}</div>}
+              {giftCampaign === 'available' ? <div className="inline-notice inline-notice--success">{t('entitlement.giftAvailable')}</div> : null}
+              {giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? <div className="inline-notice inline-notice--warning">{t('entitlement.giftExhausted')}</div> : null}
+              <div className="inline-notice">{t('entitlement.notTrial')} {t('entitlement.oneSku')}</div>
               {blockedReason ? <div className="inline-notice inline-notice--warning"><HeartPulse size={18} />{blockedReason}</div> : null}
               {!online ? <div className="inline-notice"><WifiOff size={18} />{t('onboarding.offlineReview')}</div> : null}
               <Button block disabled={!online} loading={saving} onClick={finishSetup}>{t('onboarding.reviewFinish')}</Button>

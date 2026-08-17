@@ -1,7 +1,8 @@
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import type { MomentumPlanView } from '../../data/types'
+import type { MembershipStatus } from '../../entitlement/types'
 
-export type MembershipStatus = 'gift' | 'active' | 'pending' | 'expired' | 'none'
+export type { MembershipStatus }
 export type MePanel = 'hub' | 'subscription' | 'help'
 export type ExportStatus = 'idle' | 'pending' | 'ready' | 'expired' | 'failed'
 export type DeleteStatus = 'idle' | 'review' | 'pending' | 'complete' | 'failed'

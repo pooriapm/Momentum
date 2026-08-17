@@ -136,12 +136,14 @@ describe('OnboardingPage inventory states', () => {
       ai_service_available: true,
       authoritative_for_checkout: false,
       country: 'IR',
+      gift_campaign: { status: 'available' },
       prices: [],
       source: 'fallback',
-      suggested_cuisine_region: 'international',
-      suggested_currency: 'USD',
-      suggested_locale: 'en-US',
-      suggested_market: 'global',
+      suggested_cuisine_region: 'iran',
+      suggested_currency: 'IRR',
+      suggested_locale: 'fa-IR',
+      suggested_market: 'ir',
+      suggested_product_region: 'ir',
     })
   })
 
@@ -208,7 +210,10 @@ describe('OnboardingPage inventory states', () => {
   it('ONB-27 and ONB-28 finish into the lifecycle gate without generating a plan', async () => {
     renderStep('review')
     expect(await screen.findByRole('button', { name: 'Confirm and continue' })).toBeInTheDocument()
-    expect(screen.getByText(/payment method is collected before generation/i)).toBeInTheDocument()
+    expect(screen.getByText(/add a payment method to receive the first-plan gift/i)).toBeInTheDocument()
+    expect(screen.getByText(/iranian version: persian and irr/i)).toBeInTheDocument()
+    expect(screen.getByText(/gift budget is available/i)).toBeInTheDocument()
+    expect(screen.getByText(/not a 7-day trial/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /generate my plan/i })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Confirm and continue' }))
     await waitFor(() => expect(complete).toHaveBeenCalled())

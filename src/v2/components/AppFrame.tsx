@@ -19,6 +19,8 @@ import { formatToday } from '../lib/format'
 import { localizedPath, switchLocalePath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
 import { GlassChrome, PageSkeleton, StatusPill } from '../ui/primitives'
+import { appContentSurface, type EntitlementSnapshot } from '../entitlement'
+import { EntitlementGate } from '../pages/app/EntitlementGate'
 import { PrePlanState } from '../pages/app/PrePlanState'
 
 export type AppTab = 'today' | 'plan' | 'progress' | 'me'
@@ -120,6 +122,17 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   if (!preview && planQuery.isLoading) return <PageSkeleton />
 
   const plan = preview ? demoPlan : (planQuery.data?.plan ?? null)
+  const account = planQuery.data
+  const entitlement: EntitlementSnapshot = {
+    aiPlanState: account?.aiPlanAccess.state,
+    automationBlocked: account?.onboardingStatus === 'automation_blocked' || account?.aiPlanAccess.state === 'safety_blocked',
+    hasSavedPlan: Boolean(plan),
+    membership: account?.entitlementStatus ?? plan?.progress.entitlementStatus ?? 'none',
+    onboardingStatus: account?.onboardingStatus ?? '',
+    periodEnd: account?.entitlementPeriodEnd ?? plan?.progress.entitlementPeriodEnd,
+    productRegion: account?.productRegion ?? plan?.progress.productRegion,
+  }
+  const contentSurface = preview ? 'children' : appContentSurface(tab, entitlement)
   const navQuery = preview ? '?preview=1' : ''
   const otherLocale: AppLocale = locale === 'fa' ? 'en' : 'fa'
 
@@ -155,9 +168,11 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
         {plan?.contentLocale && plan.contentLocale !== locale ? <div className="app-content-language-note">{locale === 'fa' ? 'متن برنامه با زبان پروفایل هنگام ساخت تولید شده و با تغییر زبان رابط ترجمه نمی‌شود.' : 'Plan content is generated in the profile language and is not machine-translated when the interface language changes.'}</div> : null}
         <div className="app-content">{!preview && planQuery.isError && !planQuery.data
           ? <div className="app-load-error" role="alert"><strong>{locale === 'fa' ? 'برنامه دریافت نشد' : 'Your plan could not be loaded'}</strong><p>{locale === 'fa' ? 'اتصال را بررسی کن و دوباره تلاش کن. اطلاعات حسابت حذف نشده است.' : 'Check your connection and try again. Your account data is safe.'}</p><button className="orbit-button orbit-button--primary" onClick={() => void planQuery.refetch()} type="button">{locale === 'fa' ? 'تلاش دوباره' : 'Try again'}</button></div>
-          : !preview && !plan && planQuery.data
-            ? <PrePlanState account={planQuery.data} locale={locale} />
-            : children({ plan, preview })}</div>
+          : contentSurface === 'entitlement'
+            ? <EntitlementGate locale={locale} snapshot={entitlement} />
+            : contentSurface === 'preplan' && account
+              ? <PrePlanState account={account} locale={locale} />
+              : children({ plan, preview })}</div>
       </div>
       <GlassChrome aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Primary navigation'} className={`app-bottom-nav${chromeMinimized ? ' is-minimized' : ''}`} role="navigation">
         {navItems.map(({ key, icon: Icon }) => (

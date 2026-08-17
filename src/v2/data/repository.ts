@@ -7,6 +7,7 @@ import {
   dashboardResponseSchema,
   type DashboardResponse,
 } from './contracts'
+import { mapEntitlementStatus, type MembershipStatus } from '../entitlement'
 import type { LocalizedText, MealChoice, MomentumPlanDayView, MomentumPlanView } from './types'
 
 type Dashboard = DashboardResponse['dashboard']
@@ -61,13 +62,8 @@ function consecutiveDays(checkins: Dashboard['recent_checkins'], today: string) 
   return streak
 }
 
-function mapEntitlementStatus(usage: Dashboard['entitlement_usage']): NonNullable<MomentumPlanView['progress']['entitlementStatus']> {
-  if (!usage) return 'none'
-  const status = usage.entitlement.status
-  if (usage.entitlement.source === 'gift' && status !== 'expired' && status !== 'cancelled' && status !== 'canceled') return 'gift'
-  if (status === 'past_due' || status === 'pending' || status === 'incomplete' || status === 'grace') return 'pending'
-  if (status === 'canceled' || status === 'cancelled' || status === 'expired' || status === 'unpaid') return 'expired'
-  return 'active'
+function planEntitlementStatus(usage: Dashboard['entitlement_usage']): MembershipStatus {
+  return mapEntitlementStatus(usage)
 }
 
 function strategyName(mode: string, locale: AppLocale) {
@@ -219,7 +215,7 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       entitlementLabel: dashboard.entitlement_usage?.entitlement.source === 'gift'
         ? { fa: 'هدیه برنامه اول', en: 'First-plan gift' }
         : { fa: 'عضویت Momentum', en: 'Momentum membership' },
-      entitlementStatus: mapEntitlementStatus(dashboard.entitlement_usage),
+      entitlementStatus: planEntitlementStatus(dashboard.entitlement_usage),
       entitlementPeriodEnd: dashboard.entitlement_usage?.entitlement.period_end,
       productRegion: dashboard.profile.product_region,
       recentCheckIns: dashboard.recent_checkins.slice(0, 7).map((item) => ({
@@ -242,6 +238,9 @@ export interface AccountDashboardView {
   countryCode: string | null
   aiCountryVerified: boolean
   aiPlanAccess: Dashboard['ai_access']['plan']
+  entitlementStatus?: MembershipStatus
+  entitlementPeriodEnd?: string
+  productRegion?: 'ir' | 'intl'
 }
 
 export async function loadAccountDashboard(locale: AppLocale): Promise<AccountDashboardView> {
@@ -258,6 +257,9 @@ export async function loadAccountDashboard(locale: AppLocale): Promise<AccountDa
     countryCode: parsed.dashboard.profile.country_code,
     aiCountryVerified: parsed.dashboard.profile.ai_country_verified ?? false,
     aiPlanAccess: parsed.dashboard.ai_access.plan,
+    entitlementStatus: planEntitlementStatus(parsed.dashboard.entitlement_usage),
+    entitlementPeriodEnd: parsed.dashboard.entitlement_usage?.entitlement.period_end,
+    productRegion: parsed.dashboard.profile.product_region,
   }
 }
 
