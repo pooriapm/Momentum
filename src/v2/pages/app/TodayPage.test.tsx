@@ -2,11 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import i18n from 'i18next'
 import type { ComponentProps } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { I18nProvider } from '../../../platform/i18n/I18nProvider'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { demoPlan } from '../../data/demo'
 import type { MomentumPlanView } from '../../data/types'
+import { TODAY_GENERATION_WAIT_MS } from './today-state'
 import { TodayPage } from './TodayPage'
 
 vi.mock('../../../platform/pwa/network', () => ({
@@ -36,7 +37,12 @@ function renderToday(
 describe('TodayPage inventory states', () => {
   beforeEach(async () => {
     online.mockReturnValue(true)
+    sessionStorage.clear()
     await i18n.changeLanguage('en')
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('TODAY-01 keeps one next action above the fold and a quiet check-in', () => {
@@ -60,10 +66,16 @@ describe('TodayPage inventory states', () => {
     expect(screen.getByRole('link', { name: /continue setup/i })).toHaveAttribute('href', '/en/onboarding')
   })
 
-  it('TODAY-04 shows the monthly generation wait and allows leaving', () => {
-    renderToday({ surface: 'preparing' })
+  it('TODAY-04 shows the monthly generation wait, allows leaving, and times out with retry', async () => {
+    vi.useFakeTimers()
+    const onRetry = vi.fn()
+    renderToday({ surface: 'preparing', onRetry })
     expect(screen.getByText(/please wait\. your personalized plan is being created/i)).toBeInTheDocument()
     expect(screen.getByText(/you can leave this page and come back/i)).toBeInTheDocument()
+    await vi.advanceTimersByTimeAsync(TODAY_GENERATION_WAIT_MS)
+    expect(screen.getByText(/the plan is not ready yet/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Try again'))
+    expect(onRetry).toHaveBeenCalledTimes(1)
   })
 
   it('TODAY-05 and TODAY-06 complete a meal, update the next action, and allow undo', () => {

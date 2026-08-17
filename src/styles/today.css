@@ -151,6 +151,23 @@
   min-height: 2.8rem;
 }
 
+.today-wait-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  justify-content: center;
+}
+
+.today-wait-card__icon.is-success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.today-wait-card__icon.is-warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
 .today-status-actions {
   display: flex;
   flex-wrap: wrap;

@@ -32,6 +32,7 @@ import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, GlassChrome, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
 import { GenerationWait } from './GenerationWait'
+import { useGenerationWait } from './use-generation-wait'
 import {
   deriveTodaySurface,
   formatLastSync,
@@ -101,6 +102,7 @@ export function TodayPage({
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const online = useOnlineStatus()
+  const wait = useGenerationWait(locale, Boolean(plan), !preview)
   const fa = locale === 'fa'
   const [selectedMeals, setSelectedMeals] = useState<Record<string, string>>({})
   const [mealOverrides, setMealOverrides] = useState<Record<string, boolean>>({})
@@ -132,7 +134,21 @@ export function TodayPage({
   const syncedAt = lastSyncedAt ?? readStoredLastSync()
   const mutationsLocked = view === 'offline' || view === 'stale' || view === 'safety' || view === 'load-error' || (!preview && !online)
 
-  if (view === 'preparing') return <GenerationWait locale={locale} onRetry={onRetry} />
+  if (!preview && wait.session) {
+    return (
+      <GenerationWait
+        failure={wait.session.failure}
+        hasPriorPlan={Boolean(plan) || wait.session.hasPriorPlan}
+        locale={locale}
+        onRetry={() => wait.retry()}
+        onTimeout={() => wait.markTimeout()}
+        online={online}
+        phase={wait.session.phase}
+        startedAt={wait.session.startedAt}
+      />
+    )
+  }
+  if (view === 'preparing') return <GenerationWait locale={locale} onRetry={onRetry} online={online} />
   if (view === 'no-plan' || !plan) return <EmptyPlanState locale={locale} />
   if (view === 'load-error') {
     return (
