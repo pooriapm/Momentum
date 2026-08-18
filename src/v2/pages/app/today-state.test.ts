@@ -9,6 +9,7 @@ describe('Today surface derivation', () => {
     expect(deriveTodaySurface({ plan: null, online: true, today })).toBe('no-plan')
     expect(deriveTodaySurface({ plan: demoPlan, online: true, today, preparing: true })).toBe('preparing')
     expect(deriveTodaySurface({ plan: demoPlan, online: true, today, loadError: true })).toBe('load-error')
+    expect(deriveTodaySurface({ plan: null, online: true, today, loadError: true })).toBe('load-error')
     expect(deriveTodaySurface({ plan: demoPlan, online: true, today, safetyLevel: 'urgent' })).toBe('safety')
     expect(deriveTodaySurface({ plan: demoPlan, online: false, today })).toBe('offline')
     expect(deriveTodaySurface({ plan: { ...demoPlan, localDate: '2026-01-01' }, online: true, today })).toBe('stale')

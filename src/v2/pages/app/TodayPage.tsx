@@ -24,7 +24,7 @@ import type { CheckInSafety } from '../../checkins/contracts'
 import { CheckInSheet } from '../../components/CheckInSheet'
 import { MealDetailSheet } from '../../components/MealDetailSheet'
 import { WorkoutLogger } from '../../components/WorkoutLogger'
-import { completeMeal, currentLocalDate, logMealSelection } from '../../data/repository'
+import { completeMeal, currentLocalDate, logMealSelection, undoMeal } from '../../data/repository'
 import { localize, type MealChoice, type MealSlot, type MomentumPlanView } from '../../data/types'
 import { formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
@@ -149,7 +149,6 @@ export function TodayPage({
     )
   }
   if (view === 'preparing') return <GenerationWait locale={locale} onRetry={onRetry} online={online} />
-  if (view === 'no-plan' || !plan) return <EmptyPlanState locale={locale} />
   if (view === 'load-error') {
     return (
       <main className="app-page today-page screen-enter">
@@ -157,8 +156,12 @@ export function TodayPage({
           <span className="today-status-card__icon is-warning"><AlertTriangle size={28} /></span>
           <p className="orbit-eyebrow">{fa ? 'خطای قابل بازیابی' : 'Recoverable error'}</p>
           <h1>{fa ? 'برنامه امروز دریافت نشد' : 'Today’s plan could not be loaded'}</h1>
-          <p>{fa ? 'نسخه فعال روی دستگاه حذف یا جایگزین نشده است. می‌توانی برنامه ذخیره‌شده را بخوانی و بعداً برای تازه‌سازی دوباره تلاش کنی.' : 'The active on-device plan was not deleted or replaced. You can read the saved plan and retry the refresh later.'}</p>
-          <div className="inline-notice" role="status">{fa ? `نسخه ذخیره‌شده امن است · همگام‌سازی ${formatLastSync(syncedAt, locale)}` : `Saved plan is safe · synced ${formatLastSync(syncedAt, locale)}`}</div>
+          <p>{plan
+            ? (fa ? 'نسخه فعال روی دستگاه حذف یا جایگزین نشده است. می‌توانی برنامه ذخیره‌شده را بخوانی و بعداً برای تازه‌سازی دوباره تلاش کنی.' : 'The active on-device plan was not deleted or replaced. You can read the saved plan and retry the refresh later.')
+            : (fa ? 'حسابت حذف نشده است. اتصال را بررسی کن و دوباره تلاش کن.' : 'Your account is safe. Check the connection and try again.')}</p>
+          <div className="inline-notice" role="status">{plan
+            ? (fa ? `نسخه ذخیره‌شده امن است · همگام‌سازی ${formatLastSync(syncedAt, locale)}` : `Saved plan is safe · synced ${formatLastSync(syncedAt, locale)}`)
+            : (fa ? 'اطلاعات حساب محفوظ است' : 'Account data was not replaced')}</div>
           <div className="today-status-actions">
             <Button onClick={() => (onRetry ? onRetry() : window.location.reload())}>{fa ? 'تلاش دوباره' : 'Try again'}</Button>
           </div>
@@ -166,6 +169,7 @@ export function TodayPage({
       </main>
     )
   }
+  if (view === 'no-plan' || !plan) return <EmptyPlanState locale={locale} />
 
   const currentTime = currentTimeInZone(plan.timezone)
   const orderedMeals = [...plan.meals].sort((left, right) => left.time.localeCompare(right.time))
@@ -221,9 +225,24 @@ export function TodayPage({
     }
   }
 
-  function undoMeal(slotId: string) {
+  async function revertMeal(slotId: string) {
     if (mutationsLocked) return
+    const meal = plan!.meals.find((item) => item.id === slotId)
+    const optionId = meal ? selectedOption(meal, selectedMeals)?.id : undefined
+    const previous = mealOverrides[slotId]
     setMealOverrides((current) => ({ ...current, [slotId]: false }))
+    setMealError('')
+    if (preview || !optionId) return
+    setSavingSlot(slotId)
+    try {
+      await undoMeal(plan!.localDate ?? today, slotId, optionId)
+      await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
+    } catch {
+      setMealOverrides((current) => ({ ...current, [slotId]: previous ?? true }))
+      setMealError(fa ? 'برگرداندن ثبت انجام نشد؛ دوباره تلاش کن.' : 'The meal could not be undone. Try again.')
+    } finally {
+      setSavingSlot('')
+    }
   }
 
   const nextAction = nextActionCopy({

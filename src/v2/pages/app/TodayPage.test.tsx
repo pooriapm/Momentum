@@ -109,6 +109,15 @@ describe('TodayPage inventory states', () => {
     expect(onRetry).toHaveBeenCalled()
   })
 
+  it('TODAY-09 cold load error without a cached plan still retries', () => {
+    const onRetry = vi.fn()
+    renderToday({ plan: null, loadError: true, onRetry })
+    expect(screen.getByRole('heading', { name: /today’s plan could not be loaded/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /continue setup/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }))
+    expect(onRetry).toHaveBeenCalled()
+  })
+
   it('TODAY-10 pauses training without streak pressure', () => {
     renderToday({ surface: 'safety' })
     expect(screen.getAllByText(/today’s workout is paused/i).length).toBeGreaterThan(0)
