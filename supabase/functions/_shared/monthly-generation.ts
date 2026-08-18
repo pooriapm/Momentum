@@ -160,12 +160,14 @@ export async function runMonthlyGeneration(input: {
   locale?: 'fa-IR' | 'en-US'
   store: GenerationStore
   admin?: ConsentAdminClient | null
+  enforceCapacity?: () => Promise<void>
   invalidStub?: boolean
 }): Promise<GenerationSuccess> {
   assertAiFeatureEnabled('AI_PLAN_ENABLED')
   if (!input.emailConfirmed) {
     throw new HttpError(403, 'EMAIL_UNVERIFIED', 'Confirm your email before generating a plan.')
   }
+  if (input.enforceCapacity) await input.enforceCapacity()
 
   const profile = await input.store.loadProfile(input.userId)
   if (

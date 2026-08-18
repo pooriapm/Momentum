@@ -9,7 +9,7 @@ import {
   readJsonBody,
   requireIdempotencyKey,
 } from '../_shared/http.ts'
-import { enforceRateLimit } from '../_shared/limits.ts'
+import { enforceAiCircuitBreaker, enforceRateLimit } from '../_shared/limits.ts'
 import { createSupabaseGenerationStore } from '../_shared/monthly-generation-db.ts'
 import { runMonthlyGeneration } from '../_shared/monthly-generation.ts'
 
@@ -78,6 +78,7 @@ Deno.serve(async (request) => {
       locale,
       store,
       admin: auth.admin,
+      enforceCapacity: () => enforceAiCircuitBreaker(auth.admin),
     })
     return jsonResponse(request, result.body, result.httpStatus)
   } catch (error) {

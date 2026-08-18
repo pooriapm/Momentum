@@ -320,6 +320,21 @@ describe('monthly generation pipeline', () => {
       .not.toThrow()
   })
 
+  it('does not import when the circuit breaker is open', async () => {
+    const store = new MemoryGenerationStore()
+    await expect(runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-key-circuit',
+      store,
+      enforceCapacity: async () => {
+        throw new HttpError(503, 'ai_circuit_open', 'AI capacity is temporarily paused.')
+      },
+    })).rejects.toMatchObject({ code: 'ai_circuit_open', status: 503 })
+    expect(store.importedPlans).toHaveLength(0)
+    expect(store.jobs.size).toBe(0)
+  })
+
   it('imports a schema-valid stub plan for an entitled user on v2', async () => {
     const store = new MemoryGenerationStore()
     const result = await runMonthlyGeneration({
