@@ -5,7 +5,7 @@ import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { currentWeekStart, saveWeeklyCheckIn } from '../../checkins/repository'
-import { WeeklyCheckInSheet } from '../../components/WeeklyCheckInSheet'
+import { LazyOverlay, WeeklyCheckInSheet } from '../../components/LazyOverlay'
 import { localize, type MomentumPlanView } from '../../data/types'
 import { formatNumber } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
@@ -102,7 +102,7 @@ export function ProgressPage({
           <p>{fa ? 'اختیاری است، اما اینجا مسیر اصلی پیشرفت است. هوش مصنوعی صدا زده نمی‌شود.' : 'It is optional, but this is the main Progress action. No AI is called.'}</p>
           <Button disabled={!preview && !online} onClick={() => setWeeklyOpen(true)}><CalendarCheck2 size={17} />{fa ? 'شروع گزارش هفتگی' : 'Start weekly report'}</Button>
         </ContentCard>
-        {weeklyOpen ? <WeeklySheet locale={locale} onClose={() => setWeeklyOpen(false)} onOutcome={setWeeklyOutcome} onSaved={() => setWeeklySaved(true)} plan={plan} preview={preview} /> : null}
+        {weeklyOpen ? <LazyOverlay><WeeklySheet locale={locale} onClose={() => setWeeklyOpen(false)} onOutcome={setWeeklyOutcome} onSaved={() => setWeeklySaved(true)} plan={plan} preview={preview} /></LazyOverlay> : null}
       </main>
     )
   }
@@ -192,7 +192,7 @@ export function ProgressPage({
           <ul>{plan.progress.recentCheckIns.map((checkIn) => <li key={`${checkIn.date.en}-${checkIn.score}`}><span><strong>{localize(checkIn.date, locale)}</strong><small>{localize(checkIn.note, locale)}</small></span><em>{formatNumber(checkIn.score, locale)}%</em></li>)}</ul>
         </ContentCard>
       ) : null}
-      {weeklyOpen ? <WeeklySheet locale={locale} onClose={() => setWeeklyOpen(false)} onOutcome={setWeeklyOutcome} onSaved={() => setWeeklySaved(true)} plan={plan} preview={preview} /> : null}
+      {weeklyOpen ? <LazyOverlay><WeeklySheet locale={locale} onClose={() => setWeeklyOpen(false)} onOutcome={setWeeklyOutcome} onSaved={() => setWeeklySaved(true)} plan={plan} preview={preview} /></LazyOverlay> : null}
     </main>
   )
 }

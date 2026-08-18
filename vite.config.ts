@@ -10,6 +10,7 @@ export default defineConfig({
       includeAssets: [
         'favicon.svg',
         'favicon-32.png',
+        'favicon-32.webp',
         'apple-touch-icon.png',
         'brand/momentum-orbit-splash.svg',
         'brand/momentum-orbit-master.svg',
@@ -24,8 +25,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         prefer_related_applications: false,
-        background_color: '#090d1a',
-        theme_color: '#090d1a',
+        background_color: '#161114',
+        theme_color: '#161114',
         categories: ['health', 'fitness', 'lifestyle'],
         icons: [
           {
@@ -72,7 +73,7 @@ export default defineConfig({
           },
         ],
         globPatterns: [
-          '**/*.{js,css,html,woff2,svg}',
+          '**/*.{js,css,html,woff2,svg,webp}',
           'favicon-32.png',
           'apple-touch-icon.png',
           'pwa-192.png',

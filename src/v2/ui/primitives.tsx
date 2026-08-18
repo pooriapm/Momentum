@@ -1,5 +1,6 @@
 import { Children, isValidElement, type ButtonHTMLAttributes, type HTMLAttributes, type PropsWithChildren, type ReactNode } from 'react'
 import { LoaderCircle } from 'lucide-react'
+import { Reveal } from './Reveal'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
@@ -44,7 +45,7 @@ export function Button({
 }
 
 export function ContentCard({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={`content-card ${className}`} {...props} />
+  return <Reveal className={`content-card ${className}`} {...props} />
 }
 
 export function GlassChrome({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {

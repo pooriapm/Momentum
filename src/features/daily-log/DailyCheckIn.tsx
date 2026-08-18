@@ -129,7 +129,7 @@ export function DailyCheckIn({
   }
 
   return (
-    <Dialog contentClassName="p-5 desktop:p-7" placement="sheet" size="xl">
+    <Dialog contentClassName="p-5 desktop:p-7" onClose={onClose} placement="sheet" size="xl">
       <form onSubmit={submit}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">

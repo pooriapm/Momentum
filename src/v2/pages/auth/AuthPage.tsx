@@ -12,6 +12,7 @@ import { localizedPath } from '../../router/route-utils'
 import { Input } from '../../ui/FormControls'
 import { OrbitMark } from '../../ui/OrbitMark'
 import { Button, ContentCard } from '../../ui/primitives'
+import { Reveal } from '../../ui/Reveal'
 
 const PENDING_EMAIL_KEY = 'momentum.pendingVerificationEmail'
 const RESEND_COOLDOWN_SECONDS = 60
@@ -156,7 +157,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
     <div className="public-page auth-page">
       <PublicHeader locale={locale} />
       <main className="auth-layout">
-        <section className="auth-layout__story">
+        <Reveal as="section" className="auth-layout__story">
           <OrbitMark animated size={76} />
           <p className="orbit-eyebrow"><ShieldCheck size={15} />{locale === 'fa' ? 'خصوصی، شخصی و همراه' : 'Private, personal, portable'}</p>
           <h1>{isVerify ? (fa ? 'تأیید ایمیل' : 'Verify your email') : isRecover ? (fa ? 'بازیابی حساب' : 'Recover your account') : isUpdatePassword ? (fa ? 'رمز تازه بساز' : 'Create a new password') : isSignUp ? t('auth.titleUp') : t('auth.titleIn')}</h1>
@@ -166,7 +167,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
             <span><LockKeyhole size={18} />{locale === 'fa' ? 'جداسازی داده در سطح ردیف' : 'Row-level data isolation'}</span>
             <span><ShieldCheck size={18} />{locale === 'fa' ? 'بدون تبلیغ با داده سلامت' : 'No health-data advertising'}</span>
           </div>
-        </section>
+        </Reveal>
         <ContentCard className="auth-card">
           <div className="auth-card__heading">
             <span className="auth-card__icon"><Mail size={21} /></span>

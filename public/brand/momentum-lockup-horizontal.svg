@@ -4,31 +4,31 @@
   <desc>Editable horizontal lockup. The wordmark remains live text for designer hand-off.</desc>
   <defs>
     <linearGradient id="lockup-background" x1="52" y1="34" x2="307" y2="327" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#12251D"/>
-      <stop offset="1" stop-color="#07110E"/>
+      <stop stop-color="#2d2229"/>
+      <stop offset="1" stop-color="#161114"/>
     </linearGradient>
     <linearGradient id="lockup-accent" x1="66" y1="61" x2="297" y2="297" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#72E5AF"/>
-      <stop offset="1" stop-color="#25AD73"/>
+      <stop stop-color="#e0a3c8"/>
+      <stop offset="1" stop-color="#73395f"/>
     </linearGradient>
     <linearGradient id="lockup-dot" x1="261" y1="77" x2="285" y2="101" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F1D895"/>
-      <stop offset="1" stop-color="#D8B66A"/>
+      <stop stop-color="#ff9a73"/>
+      <stop offset="1" stop-color="#b9533a"/>
     </linearGradient>
   </defs>
 
   <g id="symbol">
     <rect x="20" y="20" width="320" height="320" rx="80" fill="url(#lockup-background)"/>
-    <rect x="21" y="21" width="318" height="318" rx="79" stroke="#E0F4E9" stroke-opacity=".14" stroke-width="2"/>
-    <circle cx="180" cy="180" r="113" stroke="#DFF7EA" stroke-opacity=".13" stroke-width="15"/>
+    <rect x="21" y="21" width="318" height="318" rx="79" stroke="#e0a3c8" stroke-opacity=".18" stroke-width="2"/>
+    <circle cx="180" cy="180" r="113" stroke="#fbf5f8" stroke-opacity=".13" stroke-width="15"/>
     <circle cx="180" cy="180" r="113" stroke="url(#lockup-accent)" stroke-width="16" stroke-linecap="round" stroke-dasharray="540 170" transform="rotate(-52 180 180)"/>
-    <path d="M119 225V147C119 132 138 127 147 140L180 189L213 140C222 127 241 132 241 147V225" stroke="#F4F6EF" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="264" cy="96" r="17" fill="#D8B66A" fill-opacity=".12"/>
+    <path d="M119 225V147C119 132 138 127 147 140L180 189L213 140C222 127 241 132 241 147V225" stroke="#fbf5f8" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="264" cy="96" r="17" fill="#b9533a" fill-opacity=".12"/>
     <circle cx="264" cy="96" r="9" fill="url(#lockup-dot)"/>
   </g>
 
-  <g id="wordmark" fill="#17211C">
+  <g id="wordmark" fill="#241a21">
     <text x="405" y="190" font-family="Inter, Arial, sans-serif" font-size="96" font-weight="750" letter-spacing="-3">Momentum</text>
-    <text x="410" y="242" font-family="Vazirmatn, Tahoma, sans-serif" font-size="30" font-weight="600" fill="#607067">ریتم پایدار، پیشرفت واقعی</text>
+    <text x="410" y="242" font-family="Vazirmatn, Tahoma, sans-serif" font-size="30" font-weight="600" fill="#675762">ریتم پایدار، پیشرفت واقعی</text>
   </g>
 </svg>

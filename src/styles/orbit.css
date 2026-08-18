@@ -44,11 +44,11 @@
   --color-overlay: rgba(5, 8, 16, 0.7);
   --color-background-glow-accent: rgba(91, 95, 239, 0.15);
   --color-background-glow-highlight: rgba(155, 112, 255, 0.1);
-  --color-splash-glow: rgba(119, 123, 255, 0.18);
+  --color-splash-glow: rgba(224, 163, 200, 0.18);
   --color-selection: #8589ff;
   --color-on-selection: #ffffff;
   --color-input-inner-border: transparent;
-  --orbit-logo-surface: #11182a;
+  --orbit-logo-surface: #2d2229;
   --radius-control: 0.9rem;
   --radius-card: 1.35rem;
   --radius-panel: 1.75rem;
@@ -125,10 +125,10 @@
   --color-overlay: rgba(24, 28, 45, 0.48);
   --color-background-glow-accent: rgba(91, 95, 239, 0.08);
   --color-background-glow-highlight: rgba(127, 81, 232, 0.06);
-  --color-splash-glow: rgba(91, 95, 239, 0.1);
+  --color-splash-glow: rgba(115, 57, 95, 0.12);
   --color-selection: #c8caff;
   --color-on-selection: #14182a;
-  --orbit-logo-surface: #f5f6ff;
+  --orbit-logo-surface: #fbf3f8;
   --shadow-card: 0 16px 40px rgba(37, 42, 75, 0.07);
   --shadow-panel: 0 26px 80px rgba(37, 42, 75, 0.09);
   --shadow-chrome: 0 14px 45px rgba(37, 42, 75, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.92);
@@ -202,6 +202,65 @@ legend {
 .screen-enter {
   animation: orbit-page-enter var(--motion-emphasis) cubic-bezier(.22, 1, .36, 1) both;
 }
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition:
+    opacity 420ms var(--motion-glass-spring),
+    transform 420ms var(--motion-glass-spring);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+.lazy-picture {
+  display: block;
+  background:
+    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--color-energy) 28%, transparent), transparent 46%),
+    linear-gradient(160deg, #3a2a2f, #161114);
+  overflow: hidden;
+}
+
+.lazy-picture__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.lazy-picture.is-loaded .lazy-picture__img {
+  opacity: 1;
+}
+
+.landing-section,
+.landing-final,
+.process-section,
+.safety-banner {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 18rem;
+}
+
+.feature-grid > .scroll-reveal:nth-child(1),
+.pricing-grid > .scroll-reveal:nth-child(1),
+.safety-grid > .scroll-reveal:nth-child(1),
+.progress-metrics-grid > .scroll-reveal:nth-child(1) { transition-delay: 40ms; }
+.feature-grid > .scroll-reveal:nth-child(2),
+.pricing-grid > .scroll-reveal:nth-child(2),
+.safety-grid > .scroll-reveal:nth-child(2),
+.progress-metrics-grid > .scroll-reveal:nth-child(2) { transition-delay: 90ms; }
+.feature-grid > .scroll-reveal:nth-child(3),
+.safety-grid > .scroll-reveal:nth-child(3),
+.progress-metrics-grid > .scroll-reveal:nth-child(3) { transition-delay: 140ms; }
+.feature-grid > .scroll-reveal:nth-child(4),
+.safety-grid > .scroll-reveal:nth-child(4),
+.progress-metrics-grid > .scroll-reveal:nth-child(4) { transition-delay: 190ms; }
 
 .orbit-spin {
   animation: orbit-spin .8s linear infinite;
@@ -742,7 +801,29 @@ legend {
   display: none;
   height: 2.75rem;
   justify-content: center;
+  transition: background var(--motion-fast) ease, transform var(--motion-glass-press) var(--motion-glass-spring);
   width: 2.75rem;
+}
+
+.public-header__menu:active {
+  transform: scale(.96);
+}
+
+.public-menu-backdrop {
+  animation: orbit-glass-fade-in var(--motion-normal) ease-out both;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  background: color-mix(in srgb, var(--color-overlay) 52%, transparent);
+  border: 0;
+  cursor: default;
+  inset: 0;
+  padding: 0;
+  position: fixed;
+  z-index: 35;
+}
+
+.public-header-wrap--menu-open {
+  z-index: 41;
 }
 
 .landing-hero {
@@ -865,6 +946,12 @@ legend {
   aspect-ratio: 16 / 10;
   display: block;
   object-fit: cover;
+  width: 100%;
+}
+
+.preview-meal-card__photo.lazy-picture,
+.preview-meal-card__photo .lazy-picture__img {
+  aspect-ratio: 16 / 10;
   width: 100%;
 }
 
@@ -1365,16 +1452,16 @@ legend {
 
 .modal-backdrop {
   align-items: end;
-  background: color-mix(in srgb, var(--color-overlay) 78%, transparent);
+  animation: orbit-glass-fade-in var(--motion-normal) ease-out both;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  background: color-mix(in srgb, var(--color-overlay) 52%, transparent);
   display: flex;
   inset: 0;
   justify-content: center;
   padding: max(1rem, env(safe-area-inset-top)) .75rem max(.75rem, env(safe-area-inset-bottom));
   position: fixed;
   z-index: 120;
-  animation: orbit-glass-fade-in var(--motion-normal) ease-out both;
-  backdrop-filter: blur(12px) saturate(125%);
-  -webkit-backdrop-filter: blur(12px) saturate(125%);
 }
 .modal-surface {
   border-radius: 1.65rem;
@@ -1723,9 +1810,51 @@ legend {
 }
 
 @media (max-width: 58rem) {
-  .public-header__links { background: var(--color-chrome-strong); border: 1px solid var(--color-border); border-radius: 1rem; box-shadow: var(--shadow-panel); display: none; flex-direction: column; inset-inline: .75rem; padding: .6rem; position: absolute; top: calc(100% + .4rem); }
+  .public-header__links {
+    animation: orbit-glass-popover-in var(--motion-glass-morph) var(--motion-glass-spring) both;
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    background:
+      linear-gradient(145deg, var(--glass-highlight), transparent 24%),
+      radial-gradient(circle at 82% 10%, var(--glass-tint), transparent 44%),
+      var(--glass-core);
+    border: 1px solid color-mix(in srgb, var(--glass-highlight) 75%, var(--color-border));
+    border-radius: 1.35rem;
+    box-shadow: var(--shadow-panel), inset 0 1px 0 var(--glass-highlight);
+    display: none;
+    flex-direction: column;
+    gap: .35rem;
+    inset-inline: .75rem;
+    isolation: isolate;
+    overflow: hidden;
+    padding: .75rem;
+    position: absolute;
+    top: calc(100% + .55rem);
+    transform-origin: top center;
+    z-index: 1;
+  }
   .public-header__links--open { display: flex; }
-  .public-header__links > a { justify-content: center; width: 100%; }
+  .public-header__links > a {
+    border-radius: .95rem;
+    font-size: .92rem;
+    justify-content: center;
+    min-height: 3rem;
+    width: 100%;
+  }
+  .public-header__links > a:not(.header-cta):not(.locale-link) {
+    color: var(--color-text);
+    font-weight: 650;
+  }
+  .public-header__links .header-cta {
+    border-radius: 999px;
+    margin-inline-start: 0;
+    margin-top: .25rem;
+    min-height: 3.1rem;
+  }
+  .public-header__links .locale-link {
+    color: var(--color-text-secondary);
+    font-weight: 700;
+  }
   .public-header__menu { display: flex; }
   .landing-hero { grid-template-columns: 1fr; padding-top: 9rem; text-align: center; }
   .landing-hero__copy .orbit-eyebrow, .landing-hero__actions, .landing-hero__trust { justify-content: center; }
@@ -1931,6 +2060,7 @@ legend {
   .app-bottom-nav.is-minimized,
   .app-topbar.is-minimized,
   .modal-surface { transform: none !important; }
+  .scroll-reveal { opacity: 1; transform: none !important; }
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -1946,6 +2076,7 @@ legend {
   .glass-menu::before,
   .app-topbar::after { display: none; }
   .modal-backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .public-menu-backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; background: color-mix(in srgb, var(--color-overlay) 72%, transparent); }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

@@ -80,7 +80,7 @@ export function PromptGenerationWizard({
   if (!question) return null
 
   return (
-    <Dialog contentClassName="p-5 desktop:p-7" size="md">
+    <Dialog contentClassName="p-5 desktop:p-7" onClose={onCancel} size="md">
         <div className="flex items-start gap-3">
           <IconTile className="size-12 rounded-[16px]">
             <FileOutput aria-hidden="true" size={22} />

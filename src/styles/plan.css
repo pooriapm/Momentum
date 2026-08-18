@@ -1,6 +1,6 @@
 .plan-page {
   display: grid;
-  gap: 1rem;
+  gap: 1.35rem;
 }
 
 .plan-page .shopping-grid,
@@ -12,7 +12,7 @@
 .plan-heading-aside {
   align-items: flex-end;
   display: grid;
-  gap: .45rem;
+  gap: .65rem;
   justify-items: end;
 }
 
@@ -20,7 +20,7 @@
 .plan-overview-grid,
 .plan-grocery {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .plan-overview-grid,
@@ -28,16 +28,54 @@
   grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
 }
 
+.plan-stack > .content-card:not(.workout-detail-card):not(.plan-meal-row),
+.plan-overview-grid > .content-card,
+.plan-grocery > .content-card,
+.plan-calendar-card {
+  display: grid;
+  gap: .85rem;
+  justify-items: start;
+  padding: 1.35rem 1.4rem;
+}
+
 .plan-overview-card h2,
 .plan-grocery h2,
-.plan-calendar-card h2 {
-  margin: .55rem 0 .2rem;
+.plan-calendar-card h2,
+.plan-stack > .content-card h2,
+.plan-overview-grid > .content-card h2 {
+  margin: 0;
+}
+
+.plan-stack > .content-card p,
+.plan-overview-grid > .content-card p,
+.plan-grocery > .content-card p,
+.plan-calendar-card p {
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.plan-stack > .content-card .orbit-button,
+.plan-overview-grid > .content-card .orbit-button,
+.plan-grocery > .content-card .orbit-button {
+  margin-top: .35rem;
+}
+
+.plan-overview-card .inline-notice,
+.plan-grocery__list .inline-notice {
+  margin: 0;
+  width: 100%;
 }
 
 .plan-week {
   display: grid;
-  gap: .55rem;
+  gap: .65rem;
   grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: .15rem;
+}
+
+.plan-page .workout-logger,
+.plan-page .workout-start-card {
+  margin-top: 1.25rem;
 }
 
 .plan-week__day {
@@ -66,10 +104,11 @@
 
 .plan-pattern-list {
   display: grid;
-  gap: .65rem;
+  gap: .85rem;
   list-style: none;
-  margin: 1rem 0 0;
+  margin: 0;
   padding: 0;
+  width: 100%;
 }
 
 .plan-pattern-list li {
@@ -96,7 +135,8 @@
 }
 
 .plan-grocery__list .shopping-grid {
-  margin-top: .85rem;
+  margin-top: 0;
+  width: 100%;
 }
 
 .plan-calendar-card__heading {
@@ -104,7 +144,8 @@
   display: flex;
   gap: 1rem;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin: 0;
+  width: 100%;
 }
 
 .plan-calendar {

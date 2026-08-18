@@ -128,13 +128,13 @@ describe('TodayPage inventory states', () => {
   it('TODAY-11 and TODAY-12 open the quiet check-in and confirm a saved log with no AI', async () => {
     renderToday()
     fireEvent.click(screen.getAllByRole('button', { name: /daily check-in · optional/i })[0]!)
-    expect(screen.getByRole('heading', { name: 'Daily check-in' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Daily check-in' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText(/sleep last night/i), { target: { value: '7.5' } })
     fireEvent.click(screen.getByRole('button', { name: /save check-in/i }))
     expect(await screen.findByText(/check-in saved\. no ai was called/i)).toBeInTheDocument()
   })
 
-  it('EXEC-01 and EXEC-03 keep meal selection, details, and substitution on Today', () => {
+  it('EXEC-01 and EXEC-03 keep meal selection, details, and substitution on Today', async () => {
     renderToday()
     const strip = document.querySelector('.meal-option-strip')
     expect(strip).not.toBeNull()
@@ -142,6 +142,7 @@ describe('TodayPage inventory states', () => {
     fireEvent.click(options[1]!)
     expect(screen.getByText(/substitution saved\. this month’s plan is unchanged/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /details/i }))
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(document.getElementById('meal-detail-title')).toBeTruthy()
   })
 })

@@ -29,7 +29,7 @@ export function RecipeScreen({
   if (!option.recipe) return null
 
   return (
-    <Dialog contentClassName="overflow-hidden p-0" size="xl">
+    <Dialog contentClassName="overflow-hidden p-0" onClose={onClose} size="xl">
         <header className="relative overflow-hidden border-b border-[var(--color-border)] p-5 desktop:p-8">
           <div className="fine-grid pointer-events-none absolute inset-0 opacity-25" />
           <div className="relative flex items-start gap-4">

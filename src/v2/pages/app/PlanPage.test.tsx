@@ -116,18 +116,20 @@ describe('PlanPage inventory states', () => {
     expect(onRetry).toHaveBeenCalled()
   })
 
-  it('PLAN-11 opens meal detail with recipe, provenance and alternatives', () => {
+  it('PLAN-11 opens meal detail with recipe, provenance and alternatives', async () => {
     renderPlan({ initialSegment: 'nutrition' })
     fireEvent.click(screen.getByRole('button', { name: /saffron chicken.*details/i }))
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(document.getElementById('meal-detail-title')).toBeTruthy()
     expect(screen.getByText(/provenance: active plan/i)).toBeInTheDocument()
     expect(screen.getByText('Recipe')).toBeInTheDocument()
     expect(screen.getByText('Equivalent alternatives')).toBeInTheDocument()
   })
 
-  it('PLAN-12 opens workout detail with sets, rest, equipment and adaptations', () => {
+  it('PLAN-12 opens workout detail with sets, rest, equipment and adaptations', async () => {
     renderPlan({ initialSegment: 'training' })
     fireEvent.click(screen.getByRole('button', { name: /exercise details/i }))
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(document.getElementById('workout-detail-title')).toBeTruthy()
     expect(screen.getByText(/4 × 8 · 90s rest/i)).toBeInTheDocument()
     expect(screen.getAllByText(/12 kg dumbbell/i).length).toBeGreaterThan(0)
@@ -149,13 +151,14 @@ describe('PlanPage inventory states', () => {
     expect(screen.getByText(/prior v1 · cycle 1/i)).toBeInTheDocument()
   })
 
-  it('PLAN-13 workout substitutes stay on the catalog option and do not regenerate', () => {
+  it('PLAN-13 workout substitutes stay on the catalog option and do not regenerate', async () => {
     renderPlan({ initialSegment: 'training' })
     fireEvent.click(screen.getByRole('button', { name: /exercise details/i }))
-    fireEvent.click(screen.getAllByRole('button', { name: /^substitute$/i })[0]!)
-    expect(screen.getByText(/does not regenerate the monthly plan/i)).toBeInTheDocument()
+    const substitute = (await screen.findAllByRole('button', { name: /^substitute$/i }))[0]
+    fireEvent.click(substitute!)
+    expect(await screen.findByText(/does not regenerate the monthly plan/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /choose bodyweight squat/i }))
-    expect(screen.getByText(/same movement-pattern substitute saved/i)).toBeInTheDocument()
+    expect(await screen.findByText(/same movement-pattern substitute saved/i)).toBeInTheDocument()
   })
 })
 

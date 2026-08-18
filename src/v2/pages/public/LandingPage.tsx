@@ -24,7 +24,9 @@ import { localize } from '../../data/types'
 import { formatNumber } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
 import { ContentCard, Eyebrow, GlassChrome, StatusPill } from '../../ui/primitives'
+import { LazyImage } from '../../ui/LazyImage'
 import { OrbitMark } from '../../ui/OrbitMark'
+import { Reveal } from '../../ui/Reveal'
 
 export function LandingPage({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
@@ -60,7 +62,7 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
           <ProductPreview locale={locale} />
         </section>
 
-        <section className="landing-section landing-system">
+        <Reveal as="section" className="landing-section landing-system">
           <div className="landing-section__heading">
             <Eyebrow><Activity size={15} />Momentum Loop</Eyebrow>
             <h2>{t('landing.systemTitle')}</h2>
@@ -76,9 +78,9 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
               </ContentCard>
             ))}
           </div>
-        </section>
+        </Reveal>
 
-        <section className="landing-section process-section">
+        <Reveal as="section" className="landing-section process-section">
           <div className="landing-section__heading">
             <Eyebrow><Sparkles size={15} />Personal by design</Eyebrow>
             <h2>{t('landing.stepsTitle')}</h2>
@@ -91,9 +93,9 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
               </li>
             ))}
           </ol>
-        </section>
+        </Reveal>
 
-        <section className="landing-section safety-banner">
+        <Reveal as="section" className="landing-section safety-banner">
           <div className="safety-banner__mark"><HeartPulse size={29} /></div>
           <div>
             <Eyebrow>Safety architecture</Eyebrow>
@@ -101,15 +103,16 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
             <p>{t('landing.safetyCopy')}</p>
           </div>
           <Link href={localizedPath(locale, '/safety')}>{t('common.learnMore')} <ChevronRight className="directional-icon" size={17} /></Link>
-        </section>
+        </Reveal>
 
-        <section className="landing-final">
+        <Reveal as="section" className="landing-final">
           <OrbitMark animated size={78} />
           <h2>{t('landing.finalTitle')}</h2>
           <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-up')}>
-            <span>{t('landing.primaryCta')}</span><ArrowRight className="directional-icon" size={18} />
+            <span>{t('landing.primaryCta')}</span>
+            <ArrowRight className="directional-icon" size={18} />
           </Link>
-        </section>
+        </Reveal>
       </main>
       <PublicFooter locale={locale} />
     </div>
@@ -135,10 +138,16 @@ function ProductPreview({ locale }: { locale: AppLocale }) {
         <h2>{t('landing.todayTitle')}</h2>
         <p>{t('landing.todayCopy')}</p>
         <ContentCard className="preview-meal-card">
-          <img
+          <LazyImage
             alt=""
             className="preview-meal-card__photo"
+            fallbackSrc="/preview/saffron-chicken-lunch.svg"
+            height={640}
+            priority
+            sizes="(max-width: 58rem) 86vw, 22rem"
             src="/preview/saffron-chicken-lunch.webp"
+            srcSet="/preview/saffron-chicken-lunch-480.webp 480w, /preview/saffron-chicken-lunch-800.webp 800w, /preview/saffron-chicken-lunch.webp 960w"
+            width={960}
           />
           <div className="preview-meal-card__body">
             <div className="preview-meal-card__heading">

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { cx } from '../../lib/class-names'
 import { ViewportPortal } from '../overlay/ViewportPortal'
 
@@ -16,6 +16,7 @@ export function Dialog({
   children,
   className,
   contentClassName,
+  onClose,
   placement = 'center',
   size = 'md',
   labelledBy,
@@ -23,22 +24,43 @@ export function Dialog({
   children: ReactNode
   className?: string
   contentClassName?: string
+  onClose?: () => void
   placement?: DialogPlacement
   size?: DialogSize
   labelledBy?: string
 }) {
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  useEffect(() => {
+    if (!onClose) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      onCloseRef.current?.()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
     <ViewportPortal>
       <div
         aria-labelledby={labelledBy}
         aria-modal="true"
         className={cx(
-          'fixed inset-0 z-[80] flex h-[100dvh] justify-center overflow-hidden bg-[var(--color-overlay)] backdrop-blur-md',
+          'fixed inset-0 z-[80] flex h-[100dvh] justify-center overflow-hidden bg-[color-mix(in_srgb,var(--color-overlay)_52%,transparent)] backdrop-blur-[16px] backdrop-saturate-[140%]',
           placement === 'sheet'
             ? 'items-end desktop:items-center desktop:p-5'
             : 'items-center p-4 desktop:p-8',
           className,
         )}
+        onMouseDown={(event) => {
+          if (event.currentTarget === event.target) onClose?.()
+        }}
         role="dialog"
       >
         <div

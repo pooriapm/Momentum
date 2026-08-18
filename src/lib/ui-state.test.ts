@@ -6,7 +6,7 @@ describe('UI state', () => {
     localStorage.clear()
     document.documentElement.className = ''
     document.documentElement.removeAttribute('data-theme')
-    document.head.innerHTML = '<meta name="theme-color" content="#07110e">'
+    document.head.innerHTML = '<meta name="theme-color" content="#161114">'
   })
 
   it('persists supported preferences', () => {

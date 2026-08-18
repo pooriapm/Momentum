@@ -8,6 +8,7 @@ import { useAuth } from '../../../platform/auth/auth-context'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { localizedPath } from '../../router/route-utils'
 import { ContentCard, Eyebrow, StatusPill } from '../../ui/primitives'
+import { Reveal } from '../../ui/Reveal'
 import {
   formatPrice,
   giftCampaignFromContext,
@@ -78,7 +79,7 @@ export function PricingPage({
     <div className="public-page" data-inventory={ids.join(' ')}>
       <PublicHeader locale={locale} />
       <main className="simple-public-page pricing-page">
-        <div className="simple-public-page__heading">
+        <Reveal className="simple-public-page__heading">
           <Eyebrow>{t('pricing.eyebrow')}</Eyebrow>
           <h1>{t('pricing.title')}</h1>
           <p>{t('pricing.subtitle')}</p>
@@ -92,7 +93,7 @@ export function PricingPage({
           ) : null}
           {loading ? <p aria-live="polite">{locale === 'fa' ? 'در حال دریافت کاتالوگ قیمت…' : 'Loading the pricing catalog…'}</p> : null}
           {unavailable ? <p className="pricing-catalog-error" role="status">{t('pricing.catalogUnavailable')}</p> : null}
-        </div>
+        </Reveal>
         {!unavailable ? (
           <div className="pricing-grid pricing-grid--canonical">
             <ContentCard className="pricing-card pricing-card--featured">

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { ContentCard, Eyebrow } from '../../ui/primitives'
+import { Reveal } from '../../ui/Reveal'
 
 export function SafetyPage({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
@@ -16,11 +17,11 @@ export function SafetyPage({ locale }: { locale: AppLocale }) {
     <div className="public-page">
       <PublicHeader locale={locale} />
       <main className="simple-public-page safety-page">
-        <div className="simple-public-page__heading">
+        <Reveal className="simple-public-page__heading">
           <Eyebrow>General wellness</Eyebrow>
           <h1>{t('safety.title')}</h1>
           <p>{t('safety.intro')}</p>
-        </div>
+        </Reveal>
         <div className="safety-grid">
           {cards.map(([Icon, copy]) => <ContentCard key={copy}><Icon size={26} /><p>{copy}</p></ContentCard>)}
         </div>

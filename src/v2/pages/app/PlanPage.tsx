@@ -12,8 +12,7 @@ import { type KeyboardEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useOnlineStatus } from '../../../platform/pwa/network'
-import { MealDetailSheet } from '../../components/MealDetailSheet'
-import { PlanSubstitutionSheet, WorkoutDetailSheet } from '../../components/WorkoutDetailSheet'
+import { MealDetailSheet, PlanSubstitutionSheet, WorkoutDetailSheet, LazyOverlay } from '../../components/LazyOverlay'
 import { WorkoutLogger } from '../../components/WorkoutLogger'
 import { completeMeal, currentLocalDate, logMealSelection } from '../../data/repository'
 import { localize, type MealChoice, type MealSlot, type MomentumPlanView, type WorkoutBlock } from '../../data/types'
@@ -338,6 +337,7 @@ export function PlanPage({
       {!showHistory ? <PlanVersionView locale={locale} onOpenHistory={() => setShowHistory(true)} version={version} /> : null}
 
       {mealDetail ? (
+        <LazyOverlay>
         <MealDetailSheet
           alternatives={mealDetail.meal.options}
           choice={mealDetail.choice}
@@ -350,8 +350,10 @@ export function PlanPage({
           }}
           readOnly={!isToday || mutationsLocked}
         />
+        </LazyOverlay>
       ) : null}
       {workoutDetail ? (
+        <LazyOverlay>
         <WorkoutDetailSheet
           locale={locale}
           onClose={() => setWorkoutDetail(null)}
@@ -369,8 +371,10 @@ export function PlanPage({
           readOnly={mutationsLocked}
           workout={workoutDetail}
         />
+        </LazyOverlay>
       ) : null}
       {substitution ? (
+        <LazyOverlay>
         <PlanSubstitutionSheet
           consequence={fa ? 'این تغییر فقط همین جلسه را عوض می‌کند و برنامه ماهانه بازتولید نمی‌شود.' : 'This changes only this session and does not regenerate the monthly plan.'}
           locale={locale}
@@ -379,6 +383,7 @@ export function PlanPage({
           options={substitution.options}
           title={substitution.title}
         />
+        </LazyOverlay>
       ) : null}
     </main>
   )

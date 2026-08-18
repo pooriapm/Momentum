@@ -4,6 +4,7 @@ import { FALLBACK_LEGAL_DOCUMENT_VERSIONS, loadLegalDocumentVersions } from '../
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { ContentCard, Eyebrow } from '../../ui/primitives'
+import { Reveal } from '../../ui/Reveal'
 
 export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy' | 'terms' }) {
   const privacy = kind === 'privacy'
@@ -31,11 +32,11 @@ export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy'
     <div className="public-page">
       <PublicHeader locale={locale} />
       <main className="simple-public-page legal-page">
-        <div className="simple-public-page__heading">
+        <Reveal className="simple-public-page__heading">
           <Eyebrow>{privacy ? <LockKeyhole size={15} /> : <FileText size={15} />}{fa ? 'نسخه آلفا' : 'Alpha notice'}</Eyebrow>
           <h1>{privacy ? (fa ? 'اطلاعیه حریم خصوصی' : 'Privacy notice') : (fa ? 'شرایط استفاده' : 'Terms of use')}</h1>
           <p>{fa ? `نسخه ${version} · پیش‌نویس محصول؛ پیش از عرضه عمومی نیازمند بررسی حقوقی است.` : `Version ${version} · Product draft; legal review is required before public launch.`}</p>
-        </div>
+        </Reveal>
         <div className="legal-sections">
           {sections.map(([title, copy]) => <ContentCard key={title}><ShieldCheck size={21} /><div><h2>{title}</h2><p>{copy}</p></div></ContentCard>)}
         </div>

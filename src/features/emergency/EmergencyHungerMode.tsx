@@ -52,6 +52,7 @@ export function EmergencyHungerMode({
   return (
     <Dialog
       contentClassName="p-5 desktop:p-7"
+      onClose={onClose}
       placement="sheet"
       size="lg"
     >

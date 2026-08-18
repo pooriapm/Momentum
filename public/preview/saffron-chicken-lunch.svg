@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="960" height="640" viewBox="0 0 960 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mealTitle">
+  <title id="mealTitle">Saffron chicken lunch</title>
+  <defs>
+    <linearGradient id="plate" x1="80" y1="40" x2="900" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3a272d"/>
+      <stop offset="1" stop-color="#161114"/>
+    </linearGradient>
+    <linearGradient id="saffron" x1="250" y1="160" x2="720" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffd08a"/>
+      <stop offset=".55" stop-color="#e08a3a"/>
+      <stop offset="1" stop-color="#b9533a"/>
+    </linearGradient>
+    <linearGradient id="herb" x1="620" y1="180" x2="780" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7dba7a"/>
+      <stop offset="1" stop-color="#3f7a4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="640" fill="url(#plate)"/>
+  <ellipse cx="480" cy="360" rx="340" ry="220" fill="#2a1d22"/>
+  <ellipse cx="480" cy="348" rx="292" ry="188" fill="#1c1418"/>
+  <ellipse cx="470" cy="340" rx="210" ry="132" fill="url(#saffron)"/>
+  <path d="M338 286c42-28 96-18 128 10 18 16 22 40 8 58-22 28-70 32-108 14-40-18-58-54-28-82Z" fill="#f4c27a"/>
+  <path d="M508 250c48-8 96 18 108 62 8 30-10 58-42 70-46 18-96-8-112-48-16-42 8-76 46-84Z" fill="#d56b3a"/>
+  <circle cx="402" cy="318" r="18" fill="#fbf5f8" fill-opacity=".35"/>
+  <circle cx="538" cy="300" r="12" fill="#73395f" fill-opacity=".45"/>
+  <path d="M628 246c28-36 86-40 118-8 18 18 16 48-4 66-28 26-78 22-108-4-22-18-24-36-6-54Z" fill="url(#herb)"/>
+  <path d="M220 470c90 40 210 62 320 58 132-4 248-38 318-92" stroke="#e0a3c8" stroke-opacity=".22" stroke-width="10" stroke-linecap="round"/>
+</svg>

@@ -24,7 +24,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     const fa = document.documentElement.lang === 'fa'
     return (
       <main className="fatal-error-page" role="alert">
-        <img alt="Momentum" height="72" src="/brand/momentum-orbit-splash.svg" width="72" />
+        <img alt="Momentum" decoding="async" height="72" src="/brand/momentum-orbit-splash.svg" width="72" />
         <h1>{fa ? 'این صفحه کامل بارگذاری نشد' : 'This page did not load completely'}</h1>
         <p>{fa ? 'اطلاعات حسابت تغییری نکرده است. صفحه را دوباره بارگذاری کن.' : 'Your account data has not changed. Reload the page to try again.'}</p>
         <button className="orbit-button orbit-button--primary" onClick={() => window.location.reload()} type="button">{fa ? 'بارگذاری دوباره' : 'Reload'}</button>

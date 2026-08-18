@@ -21,8 +21,7 @@ import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { saveDailyCheckIn } from '../../checkins/repository'
 import type { CheckInSafety } from '../../checkins/contracts'
-import { CheckInSheet } from '../../components/CheckInSheet'
-import { MealDetailSheet } from '../../components/MealDetailSheet'
+import { CheckInSheet, MealDetailSheet, LazyOverlay } from '../../components/LazyOverlay'
 import { WorkoutLogger } from '../../components/WorkoutLogger'
 import { completeMeal, currentLocalDate, logMealSelection, undoMeal } from '../../data/repository'
 import { localize, type MealChoice, type MealSlot, type MomentumPlanView } from '../../data/types'
@@ -457,8 +456,9 @@ export function TodayPage({
         </aside>
       </section>
 
-      {mealDetail ? <MealDetailSheet choice={mealDetail.choice} locale={locale} mealLabel={mealDetail.label} onClose={() => setMealDetail(null)} /> : null}
+      {mealDetail ? <LazyOverlay><MealDetailSheet choice={mealDetail.choice} locale={locale} mealLabel={mealDetail.label} onClose={() => setMealDetail(null)} /></LazyOverlay> : null}
       {checkInOpen ? (
+        <LazyOverlay>
         <CheckInSheet
           locale={locale}
           onClose={() => setCheckInOpen(false)}
@@ -479,6 +479,7 @@ export function TodayPage({
             return { safety: nextSafety }
           }}
         />
+        </LazyOverlay>
       ) : null}
     </main>
   )
