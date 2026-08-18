@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { CountryCombobox } from './CountryCombobox'
+import { Select } from './FormControls'
 import { LocalizedDatePicker } from './LocalizedDatePicker'
 import { calendarParts, shiftIsoYears, todayIso } from './localized-date'
 
@@ -26,6 +27,15 @@ describe('localized onboarding inputs', () => {
     expect(screen.getByRole('combobox', { name: 'سال' })).toHaveValue(String(maxBirthYear))
   })
 
+  it('lists the full ISO country set when opened', () => {
+    render(<CountryCombobox label="Country" locale="en" onChange={vi.fn()} value="IR" />)
+
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Country' }))
+    expect(screen.getAllByRole('option').length).toBeGreaterThan(200)
+    expect(screen.getByRole('option', { name: /Iran/ })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /Zimbabwe/ })).toBeInTheDocument()
+  })
+
   it('searches localized countries and returns an ISO country code', () => {
     const onChange = vi.fn()
     render(<CountryCombobox label="Country" locale="en" onChange={onChange} value="IR" />)
@@ -35,5 +45,20 @@ describe('localized onboarding inputs', () => {
     fireEvent.change(input, { target: { value: 'United States' } })
     fireEvent.click(screen.getByRole('option', { name: /United States/ }))
     expect(onChange).toHaveBeenCalledWith('US')
+  })
+
+  it('opens a glass menu and returns the selected value', () => {
+    const onChange = vi.fn()
+    render(
+      <Select label="Goal" onChange={onChange} value="fat_loss">
+        <option value="fat_loss">Fat loss</option>
+        <option value="muscle_gain">Muscle gain</option>
+        <option value="maintenance">Maintain and improve performance</option>
+      </Select>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Goal' }))
+    fireEvent.click(screen.getByRole('option', { name: /Muscle gain/ }))
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ target: { value: 'muscle_gain' } }))
   })
 })

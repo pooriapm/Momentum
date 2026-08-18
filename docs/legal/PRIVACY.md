@@ -13,7 +13,7 @@ has been implemented or legally approved.
 
 ## خلاصه فارسی
 
-Momentum برای ارائه حساب کاربری، برنامه عمومی تندرستی، ثبت روند و مربی AI به
+Momentum برای ارائه حساب کاربری، برنامه عمومی تندرستی، ثبت روند و تولید برنامهٔ ماهانه به
 اطلاعات حساب و داده‌های حساس مرتبط با سلامت نیاز دارد. فروش داده سلامت و تبلیغات
 هدفمند بر اساس داده سلامت در سیاست محصول ممنوع است. داده‌های لازم برای قابلیت AI
 به‌صورت حداقلی و از سرور برای provider ارسال می‌شوند. قابلیت AI ایران تا مجوز
@@ -36,8 +36,8 @@ regulated services.
 | Profile | display name, age/date of birth, sex, height, locale, timezone, country and unit preferences | personalize the experience and apply eligibility rules | Alpha |
 | Wellness and health context | weight, body measurements, goals, training schedule, preferences, allergies, medical/safety disclosures, supplements and limitations | screen eligibility and create a general-wellness plan | Sensitive; DPIA/legal and licensed-review gates remain |
 | Uploaded reports | optional body-composition PDF/image/scan and extracted values | extract clearly readable measurements after explicit consent | Private-storage workflow is alpha; retention/deletion verification remains |
-| Product records | plans, recipes, meal choices, workouts, check-ins, progress and coach conversations | deliver and synchronize the service | Alpha |
-| AI operations | minimized structured context, generated output, model/schema version, token/cost and safety reason codes | generate plans, coach replies, validate output and control cost | Disabled by default; market approval required |
+| Product records | plans, recipes, meal choices, workouts, check-ins and progress | deliver and synchronize the service | Alpha |
+| AI operations | minimized structured monthly snapshot, generated output, model/schema version, token/cost and safety reason codes | generate and validate one combined monthly plan and control cost | Disabled by default; market approval required |
 | Technical/security | timestamps, device/browser signals, approximate country hint, opaque trace IDs and abuse events | reliability, fraud prevention, security and diagnostics | Final logging inventory and retention are launch gates |
 | Billing | plan, price, entitlement and transaction references | future subscription administration | Payment is not implemented; no payment data should be collected yet |
 
@@ -75,12 +75,12 @@ modified monitoring requires eligibility and approval. The production contract,
 retention mode, data region/transfer assessment, and current subprocessor list
 must be verified before activation.
 
-AI is fail-closed by country and feature switches. Iran is not present on the
-current OpenAI API supported-country list, so Momentum must not offer AI plans,
-AI coaching, an AI trial, or AI checkout to users located or billed in Iran
-unless written provider authorization and qualified legal approval are obtained.
-VPNs, proxies, false country data, or third-party routing are not acceptable
-workarounds.
+AI remains fail-closed behind master/feature switches, confirmed email, and
+safety gates. Product region is sticky locale and list currency (`ir` = Persian
+and IRR, `intl` = English and USD), not an in-product geo-block. OpenAI's
+published country list is an operator checklist before live provider
+enablement; it is not shown as an unavailable-market screen. See
+[COUNTRY_GO_NO_GO.md](./COUNTRY_GO_NO_GO.md).
 
 ## 5. Storage on the device and in the service
 

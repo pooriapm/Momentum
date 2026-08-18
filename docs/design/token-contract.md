@@ -34,9 +34,7 @@ type. Circular and unresolved aliases are invalid.
 The canonical modes are:
 
 - `light`;
-- `dark`;
-- `highContrastLight`;
-- `highContrastDark`.
+- `dark`.
 
 A primitive token normally has a scalar value. A semantic color or material
 must define every canonical mode. A generator must fail rather than silently
@@ -44,6 +42,9 @@ fall back when a mode is missing.
 
 Reduced transparency is a user capability, not a color mode. Material tokens
 therefore include both their normal parameters and an `opaqueFallback`.
+Reduced motion is also a capability, not a mode; it resolves interaction and
+morph behavior to the stable final state. The theme list remains exactly Light
+and Dark.
 
 ## Supported types
 
@@ -68,26 +69,49 @@ policy. Native generators use points/dp without changing the source value.
 
 ```json
 {
-  "fill": "{color.semantic.surface.chrome}",
+  "fill": "{color.semantic.surface.glassRegular}",
   "blur": 22,
   "saturation": 1.16,
   "border": "{color.semantic.border.glass}",
   "shadow": "{shadow.2}",
-  "opaqueFallback": "{color.semantic.surface.raised}"
+  "opaqueFallback": "{color.semantic.surface.glassFallback}"
 }
 ```
 
 `blur` is advisory for native system materials. Native implementations should
 choose the closest semantic platform material and use these values only for
-custom fallback rendering.
+custom rendering. `material.glassRegular`, `material.glassProminent`, and
+`material.glassClear` must all resolve to `material.glassFallback` when Reduced Transparency is active,
+backdrop filtering is unsupported, composited contrast is unknown, or the
+performance policy disables blur. Increased Contrast strengthens the border
+and selected-state treatment inside Light or Dark; it is not a token mode.
+
+The material value describes the stable optical base. Interaction is a separate
+semantic layer so a design tool or platform renderer can substitute its native
+shader without changing the material token. The approved cross-platform signals are:
+
+- `color.semantic.surface.glassInteractionPrimary`: localized Deep Plum
+  selection/contact response;
+- `color.semantic.surface.glassInteractionEnergy`: brief localized Apricot
+  highlight;
+- `motion.duration.glassPress`, `glassRelease`, and `glassMorph`;
+- `motion.spring.glassResponse` and `glassDampingFraction`.
+
+Those colors never replace a control's stable semantic foreground or encode state
+alone. Their animated region is clipped to the active control. Clear glass also
+requires a controlled backdrop and a local dimming/contrast treatment, following
+Apple's [`Glass.clear`](https://developer.apple.com/documentation/swiftui/glass/clear)
+legibility guidance.
 
 ## Naming
 
 Paths follow `category.layer.role.state`:
 
-- primitive: `color.primitive.indigo.700`;
+- primitive: `color.primitive.plum.700`;
 - semantic: `color.semantic.action.primaryPressed`;
 - foundation: `radius.card`, `motion.duration.standard`;
+- interaction: `motion.duration.glassPress`,
+  `color.semantic.surface.glassInteractionPrimary`;
 - component: `component.button.height.md`.
 
 Names describe purpose, never appearance. Do not add names like `greenText`,
@@ -97,6 +121,11 @@ State suffixes are limited to `default`, `hover`, `pressed`, `selected`,
 `disabled`, `focus`, and `danger` unless a component specification defines a
 domain state.
 
+The retired `indigo`, `violet`, `coral`, `teal`, and `red` primitive families
+must not be reintroduced as compatibility aliases. The schema 3 migration is an
+intentional visual reset: consumers migrate to semantic roles, not old palette
+names.
+
 ## Consumption rules
 
 Feature code must use semantic or component tokens. Primitive tokens may be
@@ -105,7 +134,7 @@ data-visualization palettes.
 
 Component tokens should alias semantic/foundation tokens rather than repeat raw
 values. A platform may substitute a system behavior only if it preserves the
-semantic intent and all accessibility modes.
+semantic intent in both supported themes.
 
 ### Target naming
 

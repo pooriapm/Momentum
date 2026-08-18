@@ -1,0 +1,152 @@
+.storybook-canvas,
+:root[data-theme="light"] {
+  --color-background: #faf7f4;
+  --color-canvas: #faf7f4;
+  --color-background-subtle: #f5f0ed;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f1eaef;
+  --color-surface-muted: #f5f0ed;
+  --color-surface-sunken: #f7f1f4;
+  --color-surface-hover: #ebdfe6;
+  --color-text: #241a21;
+  --color-text-secondary: #675762;
+  --color-text-muted: #7c6a75;
+  --color-border: #e8dfe4;
+  --color-border-subtle: #e8dfe4;
+  --color-border-strong: #7c6a75;
+  --color-brand: #73395f;
+  --color-brand-strong: #5b294a;
+  --color-brand-soft: #f3e1ec;
+  --color-brand-faint: #fbf3f8;
+  --color-plan: #73395f;
+  --color-plan-soft: #f3e1ec;
+  --color-energy: #b95332;
+  --color-energy-soft: #fbe4da;
+  --color-success: #24765d;
+  --color-success-soft: #ddf5ea;
+  --color-danger: #b23b52;
+  --color-danger-soft: #ffe4e8;
+  --color-warning: #925b00;
+  --color-warning-soft: #fff0c7;
+  --color-on-brand: #ffffff;
+  --color-action: #73395f;
+  --color-action-strong: #5b294a;
+  --color-focus: #73395f;
+  --color-chrome: #fffafcc2;
+  --color-chrome-strong: #ffffffde;
+  --color-overlay: #241a21b8;
+  --color-background-glow-accent: #73395f14;
+  --color-background-glow-highlight: #b9533212;
+  --color-splash-glow: #73395f1f;
+  --color-selection: #e0a3c8;
+  --color-on-selection: #241a21;
+  --orbit-logo-surface: #fbf3f8;
+  --shadow-card: 0 16px 40px rgb(53 19 41 / 8%);
+  --shadow-panel: 0 26px 80px rgb(53 19 41 / 11%);
+  --shadow-chrome: 0 14px 45px rgb(53 19 41 / 10%), inset 0 1px 0 rgb(255 255 255 / 88%);
+  --shadow-brand: 0 14px 34px rgb(115 57 95 / 20%);
+}
+
+:root[data-theme="dark"] .storybook-canvas,
+:root[data-theme="dark"] {
+  --color-background: #161114;
+  --color-canvas: #161114;
+  --color-background-subtle: #21191e;
+  --color-surface: #21191e;
+  --color-surface-raised: #2d2229;
+  --color-surface-muted: #2d2229;
+  --color-surface-sunken: #1b1519;
+  --color-surface-hover: #352831;
+  --color-text: #fbf5f8;
+  --color-text-secondary: #c2b3bc;
+  --color-text-muted: #9f8e98;
+  --color-border: #ffffff1f;
+  --color-border-subtle: #ffffff1f;
+  --color-border-strong: #806d78;
+  --color-brand: #e0a3c8;
+  --color-brand-strong: #ebc4db;
+  --color-brand-soft: #48283a;
+  --color-brand-faint: #351329;
+  --color-plan: #e0a3c8;
+  --color-plan-soft: #48283a;
+  --color-energy: #ff9a73;
+  --color-energy-soft: #4b261d;
+  --color-success: #69d3ac;
+  --color-success-soft: #17382e;
+  --color-danger: #ff8b9c;
+  --color-danger-soft: #471f29;
+  --color-warning: #f6c66b;
+  --color-warning-soft: #3e3017;
+  --color-on-brand: #351329;
+  --color-action: #e0a3c8;
+  --color-action-strong: #ebc4db;
+  --color-focus: #e0a3c8;
+  --color-chrome: #2d2229c7;
+  --color-chrome-strong: #352831e6;
+  --color-overlay: #000000c7;
+  --color-background-glow-accent: #e0a3c81f;
+  --color-background-glow-highlight: #ff9a731a;
+  --color-splash-glow: #e0a3c824;
+  --color-selection: #73395f;
+  --color-on-selection: #fbf5f8;
+  --orbit-logo-surface: #2d2229;
+  --shadow-card: 0 16px 40px rgb(0 0 0 / 20%);
+  --shadow-panel: 0 26px 80px rgb(0 0 0 / 28%);
+  --shadow-chrome: 0 14px 45px rgb(0 0 0 / 24%), inset 0 1px 0 rgb(255 255 255 / 10%);
+  --shadow-brand: 0 14px 34px rgb(224 163 200 / 14%);
+}
+
+html,
+body,
+#storybook-root {
+  height: 100%;
+  margin: 0;
+}
+
+.storybook-canvas {
+  min-height: 100%;
+  padding: clamp(var(--space-4), 4vw, var(--space-12));
+  color: var(--color-text);
+  background:
+    radial-gradient(circle at 78% -15%, var(--color-background-glow-accent), transparent 36rem),
+    var(--color-background);
+}
+
+.storybook-canvas:has(.mo-spec) {
+  height: 100%;
+  min-height: 100%;
+  padding: 0;
+  overflow: auto;
+}
+
+.storybook-canvas:has(.mo-spec__overlay-stage) {
+  overflow: hidden;
+}
+
+.storybook-stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.storybook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-4);
+}
+
+.storybook-surface-demo {
+  min-height: 9rem;
+  padding: var(--card-padding);
+}
+
+.storybook-surface-demo h3,
+.storybook-surface-demo p {
+  margin: 0;
+}
+
+.storybook-surface-demo p {
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+}

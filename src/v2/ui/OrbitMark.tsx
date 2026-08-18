@@ -63,7 +63,7 @@ export function BrandLockup({ compact = false }: { compact?: boolean }) {
       <OrbitMark size={compact ? 38 : 44} />
       <span className="brand-lockup__type">
         <strong>MOMENTUM</strong>
-        {!compact ? <span>Adaptive wellness coach</span> : null}
+        {!compact ? <span>Monthly fitness and nutrition plans</span> : null}
       </span>
     </span>
   )

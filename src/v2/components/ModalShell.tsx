@@ -14,8 +14,9 @@ export function ModalShell({
   children,
   className = '',
   labelId,
+  material = 'glass',
   onClose,
-}: PropsWithChildren<{ className?: string; labelId: string; onClose: () => void }>) {
+}: PropsWithChildren<{ className?: string; labelId: string; material?: 'glass' | 'content'; onClose: () => void }>) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
 
@@ -66,7 +67,7 @@ export function ModalShell({
       <div
         aria-labelledby={labelId}
         aria-modal="true"
-        className={`modal-surface glass-chrome ${className}`}
+        className={`modal-surface glass-chrome ${material === 'content' ? 'glass-chrome--content' : ''} ${className}`}
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}

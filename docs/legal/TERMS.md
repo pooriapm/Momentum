@@ -61,15 +61,12 @@ disabled.
 
 ## 4. Geographic availability
 
-Feature availability is determined server-side and may differ by country,
-billing evidence, provider rules, law, language, and product readiness. A public
-price or Persian interface does not promise that AI or payment is available.
-
-Iran is currently **AI NO-GO**: no AI trial, AI plan, AI coach, AI subscription,
-or geographic circumvention is permitted until Momentum has written provider
-authorization and qualified legal approval. Users must not falsify location or
-use a VPN, proxy, intermediary account, or third-party endpoint to bypass a
-restriction.
+Momentum serves two product versions. An Iran IP at first visit shows Persian
+and rial prices. Any other IP shows English and US-dollar prices. At account
+creation that version is stored as `product_region` and does not change if the
+user later travels or uses a different IP. Gift, checkout, and monthly plan
+generation follow the same product rules in both versions. There is no
+in-product geo-block or waitlist.
 
 ## 5. Acceptable use
 
@@ -102,12 +99,12 @@ Momentum branding, software, documentation, and non-user content remain subject
 to applicable intellectual-property rights and repository licenses. These Terms
 do not grant rights to provider models, third-party catalogs, fonts, or assets.
 
-## 7. Plans, trials, payment, cancellation, and refunds
+## 7. First-plan gift, subscription, payment, cancellation, and refunds
 
 Payment is not implemented. Displayed prices and quotas are product hypotheses,
 not an offer or checkout authorization. Before payment is enabled, these Terms
 must define the merchant of record, currency/tax treatment, renewal, proration,
-trial conversion, cancellation effective date, refund policy, price-change
+gift-to-paid conversion, cancellation effective date, refund policy, price-change
 notice, failed payments, entitlement handling, and mandatory consumer rights for
 each approved market. No paid user may be enrolled under this draft.
 

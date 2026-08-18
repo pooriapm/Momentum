@@ -1,5 +1,18 @@
-import { ChevronDown } from 'lucide-react'
-import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { Check, ChevronDown } from 'lucide-react'
+import {
+  Children,
+  isValidElement,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from 'react'
 
 interface FieldShellProps {
   controlId: string
@@ -37,21 +50,126 @@ export function Input({ label, hint, error, ...props }: InputProps) {
   )
 }
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectOption {
+  disabled?: boolean
   label: string
-  hint?: string
-  error?: string
+  value: string
 }
 
-export function Select({ label, hint, error, children, ...props }: SelectProps) {
+function readSelectOptions(children: ReactNode): SelectOption[] {
+  return Children.toArray(children).flatMap((child) => {
+    if (!isValidElement<{ children?: ReactNode; disabled?: boolean; label?: string; value?: string }>(child)) return []
+    if (child.type === 'optgroup') return readSelectOptions(child.props.children)
+    if (child.type !== 'option') return []
+    const value = child.props.value == null ? '' : String(child.props.value)
+    const label = typeof child.props.children === 'string' || typeof child.props.children === 'number'
+      ? String(child.props.children)
+      : child.props.label ?? value
+    return [{ disabled: Boolean(child.props.disabled), label, value }]
+  })
+}
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  defaultOpen?: boolean
+  error?: string
+  hint?: string
+  label: string
+}
+
+export function Select({
+  children,
+  defaultOpen = false,
+  disabled,
+  error,
+  hint,
+  id,
+  label,
+  onChange,
+  value,
+  ...props
+}: SelectProps) {
   const generatedId = useId()
-  const controlId = props.id ?? `select-${generatedId}`
+  const controlId = id ?? `select-${generatedId}`
+  const listboxId = `${controlId}-listbox`
   const descriptionId = error || hint ? `${controlId}-description` : undefined
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(defaultOpen)
+  const options = useMemo(() => readSelectOptions(children), [children])
+  const selectedValue = value == null ? '' : String(value)
+  const selected = options.find((option) => option.value === selectedValue) ?? options.find((option) => option.value) ?? options[0]
+
+  useEffect(() => {
+    const close = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+
+  function choose(nextValue: string) {
+    onChange?.({ target: { value: nextValue } } as ChangeEvent<HTMLSelectElement>)
+    setOpen(false)
+  }
+
   return (
     <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label}>
-      <div className="orbit-select-shell">
-        <select aria-describedby={descriptionId} aria-invalid={Boolean(error)} className="orbit-input orbit-select" {...props} id={controlId}>{children}</select>
-        <ChevronDown aria-hidden="true" size={17} />
+      <div className="orbit-select-shell" ref={rootRef}>
+        <select
+          aria-hidden="true"
+          className="orbit-select-native"
+          disabled={disabled}
+          onChange={onChange}
+          tabIndex={-1}
+          value={selectedValue}
+          {...props}
+        >
+          {children}
+        </select>
+        <button
+          aria-controls={listboxId}
+          aria-describedby={descriptionId}
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-invalid={Boolean(error)}
+          className={`orbit-select-trigger ${open ? 'is-open' : ''}`}
+          disabled={disabled}
+          id={controlId}
+          onClick={() => setOpen((current) => !current)}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              setOpen(true)
+            }
+            if (event.key === 'Escape') setOpen(false)
+          }}
+          type="button"
+        >
+          <span>{selected?.label || '—'}</span>
+          <ChevronDown aria-hidden="true" size={17} />
+        </button>
+        {open ? (
+          <div className="glass-menu">
+            <div className="glass-menu__scroller" id={listboxId} role="listbox">
+              {options.map((option) => {
+                const isSelected = option.value === selectedValue
+                return (
+                  <button
+                    aria-selected={isSelected}
+                    className={`glass-menu__item ${isSelected ? 'is-selected' : ''}`}
+                    disabled={option.disabled}
+                    key={option.value || option.label}
+                    onClick={() => choose(option.value)}
+                    role="option"
+                    type="button"
+                  >
+                    <span>{option.label}</span>
+                    {isSelected ? <Check size={16} /> : null}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
     </FieldShell>
   )

@@ -54,8 +54,8 @@ responses must be network-only.
 - AI calls require job/idempotency/usage reconciliation because the provider
   and PostgreSQL cannot share one transaction.
 - AI is fail-closed behind master/feature switches, confirmed email, current
-  versioned consents, entitlement, adult/safety checks and service-verified
-  billing jurisdiction. IP and self-declared country remain hints only.
+  versioned consents, entitlement, adult/safety checks and a payment method.
+  Sticky `product_region` is locale+currency only.
 - A later native app should share domain/API schemas and design-token source,
   but not DOM, `File`, download or localStorage modules.
 

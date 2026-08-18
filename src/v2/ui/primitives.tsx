@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, HTMLAttributes, PropsWithChildren, ReactNode } from 'react'
+import { Children, isValidElement, type ButtonHTMLAttributes, type HTMLAttributes, type PropsWithChildren, type ReactNode } from 'react'
 import { LoaderCircle } from 'lucide-react'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -8,6 +8,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   block?: boolean
   loading?: boolean
   icon?: ReactNode
+}
+
+function splitButtonContent(children: ReactNode, explicitIcon?: ReactNode) {
+  if (explicitIcon) return { icon: explicitIcon, label: children }
+  const items = Children.toArray(children)
+  if (items.length >= 2 && isValidElement(items[0]) && typeof items[0].type !== 'string') {
+    return { icon: items[0], label: items.slice(1) }
+  }
+  return { icon: null, label: children }
 }
 
 export function Button({
@@ -20,14 +29,16 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
+  const { icon: resolvedIcon, label } = splitButtonContent(children, icon)
+
   return (
     <button
       className={`orbit-button orbit-button--${variant} ${block ? 'orbit-button--block' : ''} ${className}`}
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? <LoaderCircle aria-hidden="true" className="orbit-spin" size={18} /> : icon}
-      <span>{children}</span>
+      {loading ? <LoaderCircle aria-hidden="true" className="orbit-spin" size={18} /> : resolvedIcon}
+      <span>{label}</span>
     </button>
   )
 }

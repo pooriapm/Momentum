@@ -1,14 +1,36 @@
 # Localization, Direction, and Regionalization
 
+## Product versions (D12)
+
+Momentum has two product versions. The only regional difference is default
+language and list currency.
+
+| `product_region` | Default UI | List currency |
+| --- | --- | --- |
+| `ir` | Persian (`fa`, RTL) | IRR |
+| `intl` | English (`en`, LTR) | USD |
+
+Anonymous visitors receive a temporary version from server-side IP (Iran vs not
+Iran). At account creation that value is stored on `profiles.product_region`
+with source `ip_at_signup` and `product_region_locked_at`. Later IP, VPN, or
+travel must not update it. Admin may correct a mis-assigned row. Raw IP is not
+stored.
+
+Calendar, units, timezone, and cuisine remain independent preferences. They
+default with the version but can be edited. List currency and default language
+follow the locked region, not a later language toggle or IP change.
+
+QA still covers mixed bidi and calendar combinations. The shipped product
+versions are `ir` and `intl` as above.
+
 ## Independent preferences
 
-Momentum stores these values independently:
+Momentum stores these values independently except where D12 binds them:
 
 ```text
-language: fa | en
-region: ISO 3166-1 alpha-2 country code
-pricingRegion: server-controlled region identifier
-currency: ISO 4217 currency code
+product_region: ir | intl          # sticky; IP writes once at signup
+language: fa | en                  # defaults from product_region
+currency: IRR | USD                # list currency from product_region
 foodLocale: one or more culinary catalog identifiers
 calendar: persian | gregorian
 unitSystem: metric | imperial
@@ -16,21 +38,8 @@ timeZone: IANA time-zone identifier
 firstDayOfWeek: locale/user preference
 ```
 
-Language determines copy and default direction. It must not determine currency,
-food suggestions, calendar, or eligibility. Region may propose defaults but does
-not override a saved user choice.
-
-IP-derived country is a low-confidence suggestion:
-
-1. detect server-side;
-2. display “Iran detected” or equivalent with a Change action;
-3. ask for confirmation before pricing/food defaults become durable;
-4. never change an active subscription currency because an IP changes;
-5. store source (`ip`, `user`, or `billing`) and confirmation timestamp;
-6. prefer verified billing region when payment is later implemented.
-
-The following QA combinations are mandatory: FA+IRR+Persian calendar,
-FA+USD+Gregorian, EN+IRR+Persian calendar, and EN+USD+Gregorian.
+Language determines copy and default direction. It must not independently
+change list currency. Cuisine catalog is not inferred from IP after signup.
 
 ## Translation architecture
 
@@ -39,7 +48,7 @@ UI copy uses stable semantic keys, for example:
 ```text
 nav.today
 today.nextAction.title
-coach.planChange.accept
+monthlyPlan.status.imported
 pricing.billing.monthly
 bodyComposition.bodyFat.label
 ```
@@ -52,7 +61,7 @@ Copy separates:
 
 - UI labels and messages, owned by localization files;
 - canonical domain codes, stored language-neutral;
-- AI/user content, stored with an explicit language;
+- generated plan content, stored with an explicit language;
 - localized catalog content, linked by stable IDs;
 - legal/pricing copy, versioned by locale and market.
 
@@ -86,8 +95,6 @@ Inputs choose direction by meaning:
 - email, URL, coupon, and machine IDs: LTR;
 - natural language: surrounding UI direction;
 - numeric fields: locale-formatted visual value with a canonical numeric model;
-- chat composer: starts with UI direction and may use first-strong behavior for
-  mixed-language user text.
 
 ## Mirroring
 
@@ -136,7 +143,7 @@ Pricing comes from server-owned market configuration. UI receives:
 
 ```text
 market id, currency, amount, billing period, tax display policy,
-entitlement set, trial rules, and effective date
+entitlement set, first-plan gift rules, and effective date
 ```
 
 The client formats but never converts or calculates a sell price. If IP and saved
@@ -150,7 +157,7 @@ tenfold interpretation error.
 ## Localization QA
 
 - pseudo-localize English to at least 35% expansion;
-- run an RTL pseudo-locale that exposes physical-position assumptions;
+- run a mirrored-layout pseudo-locale that exposes physical-position assumptions;
 - inspect 320px compact and 200% text scale;
 - test long Persian compound labels and long English accessibility labels;
 - test mixed Persian/English plan names, email, times, and measurements;

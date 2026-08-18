@@ -5,7 +5,7 @@ Last reviewed: 2026-07-31
 Owners: Engineering, Product, Safety, Support, Legal/Privacy
 Scope: pre-production through public operation
 
-This runbook defines required operating controls. Exact commands and provider dashboards must be added as implementation stabilizes. Never copy production secrets, health records, or user conversations into this document.
+This runbook defines required operating controls. Exact commands and provider dashboards must be added as implementation stabilizes. Never copy production secrets, health records, next-cycle notes, prompts or model output into this document.
 
 ## ۱. خلاصه عملیاتی فارسی
 
@@ -61,7 +61,7 @@ Names below describe configuration contracts; implementation may map them to pro
 ### Server policy configuration
 
 - AI master kill switch;
-- AI plan-generation and coach-channel switches;
+- monthly AI plan-generation switch;
 - explicit provider-country allowlist;
 - model route by task;
 - prompt/schema/catalog/safety-rule versions;
@@ -87,7 +87,7 @@ Iran must not be present in the AI country allowlist. There is no support-agent 
 
 ### Minimum controls
 
-- verified email before AI trial or plan generation;
+- verified email before first-plan gift reservation or monthly plan generation;
 - secure recovery and session revocation;
 - reasonable password/OTP abuse protection;
 - server-side session validation for sensitive operations;
@@ -115,7 +115,7 @@ Any cross-user failure is P0 and blocks deployment.
 | Public | marketing copy, public exercise descriptions | Normal integrity controls |
 | Account | email, auth IDs, subscription state | Encrypted provider storage, limited access |
 | Sensitive health/wellness | weight, measurements, allergies, goals, check-ins, plans | RLS, minimization, access audit, no general analytics payload |
-| Highly sensitive media/free text | body photos, detailed safety disclosures, conversations | Private storage, strict access, short retention, no support copying |
+| Highly sensitive media/free text | body reports, detailed safety disclosures, bounded next-cycle notes | Private storage, strict access, short retention, no support copying |
 | Secrets | API/service credentials, signing keys | Secret manager only; never user data stores |
 
 Maintain a live inventory of table/field, purpose, lawful basis/consent, owner, processor, retention, export behavior, and deletion behavior.
@@ -127,7 +127,7 @@ Maintain a live inventory of table/field, purpose, lawful basis/consent, owner, 
 1. Authenticate and resolve the canonical user on the server.
 2. Verify current consent and age eligibility.
 3. Evaluate current country/provider eligibility.
-4. Verify subscription/trial entitlement and feature quota.
+4. Verify active subscription or atomically reserved first-plan gift entitlement.
 5. Run deterministic safety screening and input moderation.
 6. Assemble the minimum structured context.
 7. Reserve an idempotency/usage record before provider execution.
@@ -136,7 +136,7 @@ Maintain a live inventory of table/field, purpose, lawful basis/consent, owner, 
 10. Parse Structured Output.
 11. Run schema, catalog, deterministic, and policy validators.
 12. Moderate user-visible output.
-13. Commit plan/message and cost usage atomically, or fail closed.
+13. Commit the plan version, import state and cost usage atomically, or fail closed.
 14. Emit privacy-safe metrics and trace IDs.
 
 ### Geographic enforcement
@@ -151,11 +151,12 @@ Maintain a live inventory of table/field, purpose, lawful basis/consent, owner, 
 
 - per-user and per-plan quotas enforced before provider call;
 - idempotency prevents duplicate charges on retries;
-- model router defaults to the lowest-cost model proven to satisfy the task;
-- Sol is exception-only and has a separate daily budget;
+- the configured model is the lowest-cost option proven to satisfy the combined-plan task;
+- no fallback or exception model may execute in the same cycle; the queued job
+  may retry the same request after a delay until import succeeds;
 - output token limits are explicit;
-- full history is not replayed; use a structured summary and recent bounded window;
-- asynchronous plan recalibration uses Flex/Batch-rate processing when suitable;
+- conversation history does not exist; use the structured prior-cycle snapshot and bounded optional note;
+- asynchronous monthly plan generation may use an approved delayed service tier when suitable;
 - cache writes and reads are measured separately;
 - daily project spend velocity and p95 user cost are monitored;
 - internal circuit breakers stop generation before a provider spend alert alone would.
@@ -165,7 +166,7 @@ Maintain a live inventory of table/field, purpose, lawful basis/consent, owner, 
 | State | Trigger | Behavior |
 | --- | --- | --- |
 | Normal | Within quality/cost baseline | Configured model routes |
-| Conserve | Spend velocity or latency warning | Disable nonessential Sol; defer background regeneration |
+| Conserve | Spend velocity or latency warning | Stop new gift reservations; preserve entitled saved plans |
 | Degraded | Provider errors/cost above incident threshold | Disable new plans; keep saved plans/logging; bounded safe message |
 | Off | Safety, geography, credential, or data incident | Stop affected AI path immediately |
 
@@ -240,7 +241,7 @@ These are Momentum targets, not provider guarantees.
 - queue depth, age, retry, and dead-letter jobs;
 - AI requests, tokens, model, service tier, cost, latency, validation, and moderation;
 - eligibility denial by categorical reason;
-- trial/subscription entitlement and quota;
+- gift/subscription entitlement, monthly-cycle usage and campaign budget;
 - export/deletion workflow age;
 - safety reports and incident state.
 
@@ -255,7 +256,7 @@ These are Momentum targets, not provider guarantees.
 
 ### Initial alert categories
 
-- P0: secret leak, cross-user data access, mass unsafe output, blocked-country AI traffic, confirmed health-data disclosure;
+- P0: secret leak, cross-user data access, mass unsafe output, confirmed health-data disclosure;
 - P1: allergen/eligibility validator escape, repeated unsafe plan, deletion failure, backup failure beyond RPO;
 - technical: auth spike, provider error, queue age, database saturation, migration failure;
 - financial: spend velocity, p95 cost, Sol volume, duplicate generation, quota anomaly.
@@ -279,14 +280,14 @@ Thresholds should be calibrated from staging/load tests and recorded in monitori
 - deploy additive database changes first;
 - deploy backend controls before exposing client UI;
 - canary AI or high-risk changes;
-- verify synthetic supported-country and blocked-country cases;
+- verify sticky `product_region` (signup lock; later IP no-op) for `ir` and `intl`;
 - verify auth, saved plan, log, export, and deletion smoke tests;
 - monitor errors, cost, safety, and database state.
 
 ### After deployment
 
 - record version and configuration;
-- confirm no Iran AI request was accepted;
+- confirm `ir` and `intl` accounts keep their locked version after IP change;
 - confirm no unexpected model or Sol traffic;
 - sample Persian/English core journeys;
 - close or roll back based on defined observation window.
@@ -336,7 +337,7 @@ Thresholds should be calibrated from staging/load tests and recorded in monitori
 #### Cost runaway
 
 - enter Conserve or Degraded state;
-- disable Sol and nonessential regeneration;
+- stop new gift reservations and monthly generations before provider start;
 - identify duplicate/idempotency, retry, prompt-context, abuse, or routing cause;
 - provider spend alert is evidence, not containment;
 - keep safety responses, saved plans, privacy access, and logging available.
@@ -354,7 +355,7 @@ Thresholds should be calibrated from staging/load tests and recorded in monitori
 ### Access/export request
 
 - authenticate the requester;
-- export user-owned profile, consent, plans, logs, and eligible conversation data in a common machine-readable format;
+- export user-owned profile, consent, plans, logs, and retained next-cycle notes in a common machine-readable format;
 - exclude other users, secrets, internal security logic, and data prohibited from disclosure;
 - record request state and completion without putting exported content in logs.
 
@@ -362,7 +363,8 @@ Thresholds should be calibrated from staging/load tests and recorded in monitori
 
 - distinguish editable user facts from immutable audit history;
 - a corrected measurement keeps source/audit metadata;
-- regenerate a plan only after explicit user request or approved recalibration rule.
+- generate at most once for each server-verified active monthly subscription
+  period; no user action may start an extra generation.
 
 ### Deletion
 
@@ -408,7 +410,7 @@ Support must not:
 
 - P0/P1 safety/privacy/security review;
 - provider availability, error, queue, and spend velocity;
-- blocked-country AI traffic must remain zero;
+- sticky `product_region` must not change after signup;
 - backup status and critical jobs.
 
 ### Weekly
@@ -468,6 +470,6 @@ One person may fill multiple roles in an early team, but the responsibilities an
 - [ ] Legal/privacy/professional launch gates signed
 - [ ] Source review date current
 - [ ] Public country allowlist recorded
-- [ ] Iran AI and Iranian AI pricing confirmed inactive
+- [ ] Sticky `product_region` (`ir` FA+IRR / `intl` EN+USD) recorded; later IP does not switch it
 
 See [Roadmap](./ROADMAP.md), [Safety and Launch Policy](./product/SAFETY_AND_LAUNCH_POLICY.md), [Metrics](./product/METRICS.md), and [Sources](./product/SOURCES.md).

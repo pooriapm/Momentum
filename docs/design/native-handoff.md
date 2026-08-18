@@ -32,16 +32,18 @@ Semantic colors resolve for the active mode to CSS custom properties:
 
 ```css
 :root {
-  --mo-color-text-primary: #14182a;
-  --mo-color-action-primary: #4e51d8;
+  --mo-color-text-primary: #241a21;
+  --mo-color-action-primary: #73395f;
+  --mo-color-surface-content: #ffffff;
   --mo-space-4: 16px;
   --mo-radius-card: 20px;
   --mo-motion-standard: 240ms;
 }
 
 [data-theme="dark"] {
-  --mo-color-text-primary: #f7f8fc;
-  --mo-color-action-primary: #9699ff;
+  --mo-color-text-primary: #fbf5f8;
+  --mo-color-action-primary: #e0a3c8;
+  --mo-color-surface-content: #21191e;
 }
 ```
 
@@ -50,7 +52,22 @@ reduced-transparency capability plus an in-app accessibility attribute. Logical
 CSS properties are mandatory for layout.
 
 Web glass maps to `backdrop-filter` only after capability testing. The element
-always has its opaque fallback color before blur is applied.
+always has its opaque fallback color before blur is applied. A conforming custom
+renderer separates the stable material from the interaction response:
+
+- a clipped backdrop sample, adaptive tint, asymmetric optical edge, and depth
+  form the stable Regular/Prominent/Clear base;
+- press/drag can move a localized highlight/refraction field only within the
+  active control;
+- a source-linked control and menu/popover/compact sheet can share one coordinated
+  morph container;
+- idle shimmer, autonomous refraction, and page-wide cursor tracking are absent;
+- `prefers-reduced-motion` removes optical travel, geometry compression, blending,
+  and morphing; reduced transparency selects the opaque fallback.
+
+Clear requires a bounded backdrop plus local dimming/contrast layer. A web
+approximation that cannot preserve contrast or the performance budget uses
+Regular/Prominent or Fallback rather than weakening the legibility gate.
 
 ## SwiftUI mapping
 
@@ -69,6 +86,10 @@ enum MOSpace {
 ```
 
 - Prefer SwiftUI system navigation/material APIs for functional glass.
+- Prefer `Glass.regular` for standard custom functional elements, use clear only
+  with the documented legibility treatment, and apply interactivity only to
+  controls. Coordinate related custom shapes in one `GlassEffectContainer` so
+  the system owns blending and morphing.
 - Apply Momentum tint and semantic foreground roles above system material.
 - Respect `layoutDirection`, `locale`, Dynamic Type, Reduce Motion, Reduce
   Transparency, Increase Contrast, and Differentiate Without Color.
@@ -78,6 +99,9 @@ enum MOSpace {
 
 Native Liquid Glass APIs are an implementation option, not the product identity.
 Older OS versions use standard Material/opaque fallback with the same hierarchy.
+See Apple's [custom-view guidance](https://developer.apple.com/documentation/swiftui/applying-liquid-glass-to-custom-views),
+[`Glass.clear` legibility note](https://developer.apple.com/documentation/swiftui/glass/clear),
+and [`GlassEffectContainer`](https://developer.apple.com/documentation/swiftui/glasseffectcontainer).
 
 ## Jetpack Compose mapping
 
@@ -102,7 +126,11 @@ data class MoColors(
   conventions.
 - Approximate functional glass with a performant blur only when supported;
   otherwise use the opaque fallback.
-- Respect `LayoutDirection`, locale, font scale, high contrast where available,
+- Preserve the same Rest/Pressed/Dragging/Source-linked transition semantics even
+  when Android uses Material motion and indication rather than Apple-like optics.
+  It must not imitate refraction if the renderer cannot keep text stable or meet
+  the performance/contrast contract.
+- Respect `LayoutDirection`, locale, font scale, Increased Contrast within the active appearance,
   remove animations, and platform accessibility services.
 - Use Material Symbols or custom vector assets through a documented icon map.
 
@@ -156,10 +184,10 @@ Before a shared design-system release:
 1. validate and checksum tokens;
 2. generate all platform outputs;
 3. run semantic color contrast manifest;
-4. render component-state snapshots in four color modes;
+4. render component-state snapshots in Light and Dark;
 5. render FA/RTL and EN/LTR at compact and expanded widths;
 6. test maximum supported text scaling;
-7. test reduced motion/transparency and high contrast;
+7. test reduced motion/transparency and Increased Contrast behavior;
 8. compare component parity records;
 9. record intentional platform differences;
 10. version and publish tokens and component documentation together.

@@ -1,0 +1,4 @@
+.mo-pattern-stage { display: grid; place-items: center; min-height: 100vh; padding: 1rem; }
+.mo-pattern-stage > .orbit-card,
+.mo-pattern-stage > .content-card { width: min(100%, 36rem); }
+.mo-pattern-stage .modal-backdrop { padding: 1rem; }

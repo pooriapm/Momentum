@@ -1,99 +1,57 @@
 # Momentum country Go/No-Go register — pre-launch
 
-**Status:** all real-user markets are `HOLD` or `NO-GO`; this document grants no
-market approval. A country appearing on a provider list is necessary for that
-provider feature, but never sufficient for Momentum launch.
+**Product (D12, 2026-08-16):** Iran is a served product version. Anonymous Iran
+IP and sticky `product_region=ir` accounts see Persian UI and IRR list prices.
+Other IPs and `intl` accounts see English UI and USD. There is no user-facing
+geo-block, waitlist, or “unavailable in this region” wall. Gift, checkout, and
+monthly generation use the same rules in both versions.
+
+**Operator register:** a country appearing on a provider list is still necessary
+before turning on that provider in production, but it is not sufficient and it
+is not expressed as a product screen. This file does not grant production-AI
+enablement by itself.
 
 ## Current decision register
 
-| Market/cohort | Informational site | Account without AI | AI plan/coach/trial | Payment | Decision |
+| Market/cohort | Product version | Informational site | Account + monthly AI | Payment | Decision |
 | --- | --- | --- | --- | --- | --- |
-| Iran: located in or trusted billing country `IR` | `HOLD` pending ordinary web/privacy review | `HOLD`; only a separately approved non-AI/waitlist scope | **NO-GO** | **NO-GO** for AI product | Hard blocker: provider + sanctions/export-control + privacy/payment/legal review |
-| Any other country | `HOLD` until host/cookie/legal review | `HOLD` until privacy, security and support gates pass | `HOLD` until the country is both provider-supported and explicitly approved | `HOLD` until merchant, tax, consumer and refund review | No blanket global launch |
-| Internal synthetic Preview | Allowed in controlled development/review environments | No real account/health collection required | Mock/off by default | Off | Development only, not a market launch |
+| Sticky or IP `ir` | FA + IRR | Served | Served by product contract D12 | IRR list; method before generation | Product GO for the Iranian version. Provider/sanctions/payment entity remain ops checklist before live OpenAI is switched on |
+| Sticky or IP `intl` | EN + USD | Served | Served by product contract D12 | USD list; method before generation | Product GO for the international version. Host/privacy/merchant review remain ops checklist |
+| Internal synthetic Preview | n/a | Allowed in controlled development | Mock/off by default | Off | Development only, not a market launch |
 
-Language, IP hint, cuisine preference, self-declared country, billing country,
-data-storage region, citizenship, and current physical location are distinct.
-Persian UI or Iranian food content never grants AI eligibility.
+Language follows `product_region`. Cuisine, calendar, and units are separate.
+Persian UI does not require a later IP from Iran.
 
-## Iran mandatory blocker
+## Operator / provider checklist
 
-As checked on 2026-08-01, Iran is absent from OpenAI's official API supported-
-country list. OpenAI states that accessing or offering API access outside its
-listed locations may lead to blocking or suspension. Momentum therefore must
-fail closed for Iran on every AI request and before trial or subscription
-activation.
+As checked on 2026-08-01, Iran was absent from OpenAI's official API supported-
+country list. That fact is an operator risk for enabling the live provider. It
+must not be implemented as PUB-05 / PUB-10 / LIFE-06 unavailable screens.
 
-The blocker cannot be cleared by a successful test request, competitor behavior,
-VPN/proxy use, a foreign cloud region, self-declared foreign country, or a price
-shown in the UI. It requires all of:
+Before production AI is enabled, ops still records:
 
-1. written authorization from the AI provider for Momentum's service and end-user
-   geography;
-2. qualified sanctions/export-control and local-market legal approval;
-3. approved health-data processing and international-transfer assessment;
-4. a compliant merchant/payment/tax/consumer structure;
-5. trusted server-side country evidence and bypass tests;
-6. signed Product, Legal, Privacy, Safety, Security, and Engineering Go decision.
+1. the chosen provider contract and end-user geography;
+2. sanctions/export-control and local-market legal review as required by the operator;
+3. health-data processing and transfer assessment;
+4. merchant/payment/tax/consumer structure for USD and IRR lists;
+5. signed Product, Legal, Privacy, Safety, Security, and Engineering enablement
+   of the live provider switch.
 
-Source: [OpenAI API supported countries and territories](https://help.openai.com/en/articles/5347006).
-
-## Per-country approval checklist
-
-A country can move from `HOLD` to a scoped `GO` only when the decision record
-identifies the exact features and proves:
-
-- the legal operator, customer terms, privacy notice, contact and complaint
-  process are valid for that market;
-- adults-only eligibility and the general-wellness/regulated-product boundary
-  are approved by qualified counsel and licensed reviewers;
-- applicable consumer-health privacy, general privacy, breach notification,
-  AI-transparency and automated-decision obligations are assessed;
-- every required provider supports the geography and contract scope;
-- data region, cross-border transfer, processor register and retention/deletion
-  workflow are approved;
-- authentication, RLS/private Storage, export, correction, deletion, recovery,
-  abuse, support, incident and restore tests pass;
-- nutrition/exercise validation and bilingual safety evals meet the release bar;
-- payment currency, tax, merchant, renewal, cancellation and refund behavior are
-  approved if payment is included;
-- pricing has positive margin under the market's verified AI/infrastructure and
-  payment costs;
-- feature switches and server allowlist are changed only after the signed record.
-
-Provider-supported countries must still start at `HOLD`. An allowlist value in
-an example environment file is configuration syntax, not evidence of approval.
+Source for the provider list: [OpenAI API supported countries and territories](https://help.openai.com/en/articles/5347006).
 
 ## Server enforcement evidence
 
-Before any AI `GO`, tests must prove that:
+Tests must prove that:
 
-- self-declared or IP country cannot set the protected AI billing-country state;
-- missing, stale, conflicting, or unverified country evidence fails closed;
-- `IR` is hard-denied even if mistakenly added to an allowlist;
-- direct Edge Function calls cannot bypass UI, consent, age, entitlement,
-  automation-safety, email, feature-switch, or country checks;
-- trial creation and checkout use the same trusted eligibility decision;
-- logs record only categorical decision codes, not raw IP or health data;
-- there is no support/admin override except a separately audited country-
-  verification process defined by policy.
+- signup IP writes `product_region` once (`ir` or `intl`);
+- later IP or VPN does not change `product_region`;
+- authenticated `geo-context` returns the locked account region;
+- raw IP is not stored;
+- age, safety, consent, payment method, and entitlement still gate generation;
+- `REGION_BLOCKED` is not returned as a product error;
+- logs record only categorical codes, not raw IP or health data.
 
 ## Decision record template
 
-```text
-Country / feature scope:
-Decision: GO | HOLD | NO-GO
-Effective and review dates:
-Legal operator / merchant:
-Provider-support evidence and date:
-Privacy/health/AI/consumer-law assessment:
-Data region and transfer mechanism:
-Payment/tax/refund assessment:
-Security/safety/eval evidence:
-Known exclusions:
-Kill-switch and rollback owner:
-Approvals: Product | Legal | Privacy | Safety | Security | Engineering
-```
-
-Review every `GO` before launch, quarterly, and whenever a provider policy,
-country list, model, payment route, privacy law, safety scope, or data flow changes.
+Keep a dated record when the live provider switch changes. Product versioning
+(D12) does not wait on that record to design or to describe the two versions.

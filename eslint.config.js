@@ -6,7 +6,16 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'dev-dist', 'coverage', 'supabase/.temp/**', 'supabase/.branches/**']),
+  globalIgnores([
+    'dist',
+    'dev-dist',
+    'coverage',
+    'storybook-static',
+    'supabase/.temp/**',
+    'supabase/.branches/**',
+    // Penpot execute_code snippets intentionally use top-level return.
+    'scripts/design/**/*.mcp.js',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

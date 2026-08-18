@@ -1,0 +1,13 @@
+.mo-system-state { display: grid; place-items: center; min-height: 100vh; }
+.mo-system-state > .content-card {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 34rem);
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+.mo-system-state h1, .mo-system-state p { margin: 0; }
+.mo-system-state p { color: var(--color-text-secondary); line-height: 1.8; }
+.mo-system-state .orbit-button { justify-self: start; }
+.mo-system-state__icon { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; color: var(--color-text-secondary); background: var(--color-surface-sunken); border-radius: 1.25rem; }
+.mo-system-state__icon--warning { color: var(--color-warning); background: var(--color-warning-soft); }
+.mo-system-state__icon--success { color: var(--color-success); background: var(--color-success-soft); }

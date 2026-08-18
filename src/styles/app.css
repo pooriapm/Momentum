@@ -1,7 +1,6 @@
 @import "./orbit.css";
 @import "./theme.css";
 @import "./workout.css";
-@import "./ai-safety.css";
 
 @font-face {
   font-family: "Vazirmatn";
@@ -42,7 +41,10 @@ body {
 button,
 input,
 textarea,
-select {
+select,
+fieldset,
+legend,
+label {
   font: inherit;
 }
 

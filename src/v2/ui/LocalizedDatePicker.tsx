@@ -101,7 +101,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
         <small>{fa ? 'تقویم هجری شمسی' : 'Gregorian calendar'}</small>
       </button>
       {open ? (
-        <div aria-label={fa ? 'انتخاب‌گر تاریخ' : 'Date picker'} className="localized-date-popover" role="dialog">
+        <div aria-label={fa ? 'انتخاب‌گر تاریخ' : 'Date picker'} className="glass-menu localized-date-popover" role="dialog">
           <div className="localized-date-popover__topbar">
             <button aria-label={fa ? 'ماه قبل' : 'Previous month'} onClick={() => moveMonth(-1)} type="button"><ChevronLeft className="directional-icon" size={19} /></button>
             <div>

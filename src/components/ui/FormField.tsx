@@ -61,7 +61,9 @@ function fieldControlClassName({
 } = {}) {
   return cx(
     'w-full rounded-2xl border bg-[var(--color-surface-muted)] px-4 text-sm text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-accent)]',
-    multiline ? 'min-h-24 resize-y py-3 leading-7' : 'min-h-12',
+    multiline
+      ? 'min-h-[calc(var(--size-field)*2)] resize-y py-3 leading-7'
+      : 'h-[length:var(--size-field)] max-h-[length:var(--size-field)] min-h-[length:var(--size-field)] py-0 leading-[1.25]',
     error ? 'border-[var(--color-danger)]' : 'border-[var(--color-border)]',
     className,
   )

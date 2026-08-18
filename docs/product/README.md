@@ -1,18 +1,24 @@
 # Momentum product documentation
 
-Last reviewed: 2026-07-31
+Last reviewed: 2026-08-17
 
-This directory contains the source-of-truth product decisions for Momentum, a bilingual AI-assisted fitness and nutrition coaching product.
+Source of truth for product decisions. Design continuation is
+[../design/HANDOFF.md](../design/HANDOFF.md). App rewrite is
+[../IMPLEMENTATION-BLUEPRINT.md](../IMPLEMENTATION-BLUEPRINT.md).
 
-## Documents
+## Canonical files
 
-- [Public bilingual PRD](./PRD.md)
-- [Monetization, pricing, and unit economics](./MONETIZATION.md)
-- [Product and safety metrics](./METRICS.md)
+- [PRD](./PRD.md) — bilingual requirements
+- [Phase 0 product contract](./PHASE-0-PRODUCT-CONTRACT.md) — D1–D13, funnel, catalog bar, live drift
+- [Screen and state inventory](./SCREEN-STATE-INVENTORY.md) — 132 semantic states
+- [Monetization](./MONETIZATION.md) — one SKU, first-month gift economics, thin payments
+- [Metrics](./METRICS.md)
 - [Safety and launch policy](./SAFETY_AND_LAUNCH_POLICY.md)
 - [Official source register](./SOURCES.md)
-- [Delivery roadmap](../ROADMAP.md)
-- [Operations runbook](../OPERATIONS.md)
+
+Related: [Roadmap](../ROADMAP.md), [Operations](../OPERATIONS.md),
+[Traceability](../TRACEABILITY.md), [Implementation blueprint](../IMPLEMENTATION-BLUEPRINT.md),
+[Next-agent plan](../AGENT-DEVELOPMENT-PLAN.md).
 
 ## Decision status
 
@@ -21,28 +27,23 @@ This directory contains the source-of-truth product decisions for Momentum, a bi
 | Product name remains **Momentum** | Approved |
 | Persian and English product experience | Approved |
 | Account-based, server-stored product | Approved |
-| PostgreSQL through Supabase for the first production architecture | Approved for MVP |
-| Subscription-led monetization without ads or health-data sale | Approved hypothesis; payment implementation deferred |
-| OpenAI model routing and cost controls | Approved design; requires implementation and evals |
-| Public AI launch in OpenAI-supported markets | Conditional on launch gates |
-| AI access and paid AI plans for users in Iran | **Blocked / disabled until written provider and legal approval** |
+| PostgreSQL through Supabase for MVP | Approved |
+| One paid subscription; no Core/Pro | Approved (D4) |
+| First monthly plan gifted under a dollar budget | Approved (D1) |
+| Public self-serve; not waitlist | Approved (D7) |
+| Payment method before first AI call; charge at cycle 2 | Approved (D8) |
+| Thin payments are a generation prerequisite | Approved (D9) |
+| Catalog `momentum-core@v2` required for public generation | Approved (D10) |
+| Early safety gates; governed allergen picker | Approved (D11) |
+| Sticky product region: FA+IRR vs EN+USD | Approved (D12) |
+| One monthly plan, queued wait with 3-minute timeout, quiet daily / bold weekly | Approved (D13) |
+| At most one imported plan per monthly cycle; same-job retry until import | Approved |
+| Cycle starts from `ready_at` | Approved |
+| No coach/chat or separate body-report AI | Approved (D6) |
 
-## Non-negotiable launch blocker
+## Product region
 
-As of 2026-07-31, Iran is not listed among the countries and territories supported for the OpenAI API. OpenAI states that accessing or offering access to its API outside listed locations may lead to an account being blocked or suspended.
-
-Momentum must therefore keep AI coaching and paid AI subscriptions disabled for users located or billed in Iran until all of the following exist:
-
-1. written confirmation from the chosen AI provider that serving those users is permitted;
-2. legal review covering sanctions, export controls, consumer protection, health-data processing, and payment flows;
-3. an approved operational path that does not rely on VPNs, proxies, or geographic circumvention.
-
-Persian UI, Iranian food localization, a waitlist, and non-AI educational functionality may be prepared separately, subject to their own legal review.
-
----
-
-## راهنمای مستندات محصول
-
-این پوشه مرجع تصمیم‌های محصول Momentum است. محصول برای تجربهٔ فارسی و انگلیسی، حساب کاربری، ذخیره‌سازی سمت سرور و مربی هوشمند شخصی‌سازی‌شده طراحی می‌شود.
-
-مهم‌ترین محدودیت انتشار: تا تاریخ ۱۴۰۵/۰۵/۰۹ برابر با ۲۰۲۶-۰۷-۳۱، ایران در فهرست کشورهای پشتیبانی‌شدهٔ OpenAI API قرار ندارد. بنابراین مربی AI و فروش پلن‌های AI برای کاربر داخل ایران باید غیرفعال بماند تا مجوز کتبی سرویس‌دهنده و تأیید حقوقی دریافت شود. استفاده از VPN، پراکسی یا سرور کشور ثالث راه‌حل قابل قبول محصولی یا عملیاتی نیست.
+Anonymous IP chooses the version: Iran → Persian + Rial; otherwise English + USD.
+That value is stored on the account as `product_region` and does not change when
+IP changes. Both versions include gift, checkout, and monthly generation. There
+is no in-product geo-block.

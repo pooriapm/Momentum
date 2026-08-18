@@ -24,13 +24,13 @@ export function DocumentLocale({ locale }: { locale: AppLocale }) {
     document.documentElement.lang = locale
     document.documentElement.dir = locale === 'fa' ? 'rtl' : 'ltr'
     document.title = locale === 'fa'
-      ? 'Momentum — مربی هوشمند حرکت‌های ماندگار'
-      : 'Momentum — Personal coaching for lasting progress'
+      ? 'Momentum — برنامه‌ریزی ماهانه حرکت‌های ماندگار'
+      : 'Momentum — Monthly fitness and nutrition plans for lasting progress'
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       'content',
       locale === 'fa'
-        ? 'Momentum — مربی هوشمند دو‌زبانه برای برنامه شخصی غذا، تمرین و پیگیری پیشرفت'
-        : 'Momentum is a bilingual AI-assisted nutrition, training, and progress coaching platform.',
+        ? 'Momentum — برنامه‌ریزی ماهانه دو‌زبانه برای برنامه شخصی غذا، تمرین و پیگیری پیشرفت'
+        : 'Momentum is a bilingual AI-assisted nutrition, training, and progress monthly planning platform.',
     )
     updateUiState({ locale })
   }, [locale])

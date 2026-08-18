@@ -91,7 +91,7 @@ export function CheckInSheet({
   if (safety) {
     const urgent = safety.level === 'urgent'
     return (
-      <ModalShell className="check-in-sheet" labelId="check-in-safety-title" onClose={onClose}>
+      <ModalShell className="check-in-sheet" labelId="check-in-safety-title" material="content" onClose={onClose}>
         <header>
           <div><p className="orbit-eyebrow"><ShieldAlert size={15} />{fa ? 'چک‌این ذخیره شد' : 'Check-in saved'}</p><h2 id="check-in-safety-title">{urgent ? (fa ? 'فعلاً فعالیت را متوقف کن' : 'Stop activity for now') : (fa ? 'امروز با احتیاط پیش برو' : 'Take extra care today')}</h2></div>
           <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
@@ -111,7 +111,7 @@ export function CheckInSheet({
   }
 
   return (
-    <ModalShell className="check-in-sheet" labelId="check-in-title" onClose={onClose}>
+    <ModalShell className="check-in-sheet" labelId="check-in-title" material="content" onClose={onClose}>
       <header>
         <div><p className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'وضعیت امروز' : 'How today feels'}</p><h2 id="check-in-title">{fa ? 'چک‌این روزانه' : 'Daily check-in'}</h2></div>
         <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
@@ -121,7 +121,7 @@ export function CheckInSheet({
         <ScoreField label={fa ? 'گرسنگی' : 'Hunger'} locale={locale} onChange={setHunger} value={hunger} />
         <ScoreField label={fa ? 'حال روحی' : 'Mood'} locale={locale} onChange={setMood} value={mood} />
         <ScoreField label={fa ? 'ریکاوری و آمادگی بدن' : 'Recovery and readiness'} locale={locale} onChange={setRecovery} value={recovery} />
-        <div className="check-in-sheet__numbers">
+        <div className="check-in-sheet__numbers check-in-sheet__numbers--daily">
           <Input inputMode="decimal" label={fa ? 'خواب دیشب (ساعت)' : 'Sleep last night (hours)'} max={24} min={0} onChange={(event) => setSleepHours(sanitizeLocalizedNumberInput(event.target.value, true))} required type="text" value={sleepHours} />
           <Input inputMode="decimal" label={fa ? 'وزن امروز (اختیاری)' : 'Weight today (optional)'} max={500} min={20} onChange={(event) => setWeight(sanitizeLocalizedNumberInput(event.target.value, true))} type="text" value={weight} />
           <Input inputMode="numeric" label={fa ? 'پایبندی دیروز % (اختیاری)' : 'Yesterday adherence % (optional)'} max={100} min={0} onChange={(event) => setAdherence(sanitizeLocalizedNumberInput(event.target.value, false))} type="text" value={adherence} />

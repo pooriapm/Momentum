@@ -9,13 +9,13 @@ service-only RPCs.
 | --- | --- | --- | --- | --- |
 | Active `product_prices` | read | read | no | yes |
 | Profile/onboarding/goal/preferences/health | no | own rows | allowed columns only; protected profile state via service | yes |
-| Body composition and private objects | no | own prefix/rows | upload/manual values only; extraction state/result via service | yes |
+| Body composition and private objects | no | own prefix/rows | upload/manual values and explicit confirmation only; no generative extraction state | yes |
 | Plan metadata | no | own rows | no | yes |
 | Raw plan versions | no | no; read through projection | no | yes |
 | Check-ins/extra foods | no | own rows | own rows | yes |
 | Meal status | no | own rows | no; select/complete through `account-data` | yes |
 | AI jobs, usage, subscriptions, entitlements | no | own rows | no | yes |
-| Coach threads/messages | no | own rows | no | yes |
+| Monthly plan periods/snapshots | no | own rows | no | yes |
 | Private rate limit/idempotency/audit tables | no | no | no | yes |
 
 ## Required tests
@@ -24,18 +24,18 @@ Run each scenario with user A, user B, anonymous and service-role sessions:
 
 1. A can read/update A's profile but cannot read/update B's.
 2. A cannot create a goal, check-in or measurement using B's `user_id`.
-3. A cannot read B's plan version, AI job, coach thread or usage ledger.
+3. A cannot read B's plan version, AI job, monthly snapshot or usage ledger.
 4. Anonymous can read only currently active catalog prices.
 5. Authenticated clients cannot insert/update plans, entitlements, subscriptions,
-   AI jobs, usage rows or coach messages directly.
+   AI jobs, usage rows or monthly snapshots directly.
 6. Storage accepts `body-composition/A/...` for A and rejects B's prefix.
 7. A signed URL expires and does not make the bucket public.
 8. `select_meal_option` rejects a slot/option not present in A's active immutable
    plan and rejects an idempotency key reused with different input.
 9. `complete_meal_option` validates the same immutable option and preserves the
    first completion timestamp; changing a completed option is rejected.
-10. `confirm_body_composition` accepts only A's `needs_confirmation` row and no
-    client metrics; direct updates to extraction status/result are denied.
+10. `confirm_body_composition` accepts only normalized, range-valid values for A,
+    records source metadata, and cannot create or authorize an AI extraction job.
 11. Plan generation with two concurrent identical keys creates one usage
    reservation/job; distinct keys cannot exceed quota.
 12. Reusing an AI key with a different request digest is rejected, and terminal

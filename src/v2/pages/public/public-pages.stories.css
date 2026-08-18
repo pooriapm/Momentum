@@ -1,0 +1,12 @@
+.storybook-canvas:has(.mo-screen-story) {
+  padding: 0;
+}
+
+.mo-screen-story {
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.pricing-grid--canonical { grid-template-columns: minmax(0, 1.2fr) minmax(16rem, .8fr); }
+@media (max-width: 48rem) { .pricing-grid--canonical { grid-template-columns: 1fr; } }

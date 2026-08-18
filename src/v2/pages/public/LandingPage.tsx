@@ -2,11 +2,14 @@ import {
   Activity,
   ArrowRight,
   BarChart3,
-  BrainCircuit,
+  CalendarRange,
   Check,
   ChevronRight,
+  CircleUserRound,
   Dumbbell,
   HeartPulse,
+  House,
+  LineChart,
   Salad,
   ScanLine,
   ShieldCheck,
@@ -16,6 +19,9 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
+import { demoPlan } from '../../data/demo'
+import { localize } from '../../data/types'
+import { formatNumber } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
 import { ContentCard, Eyebrow, GlassChrome, StatusPill } from '../../ui/primitives'
 import { OrbitMark } from '../../ui/OrbitMark'
@@ -24,7 +30,7 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
   const features = [
     [Salad, t('landing.featurePlan'), t('landing.featurePlanCopy')],
-    [BrainCircuit, t('landing.featureCoach'), t('landing.featureCoachCopy')],
+    [CalendarRange, locale === 'fa' ? 'برنامه ماهانه' : 'Monthly plan', locale === 'fa' ? 'هر دوره با اطلاعات اولیه و نتیجه ماه قبل به‌روزرسانی می‌شود.' : 'Each period uses your baseline and the prior month’s outcomes.'],
     [BarChart3, t('landing.featureProgress'), t('landing.featureProgressCopy')],
     [ScanLine, t('landing.featureBody'), t('landing.featureBodyCopy')],
   ] as const
@@ -51,7 +57,7 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
             </div>
             <p className="landing-hero__trust"><ShieldCheck size={17} />{t('landing.trust')}</p>
           </div>
-          <ProductPreview />
+          <ProductPreview locale={locale} />
         </section>
 
         <section className="landing-section landing-system">
@@ -110,44 +116,73 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
   )
 }
 
-function ProductPreview() {
+function ProductPreview({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
+  const lunchSlot = demoPlan.meals.find((meal) => meal.id === 'lunch') ?? demoPlan.meals[1]
+  const lunch = lunchSlot.options[0]
+  const workout = demoPlan.workout
+  if (!lunch || !workout) return null
+
   return (
-    <div aria-label="Momentum product preview" className="product-preview">
+    <div aria-label={locale === 'fa' ? 'پیش‌نمایش محصول Momentum' : 'Momentum product preview'} className="product-preview">
       <GlassChrome className="product-preview__chrome">
         <span><OrbitMark size={30} /></span>
-        <span className="product-preview__date">Today · 08:42</span>
-        <span className="product-preview__avatar">A</span>
+        <span className="product-preview__date">{locale === 'fa' ? 'امروز · ۰۸:۴۲' : 'Today · 08:42'}</span>
+        <span className="product-preview__avatar">{locale === 'fa' ? 'آ' : 'A'}</span>
       </GlassChrome>
       <div className="product-preview__body">
         <StatusPill tone="brand"><Sparkles size={13} />{t('landing.nextAction')}</StatusPill>
         <h2>{t('landing.todayTitle')}</h2>
         <p>{t('landing.todayCopy')}</p>
         <ContentCard className="preview-meal-card">
-          <span className="preview-meal-card__media"><Salad size={28} /></span>
-          <span className="preview-meal-card__copy">
-            <small>{t('landing.lunch')}</small>
-            <strong>{t('landing.lunchName')}</strong>
-            <em>{t('landing.protein')}</em>
-          </span>
-          <span className="preview-meal-card__check"><Check size={17} /></span>
+          <img
+            alt=""
+            className="preview-meal-card__photo"
+            src="/preview/saffron-chicken-lunch.webp"
+          />
+          <div className="preview-meal-card__body">
+            <div className="preview-meal-card__heading">
+              <span>
+                <small>{localize(lunchSlot.label, locale)} · {lunchSlot.time}</small>
+                <strong>{localize(lunch.name, locale)}</strong>
+              </span>
+              <span className="preview-meal-card__check"><Check size={17} /></span>
+            </div>
+            <p>{localize(lunch.description, locale)}</p>
+            <div className="preview-meal-card__macros">
+              <em>{formatNumber(lunch.nutrition.calories, locale)} kcal</em>
+              <em>{formatNumber(lunch.nutrition.protein, locale)}g {t('app.protein')}</em>
+              <em>{formatNumber(lunch.cookingMinutes, locale)} {locale === 'fa' ? 'دقیقه' : 'min'}</em>
+            </div>
+          </div>
+        </ContentCard>
+        <ContentCard className="preview-workout-card">
+          <span className="preview-workout-card__icon"><Dumbbell size={18} /></span>
+          <div>
+            <small>{t('app.training')}</small>
+            <strong>{localize(workout.name, locale)}</strong>
+            <p>{localize(workout.exerciseItems[0], locale)}</p>
+          </div>
+          <span className="preview-workout-card__meta">{formatNumber(workout.durationMinutes, locale)}′</span>
         </ContentCard>
         <div className="preview-metrics">
-          <span><strong>82%</strong><small>{t('app.readiness')}</small></span>
-          <span><strong>4/5</strong><small>{t('app.adherence')}</small></span>
-          <span><strong>45′</strong><small>{t('app.training')}</small></span>
+          <span><strong>{formatNumber(demoPlan.progress.readiness, locale)}%</strong><small>{t('app.readiness')}</small></span>
+          <span><strong>{formatNumber(demoPlan.progress.weeklyAdherence, locale)}%</strong><small>{t('app.adherence')}</small></span>
+          <span><strong>{formatNumber(demoPlan.progress.currentWeight, locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</strong><small>{locale === 'fa' ? 'کیلوگرم' : 'kg'}</small></span>
         </div>
-        <GlassChrome className="preview-coach-card">
-          <span><BrainCircuit size={20} /></span>
-          <p><strong>{t('landing.coachInsight')}</strong>{t('landing.coachCopy')}</p>
-        </GlassChrome>
+        <ContentCard className="preview-monthly-plan-card">
+          <span><CalendarRange size={20} /></span>
+          <p>
+            <strong>{locale === 'fa' ? 'برنامه ماه جاری' : 'Current monthly plan'}</strong>
+            {localize(demoPlan.monthlyPlanBrief, locale)}
+          </p>
+        </ContentCard>
       </div>
-      <GlassChrome className="product-preview__nav">
-        <span className="is-active"><Activity size={19} /></span>
-        <span><Salad size={19} /></span>
-        <span><BrainCircuit size={19} /></span>
-        <span><BarChart3 size={19} /></span>
-        <span><Dumbbell size={19} /></span>
+      <GlassChrome aria-hidden="true" className="product-preview__nav">
+        <span className="is-active"><House size={18} /></span>
+        <span><Salad size={18} /></span>
+        <span><LineChart size={18} /></span>
+        <span><CircleUserRound size={18} /></span>
       </GlassChrome>
     </div>
   )

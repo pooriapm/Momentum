@@ -1,0 +1,287 @@
+.mo-app-story {
+  min-height: 100vh;
+  width: 100%;
+  padding: clamp(1rem, 3vw, 3rem);
+  background: var(--color-background);
+}
+
+.mo-app-story > .app-page,
+.mo-app-story > .pre-plan-state,
+.mo-app-story > .orbit-card {
+  width: min(100%, 78rem);
+  margin-inline: auto;
+}
+
+.mo-app-story--mobile {
+  width: min(100%, 26.75rem);
+  min-height: 52rem;
+  margin-inline: auto;
+  padding: 1rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 2rem;
+  box-shadow: var(--shadow-2);
+}
+
+.storybook-canvas:has(.mo-app-story--phone) {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.mo-app-story--phone {
+  width: 390px;
+  max-width: 100%;
+  height: min(844px, 100%);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  border: 1px solid var(--color-border);
+  border-radius: 1.75rem;
+  background: var(--color-background);
+  box-shadow: var(--shadow-panel);
+  position: relative;
+  transform: translateZ(0);
+}
+
+.mo-app-story--phone .app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+}
+
+.mo-app-story--phone .app-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: 5.15rem;
+}
+
+.mo-app-story--phone .app-workspace,
+.mo-app-story--phone .app-content,
+.mo-app-story--phone .app-page,
+.mo-app-story--phone .today-hero-grid,
+.mo-app-story--phone .today-main-grid,
+.mo-app-story--phone .page-heading,
+.mo-app-story--phone .section-title-row {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mo-app-story--phone .app-sidebar {
+  display: none;
+}
+
+.mo-app-story--phone .app-topbar {
+  height: 4.25rem;
+  inset-inline: .65rem;
+  margin: 0;
+  padding-inline: 1rem;
+  position: absolute;
+  top: .5rem;
+  z-index: 30;
+  transition:
+    transform var(--motion-glass-morph) var(--motion-glass-spring),
+    height var(--motion-glass-morph) var(--motion-glass-spring),
+    padding var(--motion-glass-release) var(--motion-glass-spring),
+    inset-inline var(--motion-glass-morph) var(--motion-glass-spring),
+    border-radius var(--motion-glass-morph) var(--motion-glass-spring);
+}
+
+.mo-app-story--phone .app-topbar__date {
+  max-width: 12rem;
+  overflow: hidden;
+  transition:
+    max-width var(--motion-glass-morph) var(--motion-glass-spring),
+    opacity var(--motion-glass-press) ease,
+    margin var(--motion-glass-release) var(--motion-glass-spring);
+}
+
+.mo-app-story--phone .app-topbar.is-minimized {
+  border-radius: 999px;
+  height: 3.2rem;
+  inset-inline: 10%;
+  justify-content: flex-end;
+  padding-block: .28rem;
+  padding-inline: .55rem;
+  transform: translateY(-.08rem) scale(.98);
+}
+
+.mo-app-story--phone .app-topbar.is-minimized .app-topbar__date {
+  max-width: 0;
+  margin: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mo-app-story--phone .app-topbar__date span,
+.mo-app-story--phone .app-topbar__actions > .status-pill {
+  display: none;
+}
+
+.mo-app-story--phone .app-content {
+  padding-bottom: 5.5rem;
+}
+
+.mo-app-story--phone .app-page {
+  padding: 1.25rem 1rem;
+}
+
+.mo-app-story--phone .me-page {
+  max-width: none;
+}
+
+.mo-app-story--phone .me-identity h1 {
+  font-size: 1.2rem;
+}
+
+.mo-app-story--phone .page-heading h1,
+.mo-app-story--phone .section-title-row h2,
+.mo-app-story--phone .next-meal-card__top h3,
+.mo-app-story--phone .workout-card h3 {
+  overflow-wrap: anywhere;
+}
+
+.mo-app-story--phone .section-title-row {
+  gap: .5rem;
+}
+
+.mo-app-story--phone .page-heading > .orbit-button {
+  width: 100%;
+}
+
+.mo-app-story--phone .today-hero-grid,
+.mo-app-story--phone .today-main-grid,
+.mo-app-story--phone .today-side-stack {
+  grid-template-columns: 1fr;
+}
+
+.mo-app-story--phone .macro-row {
+  grid-template-columns: repeat(2, 1fr);
+  row-gap: 1rem;
+}
+
+.mo-app-story--phone .macro-row > span:nth-child(3) {
+  border-inline-start: 0;
+  padding-inline-start: 0;
+}
+
+.mo-app-story--phone .monthly-plan-brief-card {
+  grid-template-columns: auto 1fr;
+}
+
+.mo-app-story--phone .next-meal-card__top {
+  grid-template-columns: auto 1fr;
+}
+
+.mo-app-story--phone .next-meal-card__top > .status-pill {
+  grid-column: 2;
+}
+
+.mo-app-story--phone .meal-option-strip {
+  grid-template-columns: 1fr;
+}
+
+.mo-app-story--phone .next-meal-card__footer {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.mo-app-story--phone .next-meal-card__footer .orbit-button {
+  margin-inline-start: 0;
+  width: 100%;
+}
+
+.mo-app-story--phone .app-bottom-nav {
+  align-items: center;
+  border-radius: 1.4rem;
+  bottom: .65rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  inset-inline: .65rem;
+  padding: .35rem;
+  position: absolute;
+  z-index: 30;
+  transition:
+    transform var(--motion-glass-morph) var(--motion-glass-spring),
+    padding var(--motion-glass-release) var(--motion-glass-spring),
+    inset-inline var(--motion-glass-morph) var(--motion-glass-spring),
+    border-radius var(--motion-glass-morph) var(--motion-glass-spring);
+}
+
+.mo-app-story--phone .app-bottom-nav a {
+  align-items: center;
+  border-radius: 1rem;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  font-size: .62rem;
+  font-weight: 700;
+  gap: .15rem;
+  isolation: isolate;
+  justify-content: center;
+  min-height: 3.25rem;
+  position: relative;
+  transition: color var(--motion-normal) ease, transform var(--motion-glass-press) var(--motion-glass-spring), gap var(--motion-glass-release) var(--motion-glass-spring), min-height var(--motion-glass-morph) var(--motion-glass-spring);
+}
+
+.mo-app-story--phone .app-bottom-nav a span {
+  display: block;
+  max-height: 1.15rem;
+  opacity: 1;
+  overflow: hidden;
+  transition:
+    max-height var(--motion-glass-morph) var(--motion-glass-spring),
+    opacity var(--motion-glass-press) ease;
+}
+
+.mo-app-story--phone .app-bottom-nav a.is-active {
+  color: var(--color-brand);
+}
+
+.mo-app-story--phone .app-bottom-nav a.is-active::before {
+  position: absolute;
+  z-index: -1;
+  inset: .08rem;
+  border-radius: .9rem;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--glass-highlight) 68%, transparent), transparent 35%),
+    color-mix(in srgb, var(--color-brand-soft) 78%, var(--glass-core));
+  content: "";
+}
+
+.mo-app-story--phone .app-bottom-nav.is-minimized {
+  border-radius: 999px;
+  inset-inline: 16%;
+  padding: .18rem .4rem;
+  transform: translateY(.28rem) scale(.97);
+}
+
+.mo-app-story--phone .app-bottom-nav.is-minimized a {
+  gap: 0;
+  min-height: 2.65rem;
+}
+
+.mo-app-story--phone .app-bottom-nav.is-minimized a span {
+  max-height: 0;
+  opacity: 0;
+}
+
+@media (max-width: 48rem) {
+  .mo-app-story { padding: 1rem; }
+}

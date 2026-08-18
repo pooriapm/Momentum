@@ -1,22 +1,22 @@
 # Momentum metrics framework
 
-Version: 1.0
-Last reviewed: 2026-07-31
+Version: 1.1
+Last reviewed: 2026-08-13
 Status: Measurement specification; targets are initial hypotheses
 
 ## Measurement principles
 
-- Measure useful member outcomes and repeatable habits, not time spent in chat.
+- Measure useful member outcomes and repeatable habits, not model interaction.
 - A growth metric never overrides a safety, privacy, or cost guardrail.
 - Keep product analytics separate from identifiable health records.
-- Do not send raw messages, body photos, exact measurements, allergies, diagnoses, or free-text safety disclosures to general analytics tools.
+- Do not send body photos, exact measurements, allergies, diagnoses, or free-text safety disclosures to general analytics tools.
 - Every metric definition has one owner, query, timezone, eligibility filter, and version.
 - Persian and English cohorts are compared for parity, not ranked as more or less valuable.
-- Iran AI cohorts must not exist while the Iran launch blocker is active.
+- `ir` and `intl` cohorts are both first-class; region is sticky locale+currency, not an exclusion filter.
 
 ## North-star metric
 
-### Weekly Coached Members with 3 Meaningful Actions — `WCM3`
+### Weekly Active-Plan Members with 3 Meaningful Actions — `WPM3`
 
 A distinct eligible member who, within one product week:
 
@@ -24,16 +24,16 @@ A distinct eligible member who, within one product week:
 2. records at least three meaningful plan actions on separate or appropriate plan occasions; and
 3. completes at least one structured check-in.
 
-A meaningful action is a completed planned workout, a logged planned meal/day, or an approved plan substitution followed by completion. Opening the app, sending an unstructured chat message, or generating repeated plans does not count.
+A meaningful action is a completed planned workout, a logged planned meal/day, or an approved deterministic substitution followed by completion. Opening the app or attempting repeated generations does not count.
 
 ```text
-WCM3 = count(distinct eligible_user_id)
+WPM3 = count(distinct eligible_user_id)
 where active_validated_plan = true
 and meaningful_action_count >= 3
 and structured_checkin_count >= 1
 ```
 
-Why this metric: it combines planning, execution, and feedback without rewarding excessive chat or unhealthy over-exercise.
+Why this metric: it combines planning, execution, and feedback without rewarding model interaction or unhealthy over-exercise.
 
 فارسی: معیار اصلی تعداد کاربران واجد شرایطی است که در یک هفته برنامه معتبر دارند، حداقل سه اقدام واقعی مطابق برنامه ثبت می‌کنند و حداقل یک check-in ساختاریافته انجام می‌دهند.
 
@@ -43,11 +43,11 @@ Why this metric: it combines planning, execution, and feedback without rewarding
 | --- | --- | --- |
 | Reach | Do eligible people discover Momentum? | Qualified visits, account starts |
 | Activation | Do they reach a safe first value? | Safe Activation Rate, time to validated plan |
-| Engagement | Do they execute and reflect? | WCM3, planned-action completion, check-in rate |
+| Engagement | Do they execute and reflect? | WPM3, planned-action completion, check-in rate |
 | Retention | Does value persist? | D7, W4, M3 eligible-cohort retention |
 | Outcome proxy | Is the plan helping without overclaiming? | goal-direction trend, self-reported confidence/energy, adherence stability |
-| Revenue | Is the business sustainable? | trial conversion, paid retention, net revenue, contribution margin |
-| AI efficiency | Is coaching cost-controlled and reliable? | cost/member, tokens/task, validation pass rate, cache economics |
+| Revenue | Is the business sustainable? | gift-to-paid conversion, paid retention, net revenue, contribution margin |
+| AI efficiency | Is monthly generation cost-controlled and reliable? | cost/generated period, tokens/job, validation/import pass rate |
 | Safety/privacy | Is harm prevented and handled? | unsafe exposure rate, escalation SLA, data incidents, RLS failures |
 | Localization | Is quality comparable across experiences? | activation/retention gap, locale fallback rate, food substitution rate |
 
@@ -97,9 +97,9 @@ Supporting metrics:
 | Planned action completion | completed eligible plan items / scheduled eligible plan items | Use with safety context; higher is not always better |
 | Weekly check-in rate | members with ≥1 weekly check-in / members with an active plan | Core feedback-loop health |
 | Substitution success | completed approved substitutions / accepted substitutions | Plan practicality |
-| Regeneration rate | plan generations per active member/week | High values may indicate poor plans or abuse |
+| Monthly generation integrity | successful generations / entitled active periods | Must never exceed one per user/period |
 | D7 retained | activated users with a meaningful action on days 7–13 | Early value persistence |
-| W4 retained | activated users qualifying for WCM3 in week 4 | Primary early retention |
+| W4 retained | activated users qualifying for WPM3 in week 4 | Primary early retention |
 | M3 paid retained | paid members active and not cancelled at month 3 | Business durability |
 
 Do not optimize for number of workouts, calorie deficit, or weight-change speed in isolation. Those can become harmful incentives.
@@ -112,7 +112,8 @@ Momentum does not claim clinical outcomes in MVP. Track bounded proxies:
 - consistency of weight/measurement trend without exposing raw values to analytics;
 - self-reported plan fit, energy, recovery, confidence, and sustainability;
 - percentage choosing less aggressive or more sustainable adjustments;
-- percentage of recalibrations caused by schedule/equipment/preferences rather than model error;
+- percentage of month-two plans that correctly incorporate schedule, equipment,
+  preference, adherence, and outcome changes;
 - user-reported need for professional help and successful referral display.
 
 Any public efficacy claim requires a separate evidence and legal review.
@@ -121,7 +122,7 @@ Any public efficacy claim requires a separate evidence and legal review.
 
 | Metric | Formula |
 | --- | --- |
-| Trial-to-paid | first paid subscriptions / eligible trials ending in period |
+| Gift-to-paid | first paid subscriptions / users receiving a first-plan gift |
 | Monthly paid retention | paid members retained at period end / paid members eligible to renew |
 | Logo churn | cancelled or expired paid accounts / opening paid accounts |
 | Net revenue retention | ending recurring revenue including expansion/contraction / opening recurring revenue |
@@ -137,7 +138,7 @@ Initial guardrails:
 - refund and chargeback rates reviewed before paid scaling;
 - annual-plan cash is not recognized as one-month revenue in management reporting.
 
-Iranian price-page impressions and waitlist interest may be measured, but there must be no Iran AI checkout, paid AI subscription, or AI usage event while blocked.
+Iranian and international price-page impressions may be measured as `ir` vs `intl` cohorts.
 
 ## AI quality and cost metrics
 
@@ -149,10 +150,10 @@ Iranian price-page impressions and waitlist interest may be measured, but there 
 - prompt version, schema version, and catalog version;
 - uncached input, cached input, cache-write, reasoning, and output tokens where reported;
 - estimated provider cost;
-- latency and retry count;
+- latency and replay count; provider execution count must never exceed one per cycle;
 - finish reason;
 - schema validation, deterministic validation, catalog validation, and policy decision;
-- repair count;
+- deterministic local-normalization count;
 - user-visible/error/fallback outcome;
 - country eligibility decision code without storing full IP.
 
@@ -161,13 +162,13 @@ Iranian price-page impressions and waitlist interest may be measured, but there 
 | Metric | Target / alert |
 | --- | --- |
 | First-pass schema validity | ≥99% target |
-| Plan pass without second repair | ≥70% initial launch gate; improve with evals |
+| Plan pass from the single model output | ≥70% initial launch gate; improve with pre-release evals |
 | Invalid output exposed to user | 0 |
 | AI COGS / net subscription revenue | target <15%; alert 20%; incident 25% |
-| p95 Core AI cost/member/month | ≤USD 2.00 maximum planning envelope |
-| p95 Pro AI cost/member/month | ≤USD 4.25 maximum planning envelope |
-| Sol share of routine user tasks | 0%; exception-only |
-| Generation duplicate rate | <0.5% after idempotency |
+| p95 AI cost/member/month | ≤USD 0.48 reservation envelope |
+| Provider executions per user/cycle | ≤1; any value above 1 is an incident |
+| Generation duplicate rate | 0 after idempotency |
+| Gift campaign overspend | 0 beyond configured settled cost + active reservations |
 | Provider error rate | alert at 2% over 15 min; incident threshold set after baseline |
 | Cache net savings | cached-read savings minus cache-write premium; must be positive by prompt family |
 
@@ -226,29 +227,29 @@ onboarding_started
 onboarding_completed
 eligibility_evaluated
 safety_referral_shown
-plan_generation_requested
-plan_generation_completed
+monthly_plan_entitlement_verified
+monthly_plan_generation_requested
+monthly_plan_generation_completed
+monthly_plan_imported
+monthly_plan_generation_failed
 plan_validation_failed
 plan_viewed
 plan_item_substituted
 meaningful_action_completed
 daily_checkin_completed
 weekly_checkin_completed
-recalibration_requested
-recalibration_completed
-coach_turn_requested
-coach_turn_completed
-coach_turn_blocked
 export_requested
 deletion_requested
 pricing_viewed
-trial_started
+first_plan_gift_reserved
+first_plan_gift_budget_unavailable
 subscription_intent_created
-quota_reached
+monthly_generation_blocked
 user_report_submitted
 ```
 
-Each event carries only approved categorical metadata. Raw health values and conversation text remain in the operational database, not the analytics payload.
+Each event carries only approved categorical metadata. Raw health values and
+generated plan content remain in the operational database, not the analytics payload.
 
 ## Dashboard cadence and owners
 
@@ -262,7 +263,7 @@ Weekly product review:
 
 Monthly business review:
 
-- paid cohorts, churn, contribution margin, trial economics, support burden, refunds.
+- paid cohorts, churn, contribution margin, gift economics, support burden, refunds.
 
 Quarterly governance review:
 
@@ -270,7 +271,7 @@ Quarterly governance review:
 - model/prompt evals;
 - privacy retention and subprocessors;
 - pricing and regional eligibility;
-- Iran blocker status. Absence of new written approval means it remains blocked.
+- sticky `product_region` lock tests.
 
 ## Experiment policy
 

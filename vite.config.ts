@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
+    ...(process.env.STORYBOOK === 'true' ? [] : VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
         'favicon.svg',
@@ -82,7 +82,7 @@ export default defineConfig({
       devOptions: {
         enabled: true,
       },
-    }),
+    })),
   ],
   test: {
     exclude: ['e2e/**', 'node_modules/**', 'dist/**'],

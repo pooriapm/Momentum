@@ -1,6 +1,6 @@
 # Momentum
 
-Momentum یک محصول دو‌زبانه‌ی **general wellness** برای ساخت و اجرای برنامه‌ی شخصی غذا و تمرین، چک‌این روزانه، نمایش روند و همراهی مربی AI است. وب‌اپ فعلی PWA است؛ قراردادهای داده، API و design tokenها طوری تفکیک شده‌اند که کلاینت‌های native iOS و Android بعداً همان backend را مصرف کنند.
+Momentum یک محصول دو‌زبانه‌ی **general wellness** برای ساخت و اجرای برنامه‌ی شخصی غذا و تمرین، چک‌این روزانه و نمایش روند است. AI فقط یک موتور پس‌زمینه برای تولید برنامهٔ کامل تمرین و تغذیه در هر چرخه است؛ محصول چت یا مربی AI ندارد. وب‌اپ فعلی PWA است و قراردادهای داده، API و design tokenها برای استفادهٔ بعدی کلاینت‌های native نیز تفکیک شده‌اند.
 
 نسخه‌ی فعلی آلفا و زیر `1.0.0` است. پرداخت هنوز فعال نشده و عرضه‌ی AI برای بعضی کشورها، از جمله ایران، تا تأیید سرویس‌دهنده و بررسی حقوقی مسدود است.
 
@@ -10,11 +10,11 @@ Momentum یک محصول دو‌زبانه‌ی **general wellness** برای س
 - PostgreSQL، RLS، private Storage و Edge Function به‌جای `localStorage` برای داده‌های سلامت
 - onboarding داده‌محور و قابل‌ادامه در حساب کاربر
 - آپلود اختیاری و خصوصی گزارش Body Composition
-- تولید برنامه و گفت‌وگوی مربی فقط از سمت سرور؛ کلید OpenAI هرگز وارد مرورگر نمی‌شود
+- تولید یک برنامهٔ ترکیبی ماهانه فقط از سمت سرور؛ کلید provider هرگز وارد مرورگر نمی‌شود
 - Structured Output، اعتبارسنجی قطعی، quota، idempotency و ثبت مصرف AI
-- مسیرهای اصلی فارسی/RTL و انگلیسی/LTR؛ زبان، کشور، واحد پول و فرهنگ غذایی در مدل
+- مسیرهای اصلی فارسی و انگلیسی با جهت خودکار؛ زبان، کشور، واحد پول و فرهنگ غذایی در مدل
   جدا هستند، اما پوشش کامل واحدها، تقویم‌ها، ترجمه‌ها و فرهنگ غذایی هنوز release gate است
-- IA جدید: Today، Plan، Coach، Progress و Me
+- IA جدید: Today، Plan، Progress و Me
 - سیستم بصری **Momentum Orbit** با الهام از عمق و material شیشه‌ای؛ glass فقط در chrome و کنترل‌ها استفاده می‌شود
 - Preview حافظه‌ای با دادهٔ مصنوعی برای بررسی بدون backend؛ دادهٔ سلامت یا تجاری را persist نمی‌کند، هرچند ترجیحات غیرحساس UI و cache دارایی‌های PWA ممکن است روی دستگاه بمانند
 - PWA با prompt به‌روزرسانی، تشخیص offline و assetهای برند جدید
@@ -33,7 +33,7 @@ Supabase Auth + PostgreSQL + private Storage
                  └── OpenAI Responses API (server-side only)
 ```
 
-در حالت account متصل، داده‌ی پروفایل، برنامه، گزارش بدن، لاگ‌ها، پیام‌های مربی و
+در حالت account متصل، داده‌ی پروفایل، برنامه، گزارش بدن، لاگ‌ها، وضعیت چرخه و
 مصرف AI در دیتابیس ذخیره می‌شود. تنها session احراز هویت و ترجیحات غیرحساس UI
 می‌توانند روی دستگاه نگهداری شوند. درخواست‌های API به‌صورت network-only هستند؛
 آفلاین بودن به معنی حالت read-only shell است، نه queue کردن داده‌ی سلامت روی دستگاه.
@@ -72,15 +72,13 @@ VITE_APP_ENV=development
 supabase link --project-ref YOUR_PROJECT_REF
 supabase db push
 supabase functions deploy geo-context
-supabase functions deploy generate-plan
-supabase functions deploy coach
-supabase functions deploy analyze-body-composition
+supabase functions deploy generate-monthly-plan
 supabase functions deploy account-data
 supabase functions deploy checkins
 supabase functions deploy account-settings
 ```
 
-سپس secretهای server را تنظیم کنید. نام مدل‌ها و فهرست کشورهای مجاز باید configuration باشند، نه مقدار پراکنده در UI:
+سپس secretهای server را تنظیم کنید. نام مدل‌ها و ریجن محصول باید configuration باشند، نه مقدار پراکنده در UI:
 
 ```bash
 supabase secrets set --env-file /absolute/path/to/momentum.production.env
@@ -116,9 +114,9 @@ Database و Edge Functionها جداگانه در Supabase deploy می‌شون�
 
 ## AI و کنترل هزینه
 
-- مسیرهای plan، coach و body extraction از server config مدل می‌گیرند. پیش‌فرض
-  آلفا Terra برای ساخت برنامه و Luna برای گفت‌وگو/استخراج است؛ هر route پیش از
-  production باید روی دادهٔ نمایشی فارسی و انگلیسی eval و از نظر دسترسی حساب تأیید شود.
+- فقط مسیر تولید برنامهٔ ماهانه از server config مدل می‌گیرد؛ هیچ مسیر coach،
+  chat یا body-report extraction مولدی در محصول هدف وجود ندارد. مدل و prompt
+  مصوب باید پیش از production روی دادهٔ نمایشی فارسی و انگلیسی ارزیابی شوند.
 - آلفای فعلی Structured Output، schema/range validation، quota، idempotency و
   usage ledger دارد، اما catalog حاکم و کامل غذا/مواد مغذی/تمرین و constraintهای
   امضاشده توسط متخصص هنوز launch gate هستند. خروجی AI نباید verified یا medical
@@ -136,7 +134,7 @@ Momentum پزشک، متخصص تغذیه یا سرویس اورژانسی نی�
 کشور ایران در زمان آخرین بررسی در فهرست کشورهای پشتیبانی‌شده‌ی OpenAI API نبود. بنابراین:
 
 - RTL، غذاهای ایرانی، قیمت‌گذاری و معماری برای ایران طراحی می‌شوند؛
-- فروش trial یا قابلیت AI برای کاربر/صورتحساب ایران **launch-blocked** است؛
+- هدیه برنامه اول، اشتراک و قابلیت AI برای کاربر/صورتحساب ایران **launch-blocked** است؛
 - VPN، proxy یا سرور ثالث راه‌حل قابل‌قبول برای دورزدن محدودیت نیست؛
 - فعال‌سازی فقط پس از مجوز کتبی provider و بررسی حقوقی انجام می‌شود.
 
@@ -174,19 +172,23 @@ spec هستند. وضعیت دقیق در [`docs/design/CONFORMANCE.md`](docs/de
 [`public/brand/momentum-orbit-master.svg`](public/brand/momentum-orbit-master.svg)
 است؛ splash، favicon و PNGهای PWA derivative هستند.
 
-## اسناد محصول
+## اسناد
 
+نقشه کامل: [`docs/README.md`](docs/README.md).
+
+کد فعلی آلفا است و جایی که با قرارداد D1–D11 اختلاف دارد drift محسوب می‌شود.
+قدم بعدی تکمیل طراحی است؛ بازنویسی اپ فقط بعد از امضای Step 5.
+
+- [`docs/README.md`](docs/README.md) — دو قدم بعدی: تکمیل طراحی، سپس بازنویسی
+- [`docs/design/HANDOFF.md`](docs/design/HANDOFF.md) — ادامه طراحی
+- [`docs/product/PHASE-0-PRODUCT-CONTRACT.md`](docs/product/PHASE-0-PRODUCT-CONTRACT.md) — D1–D11
 - [`docs/product/PRD.md`](docs/product/PRD.md)
+- [`docs/IMPLEMENTATION-BLUEPRINT.md`](docs/IMPLEMENTATION-BLUEPRINT.md) — playbook بازنویسی
 - [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - [`docs/product/MONETIZATION.md`](docs/product/MONETIZATION.md)
-- [`docs/product/METRICS.md`](docs/product/METRICS.md)
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
-- [`docs/design/README.md`](docs/design/README.md)
-- [`docs/design/CONFORMANCE.md`](docs/design/CONFORMANCE.md)
 - [`docs/legal/PRIVACY.md`](docs/legal/PRIVACY.md)
 - [`docs/legal/TERMS.md`](docs/legal/TERMS.md)
-- [`docs/legal/DATA_RETENTION.md`](docs/legal/DATA_RETENTION.md)
-- [`docs/legal/SUBPROCESSORS.md`](docs/legal/SUBPROCESSORS.md)
 - [`docs/legal/COUNTRY_GO_NO_GO.md`](docs/legal/COUNTRY_GO_NO_GO.md)
 
 ## قواعد مشارکت

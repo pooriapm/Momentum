@@ -1,0 +1,2080 @@
+{
+  "Core/Color Primitives": {
+    "color": {
+      "primitive": {
+        "neutral": {
+          "0": {
+            "$value": "#FFFFFF",
+            "$type": "color"
+          },
+          "50": {
+            "$value": "#FAF7F4",
+            "$type": "color"
+          },
+          "100": {
+            "$value": "#F5F0ED",
+            "$type": "color"
+          },
+          "200": {
+            "$value": "#E8DFE4",
+            "$type": "color"
+          },
+          "300": {
+            "$value": "#D6C9D0",
+            "$type": "color"
+          },
+          "400": {
+            "$value": "#B6A7B0",
+            "$type": "color"
+          },
+          "500": {
+            "$value": "#8A7883",
+            "$type": "color"
+          },
+          "600": {
+            "$value": "#675762",
+            "$type": "color"
+          },
+          "700": {
+            "$value": "#4F3F48",
+            "$type": "color"
+          },
+          "800": {
+            "$value": "#352831",
+            "$type": "color"
+          },
+          "850": {
+            "$value": "#2D2229",
+            "$type": "color"
+          },
+          "900": {
+            "$value": "#21191E",
+            "$type": "color"
+          },
+          "950": {
+            "$value": "#161114",
+            "$type": "color"
+          },
+          "1000": {
+            "$value": "#000000",
+            "$type": "color"
+          }
+        },
+        "plum": {
+          "50": {
+            "$value": "#FBF3F8",
+            "$type": "color"
+          },
+          "100": {
+            "$value": "#F3E1EC",
+            "$type": "color"
+          },
+          "200": {
+            "$value": "#EBC4DB",
+            "$type": "color"
+          },
+          "300": {
+            "$value": "#E0A3C8",
+            "$type": "color"
+          },
+          "400": {
+            "$value": "#C67FA9",
+            "$type": "color"
+          },
+          "500": {
+            "$value": "#A75B85",
+            "$type": "color"
+          },
+          "600": {
+            "$value": "#854469",
+            "$type": "color"
+          },
+          "700": {
+            "$value": "#73395F",
+            "$type": "color"
+          },
+          "800": {
+            "$value": "#5B294A",
+            "$type": "color"
+          },
+          "900": {
+            "$value": "#48283A",
+            "$type": "color"
+          },
+          "950": {
+            "$value": "#351329",
+            "$type": "color"
+          }
+        },
+        "apricot": {
+          "50": {
+            "$value": "#FFF7F2",
+            "$type": "color"
+          },
+          "100": {
+            "$value": "#FBE4DA",
+            "$type": "color"
+          },
+          "200": {
+            "$value": "#F7C9B7",
+            "$type": "color"
+          },
+          "300": {
+            "$value": "#FF9A73",
+            "$type": "color"
+          },
+          "400": {
+            "$value": "#E97D58",
+            "$type": "color"
+          },
+          "500": {
+            "$value": "#D26846",
+            "$type": "color"
+          },
+          "600": {
+            "$value": "#B95332",
+            "$type": "color"
+          },
+          "700": {
+            "$value": "#9C3E25",
+            "$type": "color"
+          },
+          "800": {
+            "$value": "#7A2D1B",
+            "$type": "color"
+          },
+          "900": {
+            "$value": "#5B2015",
+            "$type": "color"
+          },
+          "950": {
+            "$value": "#4B261D",
+            "$type": "color"
+          }
+        },
+        "green": {
+          "50": {
+            "$value": "#F0FAF6",
+            "$type": "color"
+          },
+          "100": {
+            "$value": "#DDF5EA",
+            "$type": "color"
+          },
+          "200": {
+            "$value": "#B8E8D5",
+            "$type": "color"
+          },
+          "300": {
+            "$value": "#69D3AC",
+            "$type": "color"
+          },
+          "500": {
+            "$value": "#329877",
+            "$type": "color"
+          },
+          "700": {
+            "$value": "#24765D",
+            "$type": "color"
+          },
+          "800": {
+            "$value": "#195E49",
+            "$type": "color"
+          },
+          "950": {
+            "$value": "#17382E",
+            "$type": "color"
+          }
+        },
+        "amber": {
+          "50": {
+            "$value": "#FFF9EB",
+            "$type": "color"
+          },
+          "100": {
+            "$value": "#FFF0C7",
+            "$type": "color"
+          },
+          "200": {
+            "$value": "#FFE098",
+            "$type": "color"
+          },
+          "300": {
+            "$value": "#F6C66B",
+            "$type": "color"
+          },
+          "500": {
+            "$value": "#C98112",
+            "$type": "color"
+          },
+          "700": {
+            "$value": "#925B00",
+            "$type": "color"
+          },
+          "800": {
+            "$value": "#754700",
+            "$type": "color"
+          },
+          "950": {
+            "$value": "#3E3017",
+            "$type": "color"
+          }
+        },
+        "crimson": {
+          "50": {
+            "$value": "#FFF5F6",
+            "$type": "color"
+          },
+          "100": {
+            "$value": "#FFE4E8",
+            "$type": "color"
+          },
+          "200": {
+            "$value": "#FFC7D0",
+            "$type": "color"
+          },
+          "300": {
+            "$value": "#FF8B9C",
+            "$type": "color"
+          },
+          "500": {
+            "$value": "#D9576E",
+            "$type": "color"
+          },
+          "700": {
+            "$value": "#B23B52",
+            "$type": "color"
+          },
+          "800": {
+            "$value": "#913044",
+            "$type": "color"
+          },
+          "950": {
+            "$value": "#471F29",
+            "$type": "color"
+          }
+        },
+        "blue": {
+          "50": {
+            "$value": "#F3F8FF",
+            "$type": "color"
+          },
+          "100": {
+            "$value": "#E2EFFF",
+            "$type": "color"
+          },
+          "200": {
+            "$value": "#BEDAFF",
+            "$type": "color"
+          },
+          "300": {
+            "$value": "#7DB7FF",
+            "$type": "color"
+          },
+          "500": {
+            "$value": "#3987DF",
+            "$type": "color"
+          },
+          "700": {
+            "$value": "#2368B5",
+            "$type": "color"
+          },
+          "800": {
+            "$value": "#1C528F",
+            "$type": "color"
+          },
+          "950": {
+            "$value": "#1B3048",
+            "$type": "color"
+          }
+        },
+        "alpha": {
+          "white12": {
+            "$value": "#FFFFFF1F",
+            "$type": "color"
+          },
+          "white24": {
+            "$value": "#FFFFFF3D",
+            "$type": "color"
+          },
+          "white42": {
+            "$value": "#FFFFFF6B",
+            "$type": "color"
+          },
+          "white72": {
+            "$value": "#FFFFFFB8",
+            "$type": "color"
+          },
+          "white96": {
+            "$value": "#FFFFFFF5",
+            "$type": "color"
+          },
+          "black08": {
+            "$value": "#00000014",
+            "$type": "color"
+          },
+          "black12": {
+            "$value": "#0000001F",
+            "$type": "color"
+          },
+          "black24": {
+            "$value": "#0000003D",
+            "$type": "color"
+          },
+          "black48": {
+            "$value": "#0000007A",
+            "$type": "color"
+          },
+          "black78": {
+            "$value": "#000000C7",
+            "$type": "color"
+          }
+        }
+      }
+    }
+  },
+  "Core/Foundations": {
+    "space": {
+      "0": {
+        "$value": "0px",
+        "$type": "dimension"
+      },
+      "1": {
+        "$value": "4px",
+        "$type": "dimension"
+      },
+      "2": {
+        "$value": "8px",
+        "$type": "dimension"
+      },
+      "3": {
+        "$value": "12px",
+        "$type": "dimension"
+      },
+      "4": {
+        "$value": "16px",
+        "$type": "dimension"
+      },
+      "5": {
+        "$value": "20px",
+        "$type": "dimension"
+      },
+      "6": {
+        "$value": "24px",
+        "$type": "dimension"
+      },
+      "8": {
+        "$value": "32px",
+        "$type": "dimension"
+      },
+      "10": {
+        "$value": "40px",
+        "$type": "dimension"
+      },
+      "12": {
+        "$value": "48px",
+        "$type": "dimension"
+      },
+      "16": {
+        "$value": "64px",
+        "$type": "dimension"
+      },
+      "20": {
+        "$value": "80px",
+        "$type": "dimension"
+      }
+    },
+    "radius": {
+      "none": {
+        "$value": "0px",
+        "$type": "dimension"
+      },
+      "sm": {
+        "$value": "8px",
+        "$type": "dimension"
+      },
+      "control": {
+        "$value": "12px",
+        "$type": "dimension"
+      },
+      "field": {
+        "$value": "16px",
+        "$type": "dimension"
+      },
+      "card": {
+        "$value": "20px",
+        "$type": "dimension"
+      },
+      "panel": {
+        "$value": "24px",
+        "$type": "dimension"
+      },
+      "chrome": {
+        "$value": "28px",
+        "$type": "dimension"
+      },
+      "pill": {
+        "$value": "999px",
+        "$type": "dimension"
+      }
+    }
+  },
+  "Core/Layout": {
+    "layout": {
+      "breakpoint": {
+        "compactMax": {
+          "$value": "599px",
+          "$type": "dimension"
+        },
+        "mediumMax": {
+          "$value": "1023px",
+          "$type": "dimension"
+        },
+        "expandedMin": {
+          "$value": "1024px",
+          "$type": "dimension"
+        }
+      },
+      "gutter": {
+        "compact": {
+          "$value": "16px",
+          "$type": "dimension"
+        },
+        "medium": {
+          "$value": "24px",
+          "$type": "dimension"
+        },
+        "expanded": {
+          "$value": "32px",
+          "$type": "dimension"
+        }
+      },
+      "maxWidth": {
+        "content": {
+          "$value": "1120px",
+          "$type": "dimension"
+        },
+        "form": {
+          "$value": "720px",
+          "$type": "dimension"
+        },
+        "conversation": {
+          "$value": "760px",
+          "$type": "dimension"
+        }
+      }
+    }
+  },
+  "Core/Components": {
+    "component": {
+      "target": {
+        "minimum": {
+          "$value": "44px",
+          "$type": "dimension",
+          "$description": "Minimum interactive target on web and iOS"
+        },
+        "android": {
+          "$value": "48px",
+          "$type": "dimension",
+          "$description": "Default Android interactive target"
+        }
+      },
+      "button": {
+        "height": {
+          "sm": {
+            "$value": "40px",
+            "$type": "dimension",
+            "$description": "Compact desktop button height"
+          },
+          "md": {
+            "$value": "48px",
+            "$type": "dimension",
+            "$description": "Default button height"
+          },
+          "lg": {
+            "$value": "56px",
+            "$type": "dimension",
+            "$description": "Onboarding and conversion button height"
+          }
+        },
+        "radius": {
+          "$value": "{radius.control}",
+          "$type": "dimension",
+          "$description": "Default button radius"
+        },
+        "gap": {
+          "$value": "{space.2}",
+          "$type": "dimension",
+          "$description": "Button icon-label gap"
+        },
+        "paddingInline": {
+          "$value": "{space.4}",
+          "$type": "dimension",
+          "$description": "Default button horizontal padding"
+        }
+      },
+      "field": {
+        "height": {
+          "$value": "48px",
+          "$type": "dimension",
+          "$description": "Single-line form control height"
+        },
+        "radius": {
+          "$value": "{radius.field}",
+          "$type": "dimension",
+          "$description": "Form control radius"
+        },
+        "paddingInline": {
+          "$value": "{space.4}",
+          "$type": "dimension",
+          "$description": "Form control horizontal padding"
+        }
+      },
+      "card": {
+        "radius": {
+          "$value": "{radius.card}",
+          "$type": "dimension",
+          "$description": "Default content card radius"
+        },
+        "paddingCompact": {
+          "$value": "{space.4}",
+          "$type": "dimension",
+          "$description": "Compact card padding"
+        },
+        "paddingComfortable": {
+          "$value": "{space.5}",
+          "$type": "dimension",
+          "$description": "Comfortable card padding"
+        }
+      },
+      "navigation": {
+        "bottomBarMinHeight": {
+          "$value": "68px",
+          "$type": "dimension",
+          "$description": "Bottom bar height before safe-area inset"
+        },
+        "sidebarWidth": {
+          "$value": "272px",
+          "$type": "dimension",
+          "$description": "Expanded app sidebar width"
+        },
+        "railWidth": {
+          "$value": "88px",
+          "$type": "dimension",
+          "$description": "Medium navigation rail width"
+        },
+        "radius": {
+          "$value": "{radius.chrome}",
+          "$type": "dimension",
+          "$description": "Floating navigation container radius"
+        }
+      },
+      "dialog": {
+        "radius": {
+          "$value": "{radius.panel}",
+          "$type": "dimension",
+          "$description": "Dialog and large sheet radius"
+        },
+        "maxWidthSm": {
+          "$value": "480px",
+          "$type": "dimension",
+          "$description": "Small dialog maximum width"
+        },
+        "maxWidthMd": {
+          "$value": "640px",
+          "$type": "dimension",
+          "$description": "Medium dialog maximum width"
+        },
+        "maxWidthLg": {
+          "$value": "800px",
+          "$type": "dimension",
+          "$description": "Large dialog maximum width"
+        }
+      },
+      "monthlyPlanStatus": {
+        "minHeight": {
+          "$value": "56px",
+          "$type": "dimension",
+          "$description": "Minimum monthly plan status control height"
+        },
+        "maxWidth": {
+          "$value": "760px",
+          "$type": "dimension",
+          "$description": "Monthly plan status maximum reading width"
+        },
+        "radius": {
+          "$value": "24px",
+          "$type": "dimension",
+          "$description": "Monthly plan status outer radius"
+        }
+      },
+      "focusRing": {
+        "width": {
+          "$value": "2px",
+          "$type": "dimension",
+          "$description": "Focus ring stroke width"
+        },
+        "offset": {
+          "$value": "3px",
+          "$type": "dimension",
+          "$description": "Focus ring offset from component"
+        }
+      }
+    }
+  },
+  "Core/Typography": {
+    "typography": {
+      "fontFamily": {
+        "fa": {
+          "$value": "Vazirmatn, Tahoma, Arial, sans-serif",
+          "$type": "fontFamily",
+          "$description": "Persian interface font stack"
+        },
+        "en": {
+          "$value": "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif",
+          "$type": "fontFamily",
+          "$description": "English platform interface font stack"
+        },
+        "mono": {
+          "$value": "ui-monospace, SFMono-Regular, Consolas, monospace",
+          "$type": "fontFamily",
+          "$description": "Machine identifiers and diagnostic values only"
+        }
+      },
+      "weight": {
+        "regular": {
+          "$value": 400,
+          "$type": "fontWeight"
+        },
+        "medium": {
+          "$value": 500,
+          "$type": "fontWeight"
+        },
+        "semibold": {
+          "$value": 650,
+          "$type": "fontWeight"
+        },
+        "bold": {
+          "$value": 700,
+          "$type": "fontWeight"
+        },
+        "heavy": {
+          "$value": 800,
+          "$type": "fontWeight"
+        }
+      },
+      "role": {
+        "fa": {
+          "display": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "40px",
+              "fontWeight": "{typography.weight.heavy}",
+              "letterSpacing": "0px",
+              "lineHeight": "52px"
+            },
+            "$description": "Landing hero display — FA"
+          },
+          "title1": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "32px",
+              "fontWeight": "{typography.weight.heavy}",
+              "letterSpacing": "0px",
+              "lineHeight": "44px"
+            },
+            "$description": "Major page title — FA"
+          },
+          "title2": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "24px",
+              "fontWeight": 750,
+              "letterSpacing": "0px",
+              "lineHeight": "34px"
+            },
+            "$description": "Section and modal title — FA"
+          },
+          "title3": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "20px",
+              "fontWeight": "{typography.weight.bold}",
+              "letterSpacing": "0px",
+              "lineHeight": "30px"
+            },
+            "$description": "Card group title — FA"
+          },
+          "body": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "16px",
+              "fontWeight": "{typography.weight.regular}",
+              "letterSpacing": "0px",
+              "lineHeight": "26px"
+            },
+            "$description": "Default reading text — FA"
+          },
+          "bodyStrong": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "16px",
+              "fontWeight": "{typography.weight.semibold}",
+              "letterSpacing": "0px",
+              "lineHeight": "26px"
+            },
+            "$description": "Emphasized body text — FA"
+          },
+          "label": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "14px",
+              "fontWeight": "{typography.weight.semibold}",
+              "letterSpacing": "0px",
+              "lineHeight": "20px"
+            },
+            "$description": "Controls, tabs, and field labels — FA"
+          },
+          "caption": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "12px",
+              "fontWeight": "{typography.weight.medium}",
+              "letterSpacing": "0px",
+              "lineHeight": "18px"
+            },
+            "$description": "Nonessential metadata — FA"
+          },
+          "metric": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "28px",
+              "fontWeight": 750,
+              "letterSpacing": "0px",
+              "lineHeight": "34px"
+            },
+            "$description": "Primary numeric metric — FA"
+          }
+        },
+        "en": {
+          "display": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "40px",
+              "fontWeight": "{typography.weight.heavy}",
+              "letterSpacing": "0px",
+              "lineHeight": "52px"
+            },
+            "$description": "Landing hero display — EN"
+          },
+          "title1": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "32px",
+              "fontWeight": "{typography.weight.heavy}",
+              "letterSpacing": "0px",
+              "lineHeight": "44px"
+            },
+            "$description": "Major page title — EN"
+          },
+          "title2": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "24px",
+              "fontWeight": 750,
+              "letterSpacing": "0px",
+              "lineHeight": "34px"
+            },
+            "$description": "Section and modal title — EN"
+          },
+          "title3": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "20px",
+              "fontWeight": "{typography.weight.bold}",
+              "letterSpacing": "0px",
+              "lineHeight": "30px"
+            },
+            "$description": "Card group title — EN"
+          },
+          "body": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "16px",
+              "fontWeight": "{typography.weight.regular}",
+              "letterSpacing": "0px",
+              "lineHeight": "26px"
+            },
+            "$description": "Default reading text — EN"
+          },
+          "bodyStrong": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "16px",
+              "fontWeight": "{typography.weight.semibold}",
+              "letterSpacing": "0px",
+              "lineHeight": "26px"
+            },
+            "$description": "Emphasized body text — EN"
+          },
+          "label": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "14px",
+              "fontWeight": "{typography.weight.semibold}",
+              "letterSpacing": "0px",
+              "lineHeight": "20px"
+            },
+            "$description": "Controls, tabs, and field labels — EN"
+          },
+          "caption": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "12px",
+              "fontWeight": "{typography.weight.medium}",
+              "letterSpacing": "0px",
+              "lineHeight": "18px"
+            },
+            "$description": "Nonessential metadata — EN"
+          },
+          "metric": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "28px",
+              "fontWeight": 750,
+              "letterSpacing": "0px",
+              "lineHeight": "34px"
+            },
+            "$description": "Primary numeric metric — EN"
+          }
+        }
+      }
+    }
+  },
+  "Core/Motion": {
+    "motion": {
+      "duration": {
+        "instant": {
+          "$value": "0ms",
+          "$type": "duration"
+        },
+        "fast": {
+          "$value": "160ms",
+          "$type": "duration"
+        },
+        "standard": {
+          "$value": "240ms",
+          "$type": "duration"
+        },
+        "emphasis": {
+          "$value": "400ms",
+          "$type": "duration"
+        },
+        "slow": {
+          "$value": "600ms",
+          "$type": "duration"
+        }
+      },
+      "easing": {
+        "standard": {
+          "$value": [
+            0.2,
+            0,
+            0,
+            1
+          ],
+          "$type": "cubicBezier"
+        },
+        "enter": {
+          "$value": [
+            0.16,
+            1,
+            0.3,
+            1
+          ],
+          "$type": "cubicBezier"
+        },
+        "exit": {
+          "$value": [
+            0.4,
+            0,
+            1,
+            1
+          ],
+          "$type": "cubicBezier"
+        }
+      },
+      "spring": {
+        "response": {
+          "$value": 0.38,
+          "$type": "number"
+        },
+        "dampingFraction": {
+          "$value": 0.82,
+          "$type": "number"
+        }
+      }
+    }
+  },
+  "Theme/Light/Colors": {
+    "color": {
+      "semantic": {
+        "background": {
+          "canvas": {
+            "$value": "{color.primitive.neutral.50}",
+            "$type": "color",
+            "$description": "Warm root application canvas"
+          },
+          "subtle": {
+            "$value": "{color.primitive.neutral.100}",
+            "$type": "color",
+            "$description": "Grouped background below opaque content surfaces"
+          },
+          "auraPrimary": {
+            "$value": "#73395F14",
+            "$type": "color",
+            "$description": "Noninformational Plum environment aura; never carries state"
+          },
+          "auraEnergy": {
+            "$value": "#B9533212",
+            "$type": "color",
+            "$description": "Noninformational Apricot environment aura; never carries state"
+          }
+        },
+        "surface": {
+          "content": {
+            "$value": "{color.primitive.neutral.0}",
+            "$type": "color",
+            "$description": "Default opaque reading, plan, form, and card surface"
+          },
+          "raised": {
+            "$value": "#F1EAEF",
+            "$type": "color",
+            "$description": "Selected or elevated opaque content surface"
+          },
+          "sunken": {
+            "$value": "{color.primitive.neutral.100}",
+            "$type": "color",
+            "$description": "Input well and chart plotting surface"
+          },
+          "glassRegular": {
+            "$value": "#FFFAFCC2",
+            "$type": "color",
+            "$description": "Adaptive translucent tint for regular functional Liquid Glass"
+          },
+          "glassProminent": {
+            "$value": "#FFFFFFDE",
+            "$type": "color",
+            "$description": "More separated translucent tint for prominent functional Liquid Glass"
+          },
+          "glassFallback": {
+            "$value": "{color.primitive.neutral.0}",
+            "$type": "color",
+            "$description": "Opaque fallback for every glass material when transparency is unavailable or reduced"
+          },
+          "scrim": {
+            "$value": "#241A21B8",
+            "$type": "color",
+            "$description": "Background dimming behind modal content"
+          }
+        },
+        "text": {
+          "primary": {
+            "$value": "#241A21",
+            "$type": "color",
+            "$description": "Primary reading text"
+          },
+          "secondary": {
+            "$value": "{color.primitive.neutral.600}",
+            "$type": "color",
+            "$description": "Supporting copy and metadata"
+          },
+          "tertiary": {
+            "$value": "#7C6A75",
+            "$type": "color",
+            "$description": "Nonessential metadata; never the only presentation of required information"
+          },
+          "inverse": {
+            "$value": "{color.primitive.neutral.0}",
+            "$type": "color",
+            "$description": "Text over fixed inverse or protected media surfaces"
+          },
+          "disabled": {
+            "$value": "{color.primitive.neutral.500}",
+            "$type": "color",
+            "$description": "Text for unavailable controls"
+          }
+        },
+        "action": {
+          "primary": {
+            "$value": "{color.primitive.plum.700}",
+            "$type": "color",
+            "$description": "Default primary action and active navigation tint"
+          },
+          "primaryHover": {
+            "$value": "{color.primitive.plum.800}",
+            "$type": "color",
+            "$description": "Pointer hover fill for the primary action"
+          },
+          "primaryPressed": {
+            "$value": "{color.primitive.plum.950}",
+            "$type": "color",
+            "$description": "Pressed fill for the primary action"
+          },
+          "onPrimary": {
+            "$value": "{color.primitive.neutral.0}",
+            "$type": "color",
+            "$description": "Foreground over all primary action states"
+          },
+          "secondary": {
+            "$value": "{color.primitive.plum.100}",
+            "$type": "color",
+            "$description": "Low-emphasis Plum action or selected-control fill"
+          },
+          "secondaryHover": {
+            "$value": "{color.primitive.plum.200}",
+            "$type": "color",
+            "$description": "Pointer hover fill for low-emphasis actions"
+          },
+          "onSecondary": {
+            "$value": "{color.primitive.plum.700}",
+            "$type": "color",
+            "$description": "Foreground over low-emphasis Plum action fill"
+          },
+          "link": {
+            "$value": "{color.primitive.plum.700}",
+            "$type": "color",
+            "$description": "Inline and standalone link foreground; underline remains available for context"
+          },
+          "disabled": {
+            "$value": "{color.primitive.neutral.200}",
+            "$type": "color",
+            "$description": "Unavailable action fill"
+          },
+          "onDisabled": {
+            "$value": "{color.primitive.neutral.500}",
+            "$type": "color",
+            "$description": "Foreground over unavailable action fill"
+          }
+        },
+        "plan": {
+          "primary": {
+            "$value": "{color.primitive.plum.700}",
+            "$type": "color",
+            "$description": "Monthly plan identity and generation context; not an AI-chat identity"
+          },
+          "soft": {
+            "$value": "{color.primitive.plum.100}",
+            "$type": "color",
+            "$description": "Low-emphasis monthly plan context background"
+          }
+        },
+        "energy": {
+          "primary": {
+            "$value": "{color.primitive.apricot.600}",
+            "$type": "color",
+            "$description": "Restrained human-energy, nutrition, training, and milestone accent; never a default CTA"
+          },
+          "soft": {
+            "$value": "{color.primitive.apricot.100}",
+            "$type": "color",
+            "$description": "Low-emphasis energy context background"
+          }
+        },
+        "status": {
+          "success": {
+            "$value": "{color.primitive.green.700}",
+            "$type": "color",
+            "$description": "Confirmed successful state foreground"
+          },
+          "successSoft": {
+            "$value": "{color.primitive.green.100}",
+            "$type": "color",
+            "$description": "Confirmed successful state background"
+          },
+          "successBorder": {
+            "$value": "{color.primitive.green.700}",
+            "$type": "color",
+            "$description": "Confirmed successful state boundary"
+          },
+          "warning": {
+            "$value": "{color.primitive.amber.700}",
+            "$type": "color",
+            "$description": "Caution or state needing review foreground"
+          },
+          "warningSoft": {
+            "$value": "{color.primitive.amber.100}",
+            "$type": "color",
+            "$description": "Caution or state needing review background"
+          },
+          "warningBorder": {
+            "$value": "{color.primitive.amber.700}",
+            "$type": "color",
+            "$description": "Caution or state needing review boundary"
+          },
+          "danger": {
+            "$value": "{color.primitive.crimson.700}",
+            "$type": "color",
+            "$description": "Destructive, failed, or critical state foreground"
+          },
+          "dangerSoft": {
+            "$value": "{color.primitive.crimson.100}",
+            "$type": "color",
+            "$description": "Destructive, failed, or critical state background"
+          },
+          "dangerBorder": {
+            "$value": "{color.primitive.crimson.700}",
+            "$type": "color",
+            "$description": "Destructive, failed, or critical state boundary"
+          },
+          "info": {
+            "$value": "{color.primitive.blue.700}",
+            "$type": "color",
+            "$description": "Neutral informational state foreground"
+          },
+          "infoSoft": {
+            "$value": "{color.primitive.blue.100}",
+            "$type": "color",
+            "$description": "Neutral informational state background"
+          },
+          "infoBorder": {
+            "$value": "{color.primitive.blue.700}",
+            "$type": "color",
+            "$description": "Neutral informational state boundary"
+          }
+        },
+        "border": {
+          "subtle": {
+            "$value": "{color.primitive.neutral.200}",
+            "$type": "color",
+            "$description": "Default content grouping boundary"
+          },
+          "control": {
+            "$value": "#7C6A75",
+            "$type": "color",
+            "$description": "Control and field boundary with at least 3:1 graphical contrast"
+          },
+          "strong": {
+            "$value": "{color.primitive.neutral.600}",
+            "$type": "color",
+            "$description": "High-emphasis boundary and Increased Contrast replacement"
+          },
+          "glass": {
+            "$value": "#FFFFFFB8",
+            "$type": "color",
+            "$description": "Single optical highlight boundary for functional glass"
+          }
+        },
+        "focus": {
+          "ring": {
+            "$value": "{color.primitive.plum.700}",
+            "$type": "color",
+            "$description": "Focus indicator with a surface-colored separation gap when adjacent to a primary action"
+          }
+        },
+        "data": {
+          "series1": {
+            "$value": "{color.primitive.plum.700}",
+            "$type": "color",
+            "$description": "Chart series one; pair with solid line and circle marker"
+          },
+          "series2": {
+            "$value": "{color.primitive.apricot.700}",
+            "$type": "color",
+            "$description": "Chart series two; pair with dashed line and square marker"
+          },
+          "series3": {
+            "$value": "{color.primitive.blue.700}",
+            "$type": "color",
+            "$description": "Chart series three; pair with dotted line and diamond marker"
+          },
+          "series4": {
+            "$value": "{color.primitive.green.700}",
+            "$type": "color",
+            "$description": "Chart series four; pair with dash-dot line and triangle marker"
+          },
+          "series5": {
+            "$value": "{color.primitive.amber.700}",
+            "$type": "color",
+            "$description": "Chart series five; pair with long-dash line and cross marker"
+          },
+          "series6": {
+            "$value": "{color.primitive.crimson.700}",
+            "$type": "color",
+            "$description": "Chart series six; pair with short-dash line and plus marker; does not imply danger without a status label"
+          },
+          "gridline": {
+            "$value": "{color.primitive.neutral.200}",
+            "$type": "color",
+            "$description": "Chart grid line; never carries a data value"
+          },
+          "referenceLine": {
+            "$value": "{color.primitive.neutral.600}",
+            "$type": "color",
+            "$description": "Labeled chart reference or target line"
+          }
+        }
+      }
+    }
+  },
+  "Theme/Dark/Colors": {
+    "color": {
+      "semantic": {
+        "background": {
+          "canvas": {
+            "$value": "{color.primitive.neutral.950}",
+            "$type": "color",
+            "$description": "Warm root application canvas"
+          },
+          "subtle": {
+            "$value": "{color.primitive.neutral.900}",
+            "$type": "color",
+            "$description": "Grouped background below opaque content surfaces"
+          },
+          "auraPrimary": {
+            "$value": "#E0A3C81F",
+            "$type": "color",
+            "$description": "Noninformational Plum environment aura; never carries state"
+          },
+          "auraEnergy": {
+            "$value": "#FF9A731A",
+            "$type": "color",
+            "$description": "Noninformational Apricot environment aura; never carries state"
+          }
+        },
+        "surface": {
+          "content": {
+            "$value": "{color.primitive.neutral.900}",
+            "$type": "color",
+            "$description": "Default opaque reading, plan, form, and card surface"
+          },
+          "raised": {
+            "$value": "{color.primitive.neutral.850}",
+            "$type": "color",
+            "$description": "Selected or elevated opaque content surface"
+          },
+          "sunken": {
+            "$value": "{color.primitive.neutral.950}",
+            "$type": "color",
+            "$description": "Input well and chart plotting surface"
+          },
+          "glassRegular": {
+            "$value": "#2D2229C7",
+            "$type": "color",
+            "$description": "Adaptive translucent tint for regular functional Liquid Glass"
+          },
+          "glassProminent": {
+            "$value": "#352831E6",
+            "$type": "color",
+            "$description": "More separated translucent tint for prominent functional Liquid Glass"
+          },
+          "glassFallback": {
+            "$value": "{color.primitive.neutral.850}",
+            "$type": "color",
+            "$description": "Opaque fallback for every glass material when transparency is unavailable or reduced"
+          },
+          "scrim": {
+            "$value": "#000000C7",
+            "$type": "color",
+            "$description": "Background dimming behind modal content"
+          }
+        },
+        "text": {
+          "primary": {
+            "$value": "#FBF5F8",
+            "$type": "color",
+            "$description": "Primary reading text"
+          },
+          "secondary": {
+            "$value": "#C2B3BC",
+            "$type": "color",
+            "$description": "Supporting copy and metadata"
+          },
+          "tertiary": {
+            "$value": "#9F8E98",
+            "$type": "color",
+            "$description": "Nonessential metadata; never the only presentation of required information"
+          },
+          "inverse": {
+            "$value": "{color.primitive.neutral.950}",
+            "$type": "color",
+            "$description": "Text over fixed inverse or protected media surfaces"
+          },
+          "disabled": {
+            "$value": "{color.primitive.neutral.500}",
+            "$type": "color",
+            "$description": "Text for unavailable controls"
+          }
+        },
+        "action": {
+          "primary": {
+            "$value": "{color.primitive.plum.300}",
+            "$type": "color",
+            "$description": "Default primary action and active navigation tint"
+          },
+          "primaryHover": {
+            "$value": "{color.primitive.plum.200}",
+            "$type": "color",
+            "$description": "Pointer hover fill for the primary action"
+          },
+          "primaryPressed": {
+            "$value": "{color.primitive.plum.400}",
+            "$type": "color",
+            "$description": "Pressed fill for the primary action"
+          },
+          "onPrimary": {
+            "$value": "{color.primitive.plum.950}",
+            "$type": "color",
+            "$description": "Foreground over all primary action states"
+          },
+          "secondary": {
+            "$value": "{color.primitive.plum.900}",
+            "$type": "color",
+            "$description": "Low-emphasis Plum action or selected-control fill"
+          },
+          "secondaryHover": {
+            "$value": "{color.primitive.plum.800}",
+            "$type": "color",
+            "$description": "Pointer hover fill for low-emphasis actions"
+          },
+          "onSecondary": {
+            "$value": "{color.primitive.plum.200}",
+            "$type": "color",
+            "$description": "Foreground over low-emphasis Plum action fill"
+          },
+          "link": {
+            "$value": "{color.primitive.plum.300}",
+            "$type": "color",
+            "$description": "Inline and standalone link foreground; underline remains available for context"
+          },
+          "disabled": {
+            "$value": "{color.primitive.neutral.800}",
+            "$type": "color",
+            "$description": "Unavailable action fill"
+          },
+          "onDisabled": {
+            "$value": "{color.primitive.neutral.500}",
+            "$type": "color",
+            "$description": "Foreground over unavailable action fill"
+          }
+        },
+        "plan": {
+          "primary": {
+            "$value": "{color.primitive.plum.300}",
+            "$type": "color",
+            "$description": "Monthly plan identity and generation context; not an AI-chat identity"
+          },
+          "soft": {
+            "$value": "{color.primitive.plum.900}",
+            "$type": "color",
+            "$description": "Low-emphasis monthly plan context background"
+          }
+        },
+        "energy": {
+          "primary": {
+            "$value": "{color.primitive.apricot.300}",
+            "$type": "color",
+            "$description": "Restrained human-energy, nutrition, training, and milestone accent; never a default CTA"
+          },
+          "soft": {
+            "$value": "{color.primitive.apricot.950}",
+            "$type": "color",
+            "$description": "Low-emphasis energy context background"
+          }
+        },
+        "status": {
+          "success": {
+            "$value": "{color.primitive.green.300}",
+            "$type": "color",
+            "$description": "Confirmed successful state foreground"
+          },
+          "successSoft": {
+            "$value": "{color.primitive.green.950}",
+            "$type": "color",
+            "$description": "Confirmed successful state background"
+          },
+          "successBorder": {
+            "$value": "{color.primitive.green.300}",
+            "$type": "color",
+            "$description": "Confirmed successful state boundary"
+          },
+          "warning": {
+            "$value": "{color.primitive.amber.300}",
+            "$type": "color",
+            "$description": "Caution or state needing review foreground"
+          },
+          "warningSoft": {
+            "$value": "{color.primitive.amber.950}",
+            "$type": "color",
+            "$description": "Caution or state needing review background"
+          },
+          "warningBorder": {
+            "$value": "{color.primitive.amber.300}",
+            "$type": "color",
+            "$description": "Caution or state needing review boundary"
+          },
+          "danger": {
+            "$value": "{color.primitive.crimson.300}",
+            "$type": "color",
+            "$description": "Destructive, failed, or critical state foreground"
+          },
+          "dangerSoft": {
+            "$value": "{color.primitive.crimson.950}",
+            "$type": "color",
+            "$description": "Destructive, failed, or critical state background"
+          },
+          "dangerBorder": {
+            "$value": "{color.primitive.crimson.300}",
+            "$type": "color",
+            "$description": "Destructive, failed, or critical state boundary"
+          },
+          "info": {
+            "$value": "{color.primitive.blue.300}",
+            "$type": "color",
+            "$description": "Neutral informational state foreground"
+          },
+          "infoSoft": {
+            "$value": "{color.primitive.blue.950}",
+            "$type": "color",
+            "$description": "Neutral informational state background"
+          },
+          "infoBorder": {
+            "$value": "{color.primitive.blue.300}",
+            "$type": "color",
+            "$description": "Neutral informational state boundary"
+          }
+        },
+        "border": {
+          "subtle": {
+            "$value": "#FFFFFF1F",
+            "$type": "color",
+            "$description": "Default content grouping boundary"
+          },
+          "control": {
+            "$value": "#806D78",
+            "$type": "color",
+            "$description": "Control and field boundary with at least 3:1 graphical contrast"
+          },
+          "strong": {
+            "$value": "{color.primitive.neutral.400}",
+            "$type": "color",
+            "$description": "High-emphasis boundary and Increased Contrast replacement"
+          },
+          "glass": {
+            "$value": "#FFFFFF3D",
+            "$type": "color",
+            "$description": "Single optical highlight boundary for functional glass"
+          }
+        },
+        "focus": {
+          "ring": {
+            "$value": "{color.primitive.plum.300}",
+            "$type": "color",
+            "$description": "Focus indicator with a surface-colored separation gap when adjacent to a primary action"
+          }
+        },
+        "data": {
+          "series1": {
+            "$value": "{color.primitive.plum.300}",
+            "$type": "color",
+            "$description": "Chart series one; pair with solid line and circle marker"
+          },
+          "series2": {
+            "$value": "{color.primitive.apricot.300}",
+            "$type": "color",
+            "$description": "Chart series two; pair with dashed line and square marker"
+          },
+          "series3": {
+            "$value": "{color.primitive.blue.300}",
+            "$type": "color",
+            "$description": "Chart series three; pair with dotted line and diamond marker"
+          },
+          "series4": {
+            "$value": "{color.primitive.green.300}",
+            "$type": "color",
+            "$description": "Chart series four; pair with dash-dot line and triangle marker"
+          },
+          "series5": {
+            "$value": "{color.primitive.amber.300}",
+            "$type": "color",
+            "$description": "Chart series five; pair with long-dash line and cross marker"
+          },
+          "series6": {
+            "$value": "{color.primitive.crimson.300}",
+            "$type": "color",
+            "$description": "Chart series six; pair with short-dash line and plus marker; does not imply danger without a status label"
+          },
+          "gridline": {
+            "$value": "#FFFFFF1F",
+            "$type": "color",
+            "$description": "Chart grid line; never carries a data value"
+          },
+          "referenceLine": {
+            "$value": "{color.primitive.neutral.400}",
+            "$type": "color",
+            "$description": "Labeled chart reference or target line"
+          }
+        }
+      }
+    }
+  },
+  "Theme/Light/Effects": {
+    "shadow": {
+      "0": {
+        "$value": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "spread": 0,
+          "color": "#00000000"
+        },
+        "$type": "shadow",
+        "$description": "No elevation"
+      },
+      "1": {
+        "$value": {
+          "x": 0,
+          "y": 8,
+          "blur": 24,
+          "spread": -12,
+          "color": "#241A211F"
+        },
+        "$type": "shadow",
+        "$description": "Raised or selected content"
+      },
+      "2": {
+        "$value": {
+          "x": 0,
+          "y": 16,
+          "blur": 44,
+          "spread": -18,
+          "color": "#241A213D"
+        },
+        "$type": "shadow",
+        "$description": "Sticky functional chrome, floating toolbar, or popover"
+      },
+      "3": {
+        "$value": {
+          "x": 0,
+          "y": 24,
+          "blur": 72,
+          "spread": -20,
+          "color": "#241A2152"
+        },
+        "$type": "shadow",
+        "$description": "Dialog and blocking overlay"
+      }
+    },
+    "material": {
+      "content": {
+        "fill": {
+          "$value": "{color.semantic.surface.content}",
+          "$type": "color",
+          "$description": "Opaque default content material"
+        },
+        "blur": {
+          "$value": "0px",
+          "$type": "dimension",
+          "$description": "Opaque default content material"
+        },
+        "saturation": {
+          "$value": 1,
+          "$type": "number",
+          "$description": "Opaque default content material"
+        },
+        "border": {
+          "$value": "{color.semantic.border.subtle}",
+          "$type": "color",
+          "$description": "Opaque default content material"
+        },
+        "shadow": {
+          "$value": "{shadow.0}",
+          "$type": "shadow",
+          "$description": "Opaque default content material"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.content}",
+          "$type": "color",
+          "$description": "Opaque default content material"
+        }
+      },
+      "raised": {
+        "fill": {
+          "$value": "{color.semantic.surface.raised}",
+          "$type": "color",
+          "$description": "Elevated content material"
+        },
+        "blur": {
+          "$value": "0px",
+          "$type": "dimension",
+          "$description": "Elevated content material"
+        },
+        "saturation": {
+          "$value": 1,
+          "$type": "number",
+          "$description": "Elevated content material"
+        },
+        "border": {
+          "$value": "{color.semantic.border.subtle}",
+          "$type": "color",
+          "$description": "Elevated content material"
+        },
+        "shadow": {
+          "$value": "{shadow.1}",
+          "$type": "shadow",
+          "$description": "Elevated content material"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.raised}",
+          "$type": "color",
+          "$description": "Elevated content material"
+        }
+      },
+      "glassRegular": {
+        "fill": {
+          "$value": "{color.semantic.surface.glassRegular}",
+          "$type": "color",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "blur": {
+          "$value": "22px",
+          "$type": "dimension",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "saturation": {
+          "$value": 1.16,
+          "$type": "number",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "border": {
+          "$value": "{color.semantic.border.glass}",
+          "$type": "color",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "shadow": {
+          "$value": "{shadow.2}",
+          "$type": "shadow",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        }
+      },
+      "glassProminent": {
+        "fill": {
+          "$value": "{color.semantic.surface.glassProminent}",
+          "$type": "color",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "blur": {
+          "$value": "28px",
+          "$type": "dimension",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "saturation": {
+          "$value": 1.12,
+          "$type": "number",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "border": {
+          "$value": "{color.semantic.border.glass}",
+          "$type": "color",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "shadow": {
+          "$value": "{shadow.2}",
+          "$type": "shadow",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        }
+      },
+      "glassFallback": {
+        "fill": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "blur": {
+          "$value": "0px",
+          "$type": "dimension",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "saturation": {
+          "$value": 1,
+          "$type": "number",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "border": {
+          "$value": "{color.semantic.border.strong}",
+          "$type": "color",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "shadow": {
+          "$value": "{shadow.2}",
+          "$type": "shadow",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        }
+      },
+      "overlay": {
+        "fill": {
+          "$value": "{color.semantic.surface.raised}",
+          "$type": "color",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "blur": {
+          "$value": "0px",
+          "$type": "dimension",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "saturation": {
+          "$value": 1,
+          "$type": "number",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "border": {
+          "$value": "{color.semantic.border.strong}",
+          "$type": "color",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "shadow": {
+          "$value": "{shadow.3}",
+          "$type": "shadow",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.raised}",
+          "$type": "color",
+          "$description": "Opaque dialog and blocking overlay material"
+        }
+      }
+    }
+  },
+  "Theme/Dark/Effects": {
+    "shadow": {
+      "0": {
+        "$value": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "spread": 0,
+          "color": "#00000000"
+        },
+        "$type": "shadow",
+        "$description": "No elevation"
+      },
+      "1": {
+        "$value": {
+          "x": 0,
+          "y": 10,
+          "blur": 28,
+          "spread": -14,
+          "color": "#00000052"
+        },
+        "$type": "shadow",
+        "$description": "Raised or selected content"
+      },
+      "2": {
+        "$value": {
+          "x": 0,
+          "y": 18,
+          "blur": 48,
+          "spread": -18,
+          "color": "#0000007A"
+        },
+        "$type": "shadow",
+        "$description": "Sticky functional chrome, floating toolbar, or popover"
+      },
+      "3": {
+        "$value": {
+          "x": 0,
+          "y": 28,
+          "blur": 80,
+          "spread": -22,
+          "color": "#000000A3"
+        },
+        "$type": "shadow",
+        "$description": "Dialog and blocking overlay"
+      }
+    },
+    "material": {
+      "content": {
+        "fill": {
+          "$value": "{color.semantic.surface.content}",
+          "$type": "color",
+          "$description": "Opaque default content material"
+        },
+        "blur": {
+          "$value": "0px",
+          "$type": "dimension",
+          "$description": "Opaque default content material"
+        },
+        "saturation": {
+          "$value": 1,
+          "$type": "number",
+          "$description": "Opaque default content material"
+        },
+        "border": {
+          "$value": "{color.semantic.border.subtle}",
+          "$type": "color",
+          "$description": "Opaque default content material"
+        },
+        "shadow": {
+          "$value": "{shadow.0}",
+          "$type": "shadow",
+          "$description": "Opaque default content material"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.content}",
+          "$type": "color",
+          "$description": "Opaque default content material"
+        }
+      },
+      "raised": {
+        "fill": {
+          "$value": "{color.semantic.surface.raised}",
+          "$type": "color",
+          "$description": "Elevated content material"
+        },
+        "blur": {
+          "$value": "0px",
+          "$type": "dimension",
+          "$description": "Elevated content material"
+        },
+        "saturation": {
+          "$value": 1,
+          "$type": "number",
+          "$description": "Elevated content material"
+        },
+        "border": {
+          "$value": "{color.semantic.border.subtle}",
+          "$type": "color",
+          "$description": "Elevated content material"
+        },
+        "shadow": {
+          "$value": "{shadow.1}",
+          "$type": "shadow",
+          "$description": "Elevated content material"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.raised}",
+          "$type": "color",
+          "$description": "Elevated content material"
+        }
+      },
+      "glassRegular": {
+        "fill": {
+          "$value": "{color.semantic.surface.glassRegular}",
+          "$type": "color",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "blur": {
+          "$value": "22px",
+          "$type": "dimension",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "saturation": {
+          "$value": 1.12,
+          "$type": "number",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "border": {
+          "$value": "{color.semantic.border.glass}",
+          "$type": "color",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "shadow": {
+          "$value": "{shadow.2}",
+          "$type": "shadow",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "Default Liquid Glass for navigation, compact toolbars, popovers, and temporary controls only"
+        }
+      },
+      "glassProminent": {
+        "fill": {
+          "$value": "{color.semantic.surface.glassProminent}",
+          "$type": "color",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "blur": {
+          "$value": "28px",
+          "$type": "dimension",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "saturation": {
+          "$value": 1.08,
+          "$type": "number",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "border": {
+          "$value": "{color.semantic.border.glass}",
+          "$type": "color",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "shadow": {
+          "$value": "{shadow.2}",
+          "$type": "shadow",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        }
+      },
+      "glassFallback": {
+        "fill": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "blur": {
+          "$value": "0px",
+          "$type": "dimension",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "saturation": {
+          "$value": 1,
+          "$type": "number",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "border": {
+          "$value": "{color.semantic.border.strong}",
+          "$type": "color",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "shadow": {
+          "$value": "{shadow.2}",
+          "$type": "shadow",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "Required opaque replacement for Liquid Glass under Reduced Transparency, unsupported blur, unknown contrast, print, or performance policy"
+        }
+      },
+      "overlay": {
+        "fill": {
+          "$value": "{color.semantic.surface.raised}",
+          "$type": "color",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "blur": {
+          "$value": "0px",
+          "$type": "dimension",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "saturation": {
+          "$value": 1,
+          "$type": "number",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "border": {
+          "$value": "{color.semantic.border.strong}",
+          "$type": "color",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "shadow": {
+          "$value": "{shadow.3}",
+          "$type": "shadow",
+          "$description": "Opaque dialog and blocking overlay material"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.raised}",
+          "$type": "color",
+          "$description": "Opaque dialog and blocking overlay material"
+        }
+      }
+    }
+  },
+  "$themes": [
+    {
+      "name": "Light",
+      "group": "Momentum / Mode",
+      "selectedTokenSets": {
+        "Core/Color Primitives": "source",
+        "Core/Foundations": "source",
+        "Core/Layout": "source",
+        "Core/Components": "source",
+        "Core/Typography": "source",
+        "Core/Motion": "source",
+        "Theme/Light/Colors": "enabled",
+        "Theme/Light/Effects": "enabled"
+      }
+    },
+    {
+      "name": "Dark",
+      "group": "Momentum / Mode",
+      "selectedTokenSets": {
+        "Core/Color Primitives": "source",
+        "Core/Foundations": "source",
+        "Core/Layout": "source",
+        "Core/Components": "source",
+        "Core/Typography": "source",
+        "Core/Motion": "source",
+        "Theme/Dark/Colors": "enabled",
+        "Theme/Dark/Effects": "enabled"
+      }
+    }
+  ],
+  "$metadata": {
+    "tokenSetOrder": [
+      "Core/Color Primitives",
+      "Core/Foundations",
+      "Core/Layout",
+      "Core/Components",
+      "Core/Typography",
+      "Core/Motion",
+      "Theme/Light/Colors",
+      "Theme/Dark/Colors",
+      "Theme/Light/Effects",
+      "Theme/Dark/Effects"
+    ],
+    "activeThemes": [
+      "Light"
+    ],
+    "activeSets": [
+      "Core/Color Primitives",
+      "Core/Foundations",
+      "Core/Layout",
+      "Core/Components",
+      "Core/Typography",
+      "Core/Motion"
+    ],
+    "source": "docs/design/tokens.json",
+    "sourceSchemaVersion": "3.0.0"
+  }
+}

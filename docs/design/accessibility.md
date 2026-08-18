@@ -15,9 +15,14 @@ same accessibility bar as the daily product.
 - Disabled controls may have lower contrast only when their state and reason are
   otherwise clear and no essential information is hidden.
 - Glass contrast is tested against the worst expected composited background.
+- Clear glass requires a bounded backdrop and local dimming/contrast treatment;
+  otherwise it resolves to Regular/Prominent or the opaque fallback.
+- Press/drag refraction is clipped to the active control and never distorts its
+  label, icon, focus ring, value, or accessible state.
 
-High-contrast modes use tokenized colors and stronger boundaries. Increasing
-opacity alone is not sufficient if foreground contrast remains low.
+Increased Contrast strengthens tokenized boundaries inside Light or Dark. It is
+an accessibility behavior, not a separate theme or token mode. Increasing opacity
+alone is insufficient if foreground contrast remains low.
 
 ### Text and zoom
 
@@ -59,21 +64,29 @@ technology.
 - Route changes move focus to an appropriate page heading and announce the title.
 - Dialogs trap focus, Escape-dismiss when safe, and restore focus.
 - Tabs and radio groups use standard roving-focus keyboard behavior.
-- No keyboard trap is permitted in chat, calendar, chart, or upload controls.
+- No keyboard trap is permitted in calendar, chart, or upload controls.
 
 ### Time and motion
 
-There are no essential time limits in onboarding, check-in, payment review, or
-coach messages. Authentication codes disclose expiry and provide resend without
+There are no essential time limits in onboarding, check-in, or payment review.
+Authentication codes disclose expiry and provide resend without
 discarding entered data.
 
 Reduced Motion follows `motion.md`. Auto-updating content does not steal focus or
-scroll position. Streaming coach text can be paused or rendered as grouped
-updates for assistive technologies.
+scroll position. Monthly generation status is announced as grouped state changes,
+not as streaming model output.
+
+With Reduced Motion, Liquid Glass removes contact-following optical travel,
+geometry compression, shape blending, and source-linked morphing; a brief
+opacity/tint change may communicate the same state. With Reduced Transparency,
+all glass roles use the opaque fallback and keep identical targets, names,
+focus order, and destinations.
 
 ## Understandable
 
-- Buttons use verbs describing outcomes: “Accept plan change,” not “Continue.”
+- Buttons use verbs describing outcomes: “Save preferences” or “View updated
+  plan,” not a vague “Continue.” Monthly generated plans are validated and
+  imported automatically; no copy implies a separate acceptance gate.
 - Health and pricing terms use plain language with expandable detail.
 - Inputs state expected unit and format.
 - Errors identify the field, problem, and recovery action.
@@ -100,12 +113,11 @@ Labels are programmatically associated. Hints and errors are referenced by the
 control. Error summary links to invalid fields for long forms. Values remain
 after validation failure.
 
-### Coach
+### Monthly plan generation
 
-The conversation is a labeled log/timeline. New messages use polite live-region
-behavior without reading token-by-token. Stop generation is keyboard accessible.
-Recommendation type and whether an action changes the plan are announced before
-actions.
+Generation and automatic import states are announced once per meaningful state
+change. The covered month, subscription gate, failure recovery, and preserved
+previous plan are available as text, not color alone.
 
 ### Charts
 
@@ -149,9 +161,9 @@ Required before a component/screen is complete:
 3. VoiceOver on iOS/Safari;
 4. TalkBack on Android/Chrome;
 5. 200% web zoom, largest iOS accessibility size, Android font scale 2.0;
-6. light/dark and both high-contrast modes;
+6. Light/Dark, including increased-contrast behavior within each appearance;
 7. reduced motion and reduced transparency;
-8. FA/RTL and EN/LTR;
+8. Persian and English;
 9. color-vision simulation for charts and statuses;
 10. error, empty, loading, offline, and stale-data states.
 

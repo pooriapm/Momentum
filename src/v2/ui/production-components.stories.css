@@ -1,0 +1,25 @@
+.mo-component-column {
+  display: grid;
+  gap: var(--space-5);
+  width: min(100%, 32rem);
+  margin-inline: auto;
+  padding: clamp(var(--space-4), 3vw, var(--space-8));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.mo-component-popover-stage {
+  min-height: 48rem;
+  align-content: start;
+}
+
+.mo-brand-stage {
+  color: var(--color-text);
+}
+
+.mo-brand-stage.brand-lockup,
+.mo-brand-stage .brand-lockup {
+  width: fit-content;
+}

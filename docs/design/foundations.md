@@ -2,20 +2,24 @@
 
 ## Brand character
 
-Momentum should feel calm, capable, optimistic, and personal. It is a coach that
-remains present over months, not a short-term transformation challenge.
+Momentum should feel calm, capable, optimistic, and personal. It is a dependable
+monthly planning tool, not a conversational personality or transformation challenge.
 
 The visual signature combines:
 
-- an indigo core for intelligence and trust;
-- a violet coach accent for adaptive guidance;
-- coral for energy, meals, and moments needing attention;
-- teal strictly for successful or healthy state confirmation;
+- the approved **Human Strength — Deep Plum + Apricot** brand direction;
+- warm neutral content surfaces and semantic colors authored separately for
+  Light and Dark appearances;
+- restrained accents for plan status, energy, and confirmation;
 - large quiet content fields beneath compact floating navigation.
 
 Avoid bodybuilding imagery, aggressive red/black combinations, fluorescent
 green dashboards, medical-blue sterility, and gamification that implies moral
 failure.
+
+The approved palette anchors, Liquid Glass rules, and precedence contract are
+defined in [Visual direction](./visual-direction.md). Older indigo, violet, and
+coral examples are superseded and must not guide new design work.
 
 ## Color roles
 
@@ -31,25 +35,40 @@ are available only to the token layer.
 | `surface.content` | Default content card and form surface |
 | `surface.raised` | Elevated content or selected panel |
 | `surface.sunken` | Inputs, wells, and chart plots |
+| `surface.glassRegular` | Stable tint for default functional glass |
+| `surface.glassProminent` | Stronger-separated hierarchy-critical glass |
+| `surface.glassClear` | Minimal-tint glass over a controlled backdrop only |
+| `surface.glassInteractionPrimary` | Local Deep Plum press/selection optical response |
+| `surface.glassInteractionEnergy` | Brief local Apricot interaction highlight |
+| `surface.glassFallback` | Opaque replacement for every glass role |
 | `surface.scrim` | Modal background dimming |
 | `text.primary` | Primary reading text |
 | `text.secondary` | Supporting text |
 | `text.tertiary` | Metadata; never critical information |
 | `text.inverse` | Text over dark media/scrims |
 | `action.primary` | Main action and active navigation state |
+| `action.primaryHover` | Pointer hover on the main action |
 | `action.primaryPressed` | Pressed main action |
-| `coach.primary` | Coach identity and AI-specific context |
+| `action.secondary` | Low-emphasis action and selected-control fill |
+| `plan.primary` | Monthly plan identity and generation context |
 | `energy.primary` | Nutrition, training energy, and attention |
 | `status.success` | Confirmed completion or safe success |
 | `status.warning` | Caution or input that needs review |
 | `status.danger` | Destructive action, failure, or critical error |
+| `status.info` | Neutral informational state |
 | `border.subtle` | Content grouping |
-| `border.strong` | Interactive separation and focus support |
+| `border.control` | Default field/control separation |
+| `border.strong` | High-emphasis and Increased Contrast separation |
 | `focus.ring` | Keyboard and assistive focus indicator |
 
 Color must never be the only carrier of state. Pair it with text, iconography,
 shape, or position. A calorie deficit, weight change, or missed action is not
 automatically a danger state.
+
+All status families include foreground, `Soft` background, and `Border`
+tokens. Charts provide six semantic series, but every series must also have a
+distinct line pattern or marker. Apricot remains an energy accent and chart
+category; it is never a warning substitute or a second default CTA.
 
 ## Typography
 
@@ -110,6 +129,11 @@ Nested corners should be visually concentric. As a default, an inner radius is
 the outer radius minus the inset between them. Avoid placing unrelated rounded
 rectangles inside every card.
 
+Functional glass adds one asymmetric optical edge and a localized interaction
+response inside this same contour; it does not add nested decorative capsules.
+The complete Regular/Prominent/Clear/Fallback anatomy and motion rules live in
+[Materials](./materials.md) and [Motion](./motion.md).
+
 ## Elevation
 
 Only four elevation levels exist:
@@ -118,7 +142,7 @@ Only four elevation levels exist:
 | --- | --- |
 | `0` | Canvas and content surfaces |
 | `1` | Raised/selected content |
-| `2` | Sticky chrome, floating composer, popover |
+| `2` | Sticky chrome, floating action/control, popover |
 | `3` | Dialog, blocking confirmation, critical overlay |
 
 Dark mode relies more on border and tonal separation than large black shadows.
@@ -133,10 +157,10 @@ All layout uses logical `start` and `end` concepts.
 - expanded: 1024px and above, 32px gutter;
 - reading/content maximum: 1120px;
 - onboarding/form maximum: 720px;
-- coach conversation reading width: 760px.
+- focused reading width: 760px.
 
-Mobile uses a five-destination bottom bar. Expanded layouts use a sidebar at
-inline-start: right in RTL and left in LTR. Medium layouts may use a rail. The
+Mobile uses a four-destination bottom bar. Expanded layouts use a sidebar at
+the reading start edge. Medium layouts may use a rail. The
 content order must remain equivalent across sizes.
 
 Safe-area insets are additive to component padding. Fixed navigation must never
@@ -148,7 +172,7 @@ Icons are line-based, rounded, and optically consistent. Use 20px in standard
 controls, 24px for primary navigation, and 16px for inline metadata. An icon-only
 action requires an accessible name and at least a 44x44 target.
 
-Directional icons mirror in RTL only when they communicate physical or reading
+Directional icons mirror only when they communicate physical or reading
 direction: arrows, chevrons, undo/redo, send, and progress. Universal objects,
 charts, clocks, media controls, and the Momentum mark do not mirror.
 

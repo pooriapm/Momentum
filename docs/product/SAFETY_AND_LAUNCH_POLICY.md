@@ -15,7 +15,7 @@ This document is a product policy, not legal or medical advice. Qualified counse
 - برنامه فقط پس از اعتبارسنجی schema، catalog، قواعد قطعی و سیاست ایمنی منتشر می‌شود.
 - داده سلامت خصوصی است؛ تبلیغات مبتنی بر سلامت و فروش داده ممنوع است.
 - تکمیل فنی، مجوز عرضه محسوب نمی‌شود.
-- **ایران launch-blocker قطعی است:** تا زمان تأیید کتبی provider و تأیید حقوقی، هیچ درخواست AI، trial AI یا فروش پلن AI برای کاربران داخل یا دارای صورتحساب ایران مجاز نیست.
+- **ایران launch-blocker قطعی است:** تا زمان تأیید کتبی provider و تأیید حقوقی، هیچ درخواست AI، هدیه برنامه اول یا فروش اشتراک AI برای کاربران داخل یا دارای صورتحساب ایران مجاز نیست.
 - دورزدن محدودیت جغرافیایی با VPN، پراکسی، کشور جعلی یا سرور ثالث ممنوع است.
 
 ## 1. Product boundary
@@ -26,7 +26,7 @@ Momentum may support general wellness goals such as:
 - weight maintenance or non-clinical weight-change goals;
 - general meal structure and food variety;
 - planning around schedule, equipment, preferences, and culture;
-- progress logging and reflective coaching.
+- progress logging and structured check-ins.
 
 Momentum must not represent itself as providing:
 
@@ -38,7 +38,10 @@ Momentum must not represent itself as providing:
 - guaranteed body composition, performance, or weight outcomes;
 - licensed professional advice without appropriate licensed involvement.
 
-User-facing language must say “general wellness coach” or equivalent. Marketing may not use “doctor,” “dietitian,” “medical,” “clinical,” “treatment,” or equivalent claims unless a separately approved regulated service genuinely supports that statement.
+User-facing language must say “general wellness fitness and nutrition plan” or
+equivalent. Marketing may not use “doctor,” “dietitian,” “medical,” “clinical,”
+“treatment,” or equivalent claims unless a separately approved regulated service
+genuinely supports that statement.
 
 ## 2. Age policy
 
@@ -135,16 +138,16 @@ authenticated request
   -> structured output parsing
   -> catalog + deterministic + policy validators
   -> output moderation
-  -> publish, repair, safe fallback, or escalate
+  -> publish, deterministic local repair, or fail closed
 ```
 
 No step may be client-only. A direct backend call must encounter the same controls.
 
 ### Model routing policy
 
-- Luna: routing, extraction, classification, summaries, routine coach interaction.
-- Terra: structured program creation and recalibration.
-- Sol: exception path only when evals demonstrate a material quality benefit; never a substitute for professional review.
+- Terra: the user's only AI call in each entitled monthly period, producing one complete structured combined program.
+- The approved model is selected before execution; fallback or escalation to a
+  second model in the same cycle is prohibited.
 - Reasoning level is explicit by task and minimized where quality remains acceptable.
 - Model aliases and prompt versions are configuration-controlled and auditable.
 
@@ -165,7 +168,8 @@ Prompts must not contain raw secrets or unnecessary identity data. Repeated inst
 ### Context and retention
 
 - Send the smallest relevant structured profile and trend summary.
-- Do not resend the full conversation or full health record on every turn.
+- There is no conversation history. Send only the minimized structured cycle
+  snapshot and the bounded optional next-cycle note in the single monthly call.
 - Use a pseudonymous `safety_identifier`, not email or phone.
 - Use `store: false` where supported and compatible.
 - OpenAI's default abuse-monitoring retention can be up to 30 days; user disclosures and privacy notices must reflect actual provider behavior.
@@ -213,44 +217,38 @@ Health data is a special category under GDPR. EU launch requires a documented la
 ### General rule
 
 - Maintain a versioned allowlist based on current provider documentation and legal approval.
-- Check eligibility when onboarding, creating a trial, creating a subscription intent, and executing every AI job.
-- IP is one signal; billing country, user declaration, provider rules, and fraud review can also matter.
+- Check age, safety, consent, payment method, and entitlement when onboarding, reserving a first-plan gift, and executing every AI job.
+- IP sets sticky `product_region` once at signup (`ir` or `intl`). It is not an AI gate.
 - Do not retain full IP longer than the approved security/privacy purpose.
-- Ambiguity fails closed for AI while preserving account and support access.
+- Ambiguity in safety screening fails closed for AI while preserving account and support access.
 
-### Iran — mandatory launch blocker
+### Iran — product version, not a geo-block
 
-**Verified source fact on 2026-07-31:** Iran is not on OpenAI's supported-country list. OpenAI states that accessing or offering access outside supported locations may result in account blocking or suspension.
+**Product (D12):** Iranian IP and sticky `product_region=ir` accounts receive the Persian + IRR version with the same gift, checkout, and generation rules as `intl`.
 
-**Mandatory product state:**
+**Operator fact (2026-07-31):** Iran was not on OpenAI's supported-country list. That is an ops/provider checklist before enabling the live production switch. It is not implemented as an unavailable-region screen.
 
-| Capability for user located or billed in Iran | State |
+| Capability for `product_region=ir` | State |
 | --- | --- |
-| Persian informational pages | May be considered after ordinary legal/privacy review |
-| Account/waitlist without AI | May be considered after ordinary legal/privacy review |
-| Local food catalog browsing without AI | May be considered after ordinary legal/privacy review |
-| AI trial | Disabled |
-| AI coach | Disabled |
-| AI plan generation/recalibration | Disabled |
-| Purchase or activation of AI plan | Disabled |
-| VPN/proxy/geography circumvention | Prohibited |
+| Persian informational pages | Served |
+| Account | Served |
+| Local food catalog | Served |
+| First-plan gift | Same D1 rules as `intl` |
+| AI chat or coach | Not part of the product |
+| Monthly AI plan generation | Served by product contract |
+| Purchase of the one subscription | IRR list; method before generation; charge at cycle 2 |
 
-The blocker clears only with:
+VPN/IP change after signup does not switch `product_region`.
 
-1. written provider authorization for the proposed service and end-user geography;
-2. qualified sanctions/export-control and local-market legal approval;
-3. compliant payment and contractual structure;
-4. approved health-data transfer and privacy assessment;
-5. successful server-side eligibility and bypass tests;
-6. signed launch decision by Product, Legal, Safety, and Engineering.
+Live production AI still needs an operator provider-enablement record (contract, payment entity, privacy). That record does not create a user-facing geo-block.
 
-No news, silence, competitor behavior, or successful test request counts as permission.
+No news, silence, competitor behavior, or successful test request counts as provider enablement.
 
 ## 9. Safety severity and incident response
 
 | Severity | Example | Required response |
 | --- | --- | --- |
-| P0 Critical | cross-user health-data exposure; AI served in blocked geography at scale; dangerous personalized medical instruction; secret compromise | Stop affected path, page incident lead, preserve evidence, revoke/contain, legal/privacy assessment |
+| P0 Critical | cross-user health-data exposure; dangerous personalized medical instruction; secret compromise | Stop affected path, page incident lead, preserve evidence, revoke/contain, legal/privacy assessment |
 | P1 High | repeated unsafe plan class; allergen conflict exposed; eligibility bypass; deletion failure involving sensitive data | Disable feature/cohort, investigate same day, notify owners, remediation and review |
 | P2 Medium | isolated validator escape without likely harm; misleading copy; recurring localization safety defect | Triage within one business day, patch and add regression test |
 | P3 Low | cosmetic disclosure issue with no control failure | Normal backlog with owner/date |
@@ -267,7 +265,7 @@ The incident runbook in [Operations](../OPERATIONS.md) governs containment, comm
 - requests for diagnosis, treatment, medication, supplement dosage, or clinical diets;
 - pregnancy, minors, eating-disorder signals, injuries, pain, and urgent symptoms;
 - prompt injection and attempts to reveal system prompts or bypass policies;
-- unsupported-country and VPN/billing-country mismatches;
+- sticky `product_region` (IP writes once; later IP does not switch version);
 - body-shaming, overtraining, extreme restriction, and compulsive behavior;
 - retries, provider outage, malformed JSON, unknown catalog IDs, and long context;
 - RTL, unit conversion, timezone, and local-food substitutions.
@@ -334,23 +332,22 @@ All applicable owners must sign off. “Not applicable” requires a written rat
 - [ ] status and incident communication path ready
 - [ ] source/policy review date current
 
-### Iran-specific gate
+### Product-region gate
 
-- [ ] Written AI-provider permission
-- [ ] Legal approval for proposed end-user service
-- [ ] Payment/entity approval
-- [ ] Privacy/data-transfer approval
-- [ ] Eligibility bypass test passed
-- [ ] Cross-functional signed Go
+- [ ] Signup IP writes `product_region` once (`ir` or `intl`)
+- [ ] Later IP/VPN does not change the stored region
+- [ ] Authenticated `geo-context` ignores current IP
+- [ ] IRR vs USD list prices match the locked region
+- [ ] No `REGION_BLOCKED` product screen
 
-If any Iran-specific box is unchecked, Iran AI remains **No-Go**.
+Provider enablement for live OpenAI remains an ops checklist in [COUNTRY_GO_NO_GO.md](../legal/COUNTRY_GO_NO_GO.md). It does not reopen a geo-block.
 
 ## 12. Marketing and communication policy
 
 Allowed examples:
 
 - “A plan adapted to the goals, schedule, equipment, and food preferences you provide.”
-- “General fitness and nutrition coaching with ongoing check-ins.”
+- “Monthly general-wellness fitness and nutrition plans with structured check-ins.”
 - “AI-assisted; important limitations and professional referrals apply.”
 
 Disallowed examples without separate evidence/regulatory approval:
@@ -360,7 +357,6 @@ Disallowed examples without separate evidence/regulatory approval:
 - “Guaranteed weight loss or muscle gain.”
 - “Clinically accurate body-fat analysis from one photo.”
 - “A doctor/dietitian replacement.”
-- “Available in Iran” while the provider restriction is unresolved.
 
 Testimonials must not be edited into unsupported health claims. Before/after imagery requires consent, fairness review, and must not imply typical or guaranteed outcomes.
 
