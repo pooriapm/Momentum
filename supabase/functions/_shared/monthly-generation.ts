@@ -168,7 +168,10 @@ export async function runMonthlyGeneration(input: {
   }
 
   const profile = await input.store.loadProfile(input.userId)
-  if (profile.onboardingStatus === 'automation_blocked') {
+  if (
+    profile.onboardingStatus === 'automation_blocked' ||
+    Boolean(profile.automationBlockReason)
+  ) {
     throw new HttpError(403, 'SAFETY_BLOCKED', 'Generation is blocked for safety review.')
   }
   if (profile.onboardingStatus !== 'complete') {

@@ -335,6 +335,25 @@ describe('monthly generation pipeline', () => {
     expect(store.claimCount.size).toBe(1)
   })
 
+  it('imports a schema-valid FA stub without calling live HTTP', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const store = new MemoryGenerationStore({
+      profile: { ...entitledProfile('user-fa'), locale: 'fa-IR' },
+    })
+    const result = await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-key-fa',
+      locale: 'fa-IR',
+      store,
+    })
+    expect(result.httpStatus).toBe(201)
+    expect(result.body.job.status).toBe('ready')
+    expect(store.importedPlans).toHaveLength(1)
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
   it('rejects unentitled users without importing', async () => {
     const store = new MemoryGenerationStore({ entitlement: null })
     store.reserveGift = async () => {
@@ -382,6 +401,7 @@ describe('monthly generation pipeline', () => {
     expect(replay.httpStatus).toBe(200)
     expect(replay.body.idempotent_replay).toBe(true)
     expect(store.importedPlans).toHaveLength(1)
+    expect(store.jobs.size).toBe(1)
     expect(store.claimCount.size).toBe(1)
   })
 
@@ -532,5 +552,101 @@ describe('monthly generation pipeline', () => {
       store,
     })).rejects.toMatchObject({ code: 'PAYMENT_METHOD_REQUIRED' })
     expect(store.importedPlans).toHaveLength(0)
+    expect(store.jobs.size).toBe(0)
+  })
+
+  it('never imports for automation-blocked or ineligible profiles', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    for (const profile of [
+      { ...entitledProfile('blocked-user'), onboardingStatus: 'automation_blocked' },
+      {
+        ...entitledProfile('ineligible-user'),
+        onboardingStatus: 'complete',
+        automationBlockReason: 'eating_disorder_history',
+      },
+    ] satisfies GenerationProfile[]) {
+      const store = new MemoryGenerationStore({ profile })
+      await expect(runMonthlyGeneration({
+        userId: store.profile.userId,
+        emailConfirmed: true,
+        idempotencyKey: `generation-key-safety-${profile.userId}`,
+        store,
+      })).rejects.toMatchObject({ code: 'SAFETY_BLOCKED', status: 403 })
+      expect(store.importedPlans).toHaveLength(0)
+      expect(store.jobs.size).toBe(0)
+    }
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
+  it('fails closed on invalid catalog IDs in FA and EN without importing', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    for (const locale of ['fa-IR', 'en-US'] as const) {
+      const store = new MemoryGenerationStore({
+        profile: { ...entitledProfile(`invalid-${locale}`), locale },
+      })
+      await expect(runMonthlyGeneration({
+        userId: store.profile.userId,
+        emailConfirmed: true,
+        idempotencyKey: `generation-key-invalid-${locale}`,
+        locale,
+        invalidStub: true,
+        store,
+      })).rejects.toMatchObject({ code: 'PLAN_VALIDATION_FAILED' })
+      expect(store.importedPlans).toHaveLength(0)
+      expect(store.jobs.size).toBe(1)
+      expect([...store.jobs.values()][0]?.status).toBe('failed')
+    }
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
+  it('fails closed on allergen leaks in FA and EN without importing', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    for (const locale of ['fa-IR', 'en-US'] as const) {
+      const store = new MemoryGenerationStore({
+        profile: {
+          ...entitledProfile(`allergen-${locale}`),
+          locale,
+          allergies: locale === 'fa-IR' ? ['شیر'] : ['dairy'],
+        },
+      })
+      store.loadCatalog = async () => createPlanCatalogSnapshot({
+        ...catalogRows('momentum-core@v2'),
+        ingredientAllergens: [{
+          ingredient_id: 'ingredient:almonds@v2',
+          allergen_id: 'allergen:milk@v2',
+        }],
+      })
+      await expect(runMonthlyGeneration({
+        userId: store.profile.userId,
+        emailConfirmed: true,
+        idempotencyKey: `generation-key-allergen-${locale}`,
+        locale,
+        store,
+      })).rejects.toMatchObject({ code: 'PLAN_VALIDATION_FAILED' })
+      expect(store.importedPlans).toHaveLength(0)
+      expect([...store.jobs.values()][0]?.status).toBe('failed')
+    }
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
+  it('fails closed on quota without calling OpenAI or importing', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const store = new MemoryGenerationStore()
+    store.reserveUsage = async () => {
+      throw new HttpError(402, 'quota_exceeded', 'The AI allowance for this period is exhausted.')
+    }
+    await expect(runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-key-quota',
+      store,
+    })).rejects.toMatchObject({ code: 'PERIOD_ALREADY_CONSUMED' })
+    expect(store.importedPlans).toHaveLength(0)
+    expect(store.jobs.size).toBe(0)
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
   })
 })

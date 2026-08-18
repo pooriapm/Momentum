@@ -77,7 +77,7 @@ const PATTERNS: Array<{
     reason: 'unsafe_exercise',
     level: 'blocked',
     pattern:
-      /(?:\b(?:train|work out|push through).{0,35}(?:sharp pain|chest pain|dizziness|fainted)|\bexercise.{0,40}(?:without water|while dehydrated)\b|تمرین.{0,35}(?:با درد تیز|با درد قفسه سینه|با سرگیجه|بعد از بیهوشی)|(?:درد تیز|درد قفسه سینه|سرگیجه|بیهوشی).{0,35}تمرین|بدون آب.{0,25}تمرین)/i,
+      /(?:\b(?:train|work out|push through).{0,35}(?:sharp pain|chest pain|dizziness|fainted)|\bexercise.{0,40}(?:without water|while dehydrated)\b|تمرین.{0,35}(?:با درد تیز|با درد قفسه سینه|با سرگیجه|بعد از بیهوشی)|(?:با درد تیز|با درد قفسه سینه|با سرگیجه|بعد از بیهوشی).{0,35}تمرین|بدون آب.{0,25}تمرین)/i,
   },
   {
     reason: 'medical_boundary',

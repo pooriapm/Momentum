@@ -1,0 +1,1817 @@
+{
+  "content_locale": "fa-IR",
+  "plan_name": "برنامه پایه مومنتوم",
+  "summary": "یک برنامه ساده و غیرپزشکی برای بزرگسالان واجد شرایط.",
+  "default_targets": {
+    "calories": 1700,
+    "protein_g": 80,
+    "carbs_g": 250,
+    "fat_g": 42,
+    "fiber_g": 33,
+    "water_ml": 2200
+  },
+  "days": [
+    {
+      "day_index": 0,
+      "title": "روز 1",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "انرژی متعادل در طول روز"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "تمرین پایه تمام‌بدن",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-0-0",
+            "name": "اسکوات",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "پل باسن",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-0-1",
+            "name": "شنا دیوار",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-0-2",
+            "name": "پل باسن",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "اسکوات",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "safety_note": "در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-0",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-0",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-0",
+              "title": "موز و بادام",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "موز",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "بادام",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-0",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-0",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-0",
+              "title": "مرغ و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "مرغ",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-0",
+          "type": "dinner",
+          "title": "شام",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-0",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-0",
+              "title": "عدس و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "عدس",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 1,
+      "title": "روز 2",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "انرژی متعادل در طول روز"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "تمرین پایه تمام‌بدن",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-1-0",
+            "name": "اسکوات",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "پل باسن",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-1-1",
+            "name": "شنا دیوار",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-1-2",
+            "name": "پل باسن",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "اسکوات",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "safety_note": "در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-1",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-1",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-1",
+              "title": "موز و بادام",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "موز",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "بادام",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-1",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-1",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-1",
+              "title": "مرغ و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "مرغ",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-1",
+          "type": "dinner",
+          "title": "شام",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-1",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-1",
+              "title": "عدس و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "عدس",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 2,
+      "title": "روز 3",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "انرژی متعادل در طول روز"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "تمرین پایه تمام‌بدن",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-2-0",
+            "name": "اسکوات",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "پل باسن",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-2-1",
+            "name": "شنا دیوار",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-2-2",
+            "name": "پل باسن",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "اسکوات",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "safety_note": "در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-2",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-2",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-2",
+              "title": "موز و بادام",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "موز",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "بادام",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-2",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-2",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-2",
+              "title": "مرغ و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "مرغ",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-2",
+          "type": "dinner",
+          "title": "شام",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-2",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-2",
+              "title": "عدس و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "عدس",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 3,
+      "title": "روز 4",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "انرژی متعادل در طول روز"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "تمرین پایه تمام‌بدن",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-3-0",
+            "name": "اسکوات",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "پل باسن",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-3-1",
+            "name": "شنا دیوار",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-3-2",
+            "name": "پل باسن",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "اسکوات",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "safety_note": "در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-3",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-3",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-3",
+              "title": "موز و بادام",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "موز",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "بادام",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-3",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-3",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-3",
+              "title": "مرغ و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "مرغ",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-3",
+          "type": "dinner",
+          "title": "شام",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-3",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-3",
+              "title": "عدس و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "عدس",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 4,
+      "title": "روز 5",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "انرژی متعادل در طول روز"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "تمرین پایه تمام‌بدن",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-4-0",
+            "name": "اسکوات",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "پل باسن",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-4-1",
+            "name": "شنا دیوار",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-4-2",
+            "name": "پل باسن",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "اسکوات",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "safety_note": "در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-4",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-4",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-4",
+              "title": "موز و بادام",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "موز",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "بادام",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-4",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-4",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-4",
+              "title": "مرغ و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "مرغ",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-4",
+          "type": "dinner",
+          "title": "شام",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-4",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-4",
+              "title": "عدس و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "عدس",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 5,
+      "title": "روز 6",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "انرژی متعادل در طول روز"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "تمرین پایه تمام‌بدن",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-5-0",
+            "name": "اسکوات",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "پل باسن",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-5-1",
+            "name": "شنا دیوار",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-5-2",
+            "name": "پل باسن",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "اسکوات",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "safety_note": "در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-5",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-5",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-5",
+              "title": "موز و بادام",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "موز",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "بادام",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-5",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-5",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-5",
+              "title": "مرغ و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "مرغ",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-5",
+          "type": "dinner",
+          "title": "شام",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-5",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-5",
+              "title": "عدس و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "عدس",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 6,
+      "title": "روز 7",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "انرژی متعادل در طول روز"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "تمرین پایه تمام‌بدن",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-6-0",
+            "name": "اسکوات",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "پل باسن",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-6-1",
+            "name": "شنا دیوار",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-6-2",
+            "name": "پل باسن",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "با شدت متوسط و کنترل‌شده",
+            "substitution": "اسکوات",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "پنج دقیقه راه رفتن آرام"
+        ],
+        "safety_note": "در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-6",
+          "type": "breakfast",
+          "title": "صبحانه",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-6",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-6",
+              "title": "موز و بادام",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "موز",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "بادام",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-6",
+          "type": "lunch",
+          "title": "ناهار",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-6",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-6",
+              "title": "مرغ و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "مرغ",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-6",
+          "type": "dinner",
+          "title": "شام",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-6",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-6",
+              "title": "عدس و برنج",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "برنج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "عدس",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "روغن زیتون",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "اسفناج",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "emergency_options": [
+    {
+      "food_id": "food:banana-almonds@v2",
+      "option_key": "emergency-banana",
+      "title": "موز و بادام",
+      "ingredients": [
+        {
+          "ingredient_id": "ingredient:banana@v2",
+          "name": "موز",
+          "amount": 1,
+          "unit": "piece",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:almonds@v2",
+          "name": "بادام",
+          "amount": 1,
+          "unit": "g",
+          "note": null
+        }
+      ],
+      "nutrition": {
+        "calories": 400,
+        "protein_g": 10,
+        "carbs_g": 75,
+        "fat_g": 6,
+        "fiber_g": 8,
+        "confidence": "high",
+        "source": "catalog_reference"
+      },
+      "recipe": null,
+      "warnings": [],
+      "portable": true
+    }
+  ],
+  "restaurant_guide": [
+    {
+      "title": "گزینه ساده رستوران",
+      "order_instructions": [
+        "مواد ساده و سس جداگانه سفارش دهید."
+      ],
+      "estimated_nutrition": {
+        "calories": 650,
+        "protein_g": 45,
+        "carbs_g": 75,
+        "fat_g": 19,
+        "fiber_g": 7,
+        "confidence": "medium",
+        "source": "model_estimate"
+      }
+    }
+  ],
+  "grocery_list": [
+    {
+      "category": "مواد پایه",
+      "items": [
+        {
+          "ingredient_id": "ingredient:banana@v2",
+          "name": "موز",
+          "amount": 7,
+          "unit": "piece",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:almonds@v2",
+          "name": "بادام",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:brown-rice@v2",
+          "name": "برنج",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:chicken-breast@v2",
+          "name": "مرغ",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:olive-oil@v2",
+          "name": "روغن زیتون",
+          "amount": 7,
+          "unit": "tsp",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:spinach@v2",
+          "name": "اسفناج",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:red-lentils@v2",
+          "name": "عدس",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        }
+      ]
+    }
+  ],
+  "health_safety_notes": [
+    {
+      "category": "training",
+      "level": "caution",
+      "note": "در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید."
+    }
+  ]
+}

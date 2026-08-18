@@ -1,0 +1,1817 @@
+{
+  "content_locale": "en-US",
+  "plan_name": "Momentum starter plan",
+  "summary": "A simple, non-medical starter plan for eligible adults.",
+  "default_targets": {
+    "calories": 1700,
+    "protein_g": 80,
+    "carbs_g": 250,
+    "fat_g": 42,
+    "fiber_g": 33,
+    "water_ml": 2200
+  },
+  "days": [
+    {
+      "day_index": 0,
+      "title": "Day 1",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "Balanced energy across the day"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "Starter full-body session",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "Five minutes of easy walking"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-0-0",
+            "name": "Squat",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Glute bridge",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-0-1",
+            "name": "Wall push-up",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-0-2",
+            "name": "Glute bridge",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Squat",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "Five minutes of easy walking"
+        ],
+        "safety_note": "Stop exercising if pain, dizziness, or unusual symptoms occur."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-0",
+          "type": "breakfast",
+          "title": "Breakfast",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-0",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-0",
+              "title": "Banana almonds",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "Banana",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "Almonds",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-0",
+          "type": "lunch",
+          "title": "Lunch",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-0",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-0",
+              "title": "Chicken rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "Chicken",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-0",
+          "type": "dinner",
+          "title": "Dinner",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-0",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-0",
+              "title": "Lentil stew rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "Lentils",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 1,
+      "title": "Day 2",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "Balanced energy across the day"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "Starter full-body session",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "Five minutes of easy walking"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-1-0",
+            "name": "Squat",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Glute bridge",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-1-1",
+            "name": "Wall push-up",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-1-2",
+            "name": "Glute bridge",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Squat",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "Five minutes of easy walking"
+        ],
+        "safety_note": "Stop exercising if pain, dizziness, or unusual symptoms occur."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-1",
+          "type": "breakfast",
+          "title": "Breakfast",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-1",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-1",
+              "title": "Banana almonds",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "Banana",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "Almonds",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-1",
+          "type": "lunch",
+          "title": "Lunch",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-1",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-1",
+              "title": "Chicken rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "Chicken",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-1",
+          "type": "dinner",
+          "title": "Dinner",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-1",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-1",
+              "title": "Lentil stew rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "Lentils",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 2,
+      "title": "Day 3",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "Balanced energy across the day"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "Starter full-body session",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "Five minutes of easy walking"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-2-0",
+            "name": "Squat",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Glute bridge",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-2-1",
+            "name": "Wall push-up",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-2-2",
+            "name": "Glute bridge",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Squat",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "Five minutes of easy walking"
+        ],
+        "safety_note": "Stop exercising if pain, dizziness, or unusual symptoms occur."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-2",
+          "type": "breakfast",
+          "title": "Breakfast",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-2",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-2",
+              "title": "Banana almonds",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "Banana",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "Almonds",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-2",
+          "type": "lunch",
+          "title": "Lunch",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-2",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-2",
+              "title": "Chicken rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "Chicken",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-2",
+          "type": "dinner",
+          "title": "Dinner",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-2",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-2",
+              "title": "Lentil stew rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "Lentils",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 3,
+      "title": "Day 4",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "Balanced energy across the day"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "Starter full-body session",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "Five minutes of easy walking"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-3-0",
+            "name": "Squat",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Glute bridge",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-3-1",
+            "name": "Wall push-up",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-3-2",
+            "name": "Glute bridge",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Squat",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "Five minutes of easy walking"
+        ],
+        "safety_note": "Stop exercising if pain, dizziness, or unusual symptoms occur."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-3",
+          "type": "breakfast",
+          "title": "Breakfast",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-3",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-3",
+              "title": "Banana almonds",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "Banana",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "Almonds",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-3",
+          "type": "lunch",
+          "title": "Lunch",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-3",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-3",
+              "title": "Chicken rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "Chicken",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-3",
+          "type": "dinner",
+          "title": "Dinner",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-3",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-3",
+              "title": "Lentil stew rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "Lentils",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 4,
+      "title": "Day 5",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "Balanced energy across the day"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "Starter full-body session",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "Five minutes of easy walking"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-4-0",
+            "name": "Squat",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Glute bridge",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-4-1",
+            "name": "Wall push-up",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-4-2",
+            "name": "Glute bridge",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Squat",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "Five minutes of easy walking"
+        ],
+        "safety_note": "Stop exercising if pain, dizziness, or unusual symptoms occur."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-4",
+          "type": "breakfast",
+          "title": "Breakfast",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-4",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-4",
+              "title": "Banana almonds",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "Banana",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "Almonds",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-4",
+          "type": "lunch",
+          "title": "Lunch",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-4",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-4",
+              "title": "Chicken rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "Chicken",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-4",
+          "type": "dinner",
+          "title": "Dinner",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-4",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-4",
+              "title": "Lentil stew rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "Lentils",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 5,
+      "title": "Day 6",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "Balanced energy across the day"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "Starter full-body session",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "Five minutes of easy walking"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-5-0",
+            "name": "Squat",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Glute bridge",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-5-1",
+            "name": "Wall push-up",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-5-2",
+            "name": "Glute bridge",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Squat",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "Five minutes of easy walking"
+        ],
+        "safety_note": "Stop exercising if pain, dizziness, or unusual symptoms occur."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-5",
+          "type": "breakfast",
+          "title": "Breakfast",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-5",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-5",
+              "title": "Banana almonds",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "Banana",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "Almonds",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-5",
+          "type": "lunch",
+          "title": "Lunch",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-5",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-5",
+              "title": "Chicken rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "Chicken",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-5",
+          "type": "dinner",
+          "title": "Dinner",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-5",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-5",
+              "title": "Lentil stew rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "Lentils",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "day_index": 6,
+      "title": "Day 7",
+      "training_type": "full_body",
+      "target_strategy": {
+        "mode": "balanced",
+        "rationale": "Balanced energy across the day"
+      },
+      "targets": {
+        "calories": 1700,
+        "protein_g": 80,
+        "carbs_g": 250,
+        "fat_g": 42,
+        "fiber_g": 33,
+        "water_ml": 2200
+      },
+      "workout": {
+        "title": "Starter full-body session",
+        "duration_minutes": 30,
+        "intensity": "moderate",
+        "warmup": [
+          "Five minutes of easy walking"
+        ],
+        "exercises": [
+          {
+            "exercise_id": "exercise:bodyweight-squat@v2",
+            "exercise_key": "starter-6-0",
+            "name": "Squat",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Glute bridge",
+            "substitution_exercise_id": "exercise:glute-bridge@v2"
+          },
+          {
+            "exercise_id": "exercise:wall-pushup@v2",
+            "exercise_key": "starter-6-1",
+            "name": "Wall push-up",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2",
+              "equipment:wall@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": null,
+            "substitution_exercise_id": null
+          },
+          {
+            "exercise_id": "exercise:glute-bridge@v2",
+            "exercise_key": "starter-6-2",
+            "name": "Glute bridge",
+            "sets": 3,
+            "reps": "8-12",
+            "rest_seconds": 60,
+            "equipment": [
+              "equipment:bodyweight@v2"
+            ],
+            "equipment_ids": [
+              "equipment:bodyweight@v2"
+            ],
+            "intensity_note": "Moderate, controlled effort",
+            "substitution": "Squat",
+            "substitution_exercise_id": "exercise:bodyweight-squat@v2"
+          }
+        ],
+        "cooldown": [
+          "Five minutes of easy walking"
+        ],
+        "safety_note": "Stop exercising if pain, dizziness, or unusual symptoms occur."
+      },
+      "meals": [
+        {
+          "slot_key": "breakfast-6",
+          "type": "breakfast",
+          "title": "Breakfast",
+          "scheduled_time": "08:00",
+          "default_option_key": "breakfast-option-6",
+          "options": [
+            {
+              "food_id": "food:banana-almonds@v2",
+              "option_key": "breakfast-option-6",
+              "title": "Banana almonds",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:banana@v2",
+                  "name": "Banana",
+                  "amount": 1,
+                  "unit": "piece",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:almonds@v2",
+                  "name": "Almonds",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 10,
+                "carbs_g": 75,
+                "fat_g": 6,
+                "fiber_g": 8,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": true
+            }
+          ]
+        },
+        {
+          "slot_key": "lunch-6",
+          "type": "lunch",
+          "title": "Lunch",
+          "scheduled_time": "13:00",
+          "default_option_key": "lunch-option-6",
+          "options": [
+            {
+              "food_id": "food:chicken-rice-bowl@v2",
+              "option_key": "lunch-option-6",
+              "title": "Chicken rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:chicken-breast@v2",
+                  "name": "Chicken",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 45,
+                "carbs_g": 75,
+                "fat_g": 19,
+                "fiber_g": 7,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        },
+        {
+          "slot_key": "dinner-6",
+          "type": "dinner",
+          "title": "Dinner",
+          "scheduled_time": "19:00",
+          "default_option_key": "dinner-option-6",
+          "options": [
+            {
+              "food_id": "food:lentil-stew-rice@v2",
+              "option_key": "dinner-option-6",
+              "title": "Lentil stew rice",
+              "ingredients": [
+                {
+                  "ingredient_id": "ingredient:brown-rice@v2",
+                  "name": "Rice",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:red-lentils@v2",
+                  "name": "Lentils",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:olive-oil@v2",
+                  "name": "Olive oil",
+                  "amount": 1,
+                  "unit": "tsp",
+                  "note": null
+                },
+                {
+                  "ingredient_id": "ingredient:spinach@v2",
+                  "name": "Spinach",
+                  "amount": 1,
+                  "unit": "g",
+                  "note": null
+                }
+              ],
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 25,
+                "carbs_g": 100,
+                "fat_g": 17,
+                "fiber_g": 18,
+                "confidence": "high",
+                "source": "catalog_reference"
+              },
+              "recipe": null,
+              "warnings": [],
+              "portable": false
+            }
+          ]
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "emergency_options": [
+    {
+      "food_id": "food:banana-almonds@v2",
+      "option_key": "emergency-banana",
+      "title": "Banana almonds",
+      "ingredients": [
+        {
+          "ingredient_id": "ingredient:banana@v2",
+          "name": "Banana",
+          "amount": 1,
+          "unit": "piece",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:almonds@v2",
+          "name": "Almonds",
+          "amount": 1,
+          "unit": "g",
+          "note": null
+        }
+      ],
+      "nutrition": {
+        "calories": 400,
+        "protein_g": 10,
+        "carbs_g": 75,
+        "fat_g": 6,
+        "fiber_g": 8,
+        "confidence": "high",
+        "source": "catalog_reference"
+      },
+      "recipe": null,
+      "warnings": [],
+      "portable": true
+    }
+  ],
+  "restaurant_guide": [
+    {
+      "title": "Simple restaurant option",
+      "order_instructions": [
+        "Choose simple ingredients and request sauce separately."
+      ],
+      "estimated_nutrition": {
+        "calories": 650,
+        "protein_g": 45,
+        "carbs_g": 75,
+        "fat_g": 19,
+        "fiber_g": 7,
+        "confidence": "medium",
+        "source": "model_estimate"
+      }
+    }
+  ],
+  "grocery_list": [
+    {
+      "category": "Starter ingredients",
+      "items": [
+        {
+          "ingredient_id": "ingredient:banana@v2",
+          "name": "Banana",
+          "amount": 7,
+          "unit": "piece",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:almonds@v2",
+          "name": "Almonds",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:brown-rice@v2",
+          "name": "Rice",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:chicken-breast@v2",
+          "name": "Chicken",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:olive-oil@v2",
+          "name": "Olive oil",
+          "amount": 7,
+          "unit": "tsp",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:spinach@v2",
+          "name": "Spinach",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        },
+        {
+          "ingredient_id": "ingredient:red-lentils@v2",
+          "name": "Lentils",
+          "amount": 7,
+          "unit": "g",
+          "note": null
+        }
+      ]
+    }
+  ],
+  "health_safety_notes": [
+    {
+      "category": "training",
+      "level": "caution",
+      "note": "Stop exercising if pain, dizziness, or unusual symptoms occur."
+    }
+  ]
+}
