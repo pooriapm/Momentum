@@ -1,67 +1,96 @@
 /*
- * Momentum design tokens
+ * Momentum production theme
  *
- * Brand and theme changes should start here. Components consume semantic
- * tokens only, so palettes can evolve without editing feature code.
+ * Canonical source: docs/design/tokens.json (Human Strength — Deep Plum + Apricot).
+ * Existing --color-* names stay so orbit.css and components keep working.
+ * Light/Dark semantic map:
+ *   brand / accent / action / plan / focus → color.semantic.action|plan (plum)
+ *   highlight / energy                   → color.semantic.energy (apricot)
+ *   background / canvas                  → color.semantic.background.canvas
+ *   surface                              → color.semantic.surface.content
+ *   text                                 → color.semantic.text.primary
  */
 :root {
   --font-app: "Vazirmatn", Tahoma, "Segoe UI", Arial, sans-serif;
 
-  --color-background: #07110e;
-  --color-surface: rgba(17, 34, 27, 0.86);
-  --color-surface-raised: #12251d;
-  --color-surface-muted: rgba(35, 59, 48, 0.56);
-  --color-surface-hover: rgba(48, 78, 64, 0.68);
-  --color-text: #f4f6ef;
-  --color-text-secondary: #b4c5bc;
-  --color-text-muted: #758b80;
-  --color-border: rgba(224, 244, 233, 0.11);
-  --color-border-strong: rgba(224, 244, 233, 0.18);
+  --color-background: #161114;
+  --color-canvas: #161114;
+  --color-surface: #21191e;
+  --color-surface-raised: #2d2229;
+  --color-surface-muted: #21191e;
+  --color-surface-hover: #2d2229;
+  --color-text: #fbf5f8;
+  --color-text-secondary: #c2b3bc;
+  --color-text-muted: #9f8e98;
+  --color-border: #ffffff1f;
+  --color-border-strong: #b6a7b0;
 
-  --color-accent: #4bd69a;
-  --color-accent-strong: #25ad73;
-  --color-accent-soft: rgba(75, 214, 154, 0.14);
-  --color-on-accent: #07110d;
+  --color-accent: #e0a3c8;
+  --color-accent-strong: #ebc4db;
+  --color-accent-soft: #e0a3c838;
+  --color-on-accent: #351329;
 
-  --color-highlight: #d8b66a;
-  --color-highlight-soft: rgba(216, 182, 106, 0.13);
-  --color-on-highlight: #171006;
-  --color-danger: #ff8f7d;
+  --color-brand: #e0a3c8;
+  --color-brand-strong: #ebc4db;
+  --color-brand-soft: #48283a;
+  --color-brand-faint: #e0a3c81f;
+  --color-on-brand: #351329;
+  --color-action: #e0a3c8;
+  --color-action-strong: #c67fa9;
+  --color-focus: #e0a3c8;
+  --color-plan: #e0a3c8;
+  --color-plan-soft: #48283a;
 
-  --color-overlay: rgba(2, 8, 6, 0.82);
-  --color-chrome: rgba(7, 17, 14, 0.82);
-  --color-background-glow-accent: rgba(37, 173, 115, 0.18);
-  --color-background-glow-highlight: rgba(216, 182, 106, 0.08);
-  --color-splash-glow: rgba(75, 214, 154, 0.13);
-  --color-input-inner-border: rgba(255, 255, 255, 0.5);
-  --color-selection: #72e5af;
-  --color-on-selection: #07100c;
+  --color-highlight: #ff9a73;
+  --color-highlight-soft: #4b261d;
+  --color-on-highlight: #351329;
+  --color-energy: #ff9a73;
+  --color-energy-soft: #4b261d;
 
-  /* Brand mark — shared by every in-product logo size and theme. */
-  --color-logo-background-start: #12251d;
-  --color-logo-background-end: #07110e;
-  --color-logo-border: rgba(224, 244, 233, 0.14);
-  --color-logo-orbit-track: rgba(223, 247, 234, 0.13);
-  --color-logo-accent-start: #72e5af;
-  --color-logo-accent-end: #25ad73;
-  --color-logo-letter: #f4f6ef;
-  --color-logo-dot-start: #f1d895;
-  --color-logo-dot-end: #d8b66a;
-  --color-logo-dot-halo: rgba(216, 182, 106, 0.12);
+  --color-success: #69d3ac;
+  --color-success-soft: #17382e;
+  --color-danger: #ff8b9c;
+  --color-danger-soft: #471f29;
+  --color-warning: #f6c66b;
+  --color-warning-soft: #3e3017;
 
-  --shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.17);
-  --shadow-card: 0 14px 38px rgba(0, 0, 0, 0.1);
-  --shadow-accent: 0 10px 28px rgba(70, 205, 145, 0.2);
+  --color-overlay: #000000c7;
+  --color-chrome: #2d2229c7;
+  --color-chrome-strong: #352831e6;
+  --color-background-glow-accent: #e0a3c81f;
+  --color-background-glow-highlight: #ff9a731a;
+  --color-splash-glow: #e0a3c81f;
+  --color-input-inner-border: #ffffff3d;
+  --color-selection: #e0a3c8;
+  --color-on-selection: #351329;
+
+  /* Brand mark — Deep Plum tile, Apricot orbit accent. */
+  --color-logo-background-start: #2d2229;
+  --color-logo-background-end: #161114;
+  --color-logo-border: #ffffff3d;
+  --color-logo-orbit-track: #ffffff1f;
+  --color-logo-accent-start: #e0a3c8;
+  --color-logo-accent-end: #c67fa9;
+  --color-logo-letter: #fbf5f8;
+  --color-logo-dot-start: #ff9a73;
+  --color-logo-dot-end: #b95332;
+  --color-logo-dot-halo: #ff9a731a;
+  --orbit-logo-surface: #21191e;
+
+  --shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.28);
+  --shadow-card: 0 14px 38px rgba(0, 0, 0, 0.18);
+  --shadow-accent: 0 10px 28px rgba(224, 163, 200, 0.22);
   --shadow-dialog: 0 30px 100px rgba(0, 0, 0, 0.45);
-  --shadow-brand: 0 8px 24px rgba(0, 0, 0, 0.22);
-  --shadow-brand-active: 0 13px 30px rgba(75, 214, 154, 0.14);
+  --shadow-brand: 0 8px 24px rgba(224, 163, 200, 0.22);
+  --shadow-brand-active: 0 13px 30px rgba(224, 163, 200, 0.16);
   --shadow-splash: 0 20px 55px rgba(0, 0, 0, 0.28);
-  --shadow-splash-active: 0 22px 60px rgba(75, 214, 154, 0.14);
-  --shadow-navigation: 0 -8px 30px rgba(0, 0, 0, 0.04);
-  --shadow-hero: 0 30px 80px rgba(0, 0, 0, 0.18);
-  --shadow-option-selected: 0 8px 24px rgba(70, 205, 145, 0.08);
-  --shadow-progress: 0 0 24px rgba(70, 205, 145, 0.12);
-  --shadow-health-score: 0 0 30px rgba(75, 214, 154, 0.12);
+  --shadow-splash-active: 0 22px 60px rgba(224, 163, 200, 0.16);
+  --shadow-navigation: 0 -8px 30px rgba(0, 0, 0, 0.18);
+  --shadow-hero: 0 30px 80px rgba(0, 0, 0, 0.22);
+  --shadow-option-selected: 0 8px 24px rgba(224, 163, 200, 0.12);
+  --shadow-progress: 0 0 24px rgba(224, 163, 200, 0.14);
+  --shadow-health-score: 0 0 30px rgba(255, 154, 115, 0.12);
+  --shadow-chrome: 0 14px 45px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
   --color-print-background: #ffffff;
   --color-print-text: #111111;
@@ -76,6 +105,7 @@
   --control-height-sm: 2.5rem;
   --control-height-md: 2.75rem;
   --control-height-lg: 3rem;
+  --size-field: 3rem;
   --motion-fast: 180ms;
   --motion-normal: 300ms;
 
@@ -84,49 +114,83 @@
 
 :root.light,
 :root[data-theme="light"] {
-  --color-background: #f5f6f2;
-  --color-surface: rgba(255, 255, 255, 0.94);
-  --color-surface-raised: #ffffff;
-  --color-surface-muted: #eef1ed;
-  --color-surface-hover: #e4eae6;
-  --color-text: #17211c;
-  --color-text-secondary: #4b5b53;
-  --color-text-muted: #607067;
-  --color-border: rgba(23, 52, 39, 0.13);
-  --color-border-strong: rgba(23, 52, 39, 0.22);
+  --color-background: #faf7f4;
+  --color-canvas: #faf7f4;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f1eaef;
+  --color-surface-muted: #f5f0ed;
+  --color-surface-hover: #f1eaef;
+  --color-text: #241a21;
+  --color-text-secondary: #675762;
+  --color-text-muted: #7c6a75;
+  --color-border: #e8dfe4;
+  --color-border-strong: #675762;
 
-  --color-accent: #087a5b;
-  --color-accent-strong: #056046;
-  --color-accent-soft: rgba(8, 122, 91, 0.1);
+  --color-accent: #73395f;
+  --color-accent-strong: #5b294a;
+  --color-accent-soft: #f3e1ec;
   --color-on-accent: #ffffff;
 
-  --color-highlight: #8a6315;
-  --color-highlight-soft: rgba(138, 99, 21, 0.1);
+  --color-brand: #73395f;
+  --color-brand-strong: #5b294a;
+  --color-brand-soft: #f3e1ec;
+  --color-brand-faint: #73395f14;
+  --color-on-brand: #ffffff;
+  --color-action: #73395f;
+  --color-action-strong: #5b294a;
+  --color-focus: #73395f;
+  --color-plan: #73395f;
+  --color-plan-soft: #f3e1ec;
+
+  --color-highlight: #b95332;
+  --color-highlight-soft: #fbe4da;
   --color-on-highlight: #ffffff;
-  --color-danger: #b93832;
+  --color-energy: #b95332;
+  --color-energy-soft: #fbe4da;
 
-  --color-overlay: rgba(22, 31, 27, 0.48);
-  --color-chrome: rgba(250, 251, 248, 0.9);
-  --color-background-glow-accent: rgba(8, 122, 91, 0.065);
-  --color-background-glow-highlight: rgba(138, 99, 21, 0.035);
-  --color-splash-glow: rgba(8, 122, 91, 0.08);
-  --color-input-inner-border: rgba(255, 255, 255, 0.72);
-  --color-selection: #bde8d8;
-  --color-on-selection: #17211c;
+  --color-success: #24765d;
+  --color-success-soft: #ddf5ea;
+  --color-danger: #b23b52;
+  --color-danger-soft: #ffe4e8;
+  --color-warning: #925b00;
+  --color-warning-soft: #fff0c7;
 
-  --shadow-panel: 0 22px 55px rgba(29, 48, 39, 0.09);
-  --shadow-card: 0 12px 28px rgba(29, 48, 39, 0.08);
-  --shadow-accent: 0 10px 24px rgba(8, 122, 91, 0.18);
-  --shadow-dialog: 0 30px 90px rgba(29, 48, 39, 0.24);
-  --shadow-brand: 0 8px 24px rgba(29, 48, 39, 0.12);
-  --shadow-brand-active: 0 13px 30px rgba(8, 122, 91, 0.13);
-  --shadow-splash: 0 20px 55px rgba(29, 48, 39, 0.13);
-  --shadow-splash-active: 0 22px 60px rgba(8, 122, 91, 0.13);
-  --shadow-navigation: 0 -8px 30px rgba(29, 48, 39, 0.07);
-  --shadow-hero: 0 30px 80px rgba(29, 48, 39, 0.1);
-  --shadow-option-selected: 0 8px 24px rgba(8, 122, 91, 0.09);
-  --shadow-progress: 0 0 24px rgba(8, 122, 91, 0.11);
-  --shadow-health-score: 0 0 30px rgba(8, 122, 91, 0.11);
+  --color-overlay: #241a21b8;
+  --color-chrome: #fffafcc2;
+  --color-chrome-strong: #ffffffde;
+  --color-background-glow-accent: #73395f14;
+  --color-background-glow-highlight: #b9533212;
+  --color-splash-glow: #73395f14;
+  --color-input-inner-border: #ffffffb8;
+  --color-selection: #ebc4db;
+  --color-on-selection: #241a21;
+
+  --color-logo-background-start: #f1eaef;
+  --color-logo-background-end: #faf7f4;
+  --color-logo-border: #e8dfe4;
+  --color-logo-orbit-track: #d6c9d0;
+  --color-logo-accent-start: #a75b85;
+  --color-logo-accent-end: #73395f;
+  --color-logo-letter: #241a21;
+  --color-logo-dot-start: #ff9a73;
+  --color-logo-dot-end: #b95332;
+  --color-logo-dot-halo: #b9533212;
+  --orbit-logo-surface: #ffffff;
+
+  --shadow-panel: 0 22px 55px rgba(36, 26, 33, 0.09);
+  --shadow-card: 0 12px 28px rgba(36, 26, 33, 0.08);
+  --shadow-accent: 0 10px 24px rgba(115, 57, 95, 0.18);
+  --shadow-dialog: 0 30px 90px rgba(36, 26, 33, 0.24);
+  --shadow-brand: 0 8px 24px rgba(115, 57, 95, 0.16);
+  --shadow-brand-active: 0 13px 30px rgba(115, 57, 95, 0.14);
+  --shadow-splash: 0 20px 55px rgba(36, 26, 33, 0.13);
+  --shadow-splash-active: 0 22px 60px rgba(115, 57, 95, 0.14);
+  --shadow-navigation: 0 -8px 30px rgba(36, 26, 33, 0.07);
+  --shadow-hero: 0 30px 80px rgba(36, 26, 33, 0.1);
+  --shadow-option-selected: 0 8px 24px rgba(115, 57, 95, 0.09);
+  --shadow-progress: 0 0 24px rgba(115, 57, 95, 0.11);
+  --shadow-health-score: 0 0 30px rgba(185, 83, 50, 0.11);
+  --shadow-chrome: 0 14px 45px rgba(36, 26, 33, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.92);
 
   color-scheme: light;
 }
