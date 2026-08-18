@@ -14,12 +14,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Single runner for PRs — keeps public-repo Actions usage low.
   web:
     name: Web quality gates
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22.12.0
@@ -29,9 +32,14 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm audit --audit-level=high
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   e2e:
     name: Browser smoke
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -46,6 +54,7 @@ jobs:
 
   backend:
     name: Supabase and Deno
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -75,15 +84,3 @@ jobs:
       - name: Stop local Supabase
         if: always()
         run: npx supabase stop --no-backup
-
-  secrets:
-    name: Secret scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
