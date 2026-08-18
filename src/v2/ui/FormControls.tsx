@@ -1,4 +1,4 @@
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, Minus, Plus } from 'lucide-react'
 import {
   Children,
   isValidElement,
@@ -9,10 +9,13 @@ import {
   useState,
   type ChangeEvent,
   type InputHTMLAttributes,
+  type KeyboardEvent,
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from 'react'
+import type { AppLocale } from '../../platform/i18n/catalog'
+import { formatNumber } from '../lib/format'
 
 export function RequiredMark() {
   return <span aria-hidden="true" className="orbit-field__required">*</span>
@@ -54,6 +57,118 @@ export function Input({ label, hint, error, required, ...props }: InputProps) {
   return (
     <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label} required={required}>
       <input {...props} aria-describedby={descriptionId} aria-invalid={Boolean(error)} aria-required={required || undefined} className="orbit-input" id={controlId} required={required} />
+    </FieldShell>
+  )
+}
+
+function clampStepperValue(raw: string, min: number, max: number, fallback: number) {
+  const n = Number(raw)
+  if (!raw.trim() || !Number.isFinite(n)) return Math.min(max, Math.max(min, fallback))
+  return Math.min(max, Math.max(min, Math.round(n)))
+}
+
+interface NumberStepperProps {
+  decreaseLabel: string
+  error?: string
+  increaseLabel: string
+  label: string
+  locale: AppLocale
+  max: number
+  min: number
+  onChange: (value: string) => void
+  required?: boolean
+  step?: number
+  value: string
+}
+
+export function NumberStepper({
+  decreaseLabel,
+  error,
+  increaseLabel,
+  label,
+  locale,
+  max,
+  min,
+  onChange,
+  required,
+  step = 1,
+  value,
+}: NumberStepperProps) {
+  const generatedId = useId()
+  const controlId = `stepper-${generatedId}`
+  const descriptionId = error ? `${controlId}-description` : undefined
+  const count = clampStepperValue(value, min, max, 3)
+  const atMin = count <= min
+  const atMax = count >= max
+
+  useEffect(() => {
+    if (value !== String(count)) onChange(String(count))
+  }, [count, onChange, value])
+
+  function setCount(next: number) {
+    const clamped = Math.min(max, Math.max(min, next))
+    if (clamped === count && String(count) === value) return
+    onChange(String(clamped))
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
+      event.preventDefault()
+      setCount(count + step)
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
+      event.preventDefault()
+      setCount(count - step)
+    }
+    if (event.key === 'Home') {
+      event.preventDefault()
+      setCount(min)
+    }
+    if (event.key === 'End') {
+      event.preventDefault()
+      setCount(max)
+    }
+  }
+
+  return (
+    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} label={label} required={required}>
+      <div className="orbit-stepper">
+        <button
+          aria-label={decreaseLabel}
+          className="orbit-stepper__button"
+          disabled={atMin}
+          onClick={() => setCount(count - step)}
+          type="button"
+        >
+          <Minus size={18} />
+        </button>
+        <div
+          aria-describedby={descriptionId}
+          aria-invalid={Boolean(error) || undefined}
+          aria-label={label}
+          aria-required={required || undefined}
+          aria-valuemax={max}
+          aria-valuemin={min}
+          aria-valuenow={count}
+          aria-valuetext={formatNumber(count, locale)}
+          className="orbit-stepper__value"
+          id={controlId}
+          onKeyDown={onKeyDown}
+          role="spinbutton"
+          tabIndex={0}
+        >
+          {formatNumber(count, locale)}
+        </div>
+        <button
+          aria-label={increaseLabel}
+          className="orbit-stepper__button"
+          disabled={atMax}
+          onClick={() => setCount(count + step)}
+          type="button"
+        >
+          <Plus size={18} />
+        </button>
+      </div>
     </FieldShell>
   )
 }

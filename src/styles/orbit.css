@@ -514,6 +514,8 @@ legend {
    Do not grow these with padding-block, inner min-heights, or two-row content. */
 .orbit-input:not(textarea),
 .orbit-select-trigger,
+.orbit-stepper__button,
+.orbit-stepper__value,
 .localized-date-trigger, .country-combobox__control {
   box-sizing: border-box;
   height: var(--size-field);
@@ -538,6 +540,64 @@ legend {
   border-color: var(--color-brand);
   background: var(--color-surface-raised);
   box-shadow: 0 0 0 3px var(--color-brand-soft);
+}
+
+.orbit-stepper {
+  align-items: center;
+  display: flex;
+  gap: .5rem;
+  max-width: 13.5rem;
+}
+
+.orbit-stepper__button,
+.orbit-stepper__value {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text);
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast), background var(--motion-fast);
+}
+
+.orbit-stepper__button {
+  align-items: center;
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 var(--size-field);
+  font: inherit;
+  justify-content: center;
+  padding: 0;
+  width: var(--size-field);
+}
+
+.orbit-stepper__button:hover:not(:disabled),
+.orbit-stepper__button:focus-visible,
+.orbit-stepper__value:focus-visible {
+  background: var(--color-surface-raised);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--color-brand-soft);
+  outline: none;
+}
+
+.orbit-stepper__button:disabled {
+  cursor: default;
+  opacity: .38;
+}
+
+.orbit-stepper__value {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  font-size: .95rem;
+  font-weight: 750;
+  justify-content: center;
+  min-width: 0;
+}
+
+.orbit-field--error .orbit-stepper__button,
+.orbit-field--error .orbit-stepper__value {
+  border-color: var(--color-danger);
 }
 
 .orbit-select-shell {
@@ -723,6 +783,12 @@ legend {
   padding-block: .75rem;
   resize: vertical;
   width: 100%;
+}
+
+.orbit-input::placeholder,
+.orbit-textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
 }
 
 .orbit-field__hint,
@@ -1281,8 +1347,10 @@ legend {
   border: 1px solid color-mix(in srgb, var(--glass-highlight) 72%, var(--color-border));
   border-radius: 999px;
   box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-lowlight);
+  display: flex;
   height: .72rem;
   isolation: isolate;
+  justify-content: flex-start;
   overflow: hidden;
   position: relative;
 }
@@ -1300,11 +1368,11 @@ legend {
   border-radius: inherit;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 80%, transparent);
   display: block;
+  flex: 0 0 auto;
   height: 100%;
-  transform: scaleX(0);
-  transform-origin: inline-start;
-  transition: transform 420ms var(--motion-glass-spring);
-  width: 100%;
+  max-width: 100%;
+  transition: width 420ms var(--motion-glass-spring);
+  width: 0%;
 }
 [dir="rtl"] .onboarding-progress__fill {
   background: linear-gradient(-90deg, color-mix(in srgb, var(--color-brand) 72%, white), var(--color-brand));

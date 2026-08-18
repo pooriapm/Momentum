@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { CountryCombobox } from './CountryCombobox'
-import { Select } from './FormControls'
+import { NumberStepper, Select } from './FormControls'
 import { LocalizedDatePicker } from './LocalizedDatePicker'
 import { LocalizedTimePicker } from './LocalizedTimePicker'
 import { calendarParts, shiftIsoYears, todayIso } from './localized-date'
@@ -93,5 +93,44 @@ describe('localized onboarding inputs', () => {
     expect(screen.queryByRole('option', { name: '—' })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: '-' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['No', 'Yes'])
+  })
+
+  it('steps an integer with plus and minus inside a closed range', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(
+      <NumberStepper
+        decreaseLabel="Decrease"
+        increaseLabel="Increase"
+        label="Options per meal"
+        locale="en"
+        max={4}
+        min={1}
+        onChange={onChange}
+        value="3"
+      />,
+    )
+
+    const value = screen.getByRole('spinbutton', { name: 'Options per meal' })
+    expect(value).toHaveAttribute('aria-valuenow', '3')
+    expect(screen.queryByRole('textbox', { name: 'Options per meal' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Increase' }))
+    expect(onChange).toHaveBeenCalledWith('4')
+    rerender(
+      <NumberStepper
+        decreaseLabel="Decrease"
+        increaseLabel="Increase"
+        label="Options per meal"
+        locale="en"
+        max={4}
+        min={1}
+        onChange={onChange}
+        value="4"
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Increase' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease' }))
+    expect(onChange).toHaveBeenCalledWith('3')
   })
 })

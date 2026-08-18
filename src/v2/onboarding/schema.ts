@@ -32,6 +32,7 @@ export interface OnboardingField {
   requiredWhen?: FieldCondition
   selectionCountField?: string
   maxDigits?: number
+  stepper?: boolean
 }
 
 export interface OnboardingSection {
@@ -136,8 +137,15 @@ export const onboardingSections: readonly OnboardingSection[] = [
       { key: 'allergies', labelKey: 'onboarding.allergies', kind: 'multiselect', optionSource: 'allergens', options: ALLERGEN_CATALOG },
       { key: 'favoriteFoods', labelKey: 'onboarding.favoriteFoods', kind: 'textarea' },
       { key: 'dislikedFoods', labelKey: 'onboarding.dislikedFoods', kind: 'textarea' },
-      { key: 'requestedMealPattern', labelKey: 'onboarding.mealPattern', kind: 'textarea', required: true },
-      { key: 'preferredOptionCount', labelKey: 'onboarding.optionCount', kind: 'number', min: 1, max: 6, step: 1, defaultValue: '3' },
+      { key: 'requestedMealCount', labelKey: 'onboarding.mealCount', kind: 'select', required: true, defaultValue: '3', options: [
+        { value: '2', labelKey: 'onboarding.mealCount2' },
+        { value: '3', labelKey: 'onboarding.mealCount3' },
+        { value: '4', labelKey: 'onboarding.mealCount4' },
+        { value: '5', labelKey: 'onboarding.mealCount5' },
+        { value: '6', labelKey: 'onboarding.mealCount6' },
+      ] },
+      { key: 'requestedMealPattern', labelKey: 'onboarding.mealPattern', kind: 'textarea' },
+      { key: 'preferredOptionCount', labelKey: 'onboarding.optionCount', kind: 'number', min: 1, max: 4, step: 1, defaultValue: '3', stepper: true },
       { key: 'cookingConstraints', labelKey: 'onboarding.cookingConstraints', kind: 'textarea' },
       { key: 'foodBudget', labelKey: 'onboarding.budget', kind: 'select', options: [
         { value: 'budget', labelKey: 'onboarding.budgetLow' }, { value: 'standard', labelKey: 'onboarding.budgetStandard' }, { value: 'flexible', labelKey: 'onboarding.budgetFlexible' },

@@ -87,6 +87,7 @@ const completeDraft: Record<string, string> = {
   preferredOptionCount: '3',
   primaryActivity: 'strength',
   privacyAccepted: 'yes',
+  requestedMealCount: '3',
   requestedMealPattern: '3 meals',
   restaurantMealsPerWeek: '0',
   sex: 'female',
@@ -192,6 +193,17 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.getByText('Other')).toBeInTheDocument()
     expect(screen.queryByLabelText(/allergies & intolerances/i)).not.toBeInTheDocument()
     expect(screen.getByText(/other is not mapped to the catalog/i)).toBeInTheDocument()
+  })
+
+  it('changes options per meal only with plus and minus between 1 and 4', async () => {
+    renderStep('food')
+    expect(await screen.findByRole('spinbutton', { name: 'Options per meal' })).toHaveAttribute('aria-valuenow', '3')
+    expect(screen.queryByRole('textbox', { name: 'Options per meal' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Increase options per meal' }))
+    expect(screen.getByRole('spinbutton', { name: 'Options per meal' })).toHaveAttribute('aria-valuenow', '4')
+    expect(screen.getByRole('button', { name: 'Increase options per meal' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease options per meal' }))
+    expect(screen.getByRole('spinbutton', { name: 'Options per meal' })).toHaveAttribute('aria-valuenow', '3')
   })
 
   it('ONB-17 hides equipment for outdoor training', async () => {

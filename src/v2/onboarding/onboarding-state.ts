@@ -3,12 +3,9 @@ import {
   D11_STEP_ORDER,
   TRAINING_DURATION_PRESETS,
   hasUnmappedAllergen,
-  isFieldRequired,
-  isFieldVisible,
   onboardingDefaultValues,
+  onboardingFieldByKey,
   onboardingSections,
-  type OnboardingField,
-  type OnboardingSection,
   type OnboardingStepKey,
   validateSection,
 } from './schema'
@@ -45,44 +42,10 @@ function hasBodyInput(values: Record<string, string>) {
   )
 }
 
-function isFieldFilled(field: OnboardingField, values: Record<string, string>) {
-  const value = values[field.key]?.trim() ?? ''
-  if (field.kind === 'checkbox') return value === 'yes'
-  return value.length > 0
-}
-
-function sectionProgressUnits(section: OnboardingSection, values: Record<string, string>) {
-  if (section.key === 'review') return { filled: 0, total: 1 }
-  if (section.key === 'body') return { filled: hasBodyInput(values) ? 1 : 0, total: 1 }
-  const fields = section.fields.filter((field) => isFieldVisible(field, values) && isFieldRequired(field, values))
-  if (fields.length === 0) return { filled: 0, total: 1 }
-  return {
-    filled: fields.filter((field) => isFieldFilled(field, values)).length,
-    total: fields.length,
-  }
-}
-
-export function onboardingProgressPercent(step: OnboardingStepKey, values: Record<string, string>, locale: AppLocale = 'en') {
+export function onboardingProgressPercent(step: OnboardingStepKey) {
   const currentIndex = Math.max(0, D11_STEP_ORDER.indexOf(step))
-  let earned = 0
-  let total = 0
-
-  for (const [index, section] of onboardingSections.entries()) {
-    const units = sectionProgressUnits(section, values)
-    total += units.total
-    if (section.key === 'review') {
-      if (index <= currentIndex) earned += units.total
-      continue
-    }
-    if (index < currentIndex || isSectionComplete(section.key, values, locale)) {
-      earned += units.total
-      continue
-    }
-    if (index === currentIndex) earned += units.filled
-  }
-
-  if (total <= 0) return 0
-  return Math.min(100, Math.round((earned / total) * 100))
+  const lastIndex = Math.max(1, D11_STEP_ORDER.length - 1)
+  return Math.round((currentIndex / lastIndex) * 100)
 }
 
 export function isSectionComplete(step: OnboardingStepKey, values: Record<string, string>, locale: AppLocale = 'en') {
@@ -136,6 +99,38 @@ export function resolvedTrainingDuration(values: Record<string, string>) {
   return values.trainingDuration || onboardingDefaultValues.trainingDuration
 }
 
+function completionLocale(values: Record<string, string>): AppLocale {
+  return values.locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en'
+}
+
+function mealCountPhrase(count: string, locale: AppLocale) {
+  const normalized = ['2', '3', '4', '5', '6'].includes(count) ? count : '3'
+  if (locale === 'fa') {
+    const digit = '۰۱۲۳۴۵۶۷۸۹'[Number(normalized)]
+    return `${digit} وعده`
+  }
+  return `${normalized} meals`
+}
+
+export function composeRequestedMealPattern(values: Record<string, string>, locale: AppLocale = 'en') {
+  const count = values.requestedMealCount?.trim() || '3'
+  const label = mealCountPhrase(count, locale)
+  const notes = values.requestedMealPattern?.trim() ?? ''
+  if (!notes || notes === label) return label
+  if (notes.startsWith(`${label}.`) || notes.startsWith(`${label} `)) return notes
+  return `${label}. ${notes}`
+}
+
+function clampPreferredOptionCount(raw: string | undefined) {
+  const field = onboardingFieldByKey('preferredOptionCount')
+  const min = field?.min ?? 1
+  const max = field?.max ?? 4
+  const fallback = Number(field?.defaultValue ?? 3)
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return String(fallback)
+  return String(Math.min(max, Math.max(min, Math.round(n))))
+}
+
 export function prepareCompletionValues(values: Record<string, string>) {
   const next = { ...values }
   if (next.goalType && next.goalType !== 'maintenance' && !next.targetWeightKg?.trim()) {
@@ -144,6 +139,8 @@ export function prepareCompletionValues(values: Record<string, string>) {
   if (next.trainingDays && Number(next.trainingDays) > 0) {
     next.trainingDuration = resolvedTrainingDuration(next)
   }
+  next.requestedMealPattern = composeRequestedMealPattern(next, completionLocale(next))
+  next.preferredOptionCount = clampPreferredOptionCount(next.preferredOptionCount)
   return next
 }
 

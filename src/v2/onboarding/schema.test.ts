@@ -66,10 +66,12 @@ describe('D11 onboarding schema', () => {
   it('provides deterministic defaults for option, restaurant, and duration counts', () => {
     expect(onboardingDefaultValues).toMatchObject({
       preferredOptionCount: '3',
+      requestedMealCount: '3',
       restaurantMealsPerWeek: '0',
       trainingDuration: '60',
       trainingDurationPreset: '60',
     })
+    expect(field('food', 'preferredOptionCount')).toMatchObject({ min: 1, max: 4, stepper: true })
   })
 
   it('keeps target weight optional and hidden during maintenance', () => {
@@ -79,15 +81,40 @@ describe('D11 onboarding schema', () => {
     expect(prepareCompletionValues({ goalType: 'fat_loss', weightKg: '72.4' }).targetWeightKg).toBe('72.4')
   })
 
-  it('requires only diet style and meal pattern on Food, including optional budget', () => {
-    expect(validateSection(section('food'), { dietStyle: 'omnivore', requestedMealPattern: '3 meals' })).toEqual({})
-    expect(validateSection(section('food'), { requestedMealPattern: '3 meals' })).toHaveProperty('dietStyle')
-    expect(validateSection(section('food'), { dietStyle: 'omnivore' })).toHaveProperty('requestedMealPattern')
+  it('requires only diet style and meal count on Food, including optional budget and pattern', () => {
+    expect(validateSection(section('food'), { dietStyle: 'omnivore', requestedMealCount: '3' })).toEqual({})
+    expect(validateSection(section('food'), { requestedMealCount: '3' })).toHaveProperty('dietStyle')
+    expect(validateSection(section('food'), { dietStyle: 'omnivore' })).toHaveProperty('requestedMealCount')
     expect(validateSection(section('food'), {
       dietStyle: 'omnivore',
-      requestedMealPattern: '3 meals',
+      requestedMealCount: '4',
       restaurantMealsPerWeek: '2',
     })).toEqual({})
+  })
+
+  it('composes meal count into the stored pattern string for completion', () => {
+    expect(prepareCompletionValues({ requestedMealCount: '4', locale: 'en-US' }).requestedMealPattern).toBe('4 meals')
+    expect(prepareCompletionValues({
+      requestedMealCount: '3',
+      requestedMealPattern: 'plus a snack',
+      locale: 'en-US',
+    }).requestedMealPattern).toBe('3 meals. plus a snack')
+    expect(prepareCompletionValues({ requestedMealCount: '3', locale: 'fa-IR' }).requestedMealPattern).toBe('۳ وعده')
+  })
+
+  it('keeps options per meal inside 1–4 and defaults to 3', () => {
+    expect(validateSection(section('food'), {
+      dietStyle: 'omnivore',
+      requestedMealCount: '3',
+      preferredOptionCount: '4',
+    })).toEqual({})
+    expect(validateSection(section('food'), {
+      dietStyle: 'omnivore',
+      requestedMealCount: '3',
+      preferredOptionCount: '5',
+    })).toHaveProperty('preferredOptionCount')
+    expect(prepareCompletionValues({ preferredOptionCount: '6' }).preferredOptionCount).toBe('4')
+    expect(prepareCompletionValues({}).preferredOptionCount).toBe('3')
   })
 
   it('maps stored option values to translation keys', () => {
@@ -148,24 +175,10 @@ describe('D11 onboarding schema', () => {
     })).toBe('goal')
   })
 
-  it('fills setup progress from required fields instead of numbered steps', () => {
-    expect(onboardingProgressPercent('basics', {})).toBe(0)
-    const afterBasics = onboardingProgressPercent('basics', completeBasics)
-    expect(afterBasics).toBeGreaterThan(0)
-    expect(afterBasics).toBeLessThan(40)
-    expect(onboardingProgressPercent('health', { ...completeBasics, pregnancyOrBreastfeeding: 'no' })).toBeGreaterThan(afterBasics)
-    expect(onboardingProgressPercent('review', {
-      ...completeBasics,
-      ...eligibleHealth,
-      termsAccepted: 'yes',
-      privacyAccepted: 'yes',
-      healthDataConsent: 'yes',
-      goalType: 'fat_loss',
-      dietStyle: 'omnivore',
-      requestedMealPattern: '3 meals',
-      trainingDays: '0',
-      workSchedule: 'weekdays',
-      bodySkipped: 'yes',
-    })).toBe(100)
+  it('advances setup progress only when the current step changes', () => {
+    expect(onboardingProgressPercent('basics')).toBe(0)
+    expect(onboardingProgressPercent('health')).toBeGreaterThan(0)
+    expect(onboardingProgressPercent('consent')).toBeGreaterThan(onboardingProgressPercent('health'))
+    expect(onboardingProgressPercent('review')).toBe(100)
   })
 })

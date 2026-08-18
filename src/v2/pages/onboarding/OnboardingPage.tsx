@@ -27,7 +27,7 @@ import { sanitizeLocalizedNumberInput } from '../../../lib/numbers/localized-num
 import { localizedPath } from '../../router/route-utils'
 import { loadPricingContext } from '../../data/pricing'
 import { giftCampaignFromUnknown, postOnboardingPath, reviewInventoryIds } from '../../entitlement'
-import { Input, RequiredMark, Select, Textarea } from '../../ui/FormControls'
+import { Input, NumberStepper, RequiredMark, Select, Textarea } from '../../ui/FormControls'
 import { CountryCombobox } from '../../ui/CountryCombobox'
 import { LocalizedDatePicker } from '../../ui/LocalizedDatePicker'
 import { LocalizedTimePicker } from '../../ui/LocalizedTimePicker'
@@ -343,7 +343,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           <p className="orbit-eyebrow"><Sparkles size={15} />{t('onboarding.setupEyebrow')}</p>
           <h1>{t('onboarding.title')}</h1>
           <p>{t('onboarding.subtitle')}</p>
-          <OnboardingProgress locale={locale} percent={onboardingProgressPercent(step, values, locale)} title={t(section.titleKey)} />
+          <OnboardingProgress locale={locale} percent={onboardingProgressPercent(step)} title={t(section.titleKey)} />
         </aside>
         <div className="content-card onboarding-card">
           <div className="onboarding-card__heading">
@@ -362,6 +362,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                   legalVersions={legalVersions}
                   locale={locale}
                   onChange={(value) => updateValue(field, value)}
+                  placeholder={fieldPlaceholder(field.key, values.trainingLocation, t)}
                   required={isFieldRequired(field, values)}
                   suggested={field.key === 'country' && countrySuggested}
                   value={values[field.key] ?? ''}
@@ -375,12 +376,6 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           ) : null}
           {section.key === 'training' && values.trainingLocation === 'outdoor' ? (
             <div className="inline-notice">{t('onboarding.outdoorEquipmentHidden')}</div>
-          ) : null}
-          {section.key === 'training' && values.trainingLocation === 'home' ? (
-            <div className="inline-notice">{t('onboarding.homeEquipmentHint')}</div>
-          ) : null}
-          {section.key === 'training' && values.trainingLocation === 'gym' ? (
-            <div className="inline-notice">{t('onboarding.gymEquipmentHint')}</div>
           ) : null}
           {section.key === 'body' ? (
             <BodyStep
@@ -446,6 +441,14 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   )
 }
 
+function fieldPlaceholder(fieldKey: string, trainingLocation: string | undefined, translate: (key: string) => string) {
+  if (fieldKey === 'equipment' && trainingLocation === 'home') return translate('onboarding.homeEquipmentHint')
+  if (fieldKey === 'equipment' && trainingLocation === 'gym') return translate('onboarding.gymEquipmentHint')
+  if (fieldKey === 'workSchedule') return translate('onboarding.scheduleHint')
+  if (fieldKey === 'requestedMealPattern') return translate('onboarding.mealPatternHint')
+  return undefined
+}
+
 function OnboardingProgress({
   locale,
   percent,
@@ -473,7 +476,7 @@ function OnboardingProgress({
         <span>{display}</span>
       </div>
       <div className="onboarding-progress__track">
-        <span className="onboarding-progress__fill" style={{ transform: `scaleX(${Math.max(percent, 0) / 100})` }} />
+        <span className="onboarding-progress__fill" style={{ width: `${Math.max(percent, 0)}%` }} />
       </div>
     </div>
   )
@@ -578,6 +581,7 @@ function DynamicField({
   locale,
   legalVersions,
   required,
+  placeholder,
 }: {
   field: OnboardingField
   value: string
@@ -587,6 +591,7 @@ function DynamicField({
   locale: AppLocale
   legalVersions: LegalDocumentVersions
   required?: boolean
+  placeholder?: string
 }) {
   const { t } = useTranslation()
   if (field.kind === 'date') {
@@ -654,10 +659,27 @@ function DynamicField({
     )
   }
   if (field.kind === 'textarea') {
-    return <Textarea error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} required={required} rows={3} value={value} />
+    return <Textarea error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} rows={3} value={value} />
   }
   if (field.kind === 'time') {
     return <LocalizedTimePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} required={required} value={value} />
+  }
+  if (field.kind === 'number' && field.stepper) {
+    return (
+      <NumberStepper
+        decreaseLabel={t('onboarding.optionCountDecrease')}
+        error={error}
+        increaseLabel={t('onboarding.optionCountIncrease')}
+        label={t(field.labelKey)}
+        locale={locale}
+        max={field.max ?? 4}
+        min={field.min ?? 1}
+        onChange={onChange}
+        required={required}
+        step={field.step ?? 1}
+        value={value}
+      />
+    )
   }
   return (
     <Input
