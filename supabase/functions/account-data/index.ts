@@ -231,8 +231,10 @@ interface DashboardRequest {
   requestedLocalDate?: string
 }
 
+type MealMutationAction = 'select-meal' | 'complete-meal' | 'undo-meal'
+
 interface MealMutationRequest {
-  action: 'select-meal' | 'complete-meal'
+  action: MealMutationAction
   requestedLocalDate?: string
   slotKey: string
   optionKey: string
@@ -251,7 +253,7 @@ function parseLocalDate(value: unknown): string {
 
 function parseMealMutation(
   body: AccountDataBody,
-  action: 'select-meal' | 'complete-meal',
+  action: MealMutationAction,
 ): MealMutationRequest {
   if (body.action !== action) {
     throw new HttpError(400, 'unsupported_action', 'Meal action is unsupported.')
@@ -494,6 +496,107 @@ function addIsoDays(value: string, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
+function catalogReleaseFromContent(content: unknown): string | null {
+  if (!isRecord(content)) return null
+  if (typeof content.catalog_release_id === 'string' && content.catalog_release_id.length > 0) {
+    return content.catalog_release_id
+  }
+  const days = Array.isArray(content.days) ? content.days : []
+  for (const day of days) {
+    if (!isRecord(day) || !Array.isArray(day.meals)) continue
+    for (const meal of day.meals) {
+      if (!isRecord(meal) || !Array.isArray(meal.options)) continue
+      for (const option of meal.options) {
+        if (!isRecord(option) || typeof option.food_id !== 'string') continue
+        const marker = option.food_id.lastIndexOf('@')
+        if (marker >= 0 && marker < option.food_id.length - 1) {
+          return `momentum-core@${option.food_id.slice(marker + 1)}`
+        }
+      }
+    }
+  }
+  return null
+}
+
+function projectPlanVersionChanges(input: {
+  cycle: number
+  locale: string
+  catalogRelease: string | null
+  source: string
+}): Array<{ label: string; detail: string }> {
+  const changes = [{
+    label: `cycle ${input.cycle} imported`,
+    detail: `${input.source} · locale ${input.locale}`,
+  }]
+  if (input.catalogRelease) {
+    changes.push({
+      label: 'catalog release',
+      detail: input.catalogRelease,
+    })
+  }
+  return changes
+}
+
+function projectPlanHistory(options: {
+  plans: Array<Record<string, unknown>>
+  versions: Array<Record<string, unknown>>
+  periods: Array<Record<string, unknown>>
+}): Array<Record<string, unknown>> {
+  const plans = new Map(
+    options.plans
+      .filter((plan) => typeof plan.id === 'string')
+      .map((plan) => [plan.id as string, plan]),
+  )
+  const periodsByVersion = new Map<string, Record<string, unknown>>()
+  for (const period of options.periods) {
+    if (typeof period.imported_plan_version_id !== 'string') continue
+    periodsByVersion.set(period.imported_plan_version_id, period)
+  }
+  const activeVersionIds = new Set(
+    options.plans
+      .filter((plan) => plan.status === 'active' && typeof plan.active_version_id === 'string')
+      .map((plan) => plan.active_version_id as string),
+  )
+
+  return options.versions.flatMap((version) => {
+    if (typeof version.id !== 'string' || typeof version.plan_id !== 'string') return []
+    const plan = plans.get(version.plan_id)
+    if (!plan || typeof plan.valid_from !== 'string' || typeof plan.valid_to !== 'string') return []
+    const period = periodsByVersion.get(version.id)
+    const cycle = typeof period?.cycle_index === 'number' && period.cycle_index > 0
+      ? period.cycle_index
+      : typeof version.version === 'number' && version.version > 0
+      ? version.version
+      : 1
+    const locale = plan.locale === 'fa-IR' ? 'fa-IR' : 'en-US'
+    const catalogRelease = catalogReleaseFromContent(version.content)
+    const source = typeof version.source === 'string' ? version.source : 'imported'
+    const readyAt = typeof period?.ready_at === 'string'
+      ? period.ready_at
+      : typeof version.created_at === 'string'
+      ? version.created_at
+      : null
+    return [{
+      id: version.id,
+      cycle,
+      valid_from: plan.valid_from,
+      valid_to: plan.valid_to,
+      ready_at: readyAt,
+      active: activeVersionIds.has(version.id),
+      locale,
+      catalog_release: catalogRelease,
+      source,
+      schema_version: typeof version.schema_version === 'string' ? version.schema_version : '1.0.0',
+      changes: projectPlanVersionChanges({
+        cycle,
+        locale,
+        catalogRelease,
+        source,
+      }),
+    }]
+  })
+}
+
 function projectPlanDay(options: {
   plan: Record<string, unknown>
   version: Record<string, unknown>
@@ -623,6 +726,9 @@ async function loadDashboard(
     usageResult,
     statusesResult,
     planResult,
+    ownedPlansResult,
+    versionHistoryResult,
+    periodHistoryResult,
   ] = await Promise.all([
     admin
       .from('profiles')
@@ -697,6 +803,24 @@ async function loadDashboard(
       .gte('valid_to', input.localDate)
       .limit(1)
       .maybeSingle(),
+    admin
+      .from('plans')
+      .select('id,name,valid_from,valid_to,locale,status,active_version_id')
+      .eq('user_id', userId)
+      .order('valid_from', { ascending: false })
+      .limit(24),
+    admin
+      .from('plan_versions')
+      .select('id,plan_id,version,schema_version,source,created_at,content')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(24),
+    admin
+      .from('monthly_plan_periods')
+      .select('cycle_index,ready_at,imported_plan_version_id,status')
+      .eq('user_id', userId)
+      .order('cycle_index', { ascending: false })
+      .limit(24),
   ])
   if (
     profileResult.error ||
@@ -707,7 +831,10 @@ async function loadDashboard(
     entitlementResult.error ||
     usageResult.error ||
     statusesResult.error ||
-    planResult.error
+    planResult.error ||
+    ownedPlansResult.error ||
+    versionHistoryResult.error ||
+    periodHistoryResult.error
   ) {
     throw new HttpError(503, 'dashboard_unavailable', 'Dashboard data is unavailable.')
   }
@@ -745,6 +872,15 @@ async function loadDashboard(
         planProjection = { ...currentProjection, days }
       }
     }
+  }
+
+  const planHistory = projectPlanHistory({
+    plans: (ownedPlansResult.data ?? []) as Array<Record<string, unknown>>,
+    versions: (versionHistoryResult.data ?? []) as Array<Record<string, unknown>>,
+    periods: (periodHistoryResult.data ?? []) as Array<Record<string, unknown>>,
+  })
+  if (planProjection) {
+    planProjection = { ...planProjection, history: planHistory }
   }
 
   const entitlement = entitlementResult.data
@@ -815,6 +951,7 @@ async function loadDashboard(
     entitlement_usage: entitlementUsage,
     ai_access: { plan: projectPlanAiAccess(profileResult.data, emailConfirmed) },
     plan: planProjection,
+    plan_history: planHistory,
   }
 }
 
@@ -1039,7 +1176,11 @@ Deno.serve(async (request) => {
       return jsonResponse(request, { body_composition: data })
     }
 
-    if (body.action !== 'select-meal' && body.action !== 'complete-meal') {
+    if (
+      body.action !== 'select-meal' &&
+      body.action !== 'complete-meal' &&
+      body.action !== 'undo-meal'
+    ) {
       throw new HttpError(400, 'unsupported_action', 'Action is unsupported.')
     }
     const mealRequest = parseMealMutation(body, body.action)
@@ -1055,7 +1196,11 @@ Deno.serve(async (request) => {
       optionKey: mealRequest.optionKey,
     }
     const requestHash = await sha256(canonicalJson(input))
-    const rpcName = input.action === 'complete-meal' ? 'complete_meal_option' : 'select_meal_option'
+    const rpcName = input.action === 'complete-meal'
+      ? 'complete_meal_option'
+      : input.action === 'undo-meal'
+      ? 'undo_meal_option'
+      : 'select_meal_option'
     const { data, error } = await auth.admin.rpc(rpcName, {
       p_user_id: auth.user.id,
       p_local_date: input.localDate,
@@ -1080,6 +1225,13 @@ Deno.serve(async (request) => {
           'A completed meal selection cannot be changed.',
         )
       }
+      if (error.message.includes('meal_not_completed')) {
+        throw new HttpError(
+          409,
+          'meal_not_completed',
+          'Only a completed meal on the current day can be undone.',
+        )
+      }
       if (error.message.includes('meal_date_not_current')) {
         throw new HttpError(
           409,
@@ -1102,10 +1254,9 @@ Deno.serve(async (request) => {
       throw new HttpError(503, 'account_mutation_failed', 'Meal selection could not be saved.')
     }
 
-    return jsonResponse(
-      request,
-      input.action === 'complete-meal' ? { completion: data } : { selection: data },
-    )
+    if (input.action === 'complete-meal') return jsonResponse(request, { completion: data })
+    if (input.action === 'undo-meal') return jsonResponse(request, { undo: data })
+    return jsonResponse(request, { selection: data })
   } catch (error) {
     return errorResponse(request, error)
   }

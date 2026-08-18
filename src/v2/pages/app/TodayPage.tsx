@@ -370,7 +370,7 @@ export function TodayPage({
                     {completed ? (fa ? 'ثبت شد' : 'Logged') : isNext ? (fa ? 'بعدی' : 'Next') : (fa ? 'برنامه' : 'Planned')}
                   </StatusPill>
                   {completed ? (
-                    <Button disabled={mutationsLocked} onClick={() => undoMeal(meal.id)} variant="secondary">{fa ? 'برگرداندن ثبت' : 'Undo log'}</Button>
+                    <Button disabled={mutationsLocked || savingSlot === meal.id} onClick={() => void revertMeal(meal.id)} variant="secondary">{fa ? 'برگرداندن ثبت' : 'Undo log'}</Button>
                   ) : null}
                 </ContentCard>
               )

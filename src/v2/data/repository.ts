@@ -11,7 +11,7 @@ import {
   type DashboardResponse,
 } from './contracts'
 import { mapEntitlementStatus, type MembershipStatus } from '../entitlement'
-import type { LocalizedText, MealChoice, MomentumPlanDayView, MomentumPlanView } from './types'
+import type { LocalizedText, MealChoice, MomentumPlanDayView, MomentumPlanView, PlanChange, PlanVersionMeta } from './types'
 
 type Dashboard = DashboardResponse['dashboard']
 
@@ -83,6 +83,39 @@ function mapConfidence(source: MealChoice['nutritionSource']): MealChoice['confi
   if (source === 'verified_database') return 'verified'
   if (source === 'food_label') return 'manufacturer'
   return 'estimated'
+}
+
+function localizePlanChange(label: string, detail: string): PlanChange {
+  const cycleMatch = /^cycle (\d+) imported$/.exec(label)
+  if (cycleMatch) {
+    return {
+      label: { fa: `چرخه ${cycleMatch[1]} وارد شد`, en: label },
+      detail: { fa: detail, en: detail },
+    }
+  }
+  if (label === 'catalog release') {
+    return {
+      label: { fa: 'نسخه کاتالوگ', en: 'catalog release' },
+      detail: { fa: detail, en: detail },
+    }
+  }
+  return { label: localized(label), detail: localized(detail) }
+}
+
+export function mapPlanHistory(
+  items: NonNullable<Dashboard['plan_history']>,
+): PlanVersionMeta[] {
+  return items.map((item) => ({
+    id: item.id,
+    label: /v2/i.test(item.schema_version) ? 'v2' : item.schema_version,
+    cycle: item.cycle,
+    validFrom: item.valid_from,
+    validTo: item.valid_to,
+    readyAt: item.ready_at ?? undefined,
+    source: localized(`${item.source} · ${item.locale}`),
+    active: item.active,
+    changes: item.changes.map((change) => localizePlanChange(change.label, change.detail)),
+  }))
 }
 
 type DashboardPlanDay = NonNullable<Dashboard['plan']>['day']
@@ -188,6 +221,20 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
     return sum + (meal.options.find((option) => option.option_key === selectedKey)?.nutrition.calories ?? 0)
   }, 0)
   const readiness = scoreFromCheckIn(checkin)
+  const history = mapPlanHistory(dashboard.plan_history ?? plan.history ?? [])
+  const currentVersion = history.find((item) => item.id === plan.version_id)
+    ?? history.find((item) => item.active)
+  const version: PlanVersionMeta = currentVersion ?? {
+    id: plan.version_id,
+    label: /v2/i.test(plan.schema_version) ? 'v2' : plan.schema_version,
+    cycle: Math.max(1, dashboard.entitlement_usage?.plan_generation.used ?? 1),
+    validFrom: plan.valid_from,
+    validTo: plan.valid_to,
+    readyAt: dashboard.entitlement_usage?.entitlement.period_start,
+    source: localized(plan.name),
+    active: true,
+    changes: [],
+  }
 
   return {
     localDate: dashboard.local_date,
@@ -235,30 +282,12 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       })),
     },
     days: plan.days.map((day) => mapPlanDay(day, plan.id, locale)),
-    version: {
-      id: plan.version_id,
-      label: /v2/i.test(plan.schema_version) ? 'v2' : plan.schema_version,
-      cycle: Math.max(1, dashboard.entitlement_usage?.plan_generation.used ?? 1),
-      validFrom: plan.valid_from,
-      validTo: plan.valid_to,
-      readyAt: dashboard.entitlement_usage?.entitlement.period_start,
-      source: localized(plan.name),
-      active: true,
-      changes: [],
-    },
-    history: [{
-      id: plan.version_id,
-      label: /v2/i.test(plan.schema_version) ? 'v2' : plan.schema_version,
-      cycle: Math.max(1, dashboard.entitlement_usage?.plan_generation.used ?? 1),
-      validFrom: plan.valid_from,
-      validTo: plan.valid_to,
-      readyAt: dashboard.entitlement_usage?.entitlement.period_start,
-      source: localized(plan.name),
-      active: true,
-      changes: [],
-    }],
+    version: { ...version, active: true },
+    history: history.length ? history : [{ ...version, active: true }],
   }
 }
+
+export { mapDashboardToPlan }
 
 export interface AccountDashboardView {
   plan: MomentumPlanView | null
@@ -307,6 +336,16 @@ export async function completeMeal(date: string, slotKey: string, optionKey: str
   const client = requireSupabase()
   const { error } = await client.functions.invoke('account-data', {
     body: { action: 'complete-meal', local_date: date, slot_key: slotKey, option_key: optionKey },
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
+  })
+  if (error) throw error
+}
+
+export async function undoMeal(date: string, slotKey: string, optionKey: string) {
+  assertOnline()
+  const client = requireSupabase()
+  const { error } = await client.functions.invoke('account-data', {
+    body: { action: 'undo-meal', local_date: date, slot_key: slotKey, option_key: optionKey },
     headers: { 'Idempotency-Key': crypto.randomUUID() },
   })
   if (error) throw error

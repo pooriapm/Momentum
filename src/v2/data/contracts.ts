@@ -82,6 +82,23 @@ const dashboardPlanDaySchema = z.object({
   })).min(1),
 })
 
+export const planHistoryItemSchema = z.object({
+  id: z.string().uuid(),
+  cycle: z.number().int().positive().max(120),
+  valid_from: isoDate,
+  valid_to: isoDate,
+  ready_at: z.string().nullable(),
+  active: z.boolean(),
+  locale: z.enum(['fa-IR', 'en-US']),
+  catalog_release: z.string().min(1).max(80).nullable(),
+  source: z.string().min(1).max(80),
+  schema_version: z.string().min(1).max(40),
+  changes: z.array(z.object({
+    label: z.string().min(1).max(160),
+    detail: z.string().min(1).max(240),
+  })).min(1).max(8),
+})
+
 const dashboardPlanSchema = z.object({
   id: z.string().uuid(),
   version_id: z.string().uuid(),
@@ -103,6 +120,7 @@ const dashboardPlanSchema = z.object({
   })),
   day: dashboardPlanDaySchema,
   days: z.array(dashboardPlanDaySchema).min(1).max(31),
+  history: z.array(planHistoryItemSchema).max(24).optional(),
 })
 
 const checkinSchema = z.object({
@@ -175,6 +193,7 @@ export const dashboardResponseSchema = z.object({
       }),
     }),
     plan: dashboardPlanSchema.nullable(),
+    plan_history: z.array(planHistoryItemSchema).max(24).default([]),
   }),
 })
 
