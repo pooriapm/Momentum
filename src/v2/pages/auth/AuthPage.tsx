@@ -9,7 +9,7 @@ import { classifyAuthError } from '../../../platform/auth/auth-errors'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { PublicHeader } from '../../components/PublicChrome'
 import { localizedPath } from '../../router/route-utils'
-import { Input } from '../../ui/FormControls'
+import { Input, RequiredMark } from '../../ui/FormControls'
 import { OrbitMark } from '../../ui/OrbitMark'
 import { Button, ContentCard } from '../../ui/primitives'
 import { Reveal } from '../../ui/Reveal'
@@ -211,6 +211,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                   error={fieldErrors.email}
                   label={t('auth.email')}
                   onChange={(event) => setEmail(event.target.value)}
+                  required
                   type="email"
                   value={email}
                 />
@@ -224,6 +225,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                   label={t('auth.password')}
                   minLength={8}
                   onChange={(event) => setPassword(event.target.value)}
+                  required
                   type="password"
                   value={password}
                 />
@@ -236,6 +238,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                   label={t('auth.passwordConfirm')}
                   minLength={8}
                   onChange={(event) => setPasswordConfirm(event.target.value)}
+                  required
                   type="password"
                   value={passwordConfirm}
                 />
@@ -243,16 +246,22 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
               {isSignUp ? (
                 <div className="auth-consent">
                   <label className={`onboarding-checkbox ${fieldErrors.terms ? 'has-error' : ''}`}>
-                    <input checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} type="checkbox" />
+                    <input aria-required="true" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} required type="checkbox" />
                     <span><Check size={16} /></span>
-                    <strong>{t('onboarding.termsConsent')}</strong>
+                    <div className="onboarding-checkbox__heading">
+                      <strong>{t('onboarding.termsConsent')}</strong>
+                      <RequiredMark />
+                    </div>
                     <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {legalVersions.terms}</Link>
                     {fieldErrors.terms ? <small>{fieldErrors.terms}</small> : null}
                   </label>
                   <label className={`onboarding-checkbox ${fieldErrors.privacy ? 'has-error' : ''}`}>
-                    <input checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} type="checkbox" />
+                    <input aria-required="true" checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} required type="checkbox" />
                     <span><Check size={16} /></span>
-                    <strong>{t('onboarding.privacyConsent')}</strong>
+                    <div className="onboarding-checkbox__heading">
+                      <strong>{t('onboarding.privacyConsent')}</strong>
+                      <RequiredMark />
+                    </div>
                     <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {legalVersions.privacy}</Link>
                     {fieldErrors.privacy ? <small>{fieldErrors.privacy}</small> : null}
                   </label>

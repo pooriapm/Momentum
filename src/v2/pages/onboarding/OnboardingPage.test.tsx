@@ -150,11 +150,10 @@ describe('OnboardingPage inventory states', () => {
   it('ONB-03 keeps adult gate, sex, and Iran on Basics in D11 order', async () => {
     renderStep('basics')
     expect(await screen.findByRole('heading', { name: 'About you' })).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Setup progress' })).toBeInTheDocument()
     expect(screen.getByLabelText('I confirm I am 18 or older')).toBeInTheDocument()
     expect(screen.getByLabelText(/sex used for physiological calculations/i)).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Country of use' })).toBeInTheDocument()
-    const steps = screen.getAllByRole('listitem').map((item) => item.textContent)
-    expect(steps.join(' ')).toMatch(/About you.*Health.*Consent.*Primary goal.*Food.*Training.*Body.*Review/)
   })
 
   it('ONB-04 names the under-18 boundary without leaving Basics', async () => {
@@ -210,10 +209,13 @@ describe('OnboardingPage inventory states', () => {
   it('ONB-27 and ONB-28 finish into the lifecycle gate without generating a plan', async () => {
     renderStep('review')
     expect(await screen.findByRole('button', { name: 'Confirm and continue' })).toBeInTheDocument()
-    expect(screen.getByText(/add a payment method to receive the first-plan gift/i)).toBeInTheDocument()
-    expect(screen.getByText(/iranian version: persian and irr/i)).toBeInTheDocument()
-    expect(screen.getByText(/gift budget is available/i)).toBeInTheDocument()
-    expect(screen.getByText(/not a 7-day trial/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'One month free' })).toBeInTheDocument()
+    expect(screen.getByText(/no card and no charge/i)).toBeInTheDocument()
+    expect(screen.getByText('No payment details')).toBeInTheDocument()
+    expect(screen.queryByText(/add a payment method/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/authoritative source/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/7-day trial/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/iranian version/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /generate my plan/i })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Confirm and continue' }))
     await waitFor(() => expect(complete).toHaveBeenCalled())

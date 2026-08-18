@@ -5,12 +5,12 @@ import {
   ArrowRight,
   Check,
   FileCheck2,
+  Gift,
   HeartPulse,
   LockKeyhole,
   ShieldCheck,
   Sparkles,
   UploadCloud,
-  WalletCards,
   WifiOff,
 } from 'lucide-react'
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
@@ -27,11 +27,12 @@ import { sanitizeLocalizedNumberInput } from '../../../lib/numbers/localized-num
 import { localizedPath } from '../../router/route-utils'
 import { loadPricingContext } from '../../data/pricing'
 import { giftCampaignFromUnknown, postOnboardingPath, reviewInventoryIds } from '../../entitlement'
-import { Input, Select, Textarea } from '../../ui/FormControls'
+import { Input, RequiredMark, Select, Textarea } from '../../ui/FormControls'
 import { CountryCombobox } from '../../ui/CountryCombobox'
 import { LocalizedDatePicker } from '../../ui/LocalizedDatePicker'
+import { LocalizedTimePicker } from '../../ui/LocalizedTimePicker'
 import { BrandLockup } from '../../ui/OrbitMark'
-import { Button, ContentCard, PageSkeleton, StatusPill } from '../../ui/primitives'
+import { Button, PageSkeleton, StatusPill } from '../../ui/primitives'
 import {
   loadOnboardingDraft,
   completeOnboarding,
@@ -41,6 +42,7 @@ import {
   uploadBodyReport,
 } from '../../onboarding/repository'
 import {
+  isFieldRequired,
   isFieldVisible,
   onboardingDefaultValues,
   onboardingOptionLabelKey,
@@ -58,6 +60,7 @@ import {
   healthScreeningOutcome,
   isHealthCollectingStopped,
   nextOnboardingStep,
+  onboardingProgressPercent,
   prepareCompletionValues,
   previousOnboardingStep,
 } from '../../onboarding/onboarding-state'
@@ -340,18 +343,10 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           <p className="orbit-eyebrow"><Sparkles size={15} />{t('onboarding.setupEyebrow')}</p>
           <h1>{t('onboarding.title')}</h1>
           <p>{t('onboarding.subtitle')}</p>
-          <ol>
-            {onboardingSections.map((item, index) => (
-              <li aria-current={index === currentIndex ? 'step' : undefined} className={index === currentIndex ? 'is-current' : index < currentIndex ? 'is-complete' : ''} key={item.key}>
-                <span>{index < currentIndex ? <Check size={15} /> : index + 1}</span>
-                <strong>{t(item.titleKey)}</strong>
-              </li>
-            ))}
-          </ol>
+          <OnboardingProgress locale={locale} percent={onboardingProgressPercent(step, values, locale)} title={t(section.titleKey)} />
         </aside>
-        <ContentCard className="onboarding-card">
+        <div className="content-card onboarding-card">
           <div className="onboarding-card__heading">
-            <span>{String(currentIndex + 1).padStart(2, '0')} / {String(onboardingSections.length).padStart(2, '0')}</span>
             <h2>{t(section.titleKey)}</h2>
           </div>
           {section.key === 'basics' ? <div className="inline-notice"><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</div> : null}
@@ -367,6 +362,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                   legalVersions={legalVersions}
                   locale={locale}
                   onChange={(value) => updateValue(field, value)}
+                  required={isFieldRequired(field, values)}
                   suggested={field.key === 'country' && countrySuggested}
                   value={values[field.key] ?? ''}
                 />
@@ -405,17 +401,25 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               <span className="onboarding-review__mark"><Sparkles size={28} /></span>
               <h3>{t('onboarding.review')}</h3>
               <p>{t('onboarding.reviewCopy')}</p>
+              {giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? (
+                <div className="inline-notice inline-notice--warning" role="status">{t('entitlement.giftExhausted')}</div>
+              ) : (
+                <article aria-labelledby="onboarding-gift-title" className="onboarding-gift glass-chrome glass-chrome--prominent">
+                  <span className="onboarding-gift__icon" aria-hidden="true"><Gift size={26} /></span>
+                  <p className="orbit-eyebrow">{t('onboarding.giftHeroEyebrow')}</p>
+                  <h4 id="onboarding-gift-title">{t('onboarding.giftHeroTitle')}</h4>
+                  <p>{t('onboarding.giftHeroBody')}</p>
+                  <ul className="onboarding-gift__chips">
+                    <li>{t('onboarding.giftChipDuration')}</li>
+                    <li>{t('onboarding.giftChipNoCard')}</li>
+                    <li>{t('onboarding.giftChipPlan')}</li>
+                  </ul>
+                </article>
+              )}
               <ReviewGrid legalVersions={legalVersions} locale={locale} values={values} />
-              <div className="inline-notice"><WalletCards size={18} />{t('entitlement.addPayment')}</div>
-              <div className="inline-notice"><LockKeyhole size={18} />{t('entitlement.checking')}</div>
-              {productRegion === 'ir' ? <div className="inline-notice"><LockKeyhole size={18} />{t('entitlement.irVersion')}</div> : <div className="inline-notice"><LockKeyhole size={18} />{t('onboarding.regionLocked')}</div>}
-              {giftCampaign === 'available' ? <div className="inline-notice inline-notice--success">{t('entitlement.giftAvailable')}</div> : null}
-              {giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? <div className="inline-notice inline-notice--warning">{t('entitlement.giftExhausted')}</div> : null}
-              <div className="inline-notice">{t('entitlement.notTrial')} {t('entitlement.oneSku')}</div>
               {blockedReason ? <div className="inline-notice inline-notice--warning"><HeartPulse size={18} />{blockedReason}</div> : null}
               {!online ? <div className="inline-notice"><WifiOff size={18} />{t('onboarding.offlineReview')}</div> : null}
               <Button block disabled={!online} loading={saving} onClick={finishSetup}>{t('onboarding.reviewFinish')}</Button>
-              <Link className="orbit-button orbit-button--secondary orbit-button--block" href={localizedPath(locale, '/pricing')}>{t('onboarding.paymentMethodLater')}</Link>
               <Link className="orbit-button orbit-button--ghost orbit-button--block" href={localizedPath(locale, '/app/today?preview=1')}>{t('common.preview')}</Link>
             </div>
           ) : null}
@@ -436,8 +440,41 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           ) : (
             <div className="onboarding-actions"><Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button></div>
           )}
-        </ContentCard>
+        </div>
       </main>
+    </div>
+  )
+}
+
+function OnboardingProgress({
+  locale,
+  percent,
+  title,
+}: {
+  locale: AppLocale
+  percent: number
+  title: string
+}) {
+  const { t } = useTranslation()
+  const display = formatNumber(percent / 100, locale, { style: 'percent', maximumFractionDigits: 0 })
+
+  return (
+    <div
+      aria-label={t('onboarding.progressLabel')}
+      aria-valuemax={100}
+      aria-valuemin={0}
+      aria-valuenow={percent}
+      aria-valuetext={`${title}, ${display}`}
+      className="onboarding-progress"
+      role="progressbar"
+    >
+      <div className="onboarding-progress__meta">
+        <strong>{title}</strong>
+        <span>{display}</span>
+      </div>
+      <div className="onboarding-progress__track">
+        <span className="onboarding-progress__fill" style={{ transform: `scaleX(${Math.max(percent, 0) / 100})` }} />
+      </div>
     </div>
   )
 }
@@ -540,6 +577,7 @@ function DynamicField({
   suggested,
   locale,
   legalVersions,
+  required,
 }: {
   field: OnboardingField
   value: string
@@ -548,18 +586,19 @@ function DynamicField({
   suggested?: boolean
   locale: AppLocale
   legalVersions: LegalDocumentVersions
+  required?: boolean
 }) {
   const { t } = useTranslation()
   if (field.kind === 'date') {
-    return <LocalizedDatePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} purpose={field.key === 'birthDate' ? 'birth' : 'report'} value={value} />
+    return <LocalizedDatePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} purpose={field.key === 'birthDate' ? 'birth' : 'report'} required={required} value={value} />
   }
   if (field.optionSource === 'countries') {
-    return <CountryCombobox error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} suggested={suggested} value={value} />
+    return <CountryCombobox error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} required={required} suggested={suggested} value={value} />
   }
   if (field.kind === 'select') {
     const options = field.options?.map((option) => ({ value: option.value, label: t(option.labelKey) })) ?? []
     return (
-      <Select error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} value={value}>
+      <Select error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} required={required} value={value}>
         {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </Select>
     )
@@ -568,9 +607,12 @@ function DynamicField({
     const policyPath = field.key === 'termsAccepted' ? '/terms' : '/privacy'
     return (
       <label className={`onboarding-checkbox ${error ? 'has-error' : ''}`}>
-        <input checked={value === 'yes'} onChange={(event) => onChange(event.target.checked ? 'yes' : '')} type="checkbox" />
+        <input aria-required={required || undefined} checked={value === 'yes'} onChange={(event) => onChange(event.target.checked ? 'yes' : '')} required={required} type="checkbox" />
         <span><Check size={16} /></span>
-        <strong>{t(field.labelKey)}</strong>
+        <div className="onboarding-checkbox__heading">
+          <strong>{t(field.labelKey)}</strong>
+          {required ? <RequiredMark /> : null}
+        </div>
         <small className="onboarding-checkbox__version">{consentVersionForField(field.key, legalVersions)}</small>
         <Link className="onboarding-checkbox__policy" href={localizedPath(locale, policyPath)} onClick={(event) => event.stopPropagation()} target="_blank">{locale === 'fa' ? 'مطالعه متن' : 'Read notice'}</Link>
         {error ? <small>{error}</small> : null}
@@ -582,7 +624,10 @@ function DynamicField({
     const selected = new Set(value.split(',').filter(Boolean))
     return (
       <fieldset className={`onboarding-multiselect ${error ? 'has-error' : ''}`}>
-        <legend>{t(field.labelKey)}</legend>
+        <legend>
+          {t(field.labelKey)}
+          {required ? <RequiredMark /> : null}
+        </legend>
         <div>
           {options?.map((option) => {
             const checked = selected.has(option.value)
@@ -609,7 +654,10 @@ function DynamicField({
     )
   }
   if (field.kind === 'textarea') {
-    return <Textarea error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} rows={3} value={value} />
+    return <Textarea error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} required={required} rows={3} value={value} />
+  }
+  if (field.kind === 'time') {
+    return <LocalizedTimePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} required={required} value={value} />
   }
   return (
     <Input
@@ -619,7 +667,7 @@ function DynamicField({
       max={field.max}
       min={field.min}
       onChange={(event) => onChange(event.target.value)}
-      required={field.required}
+      required={required}
       step={field.step}
       type={field.kind === 'number' ? 'text' : field.kind}
       value={value}

@@ -3,8 +3,12 @@ import {
   D11_STEP_ORDER,
   TRAINING_DURATION_PRESETS,
   hasUnmappedAllergen,
+  isFieldRequired,
+  isFieldVisible,
   onboardingDefaultValues,
   onboardingSections,
+  type OnboardingField,
+  type OnboardingSection,
   type OnboardingStepKey,
   validateSection,
 } from './schema'
@@ -39,6 +43,46 @@ function hasBodyInput(values: Record<string, string>) {
     values.bodyReportId ||
     values.bodySource,
   )
+}
+
+function isFieldFilled(field: OnboardingField, values: Record<string, string>) {
+  const value = values[field.key]?.trim() ?? ''
+  if (field.kind === 'checkbox') return value === 'yes'
+  return value.length > 0
+}
+
+function sectionProgressUnits(section: OnboardingSection, values: Record<string, string>) {
+  if (section.key === 'review') return { filled: 0, total: 1 }
+  if (section.key === 'body') return { filled: hasBodyInput(values) ? 1 : 0, total: 1 }
+  const fields = section.fields.filter((field) => isFieldVisible(field, values) && isFieldRequired(field, values))
+  if (fields.length === 0) return { filled: 0, total: 1 }
+  return {
+    filled: fields.filter((field) => isFieldFilled(field, values)).length,
+    total: fields.length,
+  }
+}
+
+export function onboardingProgressPercent(step: OnboardingStepKey, values: Record<string, string>, locale: AppLocale = 'en') {
+  const currentIndex = Math.max(0, D11_STEP_ORDER.indexOf(step))
+  let earned = 0
+  let total = 0
+
+  for (const [index, section] of onboardingSections.entries()) {
+    const units = sectionProgressUnits(section, values)
+    total += units.total
+    if (section.key === 'review') {
+      if (index <= currentIndex) earned += units.total
+      continue
+    }
+    if (index < currentIndex || isSectionComplete(section.key, values, locale)) {
+      earned += units.total
+      continue
+    }
+    if (index === currentIndex) earned += units.filled
+  }
+
+  if (total <= 0) return 0
+  return Math.min(100, Math.round((earned / total) * 100))
 }
 
 export function isSectionComplete(step: OnboardingStepKey, values: Record<string, string>, locale: AppLocale = 'en') {

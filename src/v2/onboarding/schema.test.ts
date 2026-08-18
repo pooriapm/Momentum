@@ -6,6 +6,7 @@ import {
   healthScreeningOutcome,
   canVisitStep,
   prepareCompletionValues,
+  onboardingProgressPercent,
 } from './onboarding-state'
 import {
   D11_STEP_ORDER,
@@ -78,18 +79,15 @@ describe('D11 onboarding schema', () => {
     expect(prepareCompletionValues({ goalType: 'fat_loss', weightKg: '72.4' }).targetWeightKg).toBe('72.4')
   })
 
-  it('requires restaurant preferences only when restaurant meals are used', () => {
-    const common = {
+  it('requires only diet style and meal pattern on Food, including optional budget', () => {
+    expect(validateSection(section('food'), { dietStyle: 'omnivore', requestedMealPattern: '3 meals' })).toEqual({})
+    expect(validateSection(section('food'), { requestedMealPattern: '3 meals' })).toHaveProperty('dietStyle')
+    expect(validateSection(section('food'), { dietStyle: 'omnivore' })).toHaveProperty('requestedMealPattern')
+    expect(validateSection(section('food'), {
       dietStyle: 'omnivore',
-      favoriteFoods: 'rice',
       requestedMealPattern: '3 meals',
-      preferredOptionCount: '3',
-      cookingConstraints: '30 minutes',
-      foodBudget: 'standard',
-      groceryPreferences: 'local supermarket',
-    }
-    expect(validateSection(section('food'), { ...common, restaurantMealsPerWeek: '0' })).toEqual({})
-    expect(validateSection(section('food'), { ...common, restaurantMealsPerWeek: '2' })).toHaveProperty('restaurantPreferences')
+      restaurantMealsPerWeek: '2',
+    })).toEqual({})
   })
 
   it('maps stored option values to translation keys', () => {
@@ -148,5 +146,26 @@ describe('D11 onboarding schema', () => {
       privacyAccepted: 'yes',
       healthDataConsent: 'yes',
     })).toBe('goal')
+  })
+
+  it('fills setup progress from required fields instead of numbered steps', () => {
+    expect(onboardingProgressPercent('basics', {})).toBe(0)
+    const afterBasics = onboardingProgressPercent('basics', completeBasics)
+    expect(afterBasics).toBeGreaterThan(0)
+    expect(afterBasics).toBeLessThan(40)
+    expect(onboardingProgressPercent('health', { ...completeBasics, pregnancyOrBreastfeeding: 'no' })).toBeGreaterThan(afterBasics)
+    expect(onboardingProgressPercent('review', {
+      ...completeBasics,
+      ...eligibleHealth,
+      termsAccepted: 'yes',
+      privacyAccepted: 'yes',
+      healthDataConsent: 'yes',
+      goalType: 'fat_loss',
+      dietStyle: 'omnivore',
+      requestedMealPattern: '3 meals',
+      trainingDays: '0',
+      workSchedule: 'weekdays',
+      bodySkipped: 'yes',
+    })).toBe(100)
   })
 })

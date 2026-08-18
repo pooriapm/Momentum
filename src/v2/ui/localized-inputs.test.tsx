@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { CountryCombobox } from './CountryCombobox'
 import { Select } from './FormControls'
 import { LocalizedDatePicker } from './LocalizedDatePicker'
+import { LocalizedTimePicker } from './LocalizedTimePicker'
 import { calendarParts, shiftIsoYears, todayIso } from './localized-date'
 import { toPersianDigits } from '../../lib/dates/jalali'
 
@@ -48,6 +49,21 @@ describe('localized onboarding inputs', () => {
     fireEvent.change(input, { target: { value: 'United States' } })
     fireEvent.click(screen.getByRole('option', { name: /United States/ }))
     expect(onChange).toHaveBeenCalledWith('US')
+  })
+
+  it('opens a 24-hour glass time picker with hours and minutes only', () => {
+    const onChange = vi.fn()
+    render(<LocalizedTimePicker label="ساعت معمول شروع تمرین" locale="fa" onChange={onChange} value="18:30" />)
+
+    expect(screen.getByText('۱۸:۳۰')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /ساعت معمول شروع تمرین/ }))
+    expect(screen.getByRole('dialog', { name: 'انتخاب‌گر ساعت' })).toBeInTheDocument()
+    expect(screen.queryByText('AM')).not.toBeInTheDocument()
+    expect(screen.queryByText('PM')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('option', { name: toPersianDigits('17') }))
+    expect(onChange).toHaveBeenCalledWith('17:30')
+    fireEvent.click(screen.getByRole('option', { name: toPersianDigits('45') }))
+    expect(onChange).toHaveBeenCalledWith('17:45')
   })
 
   it('opens a glass menu and returns the selected value', () => {

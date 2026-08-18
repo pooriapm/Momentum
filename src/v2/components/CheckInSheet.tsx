@@ -7,7 +7,7 @@ import {
   type CheckInSafety,
   type DailyCheckInInput,
 } from '../checkins/contracts'
-import { Input, Select, Textarea } from '../ui/FormControls'
+import { Input, RequiredMark, Select, Textarea } from '../ui/FormControls'
 import { Button } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
 
@@ -125,7 +125,7 @@ export function CheckInSheet({
           <Input inputMode="decimal" label={fa ? 'خواب دیشب (ساعت)' : 'Sleep last night (hours)'} max={24} min={0} onChange={(event) => setSleepHours(sanitizeLocalizedNumberInput(event.target.value, true))} required type="text" value={sleepHours} />
           <Input inputMode="decimal" label={fa ? 'وزن امروز (اختیاری)' : 'Weight today (optional)'} max={500} min={20} onChange={(event) => setWeight(sanitizeLocalizedNumberInput(event.target.value, true))} type="text" value={weight} />
           <Input inputMode="numeric" label={fa ? 'پایبندی دیروز % (اختیاری)' : 'Yesterday adherence % (optional)'} max={100} min={0} onChange={(event) => setAdherence(sanitizeLocalizedNumberInput(event.target.value, false))} type="text" value={adherence} />
-          <Select label={fa ? 'درد یا ناراحتی (۰ تا ۱۰)' : 'Pain or discomfort (0–10)'} onChange={(event) => setPainScore(event.target.value)} value={painScore}>
+          <Select label={fa ? 'درد یا ناراحتی (۰ تا ۱۰)' : 'Pain or discomfort (0–10)'} onChange={(event) => setPainScore(event.target.value)} required value={painScore}>
             {Array.from({ length: 11 }, (_, value) => <option key={value} value={value}>{value} {value === 0 ? (fa ? '— بدون درد' : '— no pain') : value === 10 ? (fa ? '— شدیدترین' : '— worst') : ''}</option>)}
           </Select>
           <Select label={fa ? 'سختی تمرین امروز (اختیاری)' : 'Training difficulty today (optional)'} onChange={(event) => setTrainingDifficulty(event.target.value)} value={trainingDifficulty}>
@@ -150,7 +150,7 @@ export function CheckInSheet({
 function ScoreField({ label, locale, onChange, value }: { label: string; locale: AppLocale; onChange: (value: number) => void; value: number }) {
   return (
     <fieldset className="score-field">
-      <legend>{label}</legend>
+      <legend>{label}<RequiredMark /></legend>
       <div>
         {scoreOptions.map((score) => <button aria-pressed={value === score} className={value === score ? 'is-selected' : ''} key={score} onClick={() => onChange(score)} type="button"><span>{score}</span><small>{score === 1 ? (locale === 'fa' ? 'کم' : 'Low') : score === 5 ? (locale === 'fa' ? 'زیاد' : 'High') : ''}</small></button>)}
       </div>

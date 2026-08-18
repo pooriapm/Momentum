@@ -1,5 +1,6 @@
 .mo-onboarding-story {
-  overflow-x: clip;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .mo-onboarding-story :where(.onboarding-header > span, .orbit-eyebrow, .inline-notice) > svg,
@@ -7,7 +8,7 @@
   flex: 0 0 auto;
 }
 
-.mo-onboarding-story :where(.review-grid dd, input[type='time']) {
+.mo-onboarding-story :where(.review-grid dd, .localized-time-field strong) {
   unicode-bidi: plaintext;
 }
 

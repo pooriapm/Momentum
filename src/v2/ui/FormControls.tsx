@@ -14,19 +14,27 @@ import {
   type TextareaHTMLAttributes,
 } from 'react'
 
+export function RequiredMark() {
+  return <span aria-hidden="true" className="orbit-field__required">*</span>
+}
+
 interface FieldShellProps {
   controlId: string
   descriptionId?: string
   label: string
   hint?: string
   error?: string
+  required?: boolean
   children: ReactNode
 }
 
-function FieldShell({ controlId, descriptionId, label, hint, error, children }: FieldShellProps) {
+function FieldShell({ controlId, descriptionId, label, hint, error, required, children }: FieldShellProps) {
   return (
     <div className={`orbit-field ${error ? 'orbit-field--error' : ''}`}>
-      <label className="orbit-field__label" htmlFor={controlId}>{label}</label>
+      <div className="orbit-field__label">
+        <label htmlFor={controlId}>{label}</label>
+        {required ? <RequiredMark /> : null}
+      </div>
       {children}
       {error ? <span className="orbit-field__error" id={descriptionId} role="alert">{error}</span> : hint ? <span className="orbit-field__hint" id={descriptionId}>{hint}</span> : null}
     </div>
@@ -39,13 +47,13 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string
 }
 
-export function Input({ label, hint, error, ...props }: InputProps) {
+export function Input({ label, hint, error, required, ...props }: InputProps) {
   const generatedId = useId()
   const controlId = props.id ?? `input-${generatedId}`
   const descriptionId = error || hint ? `${controlId}-description` : undefined
   return (
-    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label}>
-      <input aria-describedby={descriptionId} aria-invalid={Boolean(error)} className="orbit-input" {...props} id={controlId} />
+    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label} required={required}>
+      <input {...props} aria-describedby={descriptionId} aria-invalid={Boolean(error)} aria-required={required || undefined} className="orbit-input" id={controlId} required={required} />
     </FieldShell>
   )
 }
@@ -90,6 +98,7 @@ export function Select({
   id,
   label,
   onChange,
+  required,
   value,
   ...props
 }: SelectProps) {
@@ -118,13 +127,14 @@ export function Select({
   }
 
   return (
-    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label}>
+    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label} required={required}>
       <div className="orbit-select-shell" ref={rootRef}>
         <select
           aria-hidden="true"
           className="orbit-select-native"
           disabled={disabled}
           onChange={onChange}
+          required={required}
           tabIndex={-1}
           value={nativeValue}
           {...props}
@@ -140,6 +150,7 @@ export function Select({
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-invalid={Boolean(error)}
+          aria-required={required || undefined}
           className={`orbit-select-trigger ${open ? 'is-open' : ''}`}
           disabled={disabled}
           id={controlId}
@@ -190,13 +201,13 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: string
 }
 
-export function Textarea({ label, hint, error, ...props }: TextareaProps) {
+export function Textarea({ label, hint, error, required, ...props }: TextareaProps) {
   const generatedId = useId()
   const controlId = props.id ?? `textarea-${generatedId}`
   const descriptionId = error || hint ? `${controlId}-description` : undefined
   return (
-    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label}>
-      <textarea aria-describedby={descriptionId} aria-invalid={Boolean(error)} className="orbit-input orbit-textarea" {...props} id={controlId} />
+    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label} required={required}>
+      <textarea {...props} aria-describedby={descriptionId} aria-invalid={Boolean(error)} aria-required={required || undefined} className="orbit-input orbit-textarea" id={controlId} required={required} />
     </FieldShell>
   )
 }

@@ -7,7 +7,7 @@ import {
   type WeeklyCheckInResult,
 } from '../checkins/contracts'
 import { formatNumber } from '../lib/format'
-import { Select, Textarea } from '../ui/FormControls'
+import { RequiredMark, Select, Textarea } from '../ui/FormControls'
 import { Button } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
 
@@ -114,10 +114,10 @@ export function WeeklyCheckInSheet({
       <form onSubmit={submit}>
         <ScoreField label={fa ? 'در مجموع هفته چطور بود؟' : 'How was the week overall?'} locale={locale} onChange={setOverallScore} value={overallScore} />
         <div className="check-in-sheet__numbers">
-          <Select label={fa ? 'روند ریکاوری' : 'Recovery trend'} onChange={(event) => setRecoveryTrend(event.target.value as WeeklyCheckInInput['recoveryTrend'])} value={recoveryTrend}><option value="improved">{fa ? 'بهتر شد' : 'Improved'}</option><option value="stable">{fa ? 'بدون تغییر' : 'Stable'}</option><option value="worse">{fa ? 'بدتر شد' : 'Worse'}</option></Select>
-          <Select label={fa ? 'تمرین‌ها چه حسی داشتند؟' : 'How did training feel?'} onChange={(event) => setTrainingTrend(event.target.value as WeeklyCheckInInput['trainingTrend'])} value={trainingTrend}><option value="easier">{fa ? 'آسان‌تر' : 'Easier'}</option><option value="same">{fa ? 'مثل قبل' : 'About the same'}</option><option value="harder">{fa ? 'سخت‌تر' : 'Harder'}</option><option value="not_applicable">{fa ? 'تمرین نکردم' : 'Did not train'}</option></Select>
-          <Select label={fa ? 'روند درد یا ناراحتی' : 'Pain or discomfort trend'} onChange={(event) => setPainTrend(event.target.value as WeeklyCheckInInput['painTrend'])} value={painTrend}><option value="no_pain">{fa ? 'درد نداشتم' : 'No pain'}</option><option value="improved">{fa ? 'بهتر شد' : 'Improved'}</option><option value="stable">{fa ? 'بدون تغییر' : 'Stable'}</option><option value="worse">{fa ? 'بدتر شد' : 'Worse'}</option></Select>
-          <Select label={fa ? 'تغییر وضعیت سلامتی' : 'Health condition change'} onChange={(event) => setConditionChange(event.target.value as WeeklyCheckInInput['conditionChange'])} value={conditionChange}><option value="none">{fa ? 'بدون تغییر' : 'No change'}</option><option value="new_condition">{fa ? 'شرایط یا تشخیص جدید' : 'New condition or diagnosis'}</option><option value="medication_change">{fa ? 'تغییر دارو' : 'Medication change'}</option><option value="injury_or_worsening_pain">{fa ? 'آسیب یا درد رو به بدترشدن' : 'Injury or worsening pain'}</option><option value="other">{fa ? 'تغییر دیگر' : 'Other change'}</option></Select>
+          <Select label={fa ? 'روند ریکاوری' : 'Recovery trend'} onChange={(event) => setRecoveryTrend(event.target.value as WeeklyCheckInInput['recoveryTrend'])} required value={recoveryTrend}><option value="improved">{fa ? 'بهتر شد' : 'Improved'}</option><option value="stable">{fa ? 'بدون تغییر' : 'Stable'}</option><option value="worse">{fa ? 'بدتر شد' : 'Worse'}</option></Select>
+          <Select label={fa ? 'تمرین‌ها چه حسی داشتند؟' : 'How did training feel?'} onChange={(event) => setTrainingTrend(event.target.value as WeeklyCheckInInput['trainingTrend'])} required value={trainingTrend}><option value="easier">{fa ? 'آسان‌تر' : 'Easier'}</option><option value="same">{fa ? 'مثل قبل' : 'About the same'}</option><option value="harder">{fa ? 'سخت‌تر' : 'Harder'}</option><option value="not_applicable">{fa ? 'تمرین نکردم' : 'Did not train'}</option></Select>
+          <Select label={fa ? 'روند درد یا ناراحتی' : 'Pain or discomfort trend'} onChange={(event) => setPainTrend(event.target.value as WeeklyCheckInInput['painTrend'])} required value={painTrend}><option value="no_pain">{fa ? 'درد نداشتم' : 'No pain'}</option><option value="improved">{fa ? 'بهتر شد' : 'Improved'}</option><option value="stable">{fa ? 'بدون تغییر' : 'Stable'}</option><option value="worse">{fa ? 'بدتر شد' : 'Worse'}</option></Select>
+          <Select label={fa ? 'تغییر وضعیت سلامتی' : 'Health condition change'} onChange={(event) => setConditionChange(event.target.value as WeeklyCheckInInput['conditionChange'])} required value={conditionChange}><option value="none">{fa ? 'بدون تغییر' : 'No change'}</option><option value="new_condition">{fa ? 'شرایط یا تشخیص جدید' : 'New condition or diagnosis'}</option><option value="medication_change">{fa ? 'تغییر دارو' : 'Medication change'}</option><option value="injury_or_worsening_pain">{fa ? 'آسیب یا درد رو به بدترشدن' : 'Injury or worsening pain'}</option><option value="other">{fa ? 'تغییر دیگر' : 'Other change'}</option></Select>
         </div>
         <label className="weekly-change-toggle"><input checked={circumstancesChanged} onChange={(event) => setCircumstancesChanged(event.target.checked)} type="checkbox" /><span><strong>{fa ? 'شرایط زندگی یا برنامه‌ام تغییر کرده' : 'My circumstances or schedule changed'}</strong><small>{fa ? 'مثل سفر، شیفت کاری، استرس یا دسترسی به غذا و باشگاه' : 'For example travel, work shifts, stress, or access to food and training'}</small></span></label>
         {circumstancesChanged || conditionChange !== 'none' ? <Textarea label={fa ? 'چه چیزی تغییر کرده؟' : 'What changed?'} maxLength={2000} onChange={(event) => setChangeNotes(event.target.value)} required rows={3} value={changeNotes} /> : null}
@@ -135,7 +135,7 @@ export function WeeklyCheckInSheet({
 }
 
 function ScoreField({ label, locale, onChange, value }: { label: string; locale: AppLocale; onChange: (value: number) => void; value: number }) {
-  return <fieldset className="score-field"><legend>{label}</legend><div>{scoreOptions.map((score) => <button aria-pressed={value === score} className={value === score ? 'is-selected' : ''} key={score} onClick={() => onChange(score)} type="button"><span>{score}</span><small>{score === 1 ? (locale === 'fa' ? 'سخت' : 'Hard') : score === 5 ? (locale === 'fa' ? 'عالی' : 'Great') : ''}</small></button>)}</div></fieldset>
+  return <fieldset className="score-field"><legend>{label}<RequiredMark /></legend><div>{scoreOptions.map((score) => <button aria-pressed={value === score} className={value === score ? 'is-selected' : ''} key={score} onClick={() => onChange(score)} type="button"><span>{score}</span><small>{score === 1 ? (locale === 'fa' ? 'سخت' : 'Hard') : score === 5 ? (locale === 'fa' ? 'عالی' : 'Great') : ''}</small></button>)}</div></fieldset>
 }
 
 function TrendValue({ label, locale, value, delta, suffix = '' }: { label: string; locale: AppLocale; value: number | null; delta: number | null; suffix?: string }) {

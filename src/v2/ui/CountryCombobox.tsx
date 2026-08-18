@@ -2,6 +2,7 @@ import { Check, ChevronDown, MapPin, Search } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { countryName, sortedCountryCodes } from '../onboarding/countries'
+import { RequiredMark } from './FormControls'
 
 interface CountryComboboxProps {
   defaultOpen?: boolean
@@ -9,6 +10,7 @@ interface CountryComboboxProps {
   label: string
   locale: AppLocale
   onChange: (value: string) => void
+  required?: boolean
   suggested?: boolean
   value: string
 }
@@ -17,7 +19,7 @@ function countryFlag(code: string) {
   return code.replace(/./g, (letter) => String.fromCodePoint(127397 + letter.charCodeAt(0)))
 }
 
-export function CountryCombobox({ defaultOpen = false, error, label, locale, onChange, suggested, value }: CountryComboboxProps) {
+export function CountryCombobox({ defaultOpen = false, error, label, locale, onChange, required, suggested, value }: CountryComboboxProps) {
   const id = useId()
   const rootRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(defaultOpen)
@@ -50,13 +52,17 @@ export function CountryCombobox({ defaultOpen = false, error, label, locale, onC
 
   return (
     <div className={`orbit-field country-combobox ${error ? 'orbit-field--error' : ''}`} ref={rootRef}>
-      <label className="orbit-field__label" htmlFor={`${id}-search`}>{label}</label>
+      <div className="orbit-field__label">
+        <label htmlFor={`${id}-search`}>{label}</label>
+        {required ? <RequiredMark /> : null}
+      </div>
       <div className="country-combobox__control">
         <span>{open ? <Search size={18} /> : value ? countryFlag(value) : <MapPin size={18} />}</span>
         <input
           aria-autocomplete="list"
           aria-controls={`${id}-listbox`}
           aria-expanded={open}
+          aria-required={required || undefined}
           autoComplete="off"
           id={`${id}-search`}
           onChange={(event) => { setSearch(event.target.value); setOpen(true) }}

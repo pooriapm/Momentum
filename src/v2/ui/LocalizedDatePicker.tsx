@@ -2,6 +2,7 @@ import { CalendarDays, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { toPersianDigits } from '../../lib/dates/jalali'
+import { RequiredMark } from './FormControls'
 import {
   calendarParts,
   formatLocalizedDate,
@@ -19,12 +20,13 @@ interface LocalizedDatePickerProps {
   locale: AppLocale
   onChange: (value: string) => void
   purpose?: 'birth' | 'report'
+  required?: boolean
   value: string
 }
 
 type PickerPanel = 'days' | 'months' | 'years'
 
-export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 'report', value }: LocalizedDatePickerProps) {
+export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 'report', required, value }: LocalizedDatePickerProps) {
   const id = useId()
   const rootRef = useRef<HTMLDivElement>(null)
   const selectedYearRef = useRef<HTMLButtonElement>(null)
@@ -101,11 +103,15 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
 
   return (
     <div className={`orbit-field localized-date-field ${error ? 'orbit-field--error' : ''}`} ref={rootRef}>
-      <label className="orbit-field__label" id={`${id}-label`}>{label}</label>
+      <div className="orbit-field__label" id={`${id}-label`}>
+        <span>{label}</span>
+        {required ? <RequiredMark /> : null}
+      </div>
       <button
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-labelledby={`${id}-label ${id}-value`}
+        aria-required={required || undefined}
         className={`localized-date-trigger ${value ? 'has-value' : ''}`}
         id={`${id}-value`}
         onClick={showPicker}
