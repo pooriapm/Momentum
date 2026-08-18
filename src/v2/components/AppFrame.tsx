@@ -19,16 +19,25 @@ import { formatToday } from '../lib/format'
 import { localizedPath, switchLocalePath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
 import { GlassChrome, PageSkeleton, StatusPill } from '../ui/primitives'
-import { appContentSurface, type EntitlementSnapshot } from '../entitlement'
+import { appContentSurface, isMembershipRequiredTab, type EntitlementSnapshot } from '../entitlement'
 import { EntitlementGate } from '../pages/app/EntitlementGate'
 import { PrePlanState } from '../pages/app/PrePlanState'
 
 export type AppTab = 'today' | 'plan' | 'progress' | 'me'
 
+export interface AppFrameContentContext {
+  plan: MomentumPlanView | null
+  preview: boolean
+  loading: boolean
+  loadError: boolean
+  onRetry?: () => void
+  lastSyncedAt?: string
+}
+
 interface AppFrameProps {
   locale: AppLocale
   tab: AppTab
-  children: (context: { plan: MomentumPlanView | null; preview: boolean }) => ReactNode
+  children: (context: AppFrameContentContext) => ReactNode
 }
 
 const navItems = [
@@ -37,6 +46,12 @@ const navItems = [
   { key: 'progress', icon: LineChart },
   { key: 'me', icon: CircleUserRound },
 ] as const
+
+function lastSyncedAtFromDashboard(account: unknown) {
+  if (!account || typeof account !== 'object' || !('lastSyncedAt' in account)) return undefined
+  const value = (account as { lastSyncedAt?: unknown }).lastSyncedAt
+  return typeof value === 'string' ? value : undefined
+}
 
 function isScrollable(overflowY: string) {
   return overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay'
@@ -99,7 +114,10 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   })
   const [chromeMinimized, setChromeMinimized] = useState(false)
   const layoutRef = useRef<HTMLDivElement>(null)
-  const showChrome = preview || (status !== 'loading' && Boolean(user) && !planQuery.isLoading)
+  const operationalTab = isMembershipRequiredTab(tab)
+  const loading = !preview && (planQuery.isLoading || planQuery.isFetching) && !planQuery.data
+  const loadError = !preview && planQuery.isError
+  const showChrome = preview || (status !== 'loading' && Boolean(user) && (!planQuery.isLoading || operationalTab))
 
   useLayoutEffect(() => {
     if (!showChrome) return
@@ -119,7 +137,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
       </main>
     )
   }
-  if (!preview && planQuery.isLoading) return <PageSkeleton />
+  if (!preview && planQuery.isLoading && !operationalTab) return <PageSkeleton />
 
   const plan = preview ? demoPlan : (planQuery.data?.plan ?? null)
   const account = planQuery.data
@@ -135,6 +153,16 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   const contentSurface = preview ? 'children' : appContentSurface(tab, entitlement)
   const navQuery = preview ? '?preview=1' : ''
   const otherLocale: AppLocale = locale === 'fa' ? 'en' : 'fa'
+  const lastSyncedAt = lastSyncedAtFromDashboard(account)
+  const pageContext: AppFrameContentContext = {
+    plan,
+    preview,
+    loading,
+    loadError,
+    onRetry: preview ? undefined : () => { void planQuery.refetch() },
+    ...(lastSyncedAt ? { lastSyncedAt } : {}),
+  }
+  const pageOwnsPlanQuery = !preview && operationalTab && (loading || (loadError && !planQuery.data))
 
   return (
     <div className="app-layout" ref={layoutRef}>
@@ -166,13 +194,15 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
         {preview ? <GlassChrome className="preview-notice"><Sparkles size={16} /><span>{t('app.previewNotice')}</span></GlassChrome> : null}
         {planQuery.isError && planQuery.data ? <div className="app-error-banner">{locale === 'fa' ? 'به‌روزرسانی برنامه انجام نشد؛ آخرین اطلاعات موجود نمایش داده می‌شود.' : 'The plan could not refresh. Showing the latest available data.'}</div> : null}
         {plan?.contentLocale && plan.contentLocale !== locale ? <div className="app-content-language-note">{locale === 'fa' ? 'متن برنامه با زبان پروفایل هنگام ساخت تولید شده و با تغییر زبان رابط ترجمه نمی‌شود.' : 'Plan content is generated in the profile language and is not machine-translated when the interface language changes.'}</div> : null}
-        <div className="app-content">{!preview && planQuery.isError && !planQuery.data
+        <div className="app-content">{pageOwnsPlanQuery
+          ? children(pageContext)
+          : !preview && planQuery.isError && !planQuery.data
           ? <div className="app-load-error" role="alert"><strong>{locale === 'fa' ? 'برنامه دریافت نشد' : 'Your plan could not be loaded'}</strong><p>{locale === 'fa' ? 'اتصال را بررسی کن و دوباره تلاش کن. اطلاعات حسابت حذف نشده است.' : 'Check your connection and try again. Your account data is safe.'}</p><button className="orbit-button orbit-button--primary" onClick={() => void planQuery.refetch()} type="button">{locale === 'fa' ? 'تلاش دوباره' : 'Try again'}</button></div>
           : contentSurface === 'entitlement'
             ? <EntitlementGate locale={locale} snapshot={entitlement} />
             : contentSurface === 'preplan' && account
               ? <PrePlanState account={account} locale={locale} />
-              : children({ plan, preview })}</div>
+              : children(pageContext)}</div>
       </div>
       <GlassChrome aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Primary navigation'} className={`app-bottom-nav${chromeMinimized ? ' is-minimized' : ''}`} role="navigation">
         {navItems.map(({ key, icon: Icon }) => (
