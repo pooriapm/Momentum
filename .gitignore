@@ -41,6 +41,8 @@ lerna-debug.log*
 # Local agent instructions and tooling state
 Agent.md
 .openai/
+.cursor/
+graphify-out/
 
 # Supabase local runtime and generated state
 supabase/.branches/
