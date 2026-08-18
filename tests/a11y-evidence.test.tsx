@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { render, screen } from '@testing-library/react'
@@ -11,8 +11,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const orbitCss = readFileSync(resolve(root, 'src/styles/orbit.css'), 'utf8')
 const appCss = readFileSync(resolve(root, 'src/styles/app.css'), 'utf8')
 const specCss = readFileSync(resolve(root, 'src/stories/product/product-spec.css'), 'utf8')
-const handoff = readFileSync(resolve(root, 'docs/design/HANDOFF.md'), 'utf8')
-const step4 = readFileSync(resolve(root, 'docs/design/STEP-4-RESPONSIVE-A11Y.md'), 'utf8')
+const handoffPath = resolve(root, 'docs/design/HANDOFF.md')
+const step4Path = resolve(root, 'docs/design/STEP-4-RESPONSIVE-A11Y.md')
 
 function blockFor(css: string, selector: string) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -53,8 +53,12 @@ describe('accessibility evidence', () => {
   })
 
   it('leaves Forced Colors as an owner exception, not Pass', () => {
-    expect(handoff).toMatch(/Forced Colors: owner exception, \*\*not Pass\*\*/)
-    expect(step4).toMatch(/Forced Colors \| Owner exception — \*\*not Pass\*\*/)
+    if (existsSync(handoffPath) && existsSync(step4Path)) {
+      const handoff = readFileSync(handoffPath, 'utf8')
+      const step4 = readFileSync(step4Path, 'utf8')
+      expect(handoff).toMatch(/Forced Colors: owner exception, \*\*not Pass\*\*/)
+      expect(step4).toMatch(/Forced Colors \| Owner exception — \*\*not Pass\*\*/)
+    }
     expect(appCss).not.toMatch(/forced-colors:\s*active/)
     expect(orbitCss).not.toMatch(/forced-colors:\s*active/)
   })

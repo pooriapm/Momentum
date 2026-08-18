@@ -44,6 +44,11 @@ Agent.md
 .cursor/
 graphify-out/
 
+# Internal product, design, legal, and ops documentation.
+# Keep these on the machine only; the GitHub remote is public.
+/docs/*.md
+/docs/**/*.md
+
 # Supabase local runtime and generated state
 supabase/.branches/
 supabase/.temp/
