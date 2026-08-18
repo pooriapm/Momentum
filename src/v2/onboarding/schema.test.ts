@@ -68,10 +68,12 @@ describe('D11 onboarding schema', () => {
       preferredOptionCount: '3',
       requestedMealCount: '3',
       restaurantMealsPerWeek: '0',
+      trainingDays: '0',
       trainingDuration: '60',
       trainingDurationPreset: '60',
     })
     expect(field('food', 'preferredOptionCount')).toMatchObject({ min: 1, max: 4, stepper: true })
+    expect(field('training', 'trainingDays')).toMatchObject({ min: 0, max: 7, stepper: true })
   })
 
   it('keeps target weight optional and hidden during maintenance', () => {
@@ -149,6 +151,9 @@ describe('D11 onboarding schema', () => {
   it('hides equipment for outdoor training and starts Persian weekdays on Saturday', () => {
     expect(isFieldVisible(field('training', 'equipment'), { trainingLocation: 'outdoor' })).toBe(false)
     expect(isFieldVisible(field('training', 'equipment'), { trainingLocation: 'home' })).toBe(true)
+    expect(isFieldVisible(field('training', 'trainingDurationPreset'), { trainingDays: '0' })).toBe(false)
+    expect(isFieldVisible(field('training', 'trainingDuration'), { trainingDays: '0', trainingDurationPreset: 'custom' })).toBe(false)
+    expect(isFieldVisible(field('training', 'trainingDurationPreset'), { trainingDays: '3' })).toBe(true)
     expect(weekdayOptionsForLocale('fa').map((option) => option.value)).toEqual(['6', '0', '1', '2', '3', '4', '5'])
   })
 

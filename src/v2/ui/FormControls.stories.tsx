@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { Input, Select, Textarea } from './FormControls'
+import { Input, NumberStepper, Select, Textarea } from './FormControls'
 import './production-components.stories.css'
 
 function FormControlGallery({ locale }: { locale: 'fa' | 'en' }) {
@@ -8,6 +8,8 @@ function FormControlGallery({ locale }: { locale: 'fa' | 'en' }) {
   const [name, setName] = useState(english ? 'Alex Morgan' : 'پوریا مقدم')
   const [goal, setGoal] = useState(english ? 'fat_loss' : 'fat_loss')
   const [notes, setNotes] = useState('')
+  const [optionCount, setOptionCount] = useState('3')
+  const [trainingDays, setTrainingDays] = useState('3')
 
   return (
     <div className="mo-component-column mo-component-popover-stage">
@@ -40,6 +42,29 @@ function FormControlGallery({ locale }: { locale: 'fa' | 'en' }) {
         <option value="muscle_gain">{english ? 'Muscle gain' : 'افزایش عضله'}</option>
         <option value="maintenance">{english ? 'Maintain and improve performance' : 'حفظ و بهبود عملکرد'}</option>
       </Select>
+      <NumberStepper
+        decreaseLabel={english ? 'Decrease' : 'کم کردن'}
+        fallback={3}
+        increaseLabel={english ? 'Increase' : 'زیاد کردن'}
+        label={english ? 'Options per meal' : 'تعداد گزینه برای هر وعده'}
+        locale={locale}
+        max={4}
+        min={1}
+        onChange={setOptionCount}
+        value={optionCount}
+      />
+      <NumberStepper
+        decreaseLabel={english ? 'Decrease' : 'کم کردن'}
+        fallback={0}
+        increaseLabel={english ? 'Increase' : 'زیاد کردن'}
+        label={english ? 'Training days per week' : 'روزهای تمرین در هفته'}
+        locale={locale}
+        max={7}
+        min={0}
+        onChange={setTrainingDays}
+        required
+        value={trainingDays}
+      />
       <Textarea
         hint={english ? 'Avoid including medical records.' : 'اطلاعات پزشکی حساس را وارد نکن.'}
         label={english ? 'Anything else?' : 'نکته دیگری هست؟'}

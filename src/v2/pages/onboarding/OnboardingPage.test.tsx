@@ -199,10 +199,10 @@ describe('OnboardingPage inventory states', () => {
     renderStep('food')
     expect(await screen.findByRole('spinbutton', { name: 'Options per meal' })).toHaveAttribute('aria-valuenow', '3')
     expect(screen.queryByRole('textbox', { name: 'Options per meal' })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Increase options per meal' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Increase' }))
     expect(screen.getByRole('spinbutton', { name: 'Options per meal' })).toHaveAttribute('aria-valuenow', '4')
-    expect(screen.getByRole('button', { name: 'Increase options per meal' })).toBeDisabled()
-    fireEvent.click(screen.getByRole('button', { name: 'Decrease options per meal' }))
+    expect(screen.getByRole('button', { name: 'Increase' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease' }))
     expect(screen.getByRole('spinbutton', { name: 'Options per meal' })).toHaveAttribute('aria-valuenow', '3')
   })
 
@@ -210,6 +210,16 @@ describe('OnboardingPage inventory states', () => {
     renderStep('training', { ...completeDraft, trainingLocation: 'outdoor', equipment: '' })
     expect(await screen.findByText(/equipment input is hidden/i)).toBeInTheDocument()
     expect(screen.queryByLabelText('Available equipment')).not.toBeInTheDocument()
+  })
+
+  it('steps training days from 0 to 7 and uses a duration dropdown', async () => {
+    renderStep('training', { ...completeDraft, trainingDays: '0', trainingDurationPreset: 'custom', trainingDuration: '' })
+    expect(await screen.findByRole('spinbutton', { name: 'Training days per week' })).toHaveAttribute('aria-valuenow', '0')
+    expect(screen.queryByRole('button', { name: 'Session duration' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Custom duration (minutes)')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Increase' }))
+    expect(screen.getByRole('spinbutton', { name: 'Training days per week' })).toHaveAttribute('aria-valuenow', '1')
+    expect(screen.getByRole('button', { name: 'Session duration' })).toBeInTheDocument()
   })
 
   it('ONB-21 lets Body be skipped without an AI analysis claim', async () => {

@@ -667,13 +667,14 @@ function DynamicField({
   if (field.kind === 'number' && field.stepper) {
     return (
       <NumberStepper
-        decreaseLabel={t('onboarding.optionCountDecrease')}
+        decreaseLabel={t('onboarding.stepperDecrease')}
         error={error}
-        increaseLabel={t('onboarding.optionCountIncrease')}
+        fallback={Number(field.defaultValue ?? field.min ?? 0)}
+        increaseLabel={t('onboarding.stepperIncrease')}
         label={t(field.labelKey)}
         locale={locale}
         max={field.max ?? 4}
-        min={field.min ?? 1}
+        min={field.min ?? 0}
         onChange={onChange}
         required={required}
         step={field.step ?? 1}

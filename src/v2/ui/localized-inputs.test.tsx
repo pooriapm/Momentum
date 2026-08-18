@@ -133,4 +133,40 @@ describe('localized onboarding inputs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Decrease' }))
     expect(onChange).toHaveBeenCalledWith('3')
   })
+
+  it('steps training days from zero up to seven', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(
+      <NumberStepper
+        decreaseLabel="Decrease"
+        fallback={0}
+        increaseLabel="Increase"
+        label="Training days per week"
+        locale="en"
+        max={7}
+        min={0}
+        onChange={onChange}
+        value="0"
+      />,
+    )
+
+    expect(screen.getByRole('spinbutton', { name: 'Training days per week' })).toHaveAttribute('aria-valuenow', '0')
+    expect(screen.getByRole('button', { name: 'Decrease' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Increase' }))
+    expect(onChange).toHaveBeenCalledWith('1')
+    rerender(
+      <NumberStepper
+        decreaseLabel="Decrease"
+        fallback={0}
+        increaseLabel="Increase"
+        label="Training days per week"
+        locale="en"
+        max={7}
+        min={0}
+        onChange={onChange}
+        value="7"
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Increase' })).toBeDisabled()
+  })
 })

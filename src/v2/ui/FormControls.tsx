@@ -70,6 +70,7 @@ function clampStepperValue(raw: string, min: number, max: number, fallback: numb
 interface NumberStepperProps {
   decreaseLabel: string
   error?: string
+  fallback?: number
   increaseLabel: string
   label: string
   locale: AppLocale
@@ -84,6 +85,7 @@ interface NumberStepperProps {
 export function NumberStepper({
   decreaseLabel,
   error,
+  fallback,
   increaseLabel,
   label,
   locale,
@@ -97,7 +99,7 @@ export function NumberStepper({
   const generatedId = useId()
   const controlId = `stepper-${generatedId}`
   const descriptionId = error ? `${controlId}-description` : undefined
-  const count = clampStepperValue(value, min, max, 3)
+  const count = clampStepperValue(value, min, max, fallback ?? min)
   const atMin = count <= min
   const atMax = count >= max
 
@@ -135,7 +137,7 @@ export function NumberStepper({
       <div className="orbit-stepper">
         <button
           aria-label={decreaseLabel}
-          className="orbit-stepper__button"
+          className="orbit-stepper__button glass-chrome glass-interactive"
           disabled={atMin}
           onClick={() => setCount(count - step)}
           type="button"
@@ -161,7 +163,7 @@ export function NumberStepper({
         </div>
         <button
           aria-label={increaseLabel}
-          className="orbit-stepper__button"
+          className="orbit-stepper__button glass-chrome glass-interactive"
           disabled={atMax}
           onClick={() => setCount(count + step)}
           type="button"

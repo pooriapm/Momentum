@@ -14,6 +14,7 @@ export interface FieldCondition {
   notEquals?: string
   greaterThan?: number
   oneOf?: readonly string[]
+  and?: FieldCondition
 }
 
 export interface OnboardingField {
@@ -159,7 +160,17 @@ export const onboardingSections: readonly OnboardingSection[] = [
     key: 'training',
     titleKey: 'onboarding.training',
     fields: [
-      { key: 'trainingDays', labelKey: 'onboarding.trainingDays', kind: 'number', required: true, min: 0, max: 7, step: 1 },
+      { key: 'trainingDays', labelKey: 'onboarding.trainingDays', kind: 'number', required: true, min: 0, max: 7, step: 1, defaultValue: '0', stepper: true },
+      { key: 'trainingDurationPreset', labelKey: 'onboarding.durationPreset', kind: 'select', options: [
+        { value: '30', labelKey: 'onboarding.duration30' },
+        { value: '45', labelKey: 'onboarding.duration45' },
+        { value: '60', labelKey: 'onboarding.duration60' },
+        { value: '75', labelKey: 'onboarding.duration75' },
+        { value: '90', labelKey: 'onboarding.duration90' },
+        { value: '120', labelKey: 'onboarding.duration120' },
+        { value: 'custom', labelKey: 'onboarding.durationCustom' },
+      ], defaultValue: '60', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
+      { key: 'trainingDuration', labelKey: 'onboarding.trainingDuration', kind: 'number', min: 15, max: 120, step: 5, defaultValue: '60', visibleWhen: { field: 'trainingDurationPreset', equals: 'custom', and: { field: 'trainingDays', greaterThan: 0 } }, requiredWhen: { field: 'trainingDurationPreset', equals: 'custom', and: { field: 'trainingDays', greaterThan: 0 } } },
       { key: 'trainingLocation', labelKey: 'onboarding.trainingLocation', kind: 'select', options: [
         { value: 'home', labelKey: 'onboarding.locationHome' },
         { value: 'gym', labelKey: 'onboarding.locationGym' },
@@ -175,16 +186,6 @@ export const onboardingSections: readonly OnboardingSection[] = [
       ], visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
       { key: 'trainingWeekdays', labelKey: 'onboarding.trainingWeekdays', kind: 'multiselect', options: weekdayOptions, visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 }, selectionCountField: 'trainingDays' },
       { key: 'trainingStartTime', labelKey: 'onboarding.trainingStartTime', kind: 'time', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
-      { key: 'trainingDurationPreset', labelKey: 'onboarding.durationPreset', kind: 'select', options: [
-        { value: '30', labelKey: 'onboarding.duration30' },
-        { value: '45', labelKey: 'onboarding.duration45' },
-        { value: '60', labelKey: 'onboarding.duration60' },
-        { value: '75', labelKey: 'onboarding.duration75' },
-        { value: '90', labelKey: 'onboarding.duration90' },
-        { value: '120', labelKey: 'onboarding.duration120' },
-        { value: 'custom', labelKey: 'onboarding.durationCustom' },
-      ], defaultValue: '60', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
-      { key: 'trainingDuration', labelKey: 'onboarding.trainingDuration', kind: 'number', min: 15, max: 120, step: 5, defaultValue: '60', visibleWhen: { field: 'trainingDurationPreset', equals: 'custom' }, requiredWhen: { field: 'trainingDurationPreset', equals: 'custom' } },
       { key: 'trainingAvailability', labelKey: 'onboarding.trainingAvailability', kind: 'textarea', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
       { key: 'equipment', labelKey: 'onboarding.equipment', kind: 'textarea', visibleWhen: { field: 'trainingLocation', oneOf: ['home', 'gym'] } },
       { key: 'workSchedule', labelKey: 'onboarding.schedule', kind: 'textarea', required: true },
@@ -215,6 +216,7 @@ function conditionMatches(condition: FieldCondition | undefined, values: Record<
   if (condition.notEquals !== undefined && value === condition.notEquals) return false
   if (condition.greaterThan !== undefined && !(Number(value) > condition.greaterThan)) return false
   if (condition.oneOf !== undefined && !condition.oneOf.includes(value)) return false
+  if (condition.and && !conditionMatches(condition.and, values)) return false
   return true
 }
 
@@ -310,7 +312,7 @@ export function validateSection(section: OnboardingSection, values: Record<strin
       }
     }
   })
-  if (section.key === 'training' && values.trainingDurationPreset === 'custom') {
+  if (section.key === 'training' && values.trainingDurationPreset === 'custom' && Number(values.trainingDays) > 0) {
     const duration = Number(values.trainingDuration)
     if (!Number.isFinite(duration) || duration < 15 || duration > 120) {
       errors.trainingDuration = locale === 'fa'

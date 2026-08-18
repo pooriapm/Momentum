@@ -545,28 +545,36 @@ legend {
 .orbit-stepper {
   align-items: center;
   display: flex;
-  gap: .5rem;
-  max-width: 13.5rem;
+  gap: var(--space-3);
+  margin-block: var(--space-1);
+  max-width: 16.5rem;
+  padding-inline: 0;
+  width: 100%;
 }
 
-.orbit-stepper__button,
+.orbit-stepper__button.glass-chrome,
+.orbit-stepper__value {
+  box-sizing: border-box;
+  color: var(--color-text);
+}
+
 .orbit-stepper__value {
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-control);
-  box-sizing: border-box;
-  color: var(--color-text);
   transition: border-color var(--motion-fast), box-shadow var(--motion-fast), background var(--motion-fast);
 }
 
 .orbit-stepper__button {
   align-items: center;
   appearance: none;
+  border-radius: 1.05rem;
   cursor: pointer;
   display: inline-flex;
   flex: 0 0 var(--size-field);
   font: inherit;
   justify-content: center;
+  margin: 0;
   padding: 0;
   width: var(--size-field);
 }
@@ -574,10 +582,13 @@ legend {
 .orbit-stepper__button:hover:not(:disabled),
 .orbit-stepper__button:focus-visible,
 .orbit-stepper__value:focus-visible {
+  outline: none;
+}
+
+.orbit-stepper__value:focus-visible {
   background: var(--color-surface-raised);
   border-color: var(--color-brand);
   box-shadow: 0 0 0 3px var(--color-brand-soft);
-  outline: none;
 }
 
 .orbit-stepper__button:disabled {
@@ -588,11 +599,12 @@ legend {
 .orbit-stepper__value {
   align-items: center;
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   font-size: .95rem;
   font-weight: 750;
   justify-content: center;
   min-width: 0;
+  padding-inline: var(--space-3);
 }
 
 .orbit-field--error .orbit-stepper__button,
@@ -2301,6 +2313,11 @@ legend {
   .onboarding-card { padding: var(--space-5); }
   .onboarding-fields { grid-template-columns: minmax(0, 1fr); }
   .onboarding-fields .orbit-field:has(textarea) { grid-column: auto; }
+  .onboarding-fields .orbit-field:has(.orbit-stepper) { grid-column: 1 / -1; }
+  .orbit-stepper {
+    max-width: none;
+    width: 100%;
+  }
   .localized-date-trigger small { display: none; }
   .body-extraction-review__grid { grid-template-columns: 1fr; }
   .check-in-sheet { padding: 1rem; }
