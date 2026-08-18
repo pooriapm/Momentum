@@ -21,4 +21,11 @@ describe('localized number input', () => {
     expect(sanitizeLocalizedNumberInput('۹.۵', false)).toBe('9')
     expect(optionalLocalizedNumber('')).toBeUndefined()
   })
+
+  it('accepts Persian or English digits and caps height/weight to three digits', () => {
+    expect(sanitizeLocalizedNumberInput('۱۷۰', true, 3)).toBe('170')
+    expect(sanitizeLocalizedNumberInput('1680', true, 3)).toBe('168')
+    expect(sanitizeLocalizedNumberInput('۷۲٫۴۵', true, 3)).toBe('72.4')
+    expect(sanitizeLocalizedNumberInput('3501', true, 3)).toBe('350')
+  })
 })

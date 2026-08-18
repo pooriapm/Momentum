@@ -31,6 +31,7 @@ export interface OnboardingField {
   visibleWhen?: FieldCondition
   requiredWhen?: FieldCondition
   selectionCountField?: string
+  maxDigits?: number
 }
 
 export interface OnboardingSection {
@@ -84,8 +85,8 @@ export const onboardingSections: readonly OnboardingSection[] = [
         { value: 'male', labelKey: 'onboarding.male' },
         { value: 'undisclosed', labelKey: 'onboarding.undisclosed' },
       ] },
-      { key: 'heightCm', labelKey: 'onboarding.height', kind: 'number', required: true, min: 120, max: 230, step: 0.1 },
-      { key: 'weightKg', labelKey: 'onboarding.weight', kind: 'number', required: true, min: 35, max: 350, step: 0.1 },
+      { key: 'heightCm', labelKey: 'onboarding.height', kind: 'number', required: true, min: 120, max: 230, step: 0.1, maxDigits: 3 },
+      { key: 'weightKg', labelKey: 'onboarding.weight', kind: 'number', required: true, min: 35, max: 350, step: 0.1, maxDigits: 3 },
       { key: 'country', labelKey: 'onboarding.country', kind: 'select', required: true, optionSource: 'countries' },
     ],
   },

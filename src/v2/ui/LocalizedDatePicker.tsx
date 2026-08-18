@@ -1,5 +1,5 @@
 import { CalendarDays, Check, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { toPersianDigits } from '../../lib/dates/jalali'
 import {
@@ -22,9 +22,12 @@ interface LocalizedDatePickerProps {
   value: string
 }
 
+type PickerPanel = 'days' | 'months' | 'years'
+
 export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 'report', value }: LocalizedDatePickerProps) {
   const id = useId()
   const rootRef = useRef<HTMLDivElement>(null)
+  const selectedYearRef = useRef<HTMLButtonElement>(null)
   const today = todayIso()
   const minIso = purpose === 'birth' ? shiftIsoYears(today, -100) : shiftIsoYears(today, -10)
   const maxIso = purpose === 'birth' ? shiftIsoYears(today, -18) : today
@@ -32,6 +35,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
   const initialIso = clampIsoDate(value || fallbackIso, minIso, maxIso)
   const initial = calendarParts(initialIso, locale)
   const [open, setOpen] = useState(false)
+  const [panel, setPanel] = useState<PickerPanel>('days')
   const [viewYear, setViewYear] = useState(initial.year)
   const [viewMonth, setViewMonth] = useState(initial.month)
   const fa = locale === 'fa'
@@ -62,10 +66,20 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
     }
   }, [])
 
+  useEffect(() => {
+    if (!open) setPanel('days')
+  }, [open])
+
+  useLayoutEffect(() => {
+    if (panel !== 'years') return
+    selectedYearRef.current?.scrollIntoView?.({ block: 'nearest' })
+  }, [panel, viewYear])
+
   function showPicker() {
     const next = calendarParts(clampIsoDate(value || initialIso, minIso, maxIso), locale)
     setViewYear(next.year)
     setViewMonth(next.month)
+    setPanel('days')
     setOpen((current) => !current)
   }
 
@@ -76,6 +90,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
     if (nextYear < minYear || nextYear > maxYear) return
     setViewYear(nextYear)
     setViewMonth(nextMonth)
+    setPanel('days')
   }
 
   function selectDate(isoDate: string) {
@@ -105,37 +120,90 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
           <div className="localized-date-popover__topbar">
             <button aria-label={fa ? 'ماه قبل' : 'Previous month'} onClick={() => moveMonth(-1)} type="button"><ChevronLeft className="directional-icon" size={19} /></button>
             <div>
-              <select aria-label={fa ? 'ماه' : 'Month'} onChange={(event) => setViewMonth(Number(event.target.value))} value={viewMonth}>
-                {months.map((month, index) => <option key={month} value={index + 1}>{month}</option>)}
-              </select>
-              <select aria-label={fa ? 'سال' : 'Year'} onChange={(event) => setViewYear(Number(event.target.value))} value={viewYear}>
-                {years.map((year) => <option key={year} value={year}>{fa ? toPersianDigits(year) : year}</option>)}
-              </select>
+              <button
+                aria-expanded={panel === 'months'}
+                aria-haspopup="listbox"
+                aria-label={fa ? 'ماه' : 'Month'}
+                className={`localized-date-chip${panel === 'months' ? ' is-open' : ''}`}
+                onClick={() => setPanel((current) => current === 'months' ? 'days' : 'months')}
+                role="combobox"
+                type="button"
+              >
+                {months[viewMonth - 1]}
+              </button>
+              <button
+                aria-expanded={panel === 'years'}
+                aria-haspopup="listbox"
+                aria-label={fa ? 'سال' : 'Year'}
+                className={`localized-date-chip${panel === 'years' ? ' is-open' : ''}`}
+                onClick={() => setPanel((current) => current === 'years' ? 'days' : 'years')}
+                role="combobox"
+                type="button"
+              >
+                {fa ? toPersianDigits(viewYear) : viewYear}
+              </button>
             </div>
             <button aria-label={fa ? 'ماه بعد' : 'Next month'} onClick={() => moveMonth(1)} type="button"><ChevronRight className="directional-icon" size={19} /></button>
           </div>
-          <div className="localized-date-weekdays">
-            {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
-          </div>
-          <div className="localized-date-grid">
-            {cells.map((cell) => {
-              const disabled = cell.isoDate < minIso || cell.isoDate > maxIso
-              const selected = cell.isoDate === value
-              return (
+          {panel === 'months' ? (
+            <div className="localized-date-choices localized-date-choices--months" role="listbox">
+              {months.map((month, index) => (
                 <button
-                  aria-label={formatLocalizedDate(cell.isoDate, locale)}
-                  aria-pressed={selected}
-                  className={`${cell.isCurrentMonth ? '' : 'is-outside'} ${selected ? 'is-selected' : ''}`}
-                  disabled={disabled}
-                  key={cell.isoDate}
-                  onClick={() => selectDate(cell.isoDate)}
+                  aria-selected={viewMonth === index + 1}
+                  className={viewMonth === index + 1 ? 'is-selected' : ''}
+                  key={month}
+                  onClick={() => { setViewMonth(index + 1); setPanel('days') }}
+                  role="option"
                   type="button"
                 >
-                  {fa ? toPersianDigits(cell.day) : cell.day}{selected ? <Check size={12} /> : null}
+                  {month}
                 </button>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+          ) : null}
+          {panel === 'years' ? (
+            <div className="localized-date-choices localized-date-choices--years" role="listbox">
+              {years.map((year) => (
+                <button
+                  aria-selected={year === viewYear}
+                  className={year === viewYear ? 'is-selected' : ''}
+                  key={year}
+                  onClick={() => { setViewYear(year); setPanel('days') }}
+                  ref={year === viewYear ? selectedYearRef : undefined}
+                  role="option"
+                  type="button"
+                >
+                  {fa ? toPersianDigits(year) : year}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {panel === 'days' ? (
+            <>
+              <div className="localized-date-weekdays">
+                {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
+              </div>
+              <div className="localized-date-grid">
+                {cells.map((cell) => {
+                  const disabled = cell.isoDate < minIso || cell.isoDate > maxIso
+                  const selected = cell.isoDate === value
+                  return (
+                    <button
+                      aria-label={formatLocalizedDate(cell.isoDate, locale)}
+                      aria-pressed={selected}
+                      className={`${cell.isCurrentMonth ? '' : 'is-outside'} ${selected ? 'is-selected' : ''}`}
+                      disabled={disabled}
+                      key={cell.isoDate}
+                      onClick={() => selectDate(cell.isoDate)}
+                      type="button"
+                    >
+                      {fa ? toPersianDigits(cell.day) : cell.day}{selected ? <Check size={12} /> : null}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          ) : null}
         </div>
       ) : null}
       {error ? <span className="orbit-field__error" role="alert">{error}</span> : null}

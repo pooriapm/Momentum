@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-  CalendarDays,
   CircleUserRound,
   House,
   LineChart,
@@ -16,10 +15,9 @@ import { useAuth } from '../../platform/auth/auth-context'
 import { demoPlan } from '../data/demo'
 import { loadAccountDashboard } from '../data/repository'
 import { localize, type MomentumPlanView } from '../data/types'
-import { formatToday } from '../lib/format'
 import { localizedPath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
-import { GlassChrome, PageSkeleton, StatusPill } from '../ui/primitives'
+import { GlassChrome, PageSkeleton } from '../ui/primitives'
 import { appContentSurface, isMembershipRequiredTab, type EntitlementSnapshot } from '../entitlement'
 import { EntitlementGate } from '../pages/app/EntitlementGate'
 import { PrePlanState } from '../pages/app/PrePlanState'
@@ -187,18 +185,6 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
           <div><i style={{ width: plan ? '100%' : '0%' }} /></div>
         </div>
       </aside>
-      <header className={`app-topbar${chromeMinimized ? ' is-minimized' : ''}`}>
-        <div className="app-topbar__date"><CalendarDays size={17} /><span>{formatToday(locale, plan?.localDate, plan?.timezone)}</span></div>
-        <div className="app-topbar__actions">
-          {preview ? <StatusPill tone="energy">{t('common.preview')}</StatusPill> : null}
-          {offlineBanner.showIcon ? (
-            <button aria-label={locale === 'fa' ? 'آفلاین' : 'Offline'} className="app-icon-button app-offline-icon" onClick={offlineBanner.dismiss} type="button">
-              <WifiOff size={16} />
-            </button>
-          ) : null}
-          <Link aria-label={locale === 'fa' ? 'حساب من' : 'My account'} className="app-profile-button" href={`${localizedPath(locale, '/app/me')}${navQuery}`}><span>{preview ? 'A' : user?.email?.slice(0, 1).toUpperCase()}</span></Link>
-        </div>
-      </header>
       <div className="app-workspace">
         {offlineBanner.showBanner ? (
           <div className="app-offline-banner inline-notice" role="status">

@@ -1,5 +1,5 @@
 import {
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ElementType,
@@ -21,6 +21,13 @@ function shouldSkipReveal() {
   }
 }
 
+function isAlreadyInView(node: HTMLElement) {
+  const rect = node.getBoundingClientRect()
+  if (rect.width === 0 && rect.height === 0) return false
+  const margin = 72
+  return rect.top < window.innerHeight + margin && rect.bottom > -margin
+}
+
 export function Reveal<T extends ElementType = 'div'>({
   as,
   className = '',
@@ -32,10 +39,14 @@ export function Reveal<T extends ElementType = 'div'>({
   const ref = useRef<HTMLElement | null>(null)
   const [visible, setVisible] = useState(shouldSkipReveal)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (visible) return
     const node = ref.current
     if (!node) return
+    if (isAlreadyInView(node)) {
+      setVisible(true)
+      return
+    }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return

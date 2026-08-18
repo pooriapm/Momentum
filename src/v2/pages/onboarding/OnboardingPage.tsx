@@ -159,7 +159,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   }
 
   function updateValue(field: OnboardingField, value: string) {
-    const nextValue = field.kind === 'number' ? sanitizeLocalizedNumberInput(value, field.step !== 1) : value
+    const nextValue = field.kind === 'number' ? sanitizeLocalizedNumberInput(value, field.step !== 1, field.maxDigits) : value
     setValueEdits((current) => {
       const next = { ...current, [field.key]: nextValue }
       if (field.key === 'trainingDurationPreset' && value !== 'custom') next.trainingDuration = value
@@ -560,7 +560,6 @@ function DynamicField({
     const options = field.options?.map((option) => ({ value: option.value, label: t(option.labelKey) })) ?? []
     return (
       <Select error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} value={value}>
-        <option value="">—</option>
         {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </Select>
     )

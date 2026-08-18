@@ -56,6 +56,10 @@ interface SelectOption {
   value: string
 }
 
+function isBlankPlaceholder(option: SelectOption) {
+  return option.value === '' && /^[\s\-–—−]*$/.test(option.label)
+}
+
 function readSelectOptions(children: ReactNode): SelectOption[] {
   return Children.toArray(children).flatMap((child) => {
     if (!isValidElement<{ children?: ReactNode; disabled?: boolean; label?: string; value?: string }>(child)) return []
@@ -65,7 +69,8 @@ function readSelectOptions(children: ReactNode): SelectOption[] {
     const label = typeof child.props.children === 'string' || typeof child.props.children === 'number'
       ? String(child.props.children)
       : child.props.label ?? value
-    return [{ disabled: Boolean(child.props.disabled), label, value }]
+    const option = { disabled: Boolean(child.props.disabled), label, value }
+    return isBlankPlaceholder(option) ? [] : [option]
   })
 }
 
@@ -96,7 +101,8 @@ export function Select({
   const [open, setOpen] = useState(defaultOpen)
   const options = useMemo(() => readSelectOptions(children), [children])
   const selectedValue = value == null ? '' : String(value)
-  const selected = options.find((option) => option.value === selectedValue) ?? options.find((option) => option.value) ?? options[0]
+  const selected = options.find((option) => option.value === selectedValue)
+  const nativeValue = selected ? selectedValue : ''
 
   useEffect(() => {
     const close = (event: MouseEvent) => {
@@ -120,10 +126,13 @@ export function Select({
           disabled={disabled}
           onChange={onChange}
           tabIndex={-1}
-          value={selectedValue}
+          value={nativeValue}
           {...props}
         >
-          {children}
+          {nativeValue === '' ? <option value="" /> : null}
+          {options.map((option) => (
+            <option disabled={option.disabled} key={option.value || option.label} value={option.value}>{option.label}</option>
+          ))}
         </select>
         <button
           aria-controls={listboxId}
@@ -144,7 +153,7 @@ export function Select({
           }}
           type="button"
         >
-          <span>{selected?.label || '—'}</span>
+          <span>{selected?.label ?? ''}</span>
           <ChevronDown aria-hidden="true" size={17} />
         </button>
         {open ? (

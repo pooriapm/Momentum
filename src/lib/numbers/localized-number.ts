@@ -10,18 +10,38 @@ export function toLatinDigits(value: string): string {
 export function sanitizeLocalizedNumberInput(
   value: string,
   allowDecimal = true,
+  maxDigits?: number,
 ): string {
   const normalized = toLatinDigits(value)
     .replace(/[٬,\s]/g, '')
     .replace(/٫/g, '.')
     .replace(/[^0-9.]/g, '')
 
-  if (!allowDecimal) return normalized.split('.', 1)[0] ?? ''
+  const sanitized = allowDecimal ? keepOneDecimal(normalized) : (normalized.split('.', 1)[0] ?? '')
+  return maxDigits == null ? sanitized : limitDigitCount(sanitized, maxDigits)
+}
 
-  const [whole = '', ...decimalParts] = normalized.split('.')
-  return decimalParts.length > 0
-    ? `${whole}.${decimalParts.join('')}`
-    : whole
+function keepOneDecimal(value: string) {
+  const [whole = '', ...decimalParts] = value.split('.')
+  return decimalParts.length > 0 ? `${whole}.${decimalParts.join('')}` : whole
+}
+
+function limitDigitCount(value: string, maxDigits: number) {
+  let digits = 0
+  let result = ''
+  let hasDot = false
+  for (const char of value) {
+    if (char === '.') {
+      if (hasDot) continue
+      result += '.'
+      hasDot = true
+      continue
+    }
+    if (digits >= maxDigits) continue
+    result += char
+    digits += 1
+  }
+  return result
 }
 
 export function parseLocalizedNumber(value: string): number {

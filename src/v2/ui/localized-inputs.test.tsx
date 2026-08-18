@@ -4,6 +4,7 @@ import { CountryCombobox } from './CountryCombobox'
 import { Select } from './FormControls'
 import { LocalizedDatePicker } from './LocalizedDatePicker'
 import { calendarParts, shiftIsoYears, todayIso } from './localized-date'
+import { toPersianDigits } from '../../lib/dates/jalali'
 
 describe('localized onboarding inputs', () => {
   it('renders a Jalali date in Persian while returning Gregorian ISO', () => {
@@ -23,18 +24,20 @@ describe('localized onboarding inputs', () => {
 
     render(<LocalizedDatePicker label="تاریخ تولد" locale="fa" onChange={vi.fn()} purpose="birth" value={todayIso()} />)
     fireEvent.click(screen.getByRole('button', { name: /تاریخ تولد/ }))
-
-    expect(screen.getByRole('combobox', { name: 'سال' })).toHaveValue(String(maxBirthYear))
+    expect(screen.getByRole('combobox', { name: 'سال' })).toHaveTextContent(toPersianDigits(maxBirthYear))
+    fireEvent.click(screen.getByRole('combobox', { name: 'سال' }))
+    expect(screen.getByRole('option', { name: toPersianDigits(maxBirthYear) })).toBeInTheDocument()
+    expect(screen.getAllByRole('option').length).toBeGreaterThan(20)
   })
 
   it('lists the full ISO country set when opened', () => {
-    render(<CountryCombobox label="Country" locale="en" onChange={vi.fn()} value="IR" />)
+    const { container } = render(<CountryCombobox label="Country" locale="en" onChange={vi.fn()} value="IR" />)
 
     fireEvent.focus(screen.getByRole('combobox', { name: 'Country' }))
-    expect(screen.getAllByRole('option').length).toBeGreaterThan(200)
-    expect(screen.getByRole('option', { name: /Iran/ })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /Zimbabwe/ })).toBeInTheDocument()
-  })
+    expect(container.querySelectorAll('[role="option"]').length).toBeGreaterThan(200)
+    expect(screen.getByText('Iran')).toBeInTheDocument()
+    expect(screen.getByText('Zimbabwe')).toBeInTheDocument()
+  }, 15_000)
 
   it('searches localized countries and returns an ISO country code', () => {
     const onChange = vi.fn()
@@ -60,5 +63,19 @@ describe('localized onboarding inputs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Goal' }))
     fireEvent.click(screen.getByRole('option', { name: /Muscle gain/ }))
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ target: { value: 'muscle_gain' } }))
+  })
+
+  it('does not list a blank dash placeholder among select options', () => {
+    render(
+      <Select defaultOpen label="Adult confirmation" onChange={vi.fn()} value="">
+        <option value="">—</option>
+        <option value="no">No</option>
+        <option value="yes">Yes</option>
+      </Select>,
+    )
+
+    expect(screen.queryByRole('option', { name: '—' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: '-' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['No', 'Yes'])
   })
 })

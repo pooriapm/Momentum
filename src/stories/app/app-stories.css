@@ -68,7 +68,6 @@
   overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-top: 5.15rem;
 }
 
 .mo-app-story--phone .app-workspace,
@@ -83,54 +82,6 @@
 }
 
 .mo-app-story--phone .app-sidebar {
-  display: none;
-}
-
-.mo-app-story--phone .app-topbar {
-  height: 4.25rem;
-  inset-inline: .65rem;
-  margin: 0;
-  padding-inline: 1rem;
-  position: absolute;
-  top: .5rem;
-  z-index: 30;
-  transition:
-    transform var(--motion-glass-morph) var(--motion-glass-spring),
-    height var(--motion-glass-morph) var(--motion-glass-spring),
-    padding var(--motion-glass-release) var(--motion-glass-spring),
-    inset-inline var(--motion-glass-morph) var(--motion-glass-spring),
-    border-radius var(--motion-glass-morph) var(--motion-glass-spring);
-}
-
-.mo-app-story--phone .app-topbar__date {
-  max-width: 12rem;
-  overflow: hidden;
-  transition:
-    max-width var(--motion-glass-morph) var(--motion-glass-spring),
-    opacity var(--motion-glass-press) ease,
-    margin var(--motion-glass-release) var(--motion-glass-spring);
-}
-
-.mo-app-story--phone .app-topbar.is-minimized {
-  border-radius: 999px;
-  height: 3.2rem;
-  inset-inline: 10%;
-  justify-content: flex-end;
-  padding-block: .28rem;
-  padding-inline: .55rem;
-  transform: translateY(-.08rem) scale(.98);
-}
-
-.mo-app-story--phone .app-topbar.is-minimized .app-topbar__date {
-  max-width: 0;
-  margin: 0;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.mo-app-story--phone .app-topbar__date span,
-.mo-app-story--phone .app-topbar__actions > .status-pill {
   display: none;
 }
 
