@@ -2,10 +2,9 @@
   "name": "momentum",
   "private": true,
   "version": "0.3.0",
-  "packageManager": "npm@11.17.0",
   "engines": {
     "node": ">=22.12.0",
-    "npm": ">=10"
+    "npm": ">=10.9.2"
   },
   "type": "module",
   "scripts": {
