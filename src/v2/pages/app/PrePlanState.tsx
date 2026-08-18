@@ -1,6 +1,6 @@
 import { ShieldAlert, Sparkles, UserRoundCheck } from 'lucide-react'
 import { Link } from 'wouter'
-import type { AppLocale } from '../../../platform/i18n/catalog'
+import { resources, type AppLocale } from '../../../platform/i18n/catalog'
 import type { AccountDashboardView } from '../../data/repository'
 import { isEntitledForGeneration } from '../../entitlement'
 import { localizedPath } from '../../router/route-utils'
@@ -14,6 +14,7 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
   const online = useOnlineStatus()
   const wait = useGenerationWait(locale, Boolean(account.plan))
   const fa = locale === 'fa'
+  const copy = resources[locale].translation.app
   const started = account.onboardingStatus === 'started' || account.onboardingStatus === 'profile_complete'
   const blocked = account.onboardingStatus === 'automation_blocked' || account.aiPlanAccess.state === 'safety_blocked'
   const entitled = isEntitledForGeneration({
@@ -47,7 +48,15 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
         <h1>{started ? (fa ? 'اول شناختت را کامل کنیم' : 'Let’s finish your setup') : blocked ? (fa ? 'مسیر امن‌تر برای تو' : 'A safer path for you') : ready ? (fa ? 'آماده ساخت برنامه‌ای' : 'You are ready for a plan') : (fa ? 'حساب آماده است؛ دسترسی در انتظار تأیید' : 'Your account is ready; access is awaiting verification')}</h1>
         <p>{started ? (fa ? 'اطلاعات لازم هنوز کامل نشده است.' : 'Required profile information is not complete yet.') : blocked ? (fa ? 'برنامه‌ریزی خودکار برای شرایط ثبت‌شده مناسب نیست. Momentum می‌تواند فقط اطلاعات عمومی نشان دهد.' : 'Automated planning is not appropriate for the recorded health context. Momentum can only provide general information.') : ready ? (fa ? 'می‌توانی برنامه ماهانه را بسازی.' : 'You can generate your monthly plan.') : account.aiPlanAccess.state === 'disabled' ? (fa ? 'ساخت برنامه در این محیط توسط اپراتور متوقف است.' : 'Plan generation is currently disabled by the operator.') : (fa ? 'ساخت برنامه هنوز آماده نیست؛ کمی بعد دوباره تلاش کن.' : 'Plan generation is not ready yet; try again shortly.')}</p>
         {started ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/onboarding')}>{fa ? 'ادامه آنبوردینگ' : 'Continue onboarding'}</Link> : null}
-        {ready ? <Button onClick={() => wait.start()}><Sparkles size={18} />{fa ? 'ساخت برنامه' : 'Generate plan'}</Button> : null}
+        {ready ? (
+          <>
+            <div className="inline-notice" role="status">
+              {copy.paymentRequiredBody} {copy.paymentRequiredNote}
+            </div>
+            <Button onClick={() => wait.start()}><Sparkles size={18} />{fa ? 'ساخت برنامه' : 'Generate plan'}</Button>
+            <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/me')}>{copy.openMembership}</Link>
+          </>
+        ) : null}
         {!started && !blocked && !entitled ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/app/me')}>{fa ? 'شروع عضویت' : 'Start membership'}</Link> : null}
         {!ready ? <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today?preview=1')}>{fa ? 'دیدن Preview' : 'View preview'}</Link> : null}
       </ContentCard>

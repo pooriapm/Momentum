@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { resources } from '../../platform/i18n/catalog'
 import type { WorkoutBlock } from '../data/types'
 import { WorkoutLogger } from './WorkoutLogger'
 
@@ -58,6 +59,43 @@ describe('WorkoutLogger preview loop', () => {
     expect(await screen.findByText(/momentum does not diagnose/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /continue with adaptation/i }))
     expect(screen.getByRole('button', { name: /finish workout/i })).toBeInTheDocument()
+  })
+
+  it('collects skip and stop reasons in a dialog instead of window.prompt', async () => {
+    const prompt = vi.spyOn(window, 'prompt')
+    const copy = resources.en.translation
+    render(<WorkoutLogger enabled locale="en" localDate="2026-08-09" preview workout={workout} />)
+    fireEvent.click(screen.getByRole('button', { name: /start workout/i }))
+    const firstSet = screen.getByText('Set 1').closest('.workout-set-row')
+    const controls = within(firstSet as HTMLElement)
+    fireEvent.change(controls.getByLabelText('kg'), { target: { value: '40' } })
+    fireEvent.change(controls.getByLabelText('reps'), { target: { value: '8' } })
+    fireEvent.click(controls.getByRole('button', { name: /log set/i }))
+    expect(await controls.findByRole('button', { name: /undo/i })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /^skip$/i }))
+    const skipDialog = document.querySelector('[role="dialog"]')
+    expect(skipDialog).toBeInstanceOf(HTMLElement)
+    expect(skipDialog).toHaveAttribute('aria-modal', 'true')
+    expect(skipDialog).toHaveAttribute('aria-labelledby', 'workout-reason-title')
+    expect(screen.getByText(copy.app.skipReasonTitle)).toBeInTheDocument()
+    expect(within(skipDialog as HTMLElement).getByText(copy.app.skipReasonLabel)).toBeInTheDocument()
+    expect((skipDialog as HTMLElement).querySelector('input')).toHaveClass('orbit-input')
+    fireEvent.click(within(skipDialog as HTMLElement).getByText(copy.common.cancel).closest('button')!)
+    expect(document.querySelector('[role="dialog"]')).toBeNull()
+    expect(controls.getByRole('button', { name: /undo/i })).toBeEnabled()
+    expect(screen.getByText('Open')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /stop workout/i }))
+    const stopDialog = document.querySelector('[role="dialog"]')
+    expect(stopDialog).toBeInstanceOf(HTMLElement)
+    expect(screen.getByText(copy.app.stopReasonTitle)).toBeInTheDocument()
+    fireEvent.click(within(stopDialog as HTMLElement).getByText(copy.common.cancel).closest('button')!)
+    expect(document.querySelector('[role="dialog"]')).toBeNull()
+    expect(screen.getByRole('button', { name: /stop workout/i })).toBeInTheDocument()
+    expect(screen.queryByText('Workout stopped')).not.toBeInTheDocument()
+    expect(prompt).not.toHaveBeenCalled()
+    prompt.mockRestore()
   })
 })
 

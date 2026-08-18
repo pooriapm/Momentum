@@ -3,7 +3,7 @@ import { TODAY_GENERATION_WAIT_MS } from './today-state'
 export const GENERATION_WAIT_STORAGE_KEY = 'momentum.generationWait.v1'
 
 export type GenerationWaitPhase = 'queued' | 'generating' | 'validating' | 'importing' | 'ready'
-export type GenerationWaitFailure = 'timeout' | 'provider' | 'validation' | 'import' | 'offline'
+export type GenerationWaitFailure = 'timeout' | 'provider' | 'validation' | 'import' | 'offline' | 'payment'
 
 export type GenerationWaitInventoryId =
   | 'LIFE-12'
@@ -25,7 +25,7 @@ export interface GenerationWaitSession {
 }
 
 const waitPhases = new Set<GenerationWaitPhase>(['queued', 'generating', 'validating', 'importing', 'ready'])
-const waitFailures = new Set<GenerationWaitFailure>(['timeout', 'provider', 'validation', 'import', 'offline'])
+const waitFailures = new Set<GenerationWaitFailure>(['timeout', 'provider', 'validation', 'import', 'offline', 'payment'])
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object'
@@ -47,7 +47,7 @@ export function waitInventoryId(input: {
 }): GenerationWaitInventoryId {
   if (input.failure === 'validation') return 'LIFE-19'
   if (input.failure === 'import') return 'LIFE-20'
-  if (input.failure === 'timeout' || input.failure === 'provider' || input.failure === 'offline') return 'LIFE-18'
+  if (input.failure === 'timeout' || input.failure === 'provider' || input.failure === 'offline' || input.failure === 'payment') return 'LIFE-18'
   if (input.phase === 'queued') return 'LIFE-12'
   if (input.phase === 'validating') return 'LIFE-14'
   if (input.phase === 'importing') return 'LIFE-15'
@@ -77,6 +77,7 @@ export function mapGenerationFailure(error: unknown): GenerationWaitFailure | 's
   const blob = `${code} ${message}`
 
   if (blob.includes('JOB_IN_PROGRESS') || blob.includes('STILL_PROCESSING')) return 'still_processing'
+  if (blob.includes('PAYMENT_METHOD_REQUIRED')) return 'payment'
   if (blob.includes('PLAN_VALIDATION_FAILED') || blob.includes('VALIDATION_FAILED')) return 'validation'
   if (blob.includes('PLAN_IMPORT_FAILED') || blob.includes('IMPORT_FAILED')) return 'import'
   if (blob.includes('OFFLINE')) return 'offline'

@@ -50,6 +50,8 @@ describe('generation wait contract', () => {
     expect(waitInventoryId({ failure: 'provider' })).toBe('LIFE-18')
     expect(waitInventoryId({ failure: 'validation' })).toBe('LIFE-19')
     expect(waitInventoryId({ failure: 'import' })).toBe('LIFE-20')
+    expect(waitInventoryId({ failure: 'offline' })).toBe('LIFE-18')
+    expect(waitInventoryId({ failure: 'payment' })).toBe('LIFE-18')
     expect(mapJobStatusToPhase('queued')).toBe('queued')
     expect(mapJobStatusToPhase('validating')).toBe('validating')
     expect(mapJobStatusToPhase('importing')).toBe('importing')
@@ -63,6 +65,10 @@ describe('generation wait contract', () => {
     expect(mapGenerationFailure({ code: 'PLAN_VALIDATION_FAILED' })).toBe('validation')
     expect(mapGenerationFailure({ error: { code: 'PLAN_IMPORT_FAILED' } })).toBe('import')
     expect(mapGenerationFailure({ code: 'JOB_IN_PROGRESS' })).toBe('still_processing')
+    expect(mapGenerationFailure({ code: 'PAYMENT_METHOD_REQUIRED' })).toBe('payment')
+    expect(mapGenerationFailure({ error: { code: 'PAYMENT_METHOD_REQUIRED' } })).toBe('payment')
+    expect(mapGenerationFailure(new Error('PAYMENT_METHOD_REQUIRED'))).toBe('payment')
+    expect(mapGenerationFailure({ code: 'PAYMENT_METHOD_REQUIRED' })).not.toBe('provider')
   })
 
   it('drops a corrupt wait session instead of inventing a new job', () => {

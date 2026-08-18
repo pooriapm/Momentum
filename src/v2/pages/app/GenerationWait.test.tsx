@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { resources } from '../../../platform/i18n/catalog'
 import { GenerationWait } from './GenerationWait'
 import { TODAY_GENERATION_WAIT_MS } from './today-state'
 
@@ -60,5 +61,23 @@ describe('GenerationWait inventory copy', () => {
     fireEvent.click(screen.getByText('Retry import'))
     expect(onRetry).toHaveBeenCalledTimes(1)
     expect(screen.getByText(/view previous plan/i).closest('a')).toHaveAttribute('href', '/en/app/plan')
+  })
+
+  it('surfaces PAYMENT_METHOD_REQUIRED without provider-failure copy', () => {
+    const onRetry = vi.fn()
+    const copy = resources.en.translation.app
+    const { rerender } = render(<GenerationWait failure="payment" locale="en" onRetry={onRetry} />)
+    expect(screen.getByText(copy.paymentRequiredTitle)).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes(copy.paymentRequiredBody))).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes(copy.paymentRequiredNote))).toBeInTheDocument()
+    expect(screen.queryByText(/creating the plan did not finish this time/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Try again')).not.toBeInTheDocument()
+    expect(screen.getByText(copy.openMembership).closest('a')).toHaveAttribute('href', '/en/app/me')
+    expect(onRetry).not.toHaveBeenCalled()
+
+    const faCopy = resources.fa.translation.app
+    rerender(<GenerationWait failure="payment" locale="fa" />)
+    expect(screen.getByText(faCopy.paymentRequiredTitle)).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes(faCopy.paymentRequiredNote))).toBeInTheDocument()
   })
 })

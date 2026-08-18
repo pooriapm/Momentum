@@ -1,6 +1,6 @@
-import { AlertTriangle, Check, CircleStop, Dumbbell, Pause, Play, Save, SkipForward } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import type { AppLocale } from '../../platform/i18n/catalog'
+import { AlertTriangle, Check, CircleStop, Dumbbell, Pause, Play, Save, SkipForward, X } from 'lucide-react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { resources, type AppLocale } from '../../platform/i18n/catalog'
 import {
   createPreviewWorkoutSession,
   loadWorkoutSession,
@@ -11,7 +11,14 @@ import {
 } from '../data/workout'
 import { localize, type WorkoutBlock } from '../data/types'
 import type { WorkoutRunStatus } from '../pages/app/today-state'
+import { Input } from '../ui/FormControls'
 import { Button, ContentCard, StatusPill } from '../ui/primitives'
+import { ModalShell } from './ModalShell'
+import './WorkoutLogger.css'
+
+type ReasonIntent =
+  | { kind: 'skip'; exerciseKey: string; exerciseId: string }
+  | { kind: 'stop' }
 
 interface SetDraft { weight: string; reps: string; rpe: string; rest: string }
 
@@ -74,6 +81,8 @@ export function WorkoutLogger({
   const [paused, setPaused] = useState(false)
   const [painCaution, setPainCaution] = useState(false)
   const [substitutingKey, setSubstitutingKey] = useState('')
+  const [reasonIntent, setReasonIntent] = useState<ReasonIntent | null>(null)
+  const [reasonText, setReasonText] = useState('')
 
   useEffect(() => {
     let active = true
@@ -180,7 +189,7 @@ export function WorkoutLogger({
                 return <div className={set.status === 'completed' ? 'workout-set-row is-complete' : 'workout-set-row'} key={set.id}><strong>{locale === 'fa' ? `ست ${set.set_number}` : `Set ${set.set_number}`}</strong>{field('weight', locale === 'fa' ? 'کیلو' : 'kg', 0, 1000, .25)}{field('reps', locale === 'fa' ? 'تکرار' : 'reps', 0, 1000)}{field('rpe', 'RPE', 1, 10, .5)}{field('rest', locale === 'fa' ? 'استراحت (ث)' : 'rest (s)', 0, 3600)}<Button disabled={closed || exercise.status === 'skipped'} loading={busy === set.id} onClick={() => void mutate(set.id, { action: 'update_set', exerciseKey: exercise.exercise_key, setNumber: set.set_number, values: { completed: set.status !== 'completed', weight_kg: numberOrNull(draft.weight), reps: numberOrNull(draft.reps), rpe: numberOrNull(draft.rpe), rest_seconds: numberOrNull(draft.rest) } })} variant={set.status === 'completed' ? 'secondary' : 'primary'}><Check size={15} />{set.status === 'completed' ? (locale === 'fa' ? 'بازکردن' : 'Undo') : (locale === 'fa' ? 'ثبت ست' : 'Log set')}</Button></div>
               })}
             </div>
-            {!closed && exercise.status !== 'skipped' ? <div className="workout-exercise-log__actions"><Button disabled={!exercise.sets.some((set) => set.status === 'completed')} onClick={() => void mutate(`complete-${exercise.id}`, { action: 'complete_exercise', exerciseKey: exercise.exercise_key })} variant="secondary"><Check size={16} />{locale === 'fa' ? 'پایان حرکت' : 'Complete exercise'}</Button><Button onClick={() => setSubstitutingKey(exercise.exercise_key)} variant="ghost">{locale === 'fa' ? 'جایگزین' : 'Substitute'}</Button><Button onClick={() => { const reason = window.prompt(locale === 'fa' ? 'دلیل ردکردن حرکت' : 'Why are you skipping this exercise?'); if (reason?.trim()) void mutate(`skip-${exercise.id}`, { action: 'skip_exercise', exerciseKey: exercise.exercise_key, values: { reason: reason.trim() } }) }} variant="ghost"><SkipForward size={15} />{locale === 'fa' ? 'رد کردن' : 'Skip'}</Button></div> : null}
+            {!closed && exercise.status !== 'skipped' ? <div className="workout-exercise-log__actions"><Button disabled={!exercise.sets.some((set) => set.status === 'completed')} onClick={() => void mutate(`complete-${exercise.id}`, { action: 'complete_exercise', exerciseKey: exercise.exercise_key })} variant="secondary"><Check size={16} />{locale === 'fa' ? 'پایان حرکت' : 'Complete exercise'}</Button><Button onClick={() => setSubstitutingKey(exercise.exercise_key)} variant="ghost">{locale === 'fa' ? 'جایگزین' : 'Substitute'}</Button><Button onClick={() => { setReasonText(''); setReasonIntent({ kind: 'skip', exerciseKey: exercise.exercise_key, exerciseId: exercise.id }) }} variant="ghost"><SkipForward size={15} />{locale === 'fa' ? 'رد کردن' : 'Skip'}</Button></div> : null}
             {substitutingKey === exercise.exercise_key ? (
               <div className="workout-substitute-panel" role="region">
                 <p>{locale === 'fa' ? 'این تغییر فقط همین جلسه را عوض می‌کند و برنامه ماهانه بازتولید نمی‌شود.' : 'This changes only this session and does not regenerate the monthly plan.'}</p>
@@ -201,9 +210,73 @@ export function WorkoutLogger({
 
       {!closed ? <ContentCard className="workout-safety-log"><div><AlertTriangle size={20} /><div><h3>{locale === 'fa' ? 'درد یا ناراحتی' : 'Pain or discomfort'}</h3><p>{locale === 'fa' ? 'درد شدید (۴ یا ۵) تمرین را برای ایمنی متوقف می‌کند.' : 'Severe pain (4 or 5) stops the workout for safety.'}</p></div></div><div className="workout-safety-log__fields"><label><span>{locale === 'fa' ? 'محل درد' : 'Pain area'}</span><input maxLength={160} onChange={(event) => setPainArea(event.target.value)} value={painArea} /></label><label><span>{locale === 'fa' ? 'شدت ۱ تا ۵' : 'Severity 1–5'}</span><input max={5} min={1} onChange={(event) => setPainSeverity(event.target.value)} type="number" value={painSeverity} /></label><Button disabled={!painArea.trim()} onClick={() => void mutate('pain', { action: 'report_pain', values: { area: painArea.trim(), severity: Number(painSeverity) } })} variant="danger">{locale === 'fa' ? 'ثبت درد' : 'Log pain'}</Button></div></ContentCard> : null}
 
-      {!finished ? <div className="workout-finish-actions"><Button disabled={paused || finishedExercises !== session.exercises.length} loading={busy === 'finish'} onClick={() => void mutate('finish', { action: 'finish' })}><Check size={17} />{locale === 'fa' ? 'پایان تمرین' : 'Finish workout'}</Button>{paused ? null : <Button onClick={() => setPaused(true)} variant="secondary"><Pause size={17} />{locale === 'fa' ? 'مکث' : 'Pause'}</Button>}<Button onClick={() => { const reason = window.prompt(locale === 'fa' ? 'چرا تمرین را متوقف می‌کنی؟' : 'Why are you stopping the workout?'); if (reason?.trim()) void mutate('stop', { action: 'stop', values: { reason: reason.trim() } }) }} variant="danger"><CircleStop size={17} />{locale === 'fa' ? 'توقف تمرین' : 'Stop workout'}</Button></div> : null}
+      {!finished ? <div className="workout-finish-actions"><Button disabled={paused || finishedExercises !== session.exercises.length} loading={busy === 'finish'} onClick={() => void mutate('finish', { action: 'finish' })}><Check size={17} />{locale === 'fa' ? 'پایان تمرین' : 'Finish workout'}</Button>{paused ? null : <Button onClick={() => setPaused(true)} variant="secondary"><Pause size={17} />{locale === 'fa' ? 'مکث' : 'Pause'}</Button>}<Button onClick={() => { setReasonText(''); setReasonIntent({ kind: 'stop' }) }} variant="danger"><CircleStop size={17} />{locale === 'fa' ? 'توقف تمرین' : 'Stop workout'}</Button></div> : null}
       {closed && session.stop_reason ? <p className="inline-notice"><Dumbbell size={15} />{locale === 'fa' ? 'دلیل توقف: ' : 'Stop reason: '}{session.stop_reason}</p> : null}
       {error ? <p className="inline-notice inline-notice--error" role="alert">{error}</p> : null}
+      {reasonIntent ? (
+        <WorkoutReasonSheet
+          intent={reasonIntent}
+          locale={locale}
+          onClose={() => setReasonIntent(null)}
+          onConfirm={() => {
+            const reason = reasonText.trim()
+            if (!reason) return
+            if (reasonIntent.kind === 'skip') {
+              void mutate(`skip-${reasonIntent.exerciseId}`, { action: 'skip_exercise', exerciseKey: reasonIntent.exerciseKey, values: { reason } })
+            } else {
+              void mutate('stop', { action: 'stop', values: { reason } })
+            }
+            setReasonIntent(null)
+            setReasonText('')
+          }}
+          onReasonChange={setReasonText}
+          reason={reasonText}
+        />
+      ) : null}
     </div>
+  )
+}
+
+function WorkoutReasonSheet({
+  intent,
+  locale,
+  onClose,
+  onConfirm,
+  onReasonChange,
+  reason,
+}: {
+  intent: ReasonIntent
+  locale: AppLocale
+  onClose: () => void
+  onConfirm: () => void
+  onReasonChange: (value: string) => void
+  reason: string
+}) {
+  const copy = resources[locale].translation
+  const titleId = 'workout-reason-title'
+  const title = intent.kind === 'skip' ? copy.app.skipReasonTitle : copy.app.stopReasonTitle
+  const label = intent.kind === 'skip' ? copy.app.skipReasonLabel : copy.app.stopReasonLabel
+  const confirm = intent.kind === 'skip' ? copy.app.skipReasonConfirm : copy.app.stopReasonConfirm
+
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    if (!reason.trim()) return
+    onConfirm()
+  }
+
+  return (
+    <ModalShell className="workout-reason-sheet" labelId={titleId} material="content" onClose={onClose}>
+      <header>
+        <h2 id={titleId}>{title}</h2>
+        <button aria-label={copy.common.close} onClick={onClose} type="button"><X size={20} /></button>
+      </header>
+      <form onSubmit={submit}>
+        <Input autoFocus label={label} maxLength={240} onChange={(event) => onReasonChange(event.target.value)} required value={reason} />
+        <div className="workout-reason-sheet__actions">
+          <Button onClick={onClose} type="button" variant="secondary">{copy.common.cancel}</Button>
+          <Button type="submit" variant={intent.kind === 'stop' ? 'danger' : 'primary'}>{confirm}</Button>
+        </div>
+      </form>
+    </ModalShell>
   )
 }

@@ -1,0 +1,50 @@
+.workout-reason-sheet {
+  display: grid;
+  gap: 1rem;
+  max-width: 28rem;
+  padding: 1.2rem;
+  width: 100%;
+}
+
+.workout-reason-sheet header {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding-bottom: 1rem;
+}
+
+.workout-reason-sheet h2 {
+  font-size: 1.25rem;
+  margin: .2rem 0 0;
+}
+
+.workout-reason-sheet header > button {
+  align-items: center;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: .75rem;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  flex: none;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
+}
+
+.workout-reason-sheet form {
+  display: grid;
+  gap: .9rem;
+}
+
+.workout-reason-sheet__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+
+.workout-reason-sheet__actions .orbit-button {
+  flex: 1 1 8rem;
+}

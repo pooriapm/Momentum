@@ -1,7 +1,7 @@
 import { LoaderCircle, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'wouter'
-import type { AppLocale } from '../../../platform/i18n/catalog'
+import { resources, type AppLocale } from '../../../platform/i18n/catalog'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard } from '../../ui/primitives'
 import {
@@ -56,6 +56,13 @@ function failureCopy(locale: AppLocale, failure: GenerationWaitFailure, hasPrior
       body: fa
         ? `کار در صف اگر شروع شده باشد همان می‌ماند. وقتی وصل شدی می‌توانی وضعیت را بخوانی؛ کار دوم ساخته نمی‌شود. ${prior}`
         : `If a job already started, it stays queued. When you are back online you can read that status; a second job is not created. ${prior}`,
+    }
+  }
+  if (failure === 'payment') {
+    const copy = resources[locale].translation.app
+    return {
+      title: copy.paymentRequiredTitle,
+      body: `${copy.paymentRequiredBody} ${copy.paymentRequiredNote} ${prior}`.trim(),
     }
   }
   return {
@@ -166,11 +173,23 @@ export function GenerationWait({
             {fa ? 'بازکردن برنامه امروز' : 'Open Today'}
           </Link>
         ) : null}
-        {activeFailure && onRetry ? (
+        {activeFailure && activeFailure !== 'payment' && onRetry ? (
           <div className="today-wait-card__actions">
             <Button disabled={!online && activeFailure === 'offline'} onClick={onRetry}>
               <RefreshCw size={17} />{retryLabel}
             </Button>
+            {hasPriorPlan ? (
+              <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/plan')}>
+                {fa ? 'دیدن برنامه قبلی' : 'View previous plan'}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+        {activeFailure === 'payment' ? (
+          <div className="today-wait-card__actions">
+            <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/app/me')}>
+              {resources[locale].translation.app.openMembership}
+            </Link>
             {hasPriorPlan ? (
               <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/plan')}>
                 {fa ? 'دیدن برنامه قبلی' : 'View previous plan'}

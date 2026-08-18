@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
+import { resources } from '../../../platform/i18n/catalog'
 import type { AccountDashboardView } from '../../data/repository'
 import { requestPlanGeneration } from '../../onboarding/repository'
 import { PrePlanState } from './PrePlanState'
@@ -92,5 +93,22 @@ describe('PrePlanState generation wait', () => {
     render(<PrePlanState account={{ ...readyAccount, entitlementStatus: 'none' }} locale="en" />)
     expect(screen.queryByRole('button', { name: /generate plan/i })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/app/me')
+  })
+
+  it('shows D8 payment-method copy on the ready surface and after a 402', async () => {
+    const copy = resources.en.translation.app
+    render(<PrePlanState account={readyAccount} locale="en" />)
+    expect(screen.getByText((content) => content.includes(copy.paymentRequiredBody))).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes(copy.paymentRequiredNote))).toBeInTheDocument()
+    expect(screen.getByText(copy.openMembership).closest('a')).toHaveAttribute('href', '/en/app/me')
+    expect(screen.queryByLabelText(/card/i)).not.toBeInTheDocument()
+
+    generate.mockRejectedValueOnce({ code: 'PAYMENT_METHOD_REQUIRED', status: 402 })
+    fireEvent.click(screen.getByRole('button', { name: /generate plan/i }))
+    expect(await screen.findByText(copy.paymentRequiredTitle)).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes(copy.paymentRequiredNote))).toBeInTheDocument()
+    expect(screen.queryByText(/creating the plan did not finish this time/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Try again')).not.toBeInTheDocument()
+    expect(screen.getByText(copy.openMembership).closest('a')).toHaveAttribute('href', '/en/app/me')
   })
 })
