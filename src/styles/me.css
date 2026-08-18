@@ -12,8 +12,8 @@
 .progress-next-cycle,
 .me-panel-card {
   display: grid;
-  gap: .75rem;
-  padding: 1.15rem;
+  gap: .85rem;
+  padding: 1.35rem;
 }
 
 .progress-weekly-cta h2,
@@ -40,7 +40,22 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: .6rem;
+  gap: .75rem;
+}
+
+.progress-chart-actions {
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.progress-chart-content {
+  animation: chart-view-enter .3s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+@keyframes chart-view-enter {
+  from { opacity: 0; transform: translateY(.35rem); }
+  to { opacity: 1; transform: none; }
 }
 
 .progress-week-bars {
@@ -67,6 +82,7 @@
   background: var(--color-brand);
   display: block;
   height: 100%;
+  transition: width .5s cubic-bezier(.22, 1, .36, 1);
 }
 
 .progress-week-bars small,
@@ -155,6 +171,16 @@
 .me-char-count {
   color: var(--color-text-muted);
   font-size: .62rem;
+}
+
+.me-version {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: .68rem;
+  gap: .35rem;
+  justify-content: center;
+  margin: 0 0 .5rem;
 }
 
 .me-footer__help {

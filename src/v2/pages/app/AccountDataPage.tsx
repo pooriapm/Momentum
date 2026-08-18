@@ -1,4 +1,4 @@
-import { Download, LockKeyhole, ShieldAlert, Trash2, X } from 'lucide-react'
+import { ChevronLeft, Download, LockKeyhole, ShieldAlert, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
@@ -178,6 +178,7 @@ export function AccountDataPage({
           <h1>{fa ? 'حریم خصوصی و حساب' : 'Privacy & account'}</h1>
           <p>{fa ? 'خروجی قابل‌حمل بگیر یا حساب و داده‌های وابسته را برای همیشه حذف کن.' : 'Download a portable export or permanently remove your account and associated data.'}</p>
         </div>
+        <Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, '/app/me')}${preview ? '?preview=1' : ''}`}><ChevronLeft className="directional-icon" size={17} />{fa ? 'حساب من' : 'Back to Me'}</Link>
       </section>
       <div className="account-data-grid">
         <ContentCard>

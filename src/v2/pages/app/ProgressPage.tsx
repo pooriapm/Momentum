@@ -175,9 +175,11 @@ export function ProgressPage({
             <h2>{chartView === 'text' ? (fa ? 'خلاصه متنی' : 'Text summary') : chartView === 'table' ? (fa ? 'جدول داده' : 'Data table') : (fa ? 'پایبندی چهار هفته' : 'Four-week adherence')}</h2>
           </div>
         </div>
-        {chartView === 'chart' ? <WeekBars locale={locale} series={series} /> : null}
-        {chartView === 'text' ? <p className="progress-text-alt">{textSummary(series, locale)}</p> : null}
-        {chartView === 'table' ? <ProgressTable locale={locale} series={series} /> : null}
+        <div className="progress-chart-content" key={chartView}>
+          {chartView === 'chart' ? <WeekBars locale={locale} series={series} /> : null}
+          {chartView === 'text' ? <p className="progress-text-alt">{textSummary(series, locale)}</p> : null}
+          {chartView === 'table' ? <ProgressTable locale={locale} series={series} /> : null}
+        </div>
         <div className="progress-chart-actions">
           <Button onClick={() => setChartView('chart')} variant={chartView === 'chart' ? 'primary' : 'secondary'}>{fa ? 'نمودار' : 'Chart'}</Button>
           <Button onClick={() => setChartView('text')} variant={chartView === 'text' ? 'primary' : 'secondary'}>{fa ? 'خلاصه متنی نمودار' : 'Text chart summary'}</Button>

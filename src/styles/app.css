@@ -78,7 +78,8 @@ select:focus-visible {
   direction: ltr;
   text-align: center;
   background:
-    radial-gradient(circle at 50% 40%, var(--color-splash-glow), transparent 20rem),
+    radial-gradient(circle at 50% 35%, var(--color-splash-glow), transparent 18rem),
+    radial-gradient(circle at 55% 55%, color-mix(in srgb, var(--color-brand-soft) 30%, transparent), transparent 22rem),
     var(--color-background);
 }
 
@@ -87,7 +88,7 @@ select:focus-visible {
   justify-items: center;
   width: min(100%, 24rem);
   padding: 2rem;
-  animation: orbit-page-enter 420ms cubic-bezier(.22, 1, .36, 1) both;
+  animation: orbit-page-enter 500ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
 .boot-splash__logo {

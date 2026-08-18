@@ -6,22 +6,24 @@ import {
   LineChart,
   Salad,
   Sparkles,
+  WifiOff,
 } from 'lucide-react'
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useSearch } from 'wouter'
+import { Link, useSearch } from 'wouter'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { useAuth } from '../../platform/auth/auth-context'
 import { demoPlan } from '../data/demo'
 import { loadAccountDashboard } from '../data/repository'
 import { localize, type MomentumPlanView } from '../data/types'
 import { formatToday } from '../lib/format'
-import { localizedPath, switchLocalePath } from '../router/route-utils'
+import { localizedPath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
 import { GlassChrome, PageSkeleton, StatusPill } from '../ui/primitives'
 import { appContentSurface, isMembershipRequiredTab, type EntitlementSnapshot } from '../entitlement'
 import { EntitlementGate } from '../pages/app/EntitlementGate'
 import { PrePlanState } from '../pages/app/PrePlanState'
+import { useOfflineBanner } from './useOfflineBanner'
 
 export type AppTab = 'today' | 'plan' | 'progress' | 'me'
 
@@ -78,7 +80,7 @@ function readScrollY(roots: Array<Window | HTMLElement>) {
   }, 0)
 }
 
-function attachChromeMinimize(layout: HTMLElement, setMinimized: (value: boolean) => void) {
+function attachChromeMinimize(layout: HTMLElement, setMinimized: (value: boolean) => void, onScrollTop?: () => void) {
   const nav = layout.querySelector<HTMLElement>('.app-bottom-nav')
   const roots = collectScrollRoots(layout)
   let lastY = readScrollY(roots)
@@ -91,8 +93,12 @@ function attachChromeMinimize(layout: HTMLElement, setMinimized: (value: boolean
     }
 
     const y = readScrollY(roots)
-    if (y < 24 || y < lastY - 6) setMinimized(false)
-    else if (y > lastY + 6 && y > 48) setMinimized(true)
+    if (y < 24 || y < lastY - 6) {
+      setMinimized(false)
+      if (y < 8 && onScrollTop) onScrollTop()
+    } else if (y > lastY + 6 && y > 48) {
+      setMinimized(true)
+    }
     lastY = y
   }
 
@@ -103,7 +109,6 @@ function attachChromeMinimize(layout: HTMLElement, setMinimized: (value: boolean
 export function AppFrame({ locale, tab, children }: AppFrameProps) {
   const { t } = useTranslation()
   const { status, user } = useAuth()
-  const [path] = useLocation()
   const search = useSearch()
   const preview = new URLSearchParams(search).get('preview') === '1'
   const planQuery = useQuery({
@@ -114,6 +119,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   })
   const [chromeMinimized, setChromeMinimized] = useState(false)
   const layoutRef = useRef<HTMLDivElement>(null)
+  const offlineBanner = useOfflineBanner()
   const operationalTab = isMembershipRequiredTab(tab)
   const loading = !preview && (planQuery.isLoading || planQuery.isFetching) && !planQuery.data
   const loadError = !preview && planQuery.isError
@@ -123,8 +129,8 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
     if (!showChrome) return
     const layout = layoutRef.current
     if (!layout) return
-    return attachChromeMinimize(layout, setChromeMinimized)
-  }, [showChrome])
+    return attachChromeMinimize(layout, setChromeMinimized, offlineBanner.dismissOnScrollTop)
+  }, [showChrome, offlineBanner.dismissOnScrollTop])
 
   if (!preview && status === 'loading') return <PageSkeleton />
   if (!preview && !user) {
@@ -152,7 +158,6 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   }
   const contentSurface = preview ? 'children' : appContentSurface(tab, entitlement)
   const navQuery = preview ? '?preview=1' : ''
-  const otherLocale: AppLocale = locale === 'fa' ? 'en' : 'fa'
   const lastSyncedAt = lastSyncedAtFromDashboard(account)
   const pageContext: AppFrameContentContext = {
     plan,
@@ -186,11 +191,21 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
         <div className="app-topbar__date"><CalendarDays size={17} /><span>{formatToday(locale, plan?.localDate, plan?.timezone)}</span></div>
         <div className="app-topbar__actions">
           {preview ? <StatusPill tone="energy">{t('common.preview')}</StatusPill> : null}
-          <Link className="app-topbar__locale" href={switchLocalePath(`${path}${search ? `?${search}` : ''}`, otherLocale)}>{otherLocale.toUpperCase()}</Link>
+          {offlineBanner.showIcon ? (
+            <button aria-label={locale === 'fa' ? 'آفلاین' : 'Offline'} className="app-icon-button app-offline-icon" onClick={offlineBanner.dismiss} type="button">
+              <WifiOff size={16} />
+            </button>
+          ) : null}
           <Link aria-label={locale === 'fa' ? 'حساب من' : 'My account'} className="app-profile-button" href={`${localizedPath(locale, '/app/me')}${navQuery}`}><span>{preview ? 'A' : user?.email?.slice(0, 1).toUpperCase()}</span></Link>
         </div>
       </header>
       <div className="app-workspace">
+        {offlineBanner.showBanner ? (
+          <div className="app-offline-banner inline-notice" role="status">
+            <WifiOff size={16} />
+            <span>{locale === 'fa' ? 'Momentum آفلاین اجرا می‌شود' : 'Momentum is running offline'}</span>
+          </div>
+        ) : null}
         {preview ? <GlassChrome className="preview-notice"><Sparkles size={16} /><span>{t('app.previewNotice')}</span></GlassChrome> : null}
         {planQuery.isError && planQuery.data ? <div className="app-error-banner">{locale === 'fa' ? 'به‌روزرسانی برنامه انجام نشد؛ آخرین اطلاعات موجود نمایش داده می‌شود.' : 'The plan could not refresh. Showing the latest available data.'}</div> : null}
         {plan?.contentLocale && plan.contentLocale !== locale ? <div className="app-content-language-note">{locale === 'fa' ? 'متن برنامه با زبان پروفایل هنگام ساخت تولید شده و با تغییر زبان رابط ترجمه نمی‌شود.' : 'Plan content is generated in the profile language and is not machine-translated when the interface language changes.'}</div> : null}

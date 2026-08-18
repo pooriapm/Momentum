@@ -1,9 +1,10 @@
-import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Languages, LifeBuoy, LockKeyhole, LogOut, MoonStar, ShieldAlert, ShieldCheck, Sun, WalletCards } from 'lucide-react'
+import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Info, Languages, LifeBuoy, LockKeyhole, LogOut, MoonStar, ShieldAlert, ShieldCheck, Sun, WalletCards } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useSearch } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useAuth } from '../../../platform/auth/auth-context'
+import { APP_CONFIG } from '../../../config/app'
 import { applyUiTheme, updateUiState } from '../../../lib/ui-state'
 import { InstallExperienceCard } from '../../components/InstallExperienceCard'
 import { ModalShell } from '../../components/ModalShell'
@@ -110,6 +111,7 @@ export function MePage({
       </nav>
 
       <div className="me-footer">
+        <p className="me-version"><Info size={14} />{APP_CONFIG.name} v{APP_CONFIG.version}</p>
         {!preview
           ? <Button onClick={() => setSignOutOpen(true)} variant="ghost"><LogOut size={18} />{t('app.signOut')}</Button>
           : <Link className="orbit-button orbit-button--ghost" href={localizedPath(locale, '/auth/sign-up')}>{t('common.signUp')}</Link>}
