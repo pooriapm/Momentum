@@ -566,7 +566,9 @@ export function cycleDateWindow(readyAtIso: string, timeZone: string): {
     month: nextMonthIndex,
     day: nextMonthDay,
   }, timeZone)
-  const validToDate = new Date(Date.UTC(nextMonthYear, nextMonthIndex - 1, nextMonthDay) - 86_400_000)
+  const validToDate = new Date(
+    Date.UTC(nextMonthYear, nextMonthIndex - 1, nextMonthDay) - 86_400_000,
+  )
   const validTo = validToDate.toISOString().slice(0, 10)
   return {
     validFrom,

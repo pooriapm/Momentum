@@ -1044,7 +1044,9 @@ async function loadDashboard(
   }
 
   const entitlementStatusAt = (row: { status: string; period_end: string }) =>
-    row.status === 'active' && Date.parse(row.period_end) <= Date.parse(now) ? 'expired' : row.status
+    row.status === 'active' && Date.parse(row.period_end) <= Date.parse(now)
+      ? 'expired'
+      : row.status
   const entitlementPriority: Record<string, number> = {
     active: 0,
     grace: 1,

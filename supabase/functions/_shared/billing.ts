@@ -44,9 +44,11 @@ export interface PaymentProviderAdapter {
 }
 
 function configuredCountries(): ReadonlySet<string> {
-  return new Set((optionalEnv('PAYMENTS_ENABLED_MARKETS') ?? '').split(',')
-    .map((value) => value.trim().toUpperCase())
-    .filter((value) => /^[A-Z]{2}$/.test(value)))
+  return new Set(
+    (optionalEnv('PAYMENTS_ENABLED_MARKETS') ?? '').split(',')
+      .map((value) => value.trim().toUpperCase())
+      .filter((value) => /^[A-Z]{2}$/.test(value)),
+  )
 }
 
 export function assertPaymentMarketAllowed(countryCode: string | null | undefined): string {
@@ -55,19 +57,29 @@ export function assertPaymentMarketAllowed(countryCode: string | null | undefine
   }
   const country = countryCode?.trim().toUpperCase() ?? ''
   if (!/^[A-Z]{2}$/.test(country)) {
-    throw new HttpError(403, 'PAYMENT_MARKET_UNVERIFIED', 'Payments are unavailable in this market.')
+    throw new HttpError(
+      403,
+      'PAYMENT_MARKET_UNVERIFIED',
+      'Payments are unavailable in this market.',
+    )
   }
   if (country === 'IR') {
     throw new HttpError(403, 'PAYMENT_MARKET_BLOCKED', 'Payments are unavailable in this market.')
   }
   if (!configuredCountries().has(country)) {
-    throw new HttpError(403, 'PAYMENT_MARKET_NOT_APPROVED', 'Payments are unavailable in this market.')
+    throw new HttpError(
+      403,
+      'PAYMENT_MARKET_NOT_APPROVED',
+      'Payments are unavailable in this market.',
+    )
   }
   return country
 }
 
 export function reduceBillingState(state: BillingState, event: PaymentEventType): BillingState {
-  const transitions: Partial<Record<BillingState, Partial<Record<PaymentEventType, BillingState>>>> = {
+  const transitions: Partial<
+    Record<BillingState, Partial<Record<PaymentEventType, BillingState>>>
+  > = {
     none: { method_recorded: 'method_required', checkout_started: 'checkout_pending' },
     method_required: { method_recorded: 'method_required', checkout_started: 'checkout_pending' },
     checkout_pending: {
@@ -100,21 +112,39 @@ export function reduceBillingState(state: BillingState, event: PaymentEventType)
   }
   const next = transitions[state]?.[event]
   if (!next) {
-    throw new HttpError(409, 'PAYMENT_TRANSITION_INVALID', 'The payment event is invalid for the current state.')
+    throw new HttpError(
+      409,
+      'PAYMENT_TRANSITION_INVALID',
+      'The payment event is invalid for the current state.',
+    )
   }
   return next
 }
 
 export function assertNormalizedPaymentEvent(value: NormalizedPaymentEvent): void {
   const eventTypes = new Set<PaymentEventType>([
-    'method_recorded', 'checkout_started', 'checkout_completed', 'invoice_paid',
-    'invoice_failed', 'subscription_cancelled', 'subscription_expired',
-    'payment_refunded', 'payment_disputed',
+    'method_recorded',
+    'checkout_started',
+    'checkout_completed',
+    'invoice_paid',
+    'invoice_failed',
+    'subscription_cancelled',
+    'subscription_expired',
+    'payment_refunded',
+    'payment_disputed',
   ])
-  if (value.schemaVersion !== '1.0.0') throw new HttpError(422, 'PAYMENT_SCHEMA_INVALID', 'Invalid payment event.')
-  if (!eventTypes.has(value.eventType)) throw new HttpError(422, 'PAYMENT_SCHEMA_INVALID', 'Invalid payment event.')
-  if (typeof value.livemode !== 'boolean') throw new HttpError(422, 'PAYMENT_SCHEMA_INVALID', 'Invalid payment event.')
-  if (!value.provider || !value.providerAccountId || !value.providerEventId || !value.providerObjectId) {
+  if (value.schemaVersion !== '1.0.0') {
+    throw new HttpError(422, 'PAYMENT_SCHEMA_INVALID', 'Invalid payment event.')
+  }
+  if (!eventTypes.has(value.eventType)) {
+    throw new HttpError(422, 'PAYMENT_SCHEMA_INVALID', 'Invalid payment event.')
+  }
+  if (typeof value.livemode !== 'boolean') {
+    throw new HttpError(422, 'PAYMENT_SCHEMA_INVALID', 'Invalid payment event.')
+  }
+  if (
+    !value.provider || !value.providerAccountId || !value.providerEventId || !value.providerObjectId
+  ) {
     throw new HttpError(422, 'PAYMENT_SCHEMA_INVALID', 'Invalid payment event.')
   }
   if (!Number.isSafeInteger(value.amountMinor ?? 0) || (value.amountMinor ?? 0) < 0) {
@@ -126,7 +156,9 @@ export function assertNormalizedPaymentEvent(value: NormalizedPaymentEvent): voi
   if (!/^[A-Z]{2}$/.test(value.countryCode) || !/^[a-f0-9]{64}$/.test(value.payloadDigest)) {
     throw new HttpError(422, 'PAYMENT_SCHEMA_INVALID', 'Invalid payment event.')
   }
-  if (!Number.isFinite(Date.parse(value.occurredAt)) || !Number.isFinite(Date.parse(value.receivedAt))) {
+  if (
+    !Number.isFinite(Date.parse(value.occurredAt)) || !Number.isFinite(Date.parse(value.receivedAt))
+  ) {
     throw new HttpError(422, 'PAYMENT_TIMESTAMP_INVALID', 'Invalid payment timestamp.')
   }
 }

@@ -1,0 +1,13 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Verified test fixtures and empty example placeholders"
+regexes = [
+  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxMjM0In0\.signaturepartxx''',
+  '''generation-(?:cycle-(?:owned|varied)-[12]|key-001)''',
+  '''momentum\.generationWait\.v1''',
+]
+paths = [
+  '''(^|/)supabase/\.env\.example$''',
+]

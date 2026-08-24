@@ -2,9 +2,11 @@ import { optionalEnv } from './config.ts'
 import { HttpError } from './http.ts'
 
 function values(name: string, pattern: RegExp): ReadonlySet<string> {
-  return new Set((optionalEnv(name) ?? '').split(',').map((value) => value.trim()).filter((value) =>
-    pattern.test(value)
-  ))
+  return new Set(
+    (optionalEnv(name) ?? '').split(',').map((value) => value.trim()).filter((value) =>
+      pattern.test(value)
+    ),
+  )
 }
 
 function enabled(name: string): boolean {
@@ -16,7 +18,11 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 function releaseCountry(countryCode: string): string {
   const country = countryCode.trim().toUpperCase()
   if (!/^[A-Z]{2}$/.test(country) || country === 'IR') {
-    throw new HttpError(403, 'RELEASE_COUNTRY_BLOCKED', 'Release access is unavailable in this market.')
+    throw new HttpError(
+      403,
+      'RELEASE_COUNTRY_BLOCKED',
+      'Release access is unavailable in this market.',
+    )
   }
   return country
 }

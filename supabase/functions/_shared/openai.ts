@@ -37,12 +37,18 @@ export async function createStructuredResponse<T>(_options: {
   assertLiveOpenAiEnabled()
   const apiKey = requiredEnv('OPENAI_API_KEY')
   const baseUrl = optionalEnv('OPENAI_API_BASE_URL') ?? 'https://api.openai.com/v1'
-  const reasoningEffort = enumEnv(_options.reasoningEffortEnv, ['none', 'minimal', 'low', 'medium', 'high'] as const)
+  const reasoningEffort = enumEnv(
+    _options.reasoningEffortEnv,
+    ['none', 'minimal', 'low', 'medium', 'high'] as const,
+  )
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), integerEnv('OPENAI_PLAN_TIMEOUT_MS', 120_000, {
-    min: 1_000,
-    max: 180_000,
-  }))
+  const timeout = setTimeout(
+    () => controller.abort(),
+    integerEnv('OPENAI_PLAN_TIMEOUT_MS', 120_000, {
+      min: 1_000,
+      max: 180_000,
+    }),
+  )
 
   let response: Response
   try {
@@ -82,11 +88,14 @@ export async function createStructuredResponse<T>(_options: {
   }
 
   if (!response.ok) {
-    const retryable = response.status === 408 || response.status === 409 || response.status === 429 || response.status >= 500
+    const retryable = response.status === 408 || response.status === 409 ||
+      response.status === 429 || response.status >= 500
     throw new HttpError(
       retryable ? 503 : 422,
       retryable ? 'OPENAI_UNAVAILABLE' : 'OPENAI_RESPONSE_REJECTED',
-      retryable ? 'The plan provider is temporarily unavailable.' : 'The plan provider rejected this request.',
+      retryable
+        ? 'The plan provider is temporarily unavailable.'
+        : 'The plan provider rejected this request.',
     )
   }
 
@@ -94,7 +103,11 @@ export async function createStructuredResponse<T>(_options: {
   try {
     payload = await response.json() as Record<string, unknown>
   } catch {
-    throw new HttpError(502, 'OPENAI_MALFORMED_RESPONSE', 'The plan provider returned an invalid response.')
+    throw new HttpError(
+      502,
+      'OPENAI_MALFORMED_RESPONSE',
+      'The plan provider returned an invalid response.',
+    )
   }
   const output = Array.isArray(payload.output) ? payload.output : []
   const text = typeof payload.output_text === 'string'
@@ -116,7 +129,11 @@ export async function createStructuredResponse<T>(_options: {
   try {
     parsed = JSON.parse(text) as T
   } catch {
-    throw new HttpError(422, 'OPENAI_MALFORMED_OUTPUT', 'The plan provider returned malformed output.')
+    throw new HttpError(
+      422,
+      'OPENAI_MALFORMED_OUTPUT',
+      'The plan provider returned malformed output.',
+    )
   }
   const usage = payload.usage && typeof payload.usage === 'object'
     ? payload.usage as Record<string, unknown>
@@ -124,9 +141,10 @@ export async function createStructuredResponse<T>(_options: {
   const inputDetails = usage.input_tokens_details && typeof usage.input_tokens_details === 'object'
     ? usage.input_tokens_details as Record<string, unknown>
     : {}
-  const outputDetails = usage.output_tokens_details && typeof usage.output_tokens_details === 'object'
-    ? usage.output_tokens_details as Record<string, unknown>
-    : {}
+  const outputDetails =
+    usage.output_tokens_details && typeof usage.output_tokens_details === 'object'
+      ? usage.output_tokens_details as Record<string, unknown>
+      : {}
   return {
     id: typeof payload.id === 'string' ? payload.id : 'openai:unknown',
     parsed,
