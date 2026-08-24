@@ -98,6 +98,8 @@ jobs:
       - run: npx supabase db lint
       - run: npx supabase test db
       - run: npm run test:security-rls
+      - run: npm run test:auth-lifecycle
+      - run: npm run test:r1-config
       - name: Stop local Supabase
         if: always()
         run: npx supabase stop --no-backup

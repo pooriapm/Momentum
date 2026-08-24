@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(29);
+select extensions.plan(33);
 
 insert into auth.users(
   id, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
@@ -53,6 +53,23 @@ select extensions.is(
   (select product_region from public.profiles where user_id = '77777777-7777-4777-8777-777777777777'),
   'ir',
   'Iranian signup metadata locks product_region=ir'
+);
+update public.profiles
+set product_region = 'intl', product_region_source = 'ip_at_signup'
+where user_id = '77777777-7777-4777-8777-777777777777';
+select extensions.is(
+  (select product_region from public.profiles where user_id = '77777777-7777-4777-8777-777777777777'),
+  'ir',
+  'later non-admin region hints cannot change the signup-locked product region'
+);
+select extensions.is(
+  (select product_region_source from public.profiles where user_id = '77777777-7777-4777-8777-777777777777'),
+  'ip_at_signup',
+  'later non-admin region hints cannot replace the signup lock source'
+);
+select extensions.ok(
+  (select product_region_locked_at is not null from public.profiles where user_id = '77777777-7777-4777-8777-777777777777'),
+  'signup region lock records an immutable lock timestamp'
 );
 select extensions.is(
   (select count(*)::integer from public.product_prices where active and product_code = 'membership'),
@@ -172,17 +189,20 @@ select extensions.ok(
 reset role;
 set local role service_role;
 
-select extensions.ok(
-  not has_table_privilege('service_role', 'public.profiles', 'SELECT'),
-  'service role is denied direct profile-table access'
+select extensions.is(
+  (select count(*)::integer from public.profiles),
+  2,
+  'service role can read both profiles for trusted Edge work'
 );
-select extensions.ok(
-  not has_table_privilege('service_role', 'public.goals', 'SELECT'),
-  'service role is denied direct goal-table access'
+select extensions.is(
+  (select count(*)::integer from public.goals),
+  2,
+  'service role can read both goals for trusted Edge work'
 );
-select extensions.ok(
-  not has_table_privilege('service_role', 'public.onboarding_drafts', 'SELECT'),
-  'service role is denied direct onboarding-table access'
+select extensions.is(
+  (select count(*)::integer from public.onboarding_drafts),
+  2,
+  'service role can read both onboarding drafts for trusted Edge work'
 );
 select extensions.is(
   (select count(*)::integer from storage.objects where bucket_id = 'body-composition'),
@@ -197,6 +217,10 @@ select extensions.is(
 select extensions.ok(
   has_schema_privilege('service_role', 'private', 'USAGE'),
   'service role can access the private backend schema'
+);
+select extensions.ok(
+  not has_table_privilege('service_role', 'public.profiles', 'UPDATE'),
+  'service role cannot mutate protected profile state directly'
 );
 
 reset role;

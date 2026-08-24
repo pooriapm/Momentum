@@ -42,6 +42,7 @@ lerna-debug.log*
 Agent.md
 .openai/
 .cursor/
+.codex/
 graphify-out/
 
 # Internal product, design, legal, and ops documentation.

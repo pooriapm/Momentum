@@ -164,10 +164,27 @@ try {
     await clientA.rpc('account_payment_method_status', { p_user_id: userB.id }),
     'User A can read user B payment-method status',
   )
-  assertDenied(
-    await admin.from('profiles').select('user_id'),
-    'Service role has broad direct profile-table access',
+  const serviceProfiles = assertSuccess(
+    await admin.from('profiles').select('user_id,product_region'),
+    'Service role could not read the reviewed profile projection',
   )
+  assert(serviceProfiles.length === 2, 'Service role did not receive both test profiles')
+  assertSuccess(
+    await admin.auth.admin.updateUserById(userA.id, {
+      user_metadata: {
+        locale: 'fa-IR',
+        country_code: 'IR',
+        product_region: 'ir',
+        product_region_source: 'ip_at_signup',
+      },
+    }),
+    'Could not apply a later auth metadata hint',
+  )
+  const lockedRegion = assertSuccess(
+    await admin.from('profiles').select('product_region').eq('user_id', userA.id).single(),
+    'Could not verify the sticky signup region',
+  )
+  assert(lockedRegion.product_region === 'intl', 'Later auth metadata changed the signup region')
   assertSuccess(
     await admin.rpc('current_legal_document_versions'),
     'Service role could not use an approved public RPC',

@@ -10,6 +10,13 @@ export class HttpError extends Error {
   }
 }
 
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{8,128}$/
+
+export function correlationId(request: Request): string {
+  const supplied = request.headers.get('x-request-id')?.trim() ?? ''
+  return REQUEST_ID_PATTERN.test(supplied) ? supplied : crypto.randomUUID()
+}
+
 function configuredOrigins(): Set<string> {
   return new Set(
     (optionalEnv('ALLOWED_ORIGINS') ?? '')
@@ -65,16 +72,19 @@ export function jsonResponse(
   const headers = new Headers(corsHeaders(request))
   headers.set('Content-Type', 'application/json; charset=utf-8')
   headers.set('Cache-Control', 'no-store')
+  headers.set('X-Request-ID', correlationId(request))
   new Headers(extraHeaders).forEach((value, key) => headers.set(key, value))
   return new Response(JSON.stringify(body), { status, headers })
 }
 
 export function errorResponse(request: Request, error: unknown): Response {
+  const requestId = correlationId(request)
   if (error instanceof HttpError) {
     return jsonResponse(
       request,
-      { error: { code: error.code, message: error.message } },
+      { error: { code: error.code, message: error.message, request_id: requestId } },
       error.status,
+      { 'X-Request-ID': requestId },
     )
   }
 
@@ -82,8 +92,15 @@ export function errorResponse(request: Request, error: unknown): Response {
   // request body, prompt, authorization header, or health context.
   return jsonResponse(
     request,
-    { error: { code: 'internal_error', message: 'The request could not be completed.' } },
+    {
+      error: {
+        code: 'internal_error',
+        message: 'The request could not be completed.',
+        request_id: requestId,
+      },
+    },
     500,
+    { 'X-Request-ID': requestId },
   )
 }
 

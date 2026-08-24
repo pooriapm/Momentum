@@ -19,6 +19,9 @@
     "test:e2e": "playwright test",
     "test:storage-rls": "node scripts/ops/verify-storage-rls.mjs",
     "test:security-rls": "node scripts/ops/verify-storage-rls.mjs",
+    "test:auth-lifecycle": "node scripts/ops/verify-auth-lifecycle.mjs",
+    "test:r1-config": "node scripts/ops/verify-r1-config.mjs",
+    "test:r1-local": "npm run test:r1-config && npm run test:security-rls && npm run test:auth-lifecycle",
     "scan:secrets": "node scripts/ops/scan-secrets.mjs",
     "ci:quality": "npm run lint && npm test && npm run build && npm run build-storybook && npm run scan:secrets && npm audit --omit=dev --audit-level=high",
     "preview": "vite preview"

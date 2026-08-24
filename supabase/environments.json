@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "local": {
+    "project_id": "momentum",
+    "status": "available",
+    "api_origin": "http://127.0.0.1:54321"
+  },
+  "staging": {
+    "status": "not_provisioned",
+    "project_ref": null,
+    "api_origin": null
+  },
+  "production": {
+    "status": "active",
+    "project_ref": "osyvvzglvyonevkhdzpu",
+    "web_origin": "https://momentum.pooria-pm.workers.dev"
+  },
+  "edge_functions": [
+    "account-data",
+    "account-settings",
+    "checkins",
+    "generate-monthly-plan",
+    "geo-context"
+  ],
+  "quarantined_remote_functions": [
+    "analyze-body-composition",
+    "coach",
+    "generate-plan"
+  ]
+}

@@ -1,7 +1,15 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
-import { requireIdempotencyKey } from '../supabase/functions/_shared/http.ts'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  assertAllowedOrigin,
+  correlationId,
+  corsHeaders,
+  errorResponse,
+  HttpError,
+  jsonResponse,
+  requireIdempotencyKey,
+} from '../supabase/functions/_shared/http.ts'
 import {
   assertAiJurisdiction,
   productRegionFromCountry,
@@ -40,6 +48,91 @@ describe('jurisdiction and idempotency boundaries', () => {
       headers: { 'Idempotency-Key': '  revision:request-01  ' },
     })
     expect(requireIdempotencyKey(request)).toBe('revision:request-01')
+  })
+})
+
+describe('privacy-safe Edge response contracts', () => {
+  beforeEach(() => {
+    vi.stubGlobal('Deno', {
+      env: {
+        get: (name: string) => name === 'ALLOWED_ORIGINS'
+          ? 'https://momentum.pooria-pm.workers.dev,http://localhost:5173'
+          : undefined,
+      },
+    })
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('allows only exact configured browser origins', () => {
+    const allowed = new Request('https://api.example.test', {
+      headers: { Origin: 'https://momentum.pooria-pm.workers.dev' },
+    })
+    const lookalike = new Request('https://api.example.test', {
+      headers: { Origin: 'https://momentum.pooria-pm.workers.dev.attacker.test' },
+    })
+
+    expect(() => assertAllowedOrigin(allowed)).not.toThrow()
+    expect(corsHeaders(allowed)).toMatchObject({
+      'Access-Control-Allow-Origin': 'https://momentum.pooria-pm.workers.dev',
+      Vary: 'Origin',
+    })
+    expect(() => assertAllowedOrigin(lookalike)).toThrow(expect.objectContaining({
+      code: 'origin_not_allowed',
+      status: 403,
+    }))
+    expect(corsHeaders(lookalike)).not.toHaveProperty('Access-Control-Allow-Origin')
+  })
+
+  it('preserves a safe caller correlation ID on successful responses', async () => {
+    const request = new Request('https://example.test', {
+      headers: { 'X-Request-ID': 'request:r1-auth-01' },
+    })
+    const response = jsonResponse(request, { ok: true })
+    expect(response.headers.get('x-request-id')).toBe('request:r1-auth-01')
+    expect(await response.json()).toEqual({ ok: true })
+  })
+
+  it('replaces unsafe correlation input with an opaque generated ID', () => {
+    const request = new Request('https://example.test', {
+      headers: { 'X-Request-ID': 'email=user@example.com health=private' },
+    })
+    const id = correlationId(request)
+    expect(id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(id).not.toContain('@')
+  })
+
+  it('returns the same correlation ID in structured error headers and bodies', async () => {
+    const request = new Request('https://example.test', {
+      headers: { 'X-Request-ID': 'request:r1-error-01' },
+    })
+    const response = errorResponse(
+      request,
+      new HttpError(409, 'ownership_conflict', 'The requested resource is unavailable.'),
+    )
+    expect(response.status).toBe(409)
+    expect(response.headers.get('x-request-id')).toBe('request:r1-error-01')
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'ownership_conflict',
+        message: 'The requested resource is unavailable.',
+        request_id: 'request:r1-error-01',
+      },
+    })
+  })
+
+  it('redacts unexpected error details while retaining an opaque correlation ID', async () => {
+    const response = errorResponse(
+      new Request('https://example.test'),
+      new Error('user@example.com weighs 75kg'),
+    )
+    const body = await response.json() as {
+      error: { code: string; message: string; request_id: string }
+    }
+    expect(response.status).toBe(500)
+    expect(body.error.code).toBe('internal_error')
+    expect(body.error.message).not.toContain('75kg')
+    expect(body.error.request_id).toBe(response.headers.get('x-request-id'))
   })
 })
 

@@ -78,8 +78,9 @@ remain immutable dependencies of both the linked project and clean bootstrap; a
 | `account-settings` | target | Current authenticated settings boundary |
 | `checkins` | target | Current authenticated daily/weekly check-in boundary |
 
-Remote history currently ends at `202608180001_account_privacy_lifecycle`. Later
-target migrations must be reviewed and promoted through staging before production.
+The linked production history was verified through `202608180300` before the R1
+service-role migration was added. `202608240001_r1_edge_service_access.sql` must
+be reviewed and promoted through staging before production.
 
 There is no target `coach`, chat/message, `analyze-body-composition`, plan-
 revision or on-demand regeneration function. Body values are entered manually or
@@ -182,6 +183,10 @@ There is no generative extraction step and unconfirmed values never enter a
 monthly snapshot.
 
 ## Hosted deployment
+
+Follow [R1 environment and security operations](./R1-OPERATIONS.md). An isolated
+staging environment is not currently provisioned, so do not run the commands
+below against the linked production project as a substitute for staging.
 
 Set secrets only in Supabase, never in frontend build variables:
 
