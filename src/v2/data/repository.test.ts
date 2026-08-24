@@ -113,6 +113,7 @@ const dashboard: DashboardResponse['dashboard'] = {
     unit_system: 'metric',
     onboarding_status: 'complete',
     automation_block_reason: null,
+    plan_source_preference: 'momentum',
   },
   active_goal: {
     id: '55555555-5555-4555-8555-555555555555',

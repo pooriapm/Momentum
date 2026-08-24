@@ -10,5 +10,5 @@
   background: var(--color-background);
 }
 
-.pricing-grid--canonical { grid-template-columns: minmax(0, 1.2fr) minmax(16rem, .8fr); }
+.pricing-grid--canonical { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 48rem) { .pricing-grid--canonical { grid-template-columns: 1fr; } }

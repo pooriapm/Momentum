@@ -1,9 +1,9 @@
 const canonicalFamilies = {
   AUTH: 18,
   EXEC: 10,
-  LIFE: 20,
+  LIFE: 24,
   ME: 9,
-  ONB: 28,
+  ONB: 29,
   PLAN: 14,
   PROG: 7,
   PUB: 14,

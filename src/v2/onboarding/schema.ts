@@ -1,6 +1,6 @@
 import type { AppLocale } from '../../platform/i18n/catalog'
 
-export type OnboardingStepKey = 'basics' | 'health' | 'consent' | 'goal' | 'food' | 'training' | 'body' | 'review'
+export type OnboardingStepKey = 'basics' | 'health' | 'consent' | 'plan-source' | 'goal' | 'food' | 'training' | 'body' | 'review'
 export type FieldKind = 'text' | 'number' | 'date' | 'time' | 'select' | 'multiselect' | 'textarea' | 'checkbox'
 
 interface FieldOption {
@@ -113,6 +113,16 @@ export const onboardingSections: readonly OnboardingSection[] = [
       { key: 'termsAccepted', labelKey: 'onboarding.termsConsent', kind: 'checkbox', required: true },
       { key: 'privacyAccepted', labelKey: 'onboarding.privacyConsent', kind: 'checkbox', required: true },
       { key: 'healthDataConsent', labelKey: 'onboarding.healthConsent', kind: 'checkbox', required: true },
+    ],
+  },
+  {
+    key: 'plan-source',
+    titleKey: 'onboarding.planSource',
+    fields: [
+      { key: 'planSource', labelKey: 'onboarding.planSource', kind: 'select', required: true, options: [
+        { value: 'external', labelKey: 'onboarding.planSourceExternal' },
+        { value: 'momentum', labelKey: 'onboarding.planSourceMomentum' },
+      ] },
     ],
   },
   {

@@ -42,6 +42,7 @@ export interface EntitlementSnapshot {
   paymentMethod?: PaymentMethodStatus
   aiPlanState?: 'ready' | 'pending_verification' | 'disabled' | 'safety_blocked'
   periodEnd?: string
+  planSourcePreference?: 'external' | 'momentum'
 }
 
 /**

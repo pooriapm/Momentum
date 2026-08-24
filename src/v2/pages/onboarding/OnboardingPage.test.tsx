@@ -84,6 +84,7 @@ const completeDraft: Record<string, string> = {
   highRiskCondition: 'no',
   injuryLimitation: 'no',
   pregnancyOrBreastfeeding: 'no',
+  planSource: 'momentum',
   preferredOptionCount: '3',
   primaryActivity: 'strength',
   privacyAccepted: 'yes',
@@ -193,6 +194,14 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.getByText('Other')).toBeInTheDocument()
     expect(screen.queryByLabelText(/allergies & intolerances/i)).not.toBeInTheDocument()
     expect(screen.getByText(/other is not mapped to the catalog/i)).toBeInTheDocument()
+  })
+
+  it('ONB-29 presents free external import and Momentum-managed paths as equal choices', async () => {
+    renderStep('plan-source', { ...completeDraft, planSource: '' })
+    expect(await screen.findByRole('radio', { name: /free forever/i })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /momentum-managed/i })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: /free forever/i }))
+    expect(screen.getByRole('radio', { name: /free forever/i })).toHaveAttribute('aria-checked', 'true')
   })
 
   it('changes options per meal only with plus and minus between 1 and 4', async () => {

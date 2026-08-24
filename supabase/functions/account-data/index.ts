@@ -11,6 +11,14 @@ import {
   requireIdempotencyKey,
 } from '../_shared/http.ts'
 import { enforceRateLimit } from '../_shared/limits.ts'
+import { assertCatalogGenerationGate } from '../_shared/catalog-gate.ts'
+import {
+  loadPlanCatalog,
+  planCatalogPromptContext,
+  resolveDeclaredAllergenIds,
+} from '../_shared/plan-catalog.ts'
+import { assertGeneratedPlan, generatedPlanJsonSchema } from '../_shared/plan-contract.ts'
+import { MONTHLY_PLAN_DAYS, PLAN_SCHEMA_VERSION } from '../_shared/plan-provider.ts'
 import {
   accountHash,
   beginDeletionRow,
@@ -37,6 +45,8 @@ interface AccountDataBody {
   slot_key?: unknown
   option_key?: unknown
   measurement_id?: unknown
+  plan?: unknown
+  source_kind?: unknown
 }
 
 const EXPORT_TABLES = [
@@ -53,6 +63,7 @@ const EXPORT_TABLES = [
   'ai_generation_jobs',
   'plans',
   'plan_versions',
+  'external_plan_imports',
   'gift_reservations',
   'monthly_plan_periods',
   'monthly_plan_snapshots',
@@ -733,7 +744,7 @@ async function loadDashboard(
     admin
       .from('profiles')
       .select(
-        'display_name,date_of_birth,sex,height_cm,locale,timezone,country_code,pricing_market,product_region,unit_system,onboarding_status,automation_block_reason,ai_billing_country_code,ai_country_verified_at,ai_country_verification_method,payment_method_status,terms_version,privacy_version,health_consent_version,health_data_consent_at',
+        'display_name,date_of_birth,sex,height_cm,locale,timezone,country_code,pricing_market,product_region,unit_system,onboarding_status,automation_block_reason,plan_source_preference,ai_billing_country_code,ai_country_verified_at,ai_country_verification_method,payment_method_status,terms_version,privacy_version,health_consent_version,health_data_consent_at',
       )
       .eq('user_id', userId)
       .single(),
@@ -929,6 +940,7 @@ async function loadDashboard(
         unit_system: profileResult.data.unit_system,
         onboarding_status: profileResult.data.onboarding_status,
         automation_block_reason: profileResult.data.automation_block_reason,
+        plan_source_preference: profileResult.data.plan_source_preference ?? 'momentum',
         email_confirmed: emailConfirmed,
         ai_country_verified: Boolean(
           profileResult.data.ai_billing_country_code &&
@@ -955,6 +967,132 @@ async function loadDashboard(
   }
 }
 
+async function loadExternalPlanContext(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+): Promise<Record<string, unknown>> {
+  const [profile, goal, dietary, health, training] = await Promise.all([
+    admin.from('profiles')
+      .select('date_of_birth,sex,height_cm,locale,timezone,country_code,onboarding_status,automation_block_reason,plan_source_preference')
+      .eq('user_id', userId).single(),
+    admin.from('goals')
+      .select('goal_type,start_weight_kg,target_weight_kg,target_date')
+      .eq('user_id', userId).eq('status', 'active').limit(1).maybeSingle(),
+    admin.from('dietary_preferences')
+      .select('dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,restaurant_preferences,grocery_preferences,cuisine_region')
+      .eq('user_id', userId).single(),
+    admin.from('health_context')
+      .select('medical_considerations,medications,supplements,clinician_notes')
+      .eq('user_id', userId).maybeSingle(),
+    admin.from('training_schedule_items')
+      .select('weekday,activity_type,local_start_time,duration_minutes,intensity,notes')
+      .eq('user_id', userId).order('weekday'),
+  ])
+  if (profile.error || goal.error || dietary.error || health.error || training.error) {
+    throw new HttpError(503, 'external_plan_context_unavailable', 'Plan context is unavailable.')
+  }
+  if (profile.data.onboarding_status !== 'complete') {
+    throw new HttpError(409, 'onboarding_incomplete', 'Complete onboarding before creating an external plan.')
+  }
+  if (profile.data.plan_source_preference !== 'external') {
+    throw new HttpError(409, 'external_plan_path_not_selected', 'Select the free external-plan path first.')
+  }
+  const catalog = await loadPlanCatalog(admin)
+  assertCatalogGenerationGate(catalog)
+  const declaredAllergenIds = resolveDeclaredAllergenIds(
+    catalog,
+    Array.isArray(dietary.data.allergies) ? dietary.data.allergies : [],
+  )
+  const birthDate = new Date(`${profile.data.date_of_birth}T00:00:00Z`)
+  const today = new Date()
+  let age = today.getUTCFullYear() - birthDate.getUTCFullYear()
+  if (
+    today.getUTCMonth() < birthDate.getUTCMonth()
+    || (today.getUTCMonth() === birthDate.getUTCMonth() && today.getUTCDate() < birthDate.getUTCDate())
+  ) age -= 1
+  const minimizedProfile = {
+    sex: profile.data.sex,
+    height_cm: profile.data.height_cm,
+    locale: profile.data.locale,
+    timezone: profile.data.timezone,
+    country_code: profile.data.country_code,
+  }
+  return {
+    schema_version: PLAN_SCHEMA_VERSION,
+    requested_days: MONTHLY_PLAN_DAYS,
+    output_schema: generatedPlanJsonSchema,
+    catalog: planCatalogPromptContext(catalog),
+    declared_allergen_ids: [...declaredAllergenIds],
+    profile: { ...minimizedProfile, age },
+    goal: goal.data,
+    dietary: dietary.data,
+    health: health.data,
+    training: training.data ?? [],
+  }
+}
+
+async function importExternalPlan(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+  body: AccountDataBody,
+  idempotencyKey: string,
+) {
+  if (!isRecord(body.plan)) {
+    throw new HttpError(400, 'invalid_external_plan', 'Import a JSON object using the Momentum plan contract.')
+  }
+  if (body.source_kind !== 'external_ai' && body.source_kind !== 'existing_plan') {
+    throw new HttpError(400, 'invalid_external_source', 'External plan source is invalid.')
+  }
+  const [profile, dietary, goal] = await Promise.all([
+    admin.from('profiles')
+      .select('locale,timezone,onboarding_status,automation_block_reason,plan_source_preference')
+      .eq('user_id', userId).single(),
+    admin.from('dietary_preferences').select('allergies').eq('user_id', userId).single(),
+    admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1).single(),
+  ])
+  if (profile.error || dietary.error || goal.error) {
+    throw new HttpError(503, 'external_plan_import_unavailable', 'External plan import is unavailable.')
+  }
+  if (profile.data.onboarding_status !== 'complete' || profile.data.automation_block_reason) {
+    throw new HttpError(409, 'external_plan_safety_blocked', 'This profile is not eligible for automated plan import.')
+  }
+  if (profile.data.plan_source_preference !== 'external') {
+    throw new HttpError(409, 'external_plan_path_not_selected', 'Select the free external-plan path first.')
+  }
+  const locale = profile.data.locale === 'fa-IR' ? 'fa-IR' : 'en-US'
+  const catalog = await loadPlanCatalog(admin)
+  assertCatalogGenerationGate(catalog)
+  const declaredAllergenIds = resolveDeclaredAllergenIds(
+    catalog,
+    Array.isArray(dietary.data.allergies) ? dietary.data.allergies : [],
+  )
+  assertGeneratedPlan(body.plan, MONTHLY_PLAN_DAYS, locale, { catalog, declaredAllergenIds })
+  const contentSha256 = await sha256(canonicalJson(body.plan))
+  const validFrom = isoDateInTimezone(profile.data.timezone || 'UTC')
+  const validTo = addIsoDays(validFrom, MONTHLY_PLAN_DAYS - 1)
+  const { data, error } = await admin.rpc('persist_external_plan', {
+    p_user_id: userId,
+    p_idempotency_key: idempotencyKey,
+    p_goal_id: goal.data.id,
+    p_plan_name: String(body.plan.plan_name),
+    p_valid_from: validFrom,
+    p_valid_to: validTo,
+    p_locale: locale,
+    p_schema_version: PLAN_SCHEMA_VERSION,
+    p_catalog_release: catalog.releaseId,
+    p_source_kind: body.source_kind,
+    p_content: body.plan,
+    p_content_sha256: contentSha256,
+  })
+  if (error) {
+    if (error.message.includes('idempotency_key_reused')) {
+      throw new HttpError(409, 'idempotency_key_reused', 'Idempotency key was used for a different plan.')
+    }
+    throw new HttpError(503, 'external_plan_import_failed', 'The validated plan could not be saved.')
+  }
+  return data
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return optionsResponse(request)
 
@@ -965,7 +1103,7 @@ Deno.serve(async (request) => {
     }
 
     const auth = await authenticate(request)
-    const body = await readJsonBody<AccountDataBody>(request, 8_192)
+    const body = await readJsonBody<AccountDataBody>(request, 2_000_000)
     await enforceRateLimit(
       auth.admin,
       auth.user.id,
@@ -993,6 +1131,12 @@ Deno.serve(async (request) => {
     if (body.action === 'legal-versions') {
       return jsonResponse(request, {
         legal_document_versions: await loadCurrentLegalVersions(auth.admin),
+      })
+    }
+
+    if (body.action === 'external-plan-context') {
+      return jsonResponse(request, {
+        external_plan_context: await loadExternalPlanContext(auth.admin, auth.user.id),
       })
     }
 
@@ -1043,6 +1187,16 @@ Deno.serve(async (request) => {
     }
 
     const idempotencyKey = requireIdempotencyKey(request)
+    if (body.action === 'import-external-plan') {
+      return jsonResponse(request, {
+        external_plan_import: await importExternalPlan(
+          auth.admin,
+          auth.user.id,
+          body,
+          idempotencyKey,
+        ),
+      })
+    }
     if (body.action === 'delete-account') {
       if (body.confirmation !== 'DELETE') {
         throw new HttpError(

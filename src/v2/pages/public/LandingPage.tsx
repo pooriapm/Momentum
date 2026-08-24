@@ -32,7 +32,7 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
   const features = [
     [Salad, t('landing.featurePlan'), t('landing.featurePlanCopy')],
-    [CalendarRange, locale === 'fa' ? 'برنامه ماهانه' : 'Monthly plan', locale === 'fa' ? 'هر دوره با اطلاعات اولیه و نتیجه ماه قبل به‌روزرسانی می‌شود.' : 'Each period uses your baseline and the prior month’s outcomes.'],
+    [CalendarRange, locale === 'fa' ? 'دو راه برای شروع' : 'Two ways to start', locale === 'fa' ? 'برنامه را رایگان از ابزار دلخواهت وارد کن، یا ساخت و به‌روزرسانی هر دوره را به Momentum بسپار.' : 'Import a plan from a tool you choose for free, or let Momentum create and update every cycle.'],
     [BarChart3, t('landing.featureProgress'), t('landing.featureProgressCopy')],
     [ScanLine, t('landing.featureBody'), t('landing.featureBodyCopy')],
   ] as const

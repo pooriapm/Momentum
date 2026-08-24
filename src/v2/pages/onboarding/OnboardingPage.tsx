@@ -7,6 +7,7 @@ import {
   FileCheck2,
   Gift,
   HeartPulse,
+  Import,
   LockKeyhole,
   ShieldCheck,
   Sparkles,
@@ -312,8 +313,12 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           : 'Your account was saved, but automated planning is not appropriate for the selected health context.'))
         return
       }
-      await deleteOnboardingDraft(user!.id)
-      navigate(postOnboardingPath(locale))
+      if (values.planSource === 'external') {
+        navigate(localizedPath(locale, '/app/import-plan'))
+      } else {
+        await deleteOnboardingDraft(user!.id)
+        navigate(postOnboardingPath(locale))
+      }
     } catch {
       setPageError(t('onboarding.saveConflict'))
     } finally {
@@ -351,8 +356,11 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           </div>
           {section.key === 'basics' ? <div className="inline-notice"><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</div> : null}
           {section.key === 'consent' ? <div className="inline-notice"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</div> : null}
+          {section.key === 'plan-source' ? (
+            <PlanSourceChoice error={errors.planSource} locale={locale} onChange={(value) => updateValue(section.fields[0], value)} value={values.planSource ?? ''} />
+          ) : null}
           {section.key === 'food' ? <div className="inline-notice inline-notice--success"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</div> : null}
-          {visibleFields.length > 0 ? (
+          {visibleFields.length > 0 && section.key !== 'plan-source' ? (
             <div className="onboarding-fields">
               {visibleFields.map((field) => (
                 <DynamicField
@@ -392,11 +400,20 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
             />
           ) : null}
           {section.key === 'review' ? (
-            <div className="onboarding-review" data-inventory={reviewIds.join(' ')}>
+            <div className="onboarding-review" data-inventory={values.planSource === 'external' ? 'ONB-29 LIFE-21' : reviewIds.join(' ')}>
               <span className="onboarding-review__mark"><Sparkles size={28} /></span>
               <h3>{t('onboarding.review')}</h3>
-              <p>{t('onboarding.reviewCopy')}</p>
-              {giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? (
+              <p>{values.planSource === 'external'
+                ? (locale === 'fa' ? 'پس از تأیید، پرامپت محلی و مسیر واردکردن برنامه باز می‌شود. اشتراک لازم نیست.' : 'After confirmation, your local prompt and secure import path will open. No subscription is required.')
+                : t('onboarding.reviewCopy')}</p>
+              {values.planSource === 'external' ? (
+                <article className="onboarding-gift glass-chrome glass-chrome--prominent">
+                  <span className="onboarding-gift__icon" aria-hidden="true"><Import size={26} /></span>
+                  <p className="orbit-eyebrow">{locale === 'fa' ? 'مسیر رایگان' : 'Free path'}</p>
+                  <h4>{locale === 'fa' ? 'ساخت بیرونی، پیگیری در Momentum' : 'Create externally, track in Momentum'}</h4>
+                  <p>{locale === 'fa' ? 'پرامپت فقط روی دستگاهت ساخته می‌شود. پیش از کپی، خروج اطلاعات سلامت را تأیید می‌کنی و فایل قبل از ذخیره اعتبارسنجی می‌شود.' : 'The prompt is built only on your device. You confirm health-data transfer before copying, and the file is validated before saving.'}</p>
+                </article>
+              ) : giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? (
                 <div className="inline-notice inline-notice--warning" role="status">{t('entitlement.giftExhausted')}</div>
               ) : (
                 <article aria-labelledby="onboarding-gift-title" className="onboarding-gift glass-chrome glass-chrome--prominent">
@@ -437,6 +454,30 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           )}
         </div>
       </main>
+    </div>
+  )
+}
+
+function PlanSourceChoice({ error, locale, value, onChange }: { error?: string; locale: AppLocale; value: string; onChange: (value: string) => void }) {
+  const fa = locale === 'fa'
+  return (
+    <div className="plan-source-choice" data-inventory="ONB-29">
+      <p>{fa ? 'هر دو مسیر از ابزارهای ثبت و پیگیری Momentum استفاده می‌کنند. فقط روش ساخت برنامه فرق دارد.' : 'Both paths include Momentum tracking and plan tools. Only the plan-creation method changes.'}</p>
+      <div className="plan-source-choice__grid" role="radiogroup" aria-label={fa ? 'روش ساخت برنامه' : 'Plan creation method'}>
+        <button aria-checked={value === 'external'} className={value === 'external' ? 'is-selected' : ''} onClick={() => onChange('external')} role="radio" type="button">
+          <Import size={24} />
+          <strong>{fa ? 'رایگان برای همیشه' : 'Free forever'}</strong>
+          <span>{fa ? 'پرامپت آماده را در ابزار دلخواهت اجرا کن یا برنامه موجود را وارد کن.' : 'Use our ready prompt in a tool you choose, or import an existing plan.'}</span>
+          <small>{fa ? 'بدون ساخت خودکار Momentum و بدون نیاز به اشتراک' : 'No Momentum automation and no subscription required'}</small>
+        </button>
+        <button aria-checked={value === 'momentum'} className={value === 'momentum' ? 'is-selected' : ''} onClick={() => onChange('momentum')} role="radio" type="button">
+          <Sparkles size={24} />
+          <strong>{fa ? 'ساخت و مدیریت با Momentum' : 'Momentum-managed'}</strong>
+          <span>{fa ? 'Momentum پاسخ‌ها را می‌گیرد، برنامه را می‌سازد و هر دوره با نتایجت به‌روزرسانی می‌کند.' : 'Momentum uses your answers to create the plan and update each cycle from your outcomes.'}</span>
+          <small>{fa ? 'برنامه اول هدیه؛ از دوره دوم اشتراک لازم است' : 'First plan is a gift; subscription required from cycle two'}</small>
+        </button>
+      </div>
+      {error ? <span className="orbit-field__error" role="alert">{error}</span> : null}
     </div>
   )
 }

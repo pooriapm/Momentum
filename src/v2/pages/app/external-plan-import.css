@@ -1,0 +1,21 @@
+.external-plan-page { min-height: 100dvh; background: var(--background); color: var(--text-primary); }
+.external-plan-header { min-height: 4.5rem; padding: .75rem clamp(1rem, 4vw, 4rem); display: flex; align-items: center; justify-content: space-between; }
+.external-plan-header > span { display: inline-flex; align-items: center; gap: .45rem; color: var(--text-secondary); }
+.external-plan-page main { width: min(74rem, calc(100% - 2rem)); margin: 0 auto; padding: clamp(2rem, 5vw, 4rem) 0 5rem; }
+.external-plan-heading { max-width: 48rem; margin-bottom: 2rem; }
+.external-plan-heading h1 { margin: .8rem 0; font-size: clamp(2rem, 5vw, 3.5rem); }
+.external-plan-heading p { color: var(--text-secondary); font-size: 1.08rem; }
+.external-plan-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+.external-plan-step { position: relative; display: grid; gap: 1rem; }
+.external-plan-step h2, .external-plan-step p { margin: 0; }
+.external-plan-step__number { position: absolute; inset-inline-end: 1rem; top: 1rem; font-size: 2rem; font-weight: 800; color: color-mix(in srgb, var(--brand-primary) 35%, transparent); }
+.external-plan-disclosure { display: grid; grid-template-columns: auto 1fr; gap: .7rem; padding: 1rem; border-radius: var(--radius-lg); background: var(--surface-muted); font-size: .9rem; line-height: 1.5; }
+.external-plan-source { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.external-plan-source button { border: 1px solid var(--border-subtle); border-radius: 999px; padding: .65rem .8rem; background: transparent; color: inherit; }
+.external-plan-source button[aria-pressed="true"] { border-color: var(--brand-primary); background: color-mix(in srgb, var(--brand-primary) 10%, transparent); }
+.external-plan-file { display: flex; align-items: center; justify-content: center; gap: .6rem; min-height: 6rem; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); cursor: pointer; }
+.external-plan-file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.external-plan-preview, .external-plan-success { display: grid; gap: .45rem; padding: 1rem; border-radius: var(--radius-lg); background: var(--surface-muted); }
+.external-plan-preview small { display: flex; gap: .4rem; color: var(--text-secondary); line-height: 1.45; }
+.external-plan-success { background: color-mix(in srgb, var(--success) 10%, var(--surface-muted)); }
+@media (max-width: 52rem) { .external-plan-grid { grid-template-columns: 1fr; } .external-plan-header > span { display: none; } }

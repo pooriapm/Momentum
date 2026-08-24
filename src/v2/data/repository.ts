@@ -299,6 +299,7 @@ export interface AccountDashboardView {
   entitlementStatus?: MembershipStatus
   entitlementPeriodEnd?: string
   productRegion?: 'ir' | 'intl'
+  planSourcePreference?: 'external' | 'momentum'
 }
 
 export async function loadAccountDashboard(locale: AppLocale): Promise<AccountDashboardView> {
@@ -318,6 +319,7 @@ export async function loadAccountDashboard(locale: AppLocale): Promise<AccountDa
     entitlementStatus: planEntitlementStatus(parsed.dashboard.entitlement_usage),
     entitlementPeriodEnd: parsed.dashboard.entitlement_usage?.entitlement.period_end,
     productRegion: parsed.dashboard.profile.product_region,
+    planSourcePreference: parsed.dashboard.profile.plan_source_preference,
   }
 }
 

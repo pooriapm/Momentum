@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(8);
+select extensions.plan(9);
 
 insert into auth.users(
   id,
@@ -36,6 +36,7 @@ values (
     'heightCm', '175',
     'weightKg', '80',
     'country', 'US',
+    'planSource', 'external',
     'goalType', 'fat_loss',
     'targetWeightKg', '74',
     'adultConfirmed', 'yes',
@@ -87,6 +88,12 @@ select extensions.is(
   (select onboarding_status from public.profiles where user_id = '11111111-1111-4111-8111-111111111111'),
   'complete',
   'profile is marked complete'
+);
+
+select extensions.is(
+  (select plan_source_preference from public.profiles where user_id = '11111111-1111-4111-8111-111111111111'),
+  'external',
+  'the selected external plan path is persisted on the account'
 );
 
 select extensions.is(

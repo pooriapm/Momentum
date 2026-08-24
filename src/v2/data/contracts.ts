@@ -152,6 +152,7 @@ export const dashboardResponseSchema = z.object({
       unit_system: z.string(),
       onboarding_status: z.string(),
       automation_block_reason: z.string().nullable(),
+      plan_source_preference: z.enum(['external', 'momentum']).default('momentum'),
       ai_country_verified: z.boolean().optional(),
       email_confirmed: z.boolean().optional(),
       payment_method_status: z.literal('not_collected').optional(),
@@ -227,6 +228,30 @@ export const generationResponseSchema = z.union([
     idempotent_replay: z.literal(true),
   }),
 ])
+
+export const externalPlanContextResponseSchema = z.object({
+  external_plan_context: z.object({
+    schema_version: z.literal('1.0.0'),
+    requested_days: z.number().int().min(1).max(31),
+    output_schema: z.record(z.string(), z.unknown()),
+    catalog: z.record(z.string(), z.unknown()),
+    declared_allergen_ids: z.array(z.string()),
+    profile: z.record(z.string(), z.unknown()),
+    goal: z.record(z.string(), z.unknown()).nullable(),
+    dietary: z.record(z.string(), z.unknown()),
+    health: z.record(z.string(), z.unknown()).nullable(),
+    training: z.array(z.record(z.string(), z.unknown())),
+  }),
+})
+
+export const externalPlanImportResponseSchema = z.object({
+  external_plan_import: z.object({
+    import_id: z.string().uuid(),
+    plan_id: z.string().uuid(),
+    plan_version_id: z.string().uuid(),
+    imported_at: z.string(),
+  }),
+})
 
 export const bodyCompositionConfirmationSchema = z.object({
   body_composition: z.object({

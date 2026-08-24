@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
-import { Check, Gift, ShieldCheck, Sparkles } from 'lucide-react'
+import { Check, FileJson2, Gift, ShieldCheck, Sparkles } from 'lucide-react'
 import { LocalizedStory } from '../../../../.storybook/LocalizedStory'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
@@ -36,11 +36,21 @@ function CanonicalPricing({ locale }: { locale: AppLocale }) {
       <PublicHeader locale={locale} />
       <main className="simple-public-page pricing-page">
         <div className="simple-public-page__heading">
-          <span className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'یک اشتراک، یک مسیر روشن' : 'One subscription, one clear path'}</span>
-          <h1>{fa ? 'برنامه ماهانه Momentum' : 'Momentum monthly plan'}</h1>
-          <p>{fa ? 'در هر دوره یک برنامه کامل تمرین و تغذیه دریافت می‌کنی و نتیجه پس از بررسی خودکار وارد حسابت می‌شود.' : 'Each period includes one complete workout and nutrition plan, automatically imported after validation.'}</p>
+          <span className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'رایگان یا مدیریت‌شده' : 'Free or managed'}</span>
+          <h1>{fa ? 'دو راه روشن برای برنامه' : 'Two clear ways to get a plan'}</h1>
+          <p>{fa ? 'برنامه خودت را رایگان وارد کن، یا ساخت و به‌روزرسانی دوره‌ای را به Momentum بسپار.' : 'Import your own plan for free, or let Momentum create and update each cycle.'}</p>
         </div>
         <div className="pricing-grid pricing-grid--canonical">
+          <ContentCard className="pricing-card pricing-card--free">
+            <header className="pricing-card__header">
+              <StatusPill tone="energy">{fa ? 'رایگان برای همیشه' : 'Free forever'}</StatusPill>
+              <span className="pricing-card__icon-wrap"><FileJson2 size={22} /></span>
+              <h2>{fa ? 'واردکردن برنامه شخصی' : 'Bring your own plan'}</h2>
+              <p>{fa ? 'پرامپت محلی یا فایل JSON موجود؛ بدون اشتراک.' : 'Local prompt or existing JSON; no subscription.'}</p>
+            </header>
+            <ul><li><Check size={16} />{fa ? 'اعتبارسنجی و تاریخچه' : 'Validation and history'}</li><li><Check size={16} />{fa ? 'پیگیری روزانه' : 'Daily tracking'}</li></ul>
+            <button className="orbit-button orbit-button--secondary" type="button">{fa ? 'انتخاب مسیر رایگان' : 'Choose free'}</button>
+          </ContentCard>
           <ContentCard className="pricing-card pricing-card--featured">
             <header className="pricing-card__header">
               <StatusPill tone="brand">{fa ? 'اشتراک Momentum' : 'Momentum membership'}</StatusPill>

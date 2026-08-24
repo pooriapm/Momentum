@@ -7,6 +7,7 @@ import './preview.css'
 sb.mock(import('../src/v2/data/pricing.ts'), { spy: true })
 sb.mock(import('../src/v2/data/repository.ts'), { spy: true })
 sb.mock(import('../src/v2/onboarding/repository.ts'), { spy: true })
+sb.mock(import('../src/v2/external-plan/external-plan.ts'), { spy: true })
 sb.mock(import('../src/platform/pwa/network.ts'), { spy: true })
 
 type MomentumTheme = 'light' | 'dark'

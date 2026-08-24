@@ -153,6 +153,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
     onboardingStatus: account?.onboardingStatus ?? '',
     periodEnd: account?.entitlementPeriodEnd ?? plan?.progress.entitlementPeriodEnd,
     productRegion: account?.productRegion ?? plan?.progress.productRegion,
+    planSourcePreference: account?.planSourcePreference,
   }
   const contentSurface = preview ? 'children' : appContentSurface(tab, entitlement)
   const navQuery = preview ? '?preview=1' : ''

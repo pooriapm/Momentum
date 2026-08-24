@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Check, Gift, ShieldCheck } from 'lucide-react'
+import { Check, FileJson2, Gift, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
@@ -96,11 +96,25 @@ export function PricingPage({
         </Reveal>
         {!unavailable ? (
           <div className="pricing-grid pricing-grid--canonical">
+            <ContentCard className="pricing-card pricing-card--free">
+              <StatusPill tone="energy">{fa ? 'رایگان برای همیشه' : 'Free forever'}</StatusPill>
+              <FileJson2 className="pricing-card__icon" size={24} />
+              <h2>{fa ? 'واردکردن برنامه شخصی' : 'Bring your own plan'}</h2>
+              <strong>{fa ? 'بدون هزینه' : 'No charge'}</strong>
+              <p>{fa ? 'از پرامپت آماده در ابزار دلخواهت استفاده کن یا برنامه موجودت را وارد کن.' : 'Use the ready prompt in a tool you choose, or import an existing plan.'}</p>
+              <ul>
+                <li><Check size={16} />{fa ? 'واردکردن، تاریخچه و پیگیری بدون اشتراک' : 'Import, history, and tracking without a subscription'}</li>
+                <li><Check size={16} />{fa ? 'اعتبارسنجی کاتالوگ، آلرژی و ایمنی' : 'Catalog, allergen, and safety validation'}</li>
+                <li><Check size={16} />{fa ? 'بدون ارسال خودکار اطلاعات به ابزار بیرونی' : 'No automatic transfer to an external tool'}</li>
+              </ul>
+              <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, authenticated ? '/onboarding/plan-source' : '/auth/sign-up')}>{fa ? 'انتخاب مسیر رایگان' : 'Choose the free path'}</Link>
+            </ContentCard>
             <ContentCard className="pricing-card pricing-card--featured">
               <StatusPill tone="brand">{t('pricing.membership')}</StatusPill>
               <ShieldCheck className="pricing-card__icon" size={24} />
               <h2>{t('pricing.membership')}</h2>
               <strong>{membershipPrice ?? t('pricing.membership')}</strong>
+              <p>{fa ? 'ساخت خودکار، مدیریت چرخه و بازیابی مطمئن برنامه توسط Momentum.' : 'Momentum automation, cycle management, and reliable plan recovery.'}</p>
               <ul>{membershipFeatures.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
               <Link className="orbit-button orbit-button--primary" href={primaryHref}>{primaryLabel}</Link>
             </ContentCard>
