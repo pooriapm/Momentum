@@ -2398,7 +2398,7 @@ legend {
   .app-bottom-nav.glass-chrome::after { display: none; }
 }
 
-@keyframes orbit-page-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes orbit-page-enter { from { transform: translateY(8px); } to { transform: none; } }
 @keyframes orbit-spin { to { transform: rotate(360deg); } }
 @keyframes orbit-draw { from { opacity: .3; stroke-dashoffset: 150; } to { opacity: 1; stroke-dashoffset: 0; } }
 @keyframes orbit-satellite { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
