@@ -11,6 +11,7 @@ import {
   type DashboardResponse,
 } from './contracts'
 import { mapEntitlementStatus, type MembershipStatus } from '../entitlement'
+import { resolveUnitSystem } from '../settings/measurement-system'
 import type { LocalizedText, MealChoice, MomentumPlanDayView, MomentumPlanView, PlanChange, PlanVersionMeta } from './types'
 
 type Dashboard = DashboardResponse['dashboard']
@@ -19,7 +20,17 @@ function localized(value: string): LocalizedText {
   return { fa: value, en: value }
 }
 
-function localIsoDate(date = new Date()) {
+function localIsoDate(timezone?: string, date = new Date()) {
+  if (timezone) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date)
+    const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? ''
+    return `${value('year')}-${value('month')}-${value('day')}`
+  }
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -58,7 +69,7 @@ function consecutiveDays(checkins: Dashboard['recent_checkins'], today: string) 
   const expected = new Date(`${today}T00:00:00`)
   let streak = 0
   for (const date of dates) {
-    if (date !== localIsoDate(expected)) break
+    if (date !== localIsoDate(undefined, expected)) break
     streak += 1
     expected.setDate(expected.getDate() - 1)
   }
@@ -252,6 +263,7 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
     localDate: dashboard.local_date,
     timezone: dashboard.profile.timezone,
     contentLocale: plan.content_locale === 'fa-IR' ? 'fa' : 'en',
+    displayUnitSystem: resolveUnitSystem(dashboard.profile.unit_system, dashboard.profile.country_code),
     userName: dashboard.profile.display_name
       ? localized(dashboard.profile.display_name)
       : { fa: 'همراه Momentum', en: 'Momentum member' },
@@ -408,6 +420,28 @@ export async function downloadAccountExport(): Promise<AccountExportResponse> {
   })
   if (error) throw error
   return accountExportResponseSchema.parse(data)
+}
+
+export async function loadNextCycleNote() {
+  assertOnline()
+  const client = requireSupabase()
+  const { data, error } = await client.functions.invoke('account-data', {
+    body: { action: 'next-cycle-note' },
+  })
+  if (error) throw error
+  const note = data?.next_cycle_note?.note
+  return typeof note === 'string' ? note : ''
+}
+
+export async function saveNextCycleNote(note: string) {
+  assertOnline()
+  const client = requireSupabase()
+  const { data, error } = await client.functions.invoke('account-data', {
+    body: { action: 'save-next-cycle-note', note },
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
+  })
+  if (error) throw error
+  if (data?.next_cycle_note?.saved !== true) throw new Error('next_cycle_note_failed')
 }
 
 export async function loadAccountDeletionStatus() {

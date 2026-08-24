@@ -13,7 +13,7 @@ describe('localized onboarding inputs', () => {
     render(<LocalizedDatePicker label="تاریخ تولد" locale="fa" onChange={onChange} purpose="birth" value="1990-03-21" />)
 
     expect(screen.getByText('۱ فروردین ۱۳۶۹')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /تاریخ تولد/ }))
+    fireEvent.click(screen.getByRole('combobox', { name: /تاریخ تولد/ }))
     expect(screen.getByRole('dialog', { name: 'انتخاب‌گر تاریخ' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '۲ فروردین ۱۳۶۹' }))
     expect(onChange).toHaveBeenCalledWith('1990-03-22')
@@ -24,7 +24,7 @@ describe('localized onboarding inputs', () => {
     const maxBirthYear = calendarParts(maxBirthDate, 'fa').year
 
     render(<LocalizedDatePicker label="تاریخ تولد" locale="fa" onChange={vi.fn()} purpose="birth" value={todayIso()} />)
-    fireEvent.click(screen.getByRole('button', { name: /تاریخ تولد/ }))
+    fireEvent.click(screen.getByRole('combobox', { name: /تاریخ تولد/ }))
     expect(screen.getByRole('combobox', { name: 'سال' })).toHaveTextContent(toPersianDigits(maxBirthYear))
     fireEvent.click(screen.getByRole('combobox', { name: 'سال' }))
     expect(screen.getByRole('option', { name: toPersianDigits(maxBirthYear) })).toBeInTheDocument()
@@ -56,7 +56,7 @@ describe('localized onboarding inputs', () => {
     render(<LocalizedTimePicker label="ساعت معمول شروع تمرین" locale="fa" onChange={onChange} value="18:30" />)
 
     expect(screen.getByText('۱۸:۳۰')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /ساعت معمول شروع تمرین/ }))
+    fireEvent.click(screen.getByRole('combobox', { name: /ساعت معمول شروع تمرین/ }))
     expect(screen.getByRole('dialog', { name: 'انتخاب‌گر ساعت' })).toBeInTheDocument()
     expect(screen.queryByText('AM')).not.toBeInTheDocument()
     expect(screen.queryByText('PM')).not.toBeInTheDocument()
@@ -76,7 +76,7 @@ describe('localized onboarding inputs', () => {
       </Select>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Goal' }))
+    fireEvent.click(screen.getByRole('combobox', { name: 'Goal' }))
     fireEvent.click(screen.getByRole('option', { name: /Muscle gain/ }))
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ target: { value: 'muscle_gain' } }))
   })

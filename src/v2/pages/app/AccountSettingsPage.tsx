@@ -86,7 +86,7 @@ export function AccountSettingsPage({ locale, preview }: { locale: AppLocale; pr
   const [error, setError] = useState('')
   const [confirmWithdrawal, setConfirmWithdrawal] = useState(false)
   const [withdrawn, setWithdrawn] = useState(false)
-  const [prefs, setPrefs] = useState<MePreferences>(readMePreferences)
+  const [prefs, setPrefs] = useState<MePreferences>(() => readMePreferences(locale))
   const permission = notificationPermission()
 
   if (!settings) {

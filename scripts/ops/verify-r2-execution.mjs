@@ -49,6 +49,7 @@ const password = `R2-Execution-${randomUUID()}-aA1!`
 const today = new Date().toISOString().slice(0, 10)
 const planId = randomUUID()
 const versionId = randomUUID()
+const periodId = randomUUID()
 let userId
 
 try {
@@ -108,6 +109,10 @@ try {
     values ('${planId}','${userId}','R2 execution smoke','active','${today}','${today}','en-US','${versionId}');
     insert into public.plan_versions(id,plan_id,user_id,version,schema_version,source,content,content_sha256)
     values ('${versionId}','${planId}','${userId}',1,'1.0.0','admin','${JSON.stringify(content).replaceAll("'", "''")}'::jsonb,'${'a'.repeat(64)}');
+    insert into public.monthly_plan_periods(id,user_id,cycle_index,status)
+    values ('${periodId}','${userId}',1,'draft');
+    insert into public.next_cycle_inputs(period_id,user_id,note,structured)
+    values ('${periodId}','${userId}','old note','{"preserve":true}'::jsonb);
     commit;
   `
   execFileSync('docker', ['exec', '-i', 'supabase_db_momentum', 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'], {
@@ -165,6 +170,23 @@ try {
     headers: { 'Idempotency-Key': `weekly-checkin-${randomUUID()}` },
   }), 'Weekly check-in failed')
 
+  const noteSaveResult = await authenticated.functions.invoke('account-data', {
+    body: { action: 'save-next-cycle-note', note: 'Prefer shorter sessions next cycle.' },
+    headers: { 'Idempotency-Key': `next-cycle-note-${randomUUID()}` },
+  })
+  if (noteSaveResult.error) {
+    const detail = noteSaveResult.error.context instanceof Response
+      ? await noteSaveResult.error.context.text()
+      : noteSaveResult.error.message
+    throw new Error(`Next-cycle note save failed: ${detail}`)
+  }
+  const nextCycleNote = success(await authenticated.functions.invoke('account-data', {
+    body: { action: 'next-cycle-note' },
+  }), 'Next-cycle note read failed')
+  assert(nextCycleNote.next_cycle_note.note === 'Prefer shorter sessions next cycle.', 'Next-cycle note did not round trip.')
+  const preservedInput = success(await authenticated.from('next_cycle_inputs').select('structured').eq('period_id', periodId).single(), 'Next-cycle structured input verification failed')
+  assert(preservedInput.structured?.preserve === true, 'Saving a note replaced structured next-cycle input.')
+
   const countResults = await Promise.all([
     authenticated.from('workout_sessions').select('*', { count: 'exact', head: true }),
     authenticated.from('daily_checkins').select('*', { count: 'exact', head: true }),
@@ -176,7 +198,7 @@ try {
   const counts = countResults.map((result) => result.count)
   assert(JSON.stringify(counts) === JSON.stringify([1, 1, 1, 0]), `Unexpected execution counts: ${JSON.stringify(counts)}`)
 
-  console.log(JSON.stringify({ authenticated: true, meals: 'select-complete-undo', workout: finishReplay.status, daily_checkins: 1, weekly_checkins: 1, ai_jobs: 0 }))
+  console.log(JSON.stringify({ authenticated: true, meals: 'select-complete-undo', workout: finishReplay.status, daily_checkins: 1, weekly_checkins: 1, next_cycle_note: 'network-only', ai_jobs: 0 }))
 } finally {
   if (userId) await admin.auth.admin.deleteUser(userId)
 }

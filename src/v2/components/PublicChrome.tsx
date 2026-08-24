@@ -56,8 +56,8 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
             <BrandLockup compact />
           </Link>
           <div
-            aria-hidden={!open}
             className={`public-header__links ${open ? 'public-header__links--open' : ''}`}
+            id="public-navigation-links"
             ref={linksRef}
           >
             <Link href={localizedPath(locale, '/pricing')} onClick={() => setMenuPath(null)}>{t('nav.pricing')}</Link>
@@ -70,6 +70,7 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
             <Link className="header-cta" href={localizedPath(locale, '/auth/sign-up')} onClick={() => setMenuPath(null)}>{t('common.start')}</Link>
           </div>
           <button
+            aria-controls="public-navigation-links"
             aria-expanded={open}
             aria-label={open ? (locale === 'fa' ? 'بستن منو' : 'Close menu') : (locale === 'fa' ? 'بازکردن منو' : 'Open menu')}
             className="public-header__menu"

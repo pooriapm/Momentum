@@ -162,7 +162,7 @@ export const dashboardResponseSchema = z.object({
       country_code: z.string().length(2).nullable(),
       pricing_market: z.enum(['ir', 'global']),
       product_region: z.enum(['ir', 'intl']).optional(),
-      unit_system: z.string(),
+      unit_system: z.enum(['auto', 'metric', 'us_customary']),
       onboarding_status: z.string(),
       automation_block_reason: z.string().nullable(),
       plan_source_preference: z.enum(['external', 'momentum']).default('momentum'),

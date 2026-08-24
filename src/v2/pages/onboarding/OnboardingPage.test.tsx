@@ -224,11 +224,11 @@ describe('OnboardingPage inventory states', () => {
   it('steps training days from 0 to 7 and uses a duration dropdown', async () => {
     renderStep('training', { ...completeDraft, trainingDays: '0', trainingDurationPreset: 'custom', trainingDuration: '' })
     expect(await screen.findByRole('spinbutton', { name: 'Training days per week' })).toHaveAttribute('aria-valuenow', '0')
-    expect(screen.queryByRole('button', { name: 'Session duration' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Session duration' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Custom duration (minutes)')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Increase' }))
     expect(screen.getByRole('spinbutton', { name: 'Training days per week' })).toHaveAttribute('aria-valuenow', '1')
-    expect(screen.getByRole('button', { name: 'Session duration' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Session duration' })).toBeInTheDocument()
   })
 
   it('ONB-21 lets Body be skipped without an AI analysis claim', async () => {

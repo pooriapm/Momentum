@@ -3,6 +3,7 @@ import { demoPlan } from '../../data/demo'
 import {
   deriveExportStatus,
   deriveMembershipStatus,
+  defaultMePreferencesFor,
   isExportExpired,
   membershipCopy,
   productVersionCopy,
@@ -34,6 +35,11 @@ describe('Me membership and export derivation', () => {
     expect(isExportExpired(1, 2, 1)).toBe(true)
     expect(deriveExportStatus({ status: 'ready', readyAt: 1, now: 2, ttlMs: 1 })).toBe('expired')
     expect(deriveExportStatus({ status: 'pending' })).toBe('pending')
+  })
+
+  it('uses locale-aware calendar and week defaults while keeping them independently overridable', () => {
+    expect(defaultMePreferencesFor('fa')).toMatchObject({ calendar: 'jalali', weekStart: 'saturday' })
+    expect(defaultMePreferencesFor('en')).toMatchObject({ calendar: 'gregorian', weekStart: 'monday' })
   })
 })
 

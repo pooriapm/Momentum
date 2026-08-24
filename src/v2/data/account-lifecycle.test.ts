@@ -18,6 +18,8 @@ import {
   downloadAccountExport,
   exportAccountData,
   loadAccountExportStatus,
+  loadNextCycleNote,
+  saveNextCycleNote,
 } from './repository'
 
 const readyExport = {
@@ -87,6 +89,22 @@ describe('account data lifecycle client', () => {
     expect(mocks.invoke).toHaveBeenCalledWith('account-data', {
       body: { action: 'export-download' },
     })
+  })
+
+  it('keeps free-text next-cycle input server-side instead of browser storage', async () => {
+    mocks.invoke
+      .mockResolvedValueOnce({ data: { next_cycle_note: { period_id: 'period', note: 'More recovery' } }, error: null })
+      .mockResolvedValueOnce({ data: { next_cycle_note: { saved: true, note: 'More recovery' } }, error: null })
+
+    expect(await loadNextCycleNote()).toBe('More recovery')
+    await saveNextCycleNote('More recovery')
+
+    expect(mocks.invoke).toHaveBeenNthCalledWith(1, 'account-data', { body: { action: 'next-cycle-note' } })
+    expect(mocks.invoke).toHaveBeenNthCalledWith(2, 'account-data', expect.objectContaining({
+      body: { action: 'save-next-cycle-note', note: 'More recovery' },
+      headers: { 'Idempotency-Key': expect.any(String) },
+    }))
+    expect(sessionStorage.getItem('momentum.progress.nextCycleNote')).toBeNull()
   })
 
   it('requires explicit deletion confirmation and clears the local session after success', async () => {

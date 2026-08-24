@@ -279,6 +279,7 @@ export function Select({
             }
             if (event.key === 'Escape') setOpen(false)
           }}
+          role="combobox"
           type="button"
         >
           <span>{selected?.label ?? ''}</span>

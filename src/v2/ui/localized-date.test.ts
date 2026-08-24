@@ -18,4 +18,11 @@ describe('localized date contract', () => {
     expect(monthGrid(1405, 7, 'fa').some((cell) => cell.isoDate === '2026-10-10')).toBe(true)
     expect(monthGrid(2026, 10, 'en')).toHaveLength(42)
   })
+
+  it('round-trips the Jalali leap-day and Nowruz boundary without changing ISO storage', () => {
+    expect(calendarParts('2025-03-20', 'fa')).toEqual({ year: 1403, month: 12, day: 30 })
+    expect(calendarIso(1403, 12, 30, 'fa')).toBe('2025-03-20')
+    expect(calendarParts('2025-03-21', 'fa')).toEqual({ year: 1404, month: 1, day: 1 })
+    expect(calendarIso(1404, 1, 1, 'fa')).toBe('2025-03-21')
+  })
 })

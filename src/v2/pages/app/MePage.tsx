@@ -236,7 +236,7 @@ function SignOutDialog({
           <h2 id="sign-out-title">{fa ? 'از کجا خارج شوی؟' : 'Where should we sign you out?'}</h2>
         </div>
       </header>
-      <p>{fa ? 'ثبت‌های همگام‌شده در حساب می‌مانند. موارد آفلاین را قبل از خروج همگام کن.' : 'Synced entries stay in your account. Sync offline entries before signing out.'}</p>
+      <p>{fa ? 'ثبت‌های همگام‌شده در حساب می‌مانند. Momentum داده سلامتی آفلاین را صف نمی‌کند.' : 'Synced entries stay in your account. Momentum does not queue health data while offline.'}</p>
       <div className="me-signout-choices">
         <button className={`me-signout-choice${scope === 'local' ? ' is-selected' : ''}`} onClick={() => setScope('local')} type="button">
           <strong>{fa ? 'فقط این دستگاه' : 'This device only'}</strong>

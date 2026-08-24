@@ -51,6 +51,7 @@ interface AccountDataBody {
   measurement_id?: unknown
   plan?: unknown
   source_kind?: unknown
+  note?: unknown
 }
 
 const EXPORT_TABLES = [
@@ -206,6 +207,60 @@ async function exportAccountData(
     private_files: privateFiles,
     note: 'Private file links are generated only when the archive is downloaded.',
   }
+}
+
+async function latestNextCycleNote(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+): Promise<{ period_id: string | null; note: string }> {
+  const { data: period, error: periodError } = await admin
+    .from('monthly_plan_periods')
+    .select('id')
+    .eq('user_id', userId)
+    .order('cycle_index', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (periodError) throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note is unavailable.')
+  if (!period) return { period_id: null, note: '' }
+  const { data: input, error: inputError } = await admin
+    .from('next_cycle_inputs')
+    .select('note')
+    .eq('period_id', period.id)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (inputError) throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note is unavailable.')
+  return { period_id: period.id, note: typeof input?.note === 'string' ? input.note : '' }
+}
+
+async function saveNextCycleNote(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+  note: unknown,
+): Promise<{ saved: true; note: string }> {
+  if (typeof note !== 'string' || note.length > 500) {
+    throw new HttpError(400, 'invalid_next_cycle_note', 'The next-cycle note is invalid.')
+  }
+  const current = await latestNextCycleNote(admin, userId)
+  if (!current.period_id) {
+    throw new HttpError(409, 'next_cycle_period_unavailable', 'No plan period is available for this note.')
+  }
+  const { data: updated, error: updateError } = await admin
+    .from('next_cycle_inputs')
+    .update({ note: note || null })
+    .eq('period_id', current.period_id)
+    .eq('user_id', userId)
+    .select('period_id')
+    .maybeSingle()
+  if (updateError) throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note could not be saved.')
+  if (!updated) {
+    const { error: insertError } = await admin.from('next_cycle_inputs').insert({
+      period_id: current.period_id,
+      user_id: userId,
+      note: note || null,
+    })
+    if (insertError) throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note could not be saved.')
+  }
+  return { saved: true, note }
 }
 
 async function deleteAccountStorageAndIdentity(
@@ -1354,6 +1409,10 @@ Deno.serve(async (request) => {
       })
     }
 
+    if (body.action === 'next-cycle-note') {
+      return jsonResponse(request, { next_cycle_note: await latestNextCycleNote(auth.admin, auth.user.id) })
+    }
+
     const idempotencyKey = requireIdempotencyKey(request)
     if (body.action === 'import-external-plan') {
       return jsonResponse(request, {
@@ -1363,6 +1422,11 @@ Deno.serve(async (request) => {
           body,
           idempotencyKey,
         ),
+      })
+    }
+    if (body.action === 'save-next-cycle-note') {
+      return jsonResponse(request, {
+        next_cycle_note: await saveNextCycleNote(auth.admin, auth.user.id, body.note),
       })
     }
     if (body.action === 'delete-account') {

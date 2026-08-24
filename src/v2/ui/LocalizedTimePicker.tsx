@@ -102,6 +102,7 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
         className={`localized-date-trigger ${value ? 'has-value' : ''}`}
         id={`${id}-value`}
         onClick={togglePicker}
+        role="combobox"
         type="button"
       >
         <span><Clock size={19} /></span>

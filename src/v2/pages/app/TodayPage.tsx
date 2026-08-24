@@ -127,7 +127,7 @@ export function TodayPage({
   const [mealDetail, setMealDetail] = useState<{ choice: MealChoice; label: string } | null>(null)
   const mutationAttempts = useRef<Record<string, { signature: string; idempotencyKey: string }>>({})
   const dailyCheckInAttempt = useRef<{ signature: string; idempotencyKey: string } | null>(null)
-  const today = currentLocalDate()
+  const today = currentLocalDate(plan?.timezone)
 
   useEffect(() => {
     if (online && plan) writeStoredLastSync()
@@ -287,7 +287,7 @@ export function TodayPage({
           <h1>{t('app.greeting', { name: localize(plan.userName, locale) })}</h1>
           <p>{localize(plan.adjustmentReason, locale)}</p>
         </div>
-        <Button className="today-checkin-quiet" disabled={mutationsLocked && !preview} onClick={() => setCheckInOpen(true)} variant="ghost">
+        <Button className="today-checkin-quiet" disabled={mutationsLocked} onClick={() => setCheckInOpen(true)} variant="ghost">
           {checkInSaved ? (fa ? 'چک‌این ثبت شد' : 'Check-in saved') : (fa ? 'چک‌این روزانه · اختیاری' : 'Daily check-in · optional')}
         </Button>
       </section>
@@ -295,7 +295,7 @@ export function TodayPage({
       {view === 'offline' ? (
         <div className="today-banner inline-notice" role="status">
           <WifiOff size={16} />
-          <span>{fa ? `آفلاین هستی. آخرین همگام‌سازی: ${formatLastSync(syncedAt, locale)}. ثبت جدید تا برگشت اتصال روی همین دستگاه می‌ماند.` : `You’re offline. Last synced ${formatLastSync(syncedAt, locale)}. New logs stay on this device until you reconnect.`}</span>
+          <span>{fa ? `آفلاین هستی. آخرین همگام‌سازی: ${formatLastSync(syncedAt, locale)}. تا برگشت اتصال ثبت غیرفعال است و هیچ داده سلامتی روی دستگاه صف نمی‌شود.` : `You’re offline. Last synced ${formatLastSync(syncedAt, locale)}. Saving is disabled until you reconnect, and no health data is queued on this device.`}</span>
         </div>
       ) : null}
       {view === 'stale' ? (
@@ -339,7 +339,7 @@ export function TodayPage({
             <Button disabled={view === 'safety' || view === 'stale'} onClick={() => document.getElementById(nextAction.targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
               {nextAction.action}
             </Button>
-            <Button className="today-checkin-quiet" disabled={mutationsLocked && !preview} onClick={() => setCheckInOpen(true)} variant="ghost">
+            <Button className="today-checkin-quiet" disabled={mutationsLocked} onClick={() => setCheckInOpen(true)} variant="ghost">
               {fa ? 'بررسی روزانه · اختیاری' : 'Daily check-in · optional'}
             </Button>
           </div>

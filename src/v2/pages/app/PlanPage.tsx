@@ -92,7 +92,7 @@ export function PlanPage({
   const [savingSlot, setSavingSlot] = useState('')
   const [mealError, setMealError] = useState('')
   const [substituteNotice, setSubstituteNotice] = useState('')
-  const today = currentLocalDate()
+  const today = currentLocalDate(plan?.timezone)
 
   useEffect(() => {
     if (online && plan) writeStoredLastSync()

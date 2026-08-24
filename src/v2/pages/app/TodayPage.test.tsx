@@ -91,7 +91,9 @@ describe('TodayPage inventory states', () => {
     renderToday({ surface: 'offline', lastSyncedAt: '2026-08-17T08:42:00.000Z' })
     expect(screen.getByText(/you’re offline/i)).toBeInTheDocument()
     expect(screen.getByText(/last synced/i)).toBeInTheDocument()
+    expect(screen.getByText(/no health data is queued on this device/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^complete$/i })).toBeDisabled()
+    expect(screen.getAllByRole('button', { name: /daily check-in/i })[0]).toBeDisabled()
   })
 
   it('TODAY-08 disables mutations on stale plan data', () => {

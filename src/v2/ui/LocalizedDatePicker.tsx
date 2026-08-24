@@ -118,6 +118,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
         className={`localized-date-trigger ${value ? 'has-value' : ''}`}
         id={`${id}-value`}
         onClick={showPicker}
+        role="combobox"
         type="button"
       >
         <span><CalendarDays size={19} /></span>

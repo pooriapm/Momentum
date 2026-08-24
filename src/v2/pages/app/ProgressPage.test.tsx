@@ -76,4 +76,10 @@ describe('ProgressPage inventory states', () => {
     expect(screen.getByLabelText(/note for next month/i)).toBeInTheDocument()
     expect(screen.getByText(/not a 7-day trial/i)).toBeInTheDocument()
   })
+
+  it('uses the account unit preference for weight without changing stored metric values', () => {
+    renderProgress({ plan: { ...demoPlan, displayUnitSystem: 'us_customary' } })
+    expect(screen.getByText(/160\.5 lb/i)).toBeInTheDocument()
+    expect(demoPlan.progress.currentWeight).toBe(72.8)
+  })
 })

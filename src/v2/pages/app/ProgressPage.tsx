@@ -1,5 +1,5 @@
 import { AlertTriangle, CalendarCheck2, CalendarDays, Check, LineChart, Scale, Sparkles, TrendingUp } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
@@ -11,13 +11,12 @@ import { formatNumber } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, PageSkeleton, StatusPill } from '../../ui/primitives'
 import { Textarea } from '../../ui/FormControls'
-import { currentLocalDate } from '../../data/repository'
+import { currentLocalDate, loadNextCycleNote, saveNextCycleNote } from '../../data/repository'
+import { kilogramsToPounds, roundMeasurement } from '../../settings/measurement-system'
 import {
   deriveMembershipStatus,
   NEXT_CYCLE_NOTE_MAX,
   NEXT_CYCLE_NOTE_SOFT,
-  readNextCycleNote,
-  writeNextCycleNote,
 } from './me-state'
 import {
   currentWeekIndex,
@@ -55,9 +54,11 @@ export function ProgressPage({
   const [weeklySaved, setWeeklySaved] = useState(false)
   const [weeklyOutcome, setWeeklyOutcome] = useState<'normal' | 'caution' | 'referral' | null>(null)
   const [chartView, setChartView] = useState<ProgressChartView>('chart')
-  const [cycleNote, setCycleNote] = useState(readNextCycleNote)
+  const [cycleNote, setCycleNote] = useState('')
   const [noteSaved, setNoteSaved] = useState(false)
-  const today = currentLocalDate()
+  const [noteSaving, setNoteSaving] = useState(false)
+  const [noteError, setNoteError] = useState(false)
+  const today = currentLocalDate(plan?.timezone)
   const derived = deriveProgressSurface({
     plan,
     online: preview ? (surface === 'offline' ? false : online) : online,
@@ -70,6 +71,33 @@ export function ProgressPage({
   const series = resolveWeeklySeries(plan)
   const membership = deriveMembershipStatus(plan)
   const showNextCycle = membership === 'gift' || membership === 'expired' || membership === 'none' || plan?.progress.cycleEnding
+  const writesLocked = !online || view === 'offline' || view === 'stale' || view === 'load-error'
+
+  useEffect(() => {
+    if (!showNextCycle || preview || !online) return
+    let active = true
+    void loadNextCycleNote()
+      .then((note) => { if (active) setCycleNote(note) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [online, preview, showNextCycle])
+
+  async function persistNextCycleNote() {
+    setNoteError(false)
+    if (preview) {
+      setNoteSaved(true)
+      return
+    }
+    setNoteSaving(true)
+    try {
+      await saveNextCycleNote(cycleNote)
+      setNoteSaved(true)
+    } catch {
+      setNoteError(true)
+    } finally {
+      setNoteSaving(false)
+    }
+  }
 
   if (view === 'loading') return <PageSkeleton />
 
@@ -100,7 +128,7 @@ export function ProgressPage({
           <StatusPill>{fa ? 'گزارش هفته' : 'Weekly report'}</StatusPill>
           <h2>{fa ? 'اولین گزارش هفتگی را ثبت کن' : 'Save your first weekly report'}</h2>
           <p>{fa ? 'اختیاری است، اما اینجا مسیر اصلی پیشرفت است. هوش مصنوعی صدا زده نمی‌شود.' : 'It is optional, but this is the main Progress action. No AI is called.'}</p>
-          <Button disabled={!preview && !online} onClick={() => setWeeklyOpen(true)}><CalendarCheck2 size={17} />{fa ? 'شروع گزارش هفتگی' : 'Start weekly report'}</Button>
+          <Button disabled={writesLocked} onClick={() => setWeeklyOpen(true)}><CalendarCheck2 size={17} />{fa ? 'شروع گزارش هفتگی' : 'Start weekly report'}</Button>
         </ContentCard>
         {weeklyOpen ? <LazyOverlay><WeeklySheet locale={locale} onClose={() => setWeeklyOpen(false)} onOutcome={setWeeklyOutcome} onSaved={() => setWeeklySaved(true)} plan={plan} preview={preview} /></LazyOverlay> : null}
       </main>
@@ -109,6 +137,12 @@ export function ProgressPage({
 
   const weekIndex = currentWeekIndex(series)
   const change = plan ? plan.progress.currentWeight - plan.progress.startWeight : 0
+  const usesUsCustomary = plan?.displayUnitSystem === 'us_customary'
+  const currentWeight = plan
+    ? roundMeasurement(usesUsCustomary ? kilogramsToPounds(plan.progress.currentWeight) : plan.progress.currentWeight)
+    : 0
+  const weightChange = roundMeasurement(usesUsCustomary ? kilogramsToPounds(Math.abs(change)) : Math.abs(change))
+  const weightUnit = usesUsCustomary ? (fa ? 'پوند' : 'lb') : (fa ? 'کیلوگرم' : 'kg')
 
   return (
     <main className="app-page progress-page screen-enter">
@@ -129,7 +163,7 @@ export function ProgressPage({
         </div>
         <div className="progress-heading-actions">
           <StatusPill tone="success">{fa ? `هفته ${formatNumber(weekIndex + 1, locale)} از ۴` : `Week ${weekIndex + 1} of 4`}</StatusPill>
-          <Button disabled={!preview && !online} onClick={() => setWeeklyOpen(true)} variant="secondary">
+          <Button disabled={writesLocked} onClick={() => setWeeklyOpen(true)} variant="secondary">
             <CalendarCheck2 size={17} />{weeklySaved ? (fa ? 'گزارش هفته ثبت شد' : 'Weekly report saved') : (fa ? 'گزارش هفتگی' : 'Weekly report')}
           </Button>
         </div>
@@ -138,7 +172,7 @@ export function ProgressPage({
         <StatusPill>{fa ? 'گزارش هفته' : 'Weekly report'}</StatusPill>
         <h2>{weeklySaved ? (fa ? 'گزارش این هفته ذخیره شد. برنامه ماه عوض نشد.' : 'This week’s report is saved. This month’s plan is unchanged.') : (fa ? 'گزارش این هفته آماده است' : 'This week’s report is ready')}</h2>
         <p>{fa ? 'اختیاری است، اما این کارت مسیر اصلی پیشرفت است. هوش مصنوعی صدا زده نمی‌شود.' : 'Optional, but this card is the main Progress action. No AI is called.'}</p>
-        <Button disabled={!preview && !online} onClick={() => setWeeklyOpen(true)}><CalendarCheck2 size={17} />{weeklySaved ? (fa ? 'مشاهده نتیجه' : 'View result') : (fa ? 'ثبت گزارش هفتگی' : 'Save weekly report')}</Button>
+        <Button disabled={writesLocked} onClick={() => setWeeklyOpen(true)}><CalendarCheck2 size={17} />{weeklySaved ? (fa ? 'مشاهده نتیجه' : 'View result') : (fa ? 'ثبت گزارش هفتگی' : 'Save weekly report')}</Button>
       </ContentCard>
       {weeklyOutcome ? <WeeklyOutcomeCard locale={locale} outcome={weeklyOutcome} /> : null}
       {showNextCycle ? (
@@ -154,15 +188,16 @@ export function ProgressPage({
             value={cycleNote}
           />
           <span className="me-char-count">{cycleNote.length >= NEXT_CYCLE_NOTE_SOFT ? `${cycleNote.length}/${NEXT_CYCLE_NOTE_MAX}` : null}</span>
+          {noteError ? <div className="inline-notice inline-notice--error" role="alert">{fa ? 'یادداشت ذخیره نشد. متن روی صفحه مانده است.' : 'The note was not saved. Your text remains on this page.'}</div> : null}
           <div className="progress-next-cycle__actions">
             <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{fa ? 'شروع عضویت' : 'Start membership'}</Link>
-            <Button onClick={() => { writeNextCycleNote(cycleNote); setNoteSaved(true) }} variant="secondary">{noteSaved ? (fa ? 'یادداشت ذخیره شد' : 'Note saved') : (fa ? 'ذخیره یادداشت' : 'Save note')}</Button>
+            <Button disabled={writesLocked} loading={noteSaving} onClick={() => void persistNextCycleNote()} variant="secondary">{noteSaved ? (fa ? 'یادداشت ذخیره شد' : 'Note saved') : (fa ? 'ذخیره یادداشت' : 'Save note')}</Button>
           </div>
         </ContentCard>
       ) : null}
       {plan ? (
         <div className="progress-metrics-grid">
-          <ContentCard><span><Scale size={19} /></span><small>{fa ? 'وزن فعلی' : 'Current weight'}</small><strong>{formatNumber(plan.progress.currentWeight, locale)} kg</strong><em><TrendingUp size={15} />{formatNumber(Math.abs(change), locale)} kg</em></ContentCard>
+          <ContentCard><span><Scale size={19} /></span><small>{fa ? 'وزن فعلی' : 'Current weight'}</small><strong>{formatNumber(currentWeight, locale)} {weightUnit}</strong><em><TrendingUp size={15} />{formatNumber(weightChange, locale)} {weightUnit}</em></ContentCard>
           <ContentCard><span><Check size={19} /></span><small>{t('app.consistency')}</small><strong>{formatNumber(plan.progress.weeklyAdherence, locale)}%</strong><em>{fa ? 'میانگین ۷ روز اخیر' : 'Last 7-day average'}</em></ContentCard>
           <ContentCard><span><CalendarDays size={19} /></span><small>{t('app.recovery')}</small><strong>{formatNumber(plan.progress.recovery, locale)}%</strong><em>{fa ? 'آخرین چک‌این' : 'Latest check-in'}</em></ContentCard>
           <ContentCard><span><LineChart size={19} /></span><small>{fa ? 'انرژی' : 'Energy'}</small><strong>{formatNumber(plan.progress.energyScore, locale)}</strong><em>{fa ? 'بدون فشار روند متوالی' : 'No streak pressure'}</em></ContentCard>

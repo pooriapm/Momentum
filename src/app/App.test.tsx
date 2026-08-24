@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
@@ -33,7 +33,10 @@ describe('Momentum public product', () => {
   it('renders the new Persian landing experience', async () => {
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: /هر روز، Momentum می‌داند/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /هر روز، Momentum می‌داند/ }, { timeout: 5_000 })).toBeInTheDocument()
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('lang', 'fa'))
+    expect(document.documentElement).toHaveAttribute('dir', 'rtl')
+    expect(document.querySelector('bdi[dir="ltr"]')).toHaveTextContent('Momentum')
     expect(screen.getAllByRole('link', { name: 'برنامه‌ام را بساز' })[0]).toHaveAttribute('href', '/fa/auth/sign-up')
     expect(screen.getAllByText(/General wellness/).length).toBeGreaterThan(0)
   })
@@ -51,7 +54,7 @@ describe('Momentum public product', () => {
     window.history.replaceState({}, '', '/fa/app/today?preview=1')
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: 'صبح بخیر، آوا' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'صبح بخیر، آوا' }, { timeout: 5_000 })).toBeInTheDocument()
     expect(await screen.findByText(/Preview حافظه‌ای/)).toBeInTheDocument()
     expect(localStorage.getItem('momentum.appState')).toBeNull()
   })

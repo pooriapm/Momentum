@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { dashboardResponseSchema, planHistoryItemSchema } from './contracts'
-import { mapDashboardToPlan, mapPlanHistory, undoMeal } from './repository'
+import { currentLocalDate, mapDashboardToPlan, mapPlanHistory, undoMeal } from './repository'
 import type { DashboardResponse } from './contracts'
 
 const mocks = vi.hoisted(() => ({
@@ -171,6 +171,13 @@ const dashboard: DashboardResponse['dashboard'] = {
 }
 
 describe('plan history mapping', () => {
+  it('uses the account timezone rather than the device timezone for date boundaries', () => {
+    const instant = new Date('2026-01-01T00:30:00.000Z')
+    expect(currentLocalDate('Asia/Tehran', instant)).toBe('2026-01-01')
+    expect(currentLocalDate('America/Los_Angeles', instant)).toBe('2025-12-31')
+    expect(currentLocalDate('UTC', instant)).toBe('2026-01-01')
+  })
+
   it('accepts dashboard plan_history items', () => {
     expect(planHistoryItemSchema.parse(history[0]).cycle).toBe(2)
     expect(dashboardResponseSchema.parse({ dashboard }).dashboard.plan_history).toHaveLength(2)

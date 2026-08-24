@@ -102,6 +102,10 @@
   font-size: .68rem;
 }
 
+.plan-week__day.is-active small {
+  color: var(--color-text);
+}
+
 .plan-pattern-list {
   display: grid;
   gap: .85rem;

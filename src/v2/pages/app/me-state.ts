@@ -11,7 +11,6 @@ export type SignOutScope = 'local' | 'global'
 export const EXPORT_TTL_MS = 24 * 60 * 60 * 1000
 export const NEXT_CYCLE_NOTE_MAX = 500
 export const NEXT_CYCLE_NOTE_SOFT = 400
-export const NEXT_CYCLE_NOTE_KEY = 'momentum.progress.nextCycleNote'
 export const ME_PREFS_KEY = 'momentum.me.preferences'
 
 export interface MePreferences {
@@ -38,6 +37,15 @@ export const defaultMePreferences: MePreferences = {
     workoutReminder: true,
     dailyCheckIn: false,
   },
+}
+
+export function defaultMePreferencesFor(locale: AppLocale): MePreferences {
+  return {
+    ...defaultMePreferences,
+    calendar: locale === 'fa' ? 'jalali' : 'gregorian',
+    weekStart: locale === 'fa' ? 'saturday' : 'monday',
+    notifications: { ...defaultMePreferences.notifications },
+  }
 }
 
 export function deriveMembershipStatus(plan: MomentumPlanView | null): MembershipStatus {
@@ -95,10 +103,11 @@ export function notificationPermission() {
   return Notification.permission
 }
 
-export function readMePreferences(): MePreferences {
+export function readMePreferences(locale: AppLocale = 'en'): MePreferences {
+  const defaults = defaultMePreferencesFor(locale)
   try {
     const raw = localStorage.getItem(ME_PREFS_KEY)
-    if (!raw) return { ...defaultMePreferences, notifications: { ...defaultMePreferences.notifications } }
+    if (!raw) return defaults
     const parsed = JSON.parse(raw) as Partial<MePreferences>
     return {
       calendar: parsed.calendar === 'jalali' ? 'jalali' : 'gregorian',
@@ -106,36 +115,20 @@ export function readMePreferences(): MePreferences {
       reduceMotion: parsed.reduceMotion === 'on' || parsed.reduceMotion === 'off' ? parsed.reduceMotion : 'system',
       reduceTransparency: parsed.reduceTransparency === 'on' || parsed.reduceTransparency === 'off' ? parsed.reduceTransparency : 'system',
       notifications: {
-        planReady: parsed.notifications?.planReady ?? true,
-        weeklyReport: parsed.notifications?.weeklyReport ?? true,
-        workoutReminder: parsed.notifications?.workoutReminder ?? true,
-        dailyCheckIn: parsed.notifications?.dailyCheckIn ?? false,
+        planReady: parsed.notifications?.planReady ?? defaults.notifications.planReady,
+        weeklyReport: parsed.notifications?.weeklyReport ?? defaults.notifications.weeklyReport,
+        workoutReminder: parsed.notifications?.workoutReminder ?? defaults.notifications.workoutReminder,
+        dailyCheckIn: parsed.notifications?.dailyCheckIn ?? defaults.notifications.dailyCheckIn,
       },
     }
   } catch {
-    return { ...defaultMePreferences, notifications: { ...defaultMePreferences.notifications } }
+    return defaults
   }
 }
 
 export function writeMePreferences(value: MePreferences) {
   try {
     localStorage.setItem(ME_PREFS_KEY, JSON.stringify(value))
-  } catch {
-    /* private mode */
-  }
-}
-
-export function readNextCycleNote() {
-  try {
-    return sessionStorage.getItem(NEXT_CYCLE_NOTE_KEY) ?? ''
-  } catch {
-    return ''
-  }
-}
-
-export function writeNextCycleNote(value: string) {
-  try {
-    sessionStorage.setItem(NEXT_CYCLE_NOTE_KEY, value.slice(0, NEXT_CYCLE_NOTE_MAX))
   } catch {
     /* private mode */
   }

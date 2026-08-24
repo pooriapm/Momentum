@@ -265,8 +265,8 @@ select extensions.is(
         )
       )
   ),
-  array['ai_generation_jobs', 'monthly_plan_periods']::text[],
-  'effective service-role writes are limited to generation job and monthly-period state'
+  array['ai_generation_jobs', 'monthly_plan_periods', 'next_cycle_inputs']::text[],
+  'effective service-role writes are limited to generation lifecycle and owner-bound next-cycle input state'
 );
 
 select extensions.is(

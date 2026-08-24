@@ -14,6 +14,7 @@ export const demoPlan: MomentumPlanView = {
   localDate: demoDates[0],
   timezone: demoTimezone,
   contentLocale: 'fa',
+  displayUnitSystem: 'metric',
   userName: { fa: 'آوا', en: 'Ava' },
   dateLabel: { fa: 'روز قدرت · هفته سوم', en: 'Strength day · Week 3' },
   monthlyPlanBrief: {

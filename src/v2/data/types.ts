@@ -115,6 +115,7 @@ export interface MomentumPlanView {
   localDate?: string
   timezone?: string
   contentLocale?: 'fa' | 'en'
+  displayUnitSystem?: 'metric' | 'us_customary'
   userName: LocalizedText
   dateLabel: LocalizedText
   monthlyPlanBrief: LocalizedText
