@@ -169,6 +169,24 @@ async function createPortableFileLinks(
   return result
 }
 
+async function hydratePortableFileLinks(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  payload: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const paths = Array.isArray(payload.private_files)
+    ? payload.private_files.flatMap((item) =>
+      isRecord(item) && typeof item.path === 'string' ? [item.path] : []
+    )
+    : []
+  return {
+    ...payload,
+    private_files: await createPortableFileLinks(admin, paths),
+    note: paths.length
+      ? 'Private file links are generated when this archive is downloaded and expire after 10 minutes.'
+      : 'This archive contains no private report files.',
+  }
+}
+
 async function exportAccountData(
   admin: Awaited<ReturnType<typeof authenticate>>['admin'],
   userId: string,
@@ -179,17 +197,14 @@ async function exportAccountData(
       return [table, await selectAllOwnedRows(admin, table, userId)] as const
     }),
   )
-  const privateFiles = await createPortableFileLinks(
-    admin,
-    await listAllAccountFiles(admin, userId),
-  )
+  const privateFiles = (await listAllAccountFiles(admin, userId)).map((path) => ({ path }))
   return {
     schema_version: 'momentum-account-export-v1',
     generated_at: new Date().toISOString(),
     account: { id: userId, email: email ?? null },
     data: Object.fromEntries(results),
     private_files: privateFiles,
-    note: 'Private report links expire after 10 minutes and should be downloaded immediately.',
+    note: 'Private file links are generated only when the archive is downloaded.',
   }
 }
 
@@ -745,6 +760,7 @@ async function loadDashboard(
     ownedPlansResult,
     versionHistoryResult,
     periodHistoryResult,
+    progressSeriesResult,
   ] = await Promise.all([
     admin
       .from('profiles')
@@ -837,6 +853,10 @@ async function loadDashboard(
       .eq('user_id', userId)
       .order('cycle_index', { ascending: false })
       .limit(24),
+    admin.rpc('get_progress_series', {
+      p_user_id: userId,
+      p_as_of: input.localDate,
+    }),
   ])
   if (
     profileResult.error ||
@@ -850,7 +870,8 @@ async function loadDashboard(
     planResult.error ||
     ownedPlansResult.error ||
     versionHistoryResult.error ||
-    periodHistoryResult.error
+    periodHistoryResult.error ||
+    progressSeriesResult.error
   ) {
     throw new HttpError(503, 'dashboard_unavailable', 'Dashboard data is unavailable.')
   }
@@ -969,6 +990,7 @@ async function loadDashboard(
     ai_access: { plan: projectPlanAiAccess(profileResult.data, emailConfirmed) },
     plan: planProjection,
     plan_history: planHistory,
+    progress_series: Array.isArray(progressSeriesResult.data) ? progressSeriesResult.data : [],
   }
 }
 
@@ -1286,13 +1308,22 @@ Deno.serve(async (request) => {
       if (current.export_request.status !== 'ready' || !current.export) {
         throw new HttpError(409, 'export_not_ready', 'The export is not ready to download.')
       }
-      return jsonResponse(request, current)
+      return jsonResponse(request, {
+        ...current,
+        export: await hydratePortableFileLinks(auth.admin, current.export),
+      })
     }
 
     if (body.action === 'export-account') {
       const requested = await requestExportRow(auth.admin, auth.user.id)
       if (requested.status === 'ready') {
-        return jsonResponse(request, await getExportRow(auth.admin, auth.user.id, true))
+        const current = await getExportRow(auth.admin, auth.user.id, true)
+        return jsonResponse(request, {
+          ...current,
+          export: current.export
+            ? await hydratePortableFileLinks(auth.admin, current.export)
+            : null,
+        })
       }
       try {
         const payload = await exportAccountData(auth.admin, auth.user.id, auth.user.email)
@@ -1302,7 +1333,10 @@ Deno.serve(async (request) => {
           requested.id,
           payload,
         )
-        return jsonResponse(request, { export_request: exportRequest, export: payload })
+        return jsonResponse(request, {
+          export_request: exportRequest,
+          export: await hydratePortableFileLinks(auth.admin, payload),
+        })
       } catch (error) {
         await failExportRow(
           auth.admin,

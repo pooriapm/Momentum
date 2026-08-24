@@ -34,7 +34,12 @@ const readyExport = {
     generated_at: '2026-08-09T10:00:00.000Z',
     account: { id: '88888888-8888-4888-8888-888888888888', email: 'user@example.com' },
     data: { profiles: [], plan_versions: [] },
-    note: 'Download immediately.',
+    private_files: [{
+      path: '88888888-8888-4888-8888-888888888888/report.pdf',
+      signed_url: 'https://storage.example.test/report.pdf?token=fresh',
+      expires_in_seconds: 600,
+    }],
+    note: 'Private file links expire after 10 minutes.',
   },
 }
 
@@ -51,6 +56,7 @@ describe('account data lifecycle client', () => {
 
     expect(result.export_request.status).toBe('ready')
     expect(result.export?.schema_version).toBe('momentum-account-export-v1')
+    expect(result.export?.private_files[0]?.expires_in_seconds).toBe(600)
     expect(mocks.invoke).toHaveBeenCalledWith('account-data', {
       body: { action: 'export-account' },
     })
@@ -77,6 +83,7 @@ describe('account data lifecycle client', () => {
     const result = await downloadAccountExport()
 
     expect(result.export_request.status).toBe('ready')
+    expect(result.export?.private_files[0]?.signed_url).toContain('token=fresh')
     expect(mocks.invoke).toHaveBeenCalledWith('account-data', {
       body: { action: 'export-download' },
     })

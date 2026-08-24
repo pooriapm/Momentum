@@ -136,6 +136,19 @@ const checkinSchema = z.object({
   adherence_percent: z.number().min(0).max(100).nullable(),
 })
 
+const progressSeriesPointSchema = z.object({
+  week: z.number().int().min(1).max(4),
+  week_start: isoDate,
+  week_end: isoDate,
+  workouts_completed: z.number().int().nonnegative(),
+  workouts_planned: z.number().int().nonnegative(),
+  meals_completed: z.number().int().nonnegative(),
+  meals_planned: z.number().int().nonnegative(),
+  energy: z.number().finite().min(0).max(10),
+  adherence: z.number().int().min(0).max(100),
+  partial: z.boolean(),
+})
+
 export const dashboardResponseSchema = z.object({
   dashboard: z.object({
     local_date: isoDate,
@@ -195,6 +208,7 @@ export const dashboardResponseSchema = z.object({
     }),
     plan: dashboardPlanSchema.nullable(),
     plan_history: z.array(planHistoryItemSchema).max(24).default([]),
+    progress_series: z.array(progressSeriesPointSchema).max(4).default([]),
   }),
 })
 
@@ -275,6 +289,11 @@ const exportPayloadSchema = z.object({
   generated_at: z.string(),
   account: z.object({ id: z.string().uuid(), email: z.string().email().nullable() }),
   data: z.record(z.string(), z.array(z.unknown())),
+  private_files: z.array(z.object({
+    path: z.string().min(1),
+    signed_url: z.string().url(),
+    expires_in_seconds: z.number().int().positive().max(3600),
+  })).default([]),
   note: z.string(),
 }).passthrough()
 

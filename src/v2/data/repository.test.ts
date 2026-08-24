@@ -156,6 +156,18 @@ const dashboard: DashboardResponse['dashboard'] = {
     history,
   },
   plan_history: history,
+  progress_series: [{
+    week: 1,
+    week_start: '2026-08-17',
+    week_end: '2026-08-23',
+    workouts_completed: 2,
+    workouts_planned: 3,
+    meals_completed: 5,
+    meals_planned: 7,
+    energy: 7,
+    adherence: 70,
+    partial: true,
+  }],
 }
 
 describe('plan history mapping', () => {
@@ -190,6 +202,17 @@ describe('plan history mapping', () => {
       'catalog release',
     ])
     expect(plan?.history?.map((item) => item.id)).toEqual([currentVersionId, priorVersionId])
+    expect(plan?.progress.weeklyAdherence).toBe(70)
+    expect(plan?.progress.weeklySeries).toEqual([{
+      week: 1,
+      workoutsCompleted: 2,
+      workoutsPlanned: 3,
+      mealsCompleted: 5,
+      mealsPlanned: 7,
+      energy: 7,
+      adherence: 70,
+      partial: true,
+    }])
   })
 })
 

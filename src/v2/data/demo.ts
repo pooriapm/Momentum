@@ -119,6 +119,12 @@ export const demoPlan: MomentumPlanView = {
   progress: {
     currentWeight: 72.8, startWeight: 76.2, targetWeight: 69, weeklyAdherence: 84, readiness: 82, recovery: 76, streak: 12,
     loggedCalories: 820, sleepMinutes: 425, energyScore: 4,
+    weeklySeries: [
+      { week: 1, workoutsCompleted: 2, workoutsPlanned: 3, mealsCompleted: 21, mealsPlanned: 28, energy: 6.8, adherence: 62 },
+      { week: 2, workoutsCompleted: 3, workoutsPlanned: 3, mealsCompleted: 23, mealsPlanned: 28, energy: 7.1, adherence: 78 },
+      { week: 3, workoutsCompleted: 3, workoutsPlanned: 3, mealsCompleted: 25, mealsPlanned: 28, energy: 7.4, adherence: 86 },
+      { week: 4, workoutsCompleted: 1, workoutsPlanned: 3, mealsCompleted: 5, mealsPlanned: 28, energy: 7, adherence: 18, partial: true },
+    ],
     entitlementLabel: { fa: 'عضویت Momentum', en: 'Momentum membership' },
     entitlementStatus: 'active',
     productRegion: 'intl',

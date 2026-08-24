@@ -215,6 +215,16 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
   const weeklyAdherence = adherenceValues.length
     ? Math.round(adherenceValues.reduce((sum, value) => sum + value, 0) / adherenceValues.length)
     : 0
+  const weeklySeries = dashboard.progress_series.map((point) => ({
+    week: point.week,
+    workoutsCompleted: point.workouts_completed,
+    workoutsPlanned: point.workouts_planned,
+    mealsCompleted: point.meals_completed,
+    mealsPlanned: point.meals_planned,
+    energy: point.energy,
+    adherence: point.adherence,
+    partial: point.partial,
+  }))
 
   const currentDay = mapPlanDay(plan.day, plan.id, locale)
   const loggedCalories = plan.day.meals.reduce((sum, meal) => {
@@ -261,13 +271,14 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       currentWeight,
       startWeight: goal.start_weight_kg,
       targetWeight: goal.target_weight_kg,
-      weeklyAdherence,
+      weeklyAdherence: weeklySeries.at(-1)?.adherence ?? weeklyAdherence,
       readiness,
       recovery: recoveryFromCheckIn(checkin),
       streak: consecutiveDays(dashboard.recent_checkins, dashboard.local_date),
       loggedCalories,
       sleepMinutes: checkin?.sleep_minutes ?? 0,
       energyScore: checkin?.energy_score ?? 0,
+      weeklySeries,
       entitlementLabel: dashboard.entitlement_usage?.entitlement.source === 'gift'
         ? { fa: 'هدیه برنامه اول', en: 'First-plan gift' }
         : { fa: 'عضویت Momentum', en: 'Momentum membership' },

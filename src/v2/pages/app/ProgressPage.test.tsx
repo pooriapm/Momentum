@@ -42,6 +42,7 @@ describe('ProgressPage inventory states', () => {
     fireEvent.click(screen.getByRole('button', { name: /view data table/i }))
     expect(screen.getByText(/this table contains exactly the chart data/i)).toBeInTheDocument()
     expect(screen.getByText(/week 4 · partial/i)).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: /week 4 · partial 1 \/ 3 5 \/ 28 7 18%/i })).toBeInTheDocument()
   })
 
   it('PROG-03 is an empty state without judgment and with a weekly CTA', () => {
