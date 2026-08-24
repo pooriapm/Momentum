@@ -48,4 +48,11 @@ describe('AccountSettingsPage inventory states', () => {
     expect(screen.getByText(/weekly report/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Accessibility' })).toBeInTheDocument()
   })
+
+  it('keeps optional analytics off by default and explains the filtered payload', () => {
+    renderSettings()
+    expect(screen.getByRole('checkbox', { name: /help improve activation and adherence/i })).not.toBeChecked()
+    expect(screen.getByText(/never raw health values, free text, email, or account identifiers/i)).toBeInTheDocument()
+    expect(screen.getByText(/required operational and security records remain independent/i)).toBeInTheDocument()
+  })
 })

@@ -8,10 +8,11 @@ import {
   Sparkles,
   WifiOff,
 } from 'lucide-react'
-import { type KeyboardEvent, useEffect, useState } from 'react'
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useOnlineStatus } from '../../../platform/pwa/network'
+import { eventContext, trackProductEvent } from '../../analytics/events'
 import { MealDetailSheet, PlanSubstitutionSheet, WorkoutDetailSheet, LazyOverlay } from '../../components/LazyOverlay'
 import { WorkoutLogger } from '../../components/WorkoutLogger'
 import { completeMeal, currentLocalDate, logMealSelection } from '../../data/repository'
@@ -92,11 +93,18 @@ export function PlanPage({
   const [savingSlot, setSavingSlot] = useState('')
   const [mealError, setMealError] = useState('')
   const [substituteNotice, setSubstituteNotice] = useState('')
+  const planViewTracked = useRef(false)
   const today = currentLocalDate(plan?.timezone)
 
   useEffect(() => {
     if (online && plan) writeStoredLastSync()
   }, [online, plan])
+
+  useEffect(() => {
+    if (preview || !online || !plan || planViewTracked.current) return
+    planViewTracked.current = true
+    trackProductEvent({ ...eventContext(locale, plan.progress.productRegion), event_name: 'plan_viewed', surface: 'plan', action_kind: 'plan', outcome: 'viewed' })
+  }, [locale, online, plan, preview])
 
   const derived = derivePlanSurface({
     plan,

@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { saveDailyCheckIn } from '../../checkins/repository'
+import { eventContext, trackProductEvent } from '../../analytics/events'
 import type { CheckInSafety } from '../../checkins/contracts'
 import { CheckInSheet, MealDetailSheet, LazyOverlay } from '../../components/LazyOverlay'
 import { WorkoutLogger } from '../../components/WorkoutLogger'
@@ -127,11 +128,19 @@ export function TodayPage({
   const [mealDetail, setMealDetail] = useState<{ choice: MealChoice; label: string } | null>(null)
   const mutationAttempts = useRef<Record<string, { signature: string; idempotencyKey: string }>>({})
   const dailyCheckInAttempt = useRef<{ signature: string; idempotencyKey: string } | null>(null)
+  const planViewTracked = useRef(false)
+  const workoutTracked = useRef(false)
   const today = currentLocalDate(plan?.timezone)
 
   useEffect(() => {
     if (online && plan) writeStoredLastSync()
   }, [online, plan])
+
+  useEffect(() => {
+    if (preview || !online || !plan || planViewTracked.current) return
+    planViewTracked.current = true
+    trackProductEvent({ ...eventContext(locale, plan.progress.productRegion), event_name: 'plan_viewed', surface: 'today', action_kind: 'plan', outcome: 'viewed' })
+  }, [locale, online, plan, preview])
 
   const derived = deriveTodaySurface({
     plan,
@@ -235,6 +244,7 @@ export function TodayPage({
         const attempt = `complete:${slotId}`
         const idempotencyKey = retryKey(mutationAttempts.current, attempt, `${plan!.localDate ?? today}:${slotId}:${optionId}`)
         await completeMeal(plan!.localDate ?? today, slotId, optionId, idempotencyKey)
+        trackProductEvent({ ...eventContext(locale, plan?.progress.productRegion), event_name: 'meaningful_action_completed', surface: 'today', action_kind: 'meal', outcome: 'completed' })
         delete mutationAttempts.current[attempt]
       }
       setMealOverrides((current) => ({ ...current, [slotId]: true }))
@@ -461,7 +471,13 @@ export function TodayPage({
                 enabled={!mutationsLocked}
                 locale={locale}
                 localDate={plan.localDate ?? today}
-                onStatusChange={setWorkoutStatus}
+                onStatusChange={(status) => {
+                  setWorkoutStatus(status)
+                  if (!preview && status === 'completed' && !workoutTracked.current) {
+                    workoutTracked.current = true
+                    trackProductEvent({ ...eventContext(locale, plan.progress.productRegion), event_name: 'meaningful_action_completed', surface: 'today', action_kind: 'workout', outcome: 'completed' })
+                  }
+                }}
                 preview={preview}
                 workout={plan.workout}
               />
@@ -502,6 +518,7 @@ export function TodayPage({
               dailyCheckInAttempt.current = null
               await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
               setCheckInSaved(true)
+              trackProductEvent({ ...eventContext(locale, plan.progress.productRegion), event_name: 'daily_checkin_completed', surface: 'today', action_kind: 'daily_checkin', outcome: 'completed' })
               if (result.safety.level !== 'normal') setSafety(result.safety)
               return result
             }

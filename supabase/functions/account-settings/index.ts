@@ -16,6 +16,7 @@ interface SettingsBody {
   action?: unknown
   settings?: unknown
   confirmation?: unknown
+  enabled?: unknown
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -156,7 +157,7 @@ async function loadSettings(
 ) {
   const [profile, goal, dietary, schedule] = await Promise.all([
     admin.from('profiles').select(
-      'display_name,date_of_birth,sex,height_cm,locale,timezone,unit_system,country_code,pricing_market,ai_country_verified_at,health_data_consent_at,health_consent_version,terms_version,privacy_version,payment_method_status,product_region',
+      'display_name,date_of_birth,sex,height_cm,locale,timezone,unit_system,country_code,pricing_market,ai_country_verified_at,health_data_consent_at,health_consent_version,terms_version,privacy_version,payment_method_status,product_region,analytics_consent_at,analytics_consent_version',
     ).eq('user_id', userId).single(),
     admin.from('goals').select('goal_type,custom_goal,start_weight_kg,target_weight_kg').eq(
       'user_id',
@@ -257,6 +258,26 @@ Deno.serve(async (request) => {
         )
       }
       return jsonResponse(request, { withdrawal: data })
+    }
+
+    if (body.action === 'set-analytics-consent') {
+      if (typeof body.enabled !== 'boolean') {
+        throw new HttpError(422, 'invalid_analytics_consent', 'Analytics preference is invalid.')
+      }
+      const input = { action: body.action, enabled: body.enabled }
+      const { data, error } = await auth.admin.rpc('set_analytics_consent', {
+        p_user_id: auth.user.id,
+        p_enabled: body.enabled,
+        p_idempotency_key: idempotencyKey,
+        p_request_sha256: await sha256(canonicalJson(input)),
+      })
+      if (error) {
+        if (error.message.includes('idempotency_key_reused')) {
+          throw new HttpError(409, 'idempotency_key_reused', 'Idempotency key was used for different input.')
+        }
+        throw new HttpError(503, 'analytics_consent_update_failed', 'Analytics preference could not be updated.')
+      }
+      return jsonResponse(request, { analytics: data })
     }
 
     throw new HttpError(400, 'unsupported_action', 'Settings action is unsupported.')

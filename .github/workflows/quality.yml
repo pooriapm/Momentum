@@ -44,7 +44,7 @@ jobs:
   browser-e2e:
     name: Browser E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,7 +53,40 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
-      - run: npm run test:e2e
+      - name: Public, preview, accessibility, and offline browser matrix
+        run: npx playwright test --grep-invert "FLOW-02 terminal"
+      - name: Start isolated Supabase browser fixture
+        run: |
+          npx supabase start
+          npx supabase db reset
+          echo "VITE_SUPABASE_URL=$(npx supabase status -o json | jq -r .API_URL)" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_PUBLISHABLE_KEY=$(npx supabase status -o json | jq -r .ANON_KEY)" >> "$GITHUB_ENV"
+          echo "R2_AUTHENTICATED_E2E=1" >> "$GITHUB_ENV"
+      - name: Authenticated R2 desktop release flow
+        run: |
+          npx supabase functions serve --env-file supabase/functions.ci.env > /tmp/momentum-functions-desktop.log 2>&1 &
+          functions_pid=$!
+          trap 'kill "$functions_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            curl --fail --silent --output /dev/null -X OPTIONS -H 'Origin: http://127.0.0.1:4173' "${VITE_SUPABASE_URL}/functions/v1/account-data" && break
+            sleep 1
+          done
+          curl --fail --silent --output /dev/null -X OPTIONS -H 'Origin: http://127.0.0.1:4173' "${VITE_SUPABASE_URL}/functions/v1/account-data"
+          npx playwright test e2e/r2-authenticated-flows.spec.ts --project=chromium --workers=1
+      - name: Authenticated R2 mobile release flow
+        run: |
+          npx supabase functions serve --env-file supabase/functions.ci.env > /tmp/momentum-functions-mobile.log 2>&1 &
+          functions_pid=$!
+          trap 'kill "$functions_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            curl --fail --silent --output /dev/null -X OPTIONS -H 'Origin: http://127.0.0.1:4173' "${VITE_SUPABASE_URL}/functions/v1/account-data" && break
+            sleep 1
+          done
+          curl --fail --silent --output /dev/null -X OPTIONS -H 'Origin: http://127.0.0.1:4173' "${VITE_SUPABASE_URL}/functions/v1/account-data"
+          npx playwright test e2e/r2-authenticated-flows.spec.ts --project=mobile-chromium --workers=1
+      - name: Stop isolated Supabase browser fixture
+        if: always()
+        run: npx supabase stop --no-backup
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

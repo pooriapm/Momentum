@@ -27,6 +27,7 @@ import { useAuth } from '../../../platform/auth/auth-context'
 import { sanitizeLocalizedNumberInput } from '../../../lib/numbers/localized-number'
 import { localizedPath } from '../../router/route-utils'
 import { loadPricingContext } from '../../data/pricing'
+import { eventContext, trackProductEvent } from '../../analytics/events'
 import { giftCampaignFromUnknown, postOnboardingPath, reviewInventoryIds } from '../../entitlement'
 import { Input, NumberStepper, RequiredMark, Select, Textarea } from '../../ui/FormControls'
 import { CountryCombobox } from '../../ui/CountryCombobox'
@@ -314,10 +315,12 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           : 'Your account was saved, but automated planning is not appropriate for the selected health context.'))
         return
       }
+      trackProductEvent({ ...eventContext(locale, productRegion, values.planSource === 'external' ? 'external' : 'momentum'), event_name: 'onboarding_completed', surface: 'onboarding', action_kind: null, outcome: 'completed' })
       if (values.planSource === 'external') {
         navigate(localizedPath(locale, '/app/import-plan'))
       } else {
         await createStarterPlan(`${onboardingFlowId}:starter-plan`)
+        trackProductEvent({ ...eventContext(locale, productRegion, 'momentum'), event_name: 'plan_activated', surface: 'onboarding', action_kind: 'plan', outcome: 'activated' })
         await deleteOnboardingDraft(user!.id)
         navigate(postOnboardingPath(locale))
       }

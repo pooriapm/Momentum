@@ -58,6 +58,8 @@ export const accountSettingsResponseSchema = z.object({
       ai_country_verified: z.boolean(),
       health_data_consent_at: z.string().nullable(),
       health_consent_version: z.string().nullable(),
+      analytics_consent_at: z.string().nullable().optional(),
+      analytics_consent_version: z.literal('analytics-v1').nullable().optional(),
       terms_version: z.string().nullable().optional(),
       privacy_version: z.string().nullable().optional(),
       payment_method_status: z.literal('not_collected').optional(),
@@ -92,6 +94,13 @@ export const consentWithdrawalResponseSchema = z.object({
   withdrawal: z.object({
     withdrawn: z.literal(true),
     plan_review_required: z.literal(true),
+  }),
+})
+
+export const analyticsConsentResponseSchema = z.object({
+  analytics: z.object({
+    enabled: z.boolean(),
+    version: z.literal('analytics-v1').nullable(),
   }),
 })
 

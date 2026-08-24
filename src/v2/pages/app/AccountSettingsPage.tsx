@@ -6,7 +6,7 @@ import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { applyUiTheme, updateUiState } from '../../../lib/ui-state'
 import { accountSettingsUpdateSchema, type AccountSettings, type AccountSettingsUpdate } from '../../settings/contracts'
-import { loadAccountSettings, updateAccountSettings, withdrawHealthConsent } from '../../settings/repository'
+import { loadAccountSettings, setAnalyticsConsent, updateAccountSettings, withdrawHealthConsent } from '../../settings/repository'
 import {
   centimetersToInches,
   inchesToCentimeters,
@@ -37,7 +37,7 @@ const weekdays = [
 ] as const
 
 const previewSettings: AccountSettings = {
-  profile: { display_name: 'Ava', date_of_birth: '1992-04-12', sex: 'prefer_not_to_say', height_cm: 170, locale: 'en-US', timezone: 'Asia/Tehran', unit_system: 'auto', product_region: 'intl', country_code: 'US', pricing_market: 'global', ai_country_verified: false, health_data_consent_at: new Date().toISOString(), health_consent_version: 'preview-health-v1', terms_version: '2026-08-01-alpha', privacy_version: '2026-08-01-alpha', payment_method_status: 'not_collected' },
+  profile: { display_name: 'Ava', date_of_birth: '1992-04-12', sex: 'prefer_not_to_say', height_cm: 170, locale: 'en-US', timezone: 'Asia/Tehran', unit_system: 'auto', product_region: 'intl', country_code: 'US', pricing_market: 'global', ai_country_verified: false, health_data_consent_at: new Date().toISOString(), health_consent_version: 'preview-health-v1', analytics_consent_at: null, analytics_consent_version: null, terms_version: '2026-08-01-alpha', privacy_version: '2026-08-01-alpha', payment_method_status: 'not_collected' },
   goal: { goal_type: 'fat_loss', custom_goal: null, start_weight_kg: 76.2, target_weight_kg: 69 },
   dietary: { dietary_pattern: 'omnivore', favorite_foods: ['rice', 'chicken'], allergies: [], available_equipment: ['dumbbells'], work_schedule: 'Weekdays 9–5', cuisine_region: 'international' },
   schedule: [{ weekday: 1, activity_type: 'strength', local_start_time: '18:30:00', duration_minutes: 60 }],
@@ -86,6 +86,8 @@ export function AccountSettingsPage({ locale, preview }: { locale: AppLocale; pr
   const [error, setError] = useState('')
   const [confirmWithdrawal, setConfirmWithdrawal] = useState(false)
   const [withdrawn, setWithdrawn] = useState(false)
+  const [analyticsOverride, setAnalyticsOverride] = useState<boolean | null>(null)
+  const [analyticsSaving, setAnalyticsSaving] = useState(false)
   const [prefs, setPrefs] = useState<MePreferences>(() => readMePreferences(locale))
   const permission = notificationPermission()
 
@@ -104,6 +106,7 @@ export function AccountSettingsPage({ locale, preview }: { locale: AppLocale; pr
   const favoriteFoodsValue = favoriteFoods ?? listText(settings.dietary?.favorite_foods ?? [])
   const allergiesValue = allergies ?? listText(settings.dietary?.allergies ?? [])
   const equipmentValue = equipment ?? listText(settings.dietary?.available_equipment ?? [])
+  const analyticsEnabled = analyticsOverride ?? Boolean(settings.profile.analytics_consent_at)
 
   function update<K extends keyof AccountSettingsUpdate>(key: K, value: AccountSettingsUpdate[K]) {
     setForm((current) => ({ ...(current ?? activeForm), [key]: value }))
@@ -149,6 +152,20 @@ export function AccountSettingsPage({ locale, preview }: { locale: AppLocale; pr
       if (!preview) await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
     } catch { setError(fa ? 'پس‌گرفتن رضایت انجام نشد.' : 'Consent could not be withdrawn.') }
     finally { setSaving(false) }
+  }
+
+  async function toggleAnalytics(enabled: boolean) {
+    setAnalyticsSaving(true); setError(''); setNotice('')
+    try {
+      if (!preview) await setAnalyticsConsent(enabled)
+      setAnalyticsOverride(enabled)
+      setNotice(enabled
+        ? (fa ? 'تحلیل اختیاری محصول فعال شد.' : 'Optional product analytics enabled.')
+        : (fa ? 'تحلیل اختیاری محصول غیرفعال شد.' : 'Optional product analytics disabled.'))
+      if (!preview) await queryClient.invalidateQueries({ queryKey: ['account-settings'] })
+    } catch {
+      setError(fa ? 'تنظیم تحلیل محصول ذخیره نشد.' : 'The product analytics preference could not be saved.')
+    } finally { setAnalyticsSaving(false) }
   }
 
   function updatePrefs(patch: Partial<MePreferences>) {
@@ -200,6 +217,18 @@ export function AccountSettingsPage({ locale, preview }: { locale: AppLocale; pr
             <label className="weekly-change-toggle"><input checked={prefs.notifications.workoutReminder} onChange={(e) => updatePrefs({ notifications: { ...prefs.notifications, workoutReminder: e.target.checked } })} type="checkbox" /><span><strong>{fa ? 'یادآوری تمرین' : 'Workout reminder'}</strong><small>{fa ? '۲ ساعت پیش از زمان انتخابی' : '2 hours before the selected time'}</small></span></label>
             <label className="weekly-change-toggle"><input checked={prefs.notifications.dailyCheckIn} onChange={(e) => updatePrefs({ notifications: { ...prefs.notifications, dailyCheckIn: e.target.checked } })} type="checkbox" /><span><strong>{fa ? 'بررسی روزانه' : 'Daily check-in'}</strong><small>{fa ? 'اختیاری' : 'Optional'}</small></span></label>
           </div>
+        </ContentCard>
+
+        <ContentCard className="account-settings-section">
+          <h2>{fa ? 'تحلیل اختیاری محصول' : 'Optional product analytics'}</h2>
+          <label className="weekly-change-toggle">
+            <input checked={analyticsEnabled} disabled={analyticsSaving || (!preview && !online)} onChange={(event) => void toggleAnalytics(event.target.checked)} type="checkbox" />
+            <span>
+              <strong>{fa ? 'کمک به بهبود فعال‌سازی و پایبندی' : 'Help improve activation and adherence'}</strong>
+              <small>{fa ? 'فقط رویدادهای دسته‌بندی‌شده ثبت می‌شوند؛ نه مقادیر خام سلامت، متن آزاد، ایمیل یا شناسه حساب. این گزینه پیش‌فرض خاموش است و هر زمان می‌توانی غیرفعالش کنی.' : 'Only categorical events are recorded—never raw health values, free text, email, or account identifiers. This is off by default and can be disabled at any time.'}</small>
+            </span>
+          </label>
+          <p>{fa ? 'ثبت‌های ضروری عملیاتی و امنیتی مستقل از این انتخاب باقی می‌مانند.' : 'Required operational and security records remain independent of this choice.'}</p>
         </ContentCard>
 
         <ContentCard className="account-settings-section">

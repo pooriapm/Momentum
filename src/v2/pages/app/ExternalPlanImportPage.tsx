@@ -4,6 +4,7 @@ import { type ChangeEvent, useMemo, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { localizedPath } from '../../router/route-utils'
+import { eventContext, trackProductEvent } from '../../analytics/events'
 import { BrandLockup } from '../../ui/OrbitMark'
 import { Button, ContentCard, PageSkeleton, StatusPill } from '../../ui/primitives'
 import {
@@ -76,6 +77,7 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
     setSaving(true)
     try {
       await importExternalPlan(preview.plan, sourceKind)
+      trackProductEvent({ ...eventContext(locale, undefined, 'external'), event_name: 'plan_activated', surface: 'onboarding', action_kind: 'plan', outcome: 'activated' })
       setComplete(true)
     } catch {
       setError(fa ? 'برنامه با قرارداد، کاتالوگ یا محدودیت‌های ایمنی Momentum سازگار نیست. فایل قبلی دست‌نخورده باقی ماند.' : 'The plan does not match Momentum’s contract, catalog, or safety rules. Your previous plan was left untouched.')

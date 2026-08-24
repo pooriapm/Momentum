@@ -5,6 +5,7 @@ import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { currentWeekStart, saveWeeklyCheckIn } from '../../checkins/repository'
+import { eventContext, trackProductEvent } from '../../analytics/events'
 import { LazyOverlay, WeeklyCheckInSheet } from '../../components/LazyOverlay'
 import { localize, type MomentumPlanView } from '../../data/types'
 import { formatNumber } from '../../lib/format'
@@ -278,6 +279,7 @@ function WeeklySheet({
             }
             const saved = await saveWeeklyCheckIn(input, weekStart, timezone, pendingAttempt.current.idempotencyKey)
             pendingAttempt.current = null
+            trackProductEvent({ ...eventContext(locale, plan.progress.productRegion), event_name: 'weekly_checkin_completed', surface: 'progress', action_kind: 'weekly_checkin', outcome: 'completed' })
             return saved
           })()
       onSaved()

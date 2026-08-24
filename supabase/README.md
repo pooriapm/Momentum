@@ -72,6 +72,7 @@ remain immutable dependencies of both the linked project and clean bootstrap; a
 | `202608170001_phase1b_contract_alignment.sql` | bridge | Explicitly aligns the historical foundation to the current product contract |
 | `202608180001_account_privacy_lifecycle.sql` | target | Current consent, export, deletion, and payment-method lifecycle |
 | `202608180002_monthly_generation_pipeline.sql` through `202608180300_meal_undo_plan_history_stale_jobs.sql` | target | Current monthly generation, catalog v2, entitlement gates, history, undo, and stale-job behavior |
+| `202608240001_r1_edge_service_access.sql` through `202608240012_r2_privacy_safe_metrics.sql` | target | Current service boundary, R2 deterministic core, portability, resilience, optional analytics consent, categorical event allowlist, and aggregate metrics |
 | `geo-context` | target | Current public locale/region hint endpoint; never checkout authorization |
 | `generate-monthly-plan` | target (stub provider) | Current cycle/idempotency/import boundary; live provider remains disabled |
 | `account-data` | target | Current authenticated dashboard, onboarding, meal, export, and deletion boundary |

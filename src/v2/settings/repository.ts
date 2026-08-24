@@ -4,6 +4,7 @@ import {
   accountSettingsResponseSchema,
   accountSettingsUpdateResponseSchema,
   accountSettingsUpdateSchema,
+  analyticsConsentResponseSchema,
   consentWithdrawalResponseSchema,
   type AccountSettingsUpdate,
 } from './contracts'
@@ -41,4 +42,15 @@ export async function withdrawHealthConsent(idempotencyKey = crypto.randomUUID()
   })
   if (error) throw error
   return consentWithdrawalResponseSchema.parse(data).withdrawal
+}
+
+export async function setAnalyticsConsent(enabled: boolean, idempotencyKey = crypto.randomUUID()) {
+  assertOnline()
+  const client = requireSupabase()
+  const { data, error } = await client.functions.invoke('account-settings', {
+    body: { action: 'set-analytics-consent', enabled },
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+  if (error) throw error
+  return analyticsConsentResponseSchema.parse(data).analytics
 }

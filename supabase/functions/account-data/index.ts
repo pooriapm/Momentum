@@ -52,6 +52,8 @@ interface AccountDataBody {
   plan?: unknown
   source_kind?: unknown
   note?: unknown
+  event_id?: unknown
+  event?: unknown
 }
 
 const EXPORT_TABLES = [
@@ -422,6 +424,44 @@ async function resolveCurrentLocalDate(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+const PRODUCT_EVENT_NAMES = [
+  'onboarding_completed',
+  'plan_activated',
+  'plan_viewed',
+  'meaningful_action_completed',
+  'daily_checkin_completed',
+  'weekly_checkin_completed',
+] as const
+
+function parseProductEvent(value: unknown) {
+  if (!isRecord(value)) throw new HttpError(422, 'invalid_product_event', 'Product event is invalid.')
+  const allowedKeys = new Set([
+    'event_name', 'locale', 'product_region', 'plan_source',
+    'surface', 'action_kind', 'outcome', 'schema_version',
+  ])
+  if (Object.keys(value).length !== allowedKeys.size || Object.keys(value).some((key) => !allowedKeys.has(key))) {
+    throw new HttpError(422, 'invalid_product_event', 'Product event contains a forbidden field.')
+  }
+  const categorical = <T extends string>(field: string, allowed: readonly T[], nullable = false): T | null => {
+    const candidate = value[field]
+    if (nullable && candidate === null) return null
+    if (typeof candidate !== 'string' || !allowed.includes(candidate as T)) {
+      throw new HttpError(422, 'invalid_product_event', `Product event ${field} is invalid.`)
+    }
+    return candidate as T
+  }
+  return {
+    event_name: categorical('event_name', PRODUCT_EVENT_NAMES),
+    locale: categorical('locale', ['fa', 'en'] as const),
+    product_region: categorical('product_region', ['ir', 'intl'] as const, true),
+    plan_source: categorical('plan_source', ['external', 'momentum'] as const, true),
+    surface: categorical('surface', ['onboarding', 'today', 'plan', 'progress'] as const),
+    action_kind: categorical('action_kind', ['plan', 'meal', 'workout', 'daily_checkin', 'weekly_checkin'] as const, true),
+    outcome: categorical('outcome', ['completed', 'activated', 'viewed'] as const),
+    schema_version: categorical('schema_version', ['1.0.0'] as const),
+  }
 }
 
 function projectPlanAiAccess(
@@ -1414,6 +1454,27 @@ Deno.serve(async (request) => {
     }
 
     const idempotencyKey = requireIdempotencyKey(request)
+    if (body.action === 'record-product-event') {
+      if (typeof body.event_id !== 'string' || !UUID_PATTERN.test(body.event_id)) {
+        throw new HttpError(422, 'invalid_product_event', 'Product event identifier is invalid.')
+      }
+      const event = parseProductEvent(body.event)
+      const { data, error } = await auth.admin.rpc('record_product_event', {
+        p_user_id: auth.user.id,
+        p_event_id: body.event_id,
+        p_event: event,
+      })
+      if (error) {
+        if (error.message.includes('analytics_consent_required')) {
+          throw new HttpError(403, 'analytics_consent_required', 'Optional analytics is disabled.')
+        }
+        if (error.message.includes('invalid_product_event') || error.message.includes('product_events_')) {
+          throw new HttpError(422, 'invalid_product_event', 'Product event is invalid.')
+        }
+        throw new HttpError(503, 'product_event_failed', 'Product event could not be recorded.')
+      }
+      return jsonResponse(request, { analytics: data })
+    }
     if (body.action === 'import-external-plan') {
       return jsonResponse(request, {
         external_plan_import: await importExternalPlan(
