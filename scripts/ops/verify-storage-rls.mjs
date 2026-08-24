@@ -41,6 +41,10 @@ function assertSuccess(result, message) {
   return result.data
 }
 
+function assertDenied(result, message) {
+  if (!result.error) throw new Error(message)
+}
+
 async function createVerifiedUser(admin, email, password, locale, countryCode) {
   const result = await admin.auth.admin.createUser({
     email,
@@ -95,6 +99,79 @@ try {
 
   const clientA = await signedInClient(environment.API_URL, environment.ANON_KEY, emailA, password)
   const clientB = await signedInClient(environment.API_URL, environment.ANON_KEY, emailB, password)
+
+  const profileA = assertSuccess(
+    await clientA.from('profiles').select('user_id'),
+    'User A could not read their profile',
+  )
+  assert(
+    profileA.length === 1 && profileA[0].user_id === userA.id,
+    'User A profile query escaped its owner boundary',
+  )
+  const profileB = assertSuccess(
+    await clientB.from('profiles').select('user_id'),
+    'User B could not read their profile',
+  )
+  assert(
+    profileB.length === 1 && profileB[0].user_id === userB.id,
+    'User B profile query escaped its owner boundary',
+  )
+  assert(
+    assertSuccess(
+      await clientA.from('profiles').select('user_id').eq('user_id', userB.id),
+      'User A cross-user profile query failed unexpectedly',
+    ).length === 0,
+    'User A can read user B profile through the REST API',
+  )
+  assertDenied(
+    await anonymous.from('profiles').select('user_id'),
+    'Anonymous clients can read profiles through the REST API',
+  )
+
+  assertSuccess(
+    await clientA
+      .from('onboarding_drafts')
+      .insert({ user_id: userA.id, current_step: 'profile', payload: { owner: 'user-a' } }),
+    'User A could not create their own onboarding draft',
+  )
+  assertDenied(
+    await clientA
+      .from('onboarding_drafts')
+      .insert({ user_id: userB.id, current_step: 'profile', payload: { owner: 'user-a' } }),
+    'User A created onboarding data for user B',
+  )
+  assertDenied(
+    await clientA.from('entitlements').insert({ user_id: userA.id }),
+    'Authenticated clients can insert entitlements directly',
+  )
+  assertDenied(
+    await clientA.from('plans').insert({ user_id: userA.id }),
+    'Authenticated clients can insert plans directly',
+  )
+  assertDenied(
+    await clientA.rpc('request_account_export', { p_user_id: userA.id }),
+    'Authenticated clients can execute the service-only export RPC',
+  )
+
+  assert(
+    assertSuccess(
+      await clientA.rpc('account_payment_method_status', { p_user_id: userA.id }),
+      'User A could not read their payment-method status',
+    ) === 'not_collected',
+    'User A received an invalid payment-method status',
+  )
+  assertDenied(
+    await clientA.rpc('account_payment_method_status', { p_user_id: userB.id }),
+    'User A can read user B payment-method status',
+  )
+  assertDenied(
+    await admin.from('profiles').select('user_id'),
+    'Service role has broad direct profile-table access',
+  )
+  assertSuccess(
+    await admin.rpc('current_legal_document_versions'),
+    'Service role could not use an approved public RPC',
+  )
 
   assertSuccess(
     await clientA.storage.from(bucket).upload(pathA, body, { contentType: body.type }),
@@ -152,7 +229,9 @@ try {
     'Service-role cleanup left private objects behind',
   )
 
-  console.log('Storage RLS proof passed: owner, cross-user, anonymous, service-role, and deletion checks.')
+  console.log(
+    'API and Storage RLS proof passed: owner, cross-user, anonymous, service-role, RPC, and deletion checks.',
+  )
 } finally {
   if (pathA || pathB) {
     await admin.storage.from(bucket).remove([pathA, pathB].filter(Boolean))

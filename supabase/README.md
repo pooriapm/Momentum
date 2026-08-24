@@ -205,7 +205,7 @@ origins. Rotate `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and
 supabase db lint
 supabase db reset
 supabase test db
-npm run test:storage-rls
+npm run test:security-rls
 deno fmt --check supabase/functions
 deno lint supabase/functions
 deno check supabase/functions/geo-context/index.ts
@@ -215,9 +215,10 @@ deno check supabase/functions/account-settings/index.ts
 deno check supabase/functions/checkins/index.ts
 ```
 
-The database suite includes the user-A/user-B/anonymous/service-role SQL matrix.
-`test:storage-rls` exercises the same identities through the local Storage API,
-including owner deletion and failed cross-user deletion. Before production,
+The database suite includes the user-A/user-B/anonymous/service-role SQL matrix
+and a database-wide policy/grant/RPC inventory. `test:security-rls` exercises the
+same identities through the local REST, RPC, and Storage APIs, including owner
+deletion and failed cross-user deletion. Before production,
 complete the remaining scenarios in `docs/security/rls.md` against staging,
 verify account export/deletion, and run representative AI evals. The preview
 prices in `seed.sql` are not checkout authorization and must receive a final
