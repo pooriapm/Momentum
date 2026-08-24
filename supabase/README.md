@@ -193,12 +193,17 @@ Set secrets only in Supabase, never in frontend build variables:
 ```bash
 supabase secrets set --env-file /absolute/path/to/momentum.production.env
 supabase db push
-supabase functions deploy geo-context
-supabase functions deploy generate-monthly-plan
-supabase functions deploy account-data
-supabase functions deploy account-settings
-supabase functions deploy checkins
+supabase functions deploy \
+  geo-context account-data account-settings checkins generate-monthly-plan \
+  --use-api \
+  --import-map supabase/functions/deno.json \
+  --no-verify-jwt
 ```
+
+The four private functions authenticate every bearer token with
+`auth.getUser()` in the shared application handler. Gateway JWT verification is
+disabled so exact-origin CORS, structured 401 errors, and correlation IDs apply
+before any user-scoped or service-role operation.
 
 Configure production auth URLs and replace `ALLOWED_ORIGINS` with exact HTTPS
 origins. Rotate `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and
