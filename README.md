@@ -178,13 +178,14 @@ spec هستند. وضعیت دقیق در [`docs/design/CONFORMANCE.md`](docs/de
 
 کد فعلی آلفا است و جایی که با قرارداد D1–D14 اختلاف دارد drift محسوب می‌شود.
 Design Step 5، R0، R1 و R2 تکمیل شده‌اند. release نهایی R2 با commit
-`464d45b` در production فعال است و هر پنج job نهایی GitHub CI پاس شده‌اند.
+`464d45b` در production فعال شد و هر پنج job نهایی GitHub CI پاس شدند.
 بازبینی حرفه‌ای در R2 non-blocking بود و به assurance پیش از public beta منتقل
 شده است. AI زنده، payment، subscription billing و coach همچنان fail-closed
-هستند. کاندیدای مهندسی R3 اکنون build، E2E و تمام 229 assertion دیتابیس را
-محلی پاس می‌کند، اما production همچنان `464d45b` است. foundationهای R4 تا R8
-نیز به‌صورت fail-closed پیاده‌سازی و تست شده‌اند: adapter زنده، پرداخت، alpha و
-beta همگی بدون evidence و approval صریح خاموش می‌مانند. شواهد در
+هستند. R3 با implementation commit `65b0847` در GitHub، Cloudflare و Supabase
+منتشر شده است؛ schema ledger و production probe دیتابیس، پنج Edge Function،
+release metadata و smoke test مرورگر همگی تأیید شده‌اند. foundationهای R4 تا
+R8 نیز به‌صورت fail-closed در همین build پیاده‌سازی و تست شده‌اند: adapter زنده،
+پرداخت، alpha و beta همگی بدون evidence و approval صریح خاموش می‌مانند. شواهد در
 [`docs/R4-R8-IMPLEMENTATION-EVIDENCE.md`](docs/R4-R8-IMPLEMENTATION-EVIDENCE.md)
 و وضعیت کلان در [`docs/ROADMAP-EXECUTION.md`](docs/ROADMAP-EXECUTION.md) ثبت شده‌اند.
 
