@@ -17,7 +17,7 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "http://localhost:5173"
+site_url = "https://momentum.pooria-pm.workers.dev"
 additional_redirect_urls = [
   "http://localhost:5173/**",
   "https://momentum.pooria-pm.workers.dev/**",

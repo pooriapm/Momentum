@@ -36,6 +36,7 @@ if (fs.existsSync(linkedRefPath)) {
 }
 
 const config = read('supabase/config.toml')
+assert(config.includes(`site_url = "${expectedOrigin}"`), 'Production Auth site URL is missing.')
 assert(config.includes(`"${expectedOrigin}/**"`), 'Production auth redirect is missing.')
 const envExample = read('supabase/.env.example')
 for (const line of [
