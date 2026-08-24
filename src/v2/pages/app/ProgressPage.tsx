@@ -1,5 +1,5 @@
 import { AlertTriangle, CalendarCheck2, CalendarDays, Check, LineChart, Scale, Sparkles, TrendingUp } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
@@ -212,6 +212,9 @@ function WeeklySheet({
   plan: MomentumPlanView | null
   preview: boolean
 }) {
+  const timezone = plan?.timezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
+  const weekStart = currentWeekStart(timezone)
+  const pendingAttempt = useRef<{ signature: string; idempotencyKey: string } | null>(null)
   return (
     <WeeklyCheckInSheet locale={locale} onClose={onClose} onSave={async (input) => {
       const referral = input.conditionChange === 'new_condition' || input.conditionChange === 'injury_or_worsening_pain'
@@ -221,7 +224,7 @@ function WeeklySheet({
         ? {
             checkin: {
               id: crypto.randomUUID(),
-              week_start: currentWeekStart(),
+              week_start: weekStart,
               updated_at: new Date().toISOString(),
               trend_summary: {
                 current: { adherence_percent: 84, pain_score: 1.5, recovery_score: 3.8, training_difficulty_score: 3.2 },
@@ -233,7 +236,15 @@ function WeeklySheet({
             },
             safety: { level, reasons: referral ? ['professional_referral'] : [] },
           }
-        : await saveWeeklyCheckIn(input, currentWeekStart(), plan.timezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'))
+        : await (async () => {
+            const signature = JSON.stringify(input)
+            if (pendingAttempt.current?.signature !== signature) {
+              pendingAttempt.current = { signature, idempotencyKey: crypto.randomUUID() }
+            }
+            const saved = await saveWeeklyCheckIn(input, weekStart, timezone, pendingAttempt.current.idempotencyKey)
+            pendingAttempt.current = null
+            return saved
+          })()
       onSaved()
       onOutcome(result.safety.reasons.includes('professional_referral') ? 'referral' : result.safety.level === 'caution' || result.safety.level === 'urgent' ? 'caution' : 'normal')
       return result

@@ -9,23 +9,30 @@ import {
   type WeeklyCheckInInput,
 } from './contracts'
 
-function localIsoDate(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+function datePartsInTimezone(timezone: string, date: Date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const value = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((part) => part.type === type)?.value)
+  return { year: value('year'), month: value('month'), day: value('day') }
 }
 
-export function currentWeekStart(date = new Date()) {
-  const result = new Date(date)
-  result.setHours(12, 0, 0, 0)
-  const weekday = result.getDay()
-  result.setDate(result.getDate() - (weekday === 0 ? 6 : weekday - 1))
-  return localIsoDate(result)
+export function currentWeekStart(timezone: string, date = new Date()) {
+  const local = datePartsInTimezone(timezone, date)
+  const result = new Date(Date.UTC(local.year, local.month - 1, local.day, 12))
+  const weekday = result.getUTCDay()
+  result.setUTCDate(result.getUTCDate() - (weekday === 0 ? 6 : weekday - 1))
+  return result.toISOString().slice(0, 10)
 }
 
 export async function saveDailyCheckIn(
   input: DailyCheckInInput,
   localDate: string,
   timezone: string,
-  idempotencyKey = crypto.randomUUID(),
+  idempotencyKey: string = crypto.randomUUID(),
 ) {
   assertOnline()
   const payload = dailyCheckInInputSchema.parse(input)
@@ -47,7 +54,7 @@ export async function saveWeeklyCheckIn(
   input: WeeklyCheckInInput,
   weekStart: string,
   timezone: string,
-  idempotencyKey = crypto.randomUUID(),
+  idempotencyKey: string = crypto.randomUUID(),
 ) {
   assertOnline()
   const payload = weeklyCheckInInputSchema.parse(input)

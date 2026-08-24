@@ -1,5 +1,5 @@
 import { AlertTriangle, Check, CircleStop, Dumbbell, Pause, Play, Save, SkipForward, X } from 'lucide-react'
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { resources, type AppLocale } from '../../platform/i18n/catalog'
 import {
   createPreviewWorkoutSession,
@@ -44,12 +44,15 @@ function applyPreviewMutation(session: WorkoutSession, mutation: WorkoutMutation
     exercise.sets.forEach((set) => { if (set.status === 'planned') set.status = 'skipped' })
   } else if (mutation.action === 'substitute_exercise' && exercise) {
     exercise.status = 'in_progress'; exercise.substitute_name = mutation.values.name
+    exercise.substitute_exercise_id = mutation.values.exercise_id ?? null
   } else if (mutation.action === 'exercise_notes' && exercise) exercise.notes = mutation.values.notes || null
   else if (mutation.action === 'session_notes') next.notes = mutation.values.notes || null
   else if (mutation.action === 'report_pain') {
     next.pain_reported = true; next.pain_area = mutation.values.area; next.pain_severity = mutation.values.severity
     if (mutation.values.severity >= 4) { next.status = 'stopped'; next.ended_at = new Date().toISOString(); next.stop_reason = 'pain_reported' }
-  } else if (mutation.action === 'stop') {
+  } else if (mutation.action === 'pause') next.status = 'paused'
+  else if (mutation.action === 'resume') next.status = 'in_progress'
+  else if (mutation.action === 'stop') {
     next.status = 'stopped'; next.ended_at = new Date().toISOString(); next.stop_reason = mutation.values.reason
   } else if (mutation.action === 'finish') { next.status = 'completed'; next.ended_at = new Date().toISOString() }
   return next
@@ -78,11 +81,11 @@ export function WorkoutLogger({
   const [painSeverity, setPainSeverity] = useState('1')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
-  const [paused, setPaused] = useState(false)
   const [painCaution, setPainCaution] = useState(false)
   const [substitutingKey, setSubstitutingKey] = useState('')
   const [reasonIntent, setReasonIntent] = useState<ReasonIntent | null>(null)
   const [reasonText, setReasonText] = useState('')
+  const pendingMutations = useRef<Record<string, { signature: string; idempotencyKey: string }>>({})
 
   useEffect(() => {
     let active = true
@@ -94,8 +97,8 @@ export function WorkoutLogger({
   }, [enabled, localDate, locale, preview, workout.id])
 
   useEffect(() => {
-    onStatusChange?.(paused ? 'paused' : session?.status ?? 'idle')
-  }, [onStatusChange, paused, session])
+    onStatusChange?.(session?.status ?? 'idle')
+  }, [onStatusChange, session])
 
   const finishedExercises = useMemo(
     () => session?.exercises.filter((item) => item.status === 'completed' || item.status === 'skipped').length ?? 0,
@@ -104,7 +107,7 @@ export function WorkoutLogger({
 
   async function begin() {
     if (!enabled) return
-    setBusy('start'); setError(''); setPaused(false); setPainCaution(false)
+    setBusy('start'); setError(''); setPainCaution(false)
     try {
       const value = preview
         ? createPreviewWorkoutSession(workout, localDate)
@@ -116,12 +119,22 @@ export function WorkoutLogger({
   }
 
   async function mutate(key: string, mutation: WorkoutMutation) {
-    if (!session || session.status !== 'in_progress') return
-    if (paused && mutation.action !== 'stop') return
+    if (!session) return
+    const allowed = mutation.action === 'resume'
+      ? session.status === 'paused'
+      : mutation.action === 'stop'
+        ? session.status === 'in_progress' || session.status === 'paused'
+        : session.status === 'in_progress'
+    if (!allowed) return
     setBusy(key); setError('')
     try {
-      const value = preview ? applyPreviewMutation(session, mutation) : await mutateWorkoutSession(session.id, mutation)
+      const signature = JSON.stringify(mutation)
+      const pending = pendingMutations.current[key]
+      const idempotencyKey = pending?.signature === signature ? pending.idempotencyKey : crypto.randomUUID()
+      pendingMutations.current[key] = { signature, idempotencyKey }
+      const value = preview ? applyPreviewMutation(session, mutation) : await mutateWorkoutSession(session.id, mutation, idempotencyKey)
       setSession(value)
+      delete pendingMutations.current[key]
       if (mutation.action === 'report_pain' && mutation.values.severity < 4) setPainCaution(true)
     } catch {
       setError(locale === 'fa' ? 'تغییرات ذخیره نشد. مقدارها و وضعیت حرکت را بررسی کن.' : 'Changes were not saved. Check the values and exercise status.')
@@ -151,7 +164,8 @@ export function WorkoutLogger({
     </ContentCard>
   )
 
-  const finished = session.status !== 'in_progress'
+  const paused = session.status === 'paused'
+  const finished = session.status === 'completed' || session.status === 'stopped'
   const closed = finished || paused
   return (
     <div className="workout-logger">
@@ -165,7 +179,7 @@ export function WorkoutLogger({
         <div className="inline-notice" role="status">
           <Pause size={16} />
           <span>{locale === 'fa' ? 'تمرین موقتاً متوقف است. پیشرفت از بین نمی‌رود.' : 'Workout is paused. Progress is kept.'}</span>
-          <Button onClick={() => setPaused(false)} variant="secondary"><Play size={16} />{locale === 'fa' ? 'ادامه' : 'Resume'}</Button>
+          <Button onClick={() => void mutate('resume', { action: 'resume' })} variant="secondary"><Play size={16} />{locale === 'fa' ? 'ادامه' : 'Resume'}</Button>
         </div>
       ) : null}
       {painCaution && !finished ? (
@@ -194,7 +208,7 @@ export function WorkoutLogger({
               <div className="workout-substitute-panel" role="region">
                 <p>{locale === 'fa' ? 'این تغییر فقط همین جلسه را عوض می‌کند و برنامه ماهانه بازتولید نمی‌شود.' : 'This changes only this session and does not regenerate the monthly plan.'}</p>
                 {planned?.substitution ? (
-                  <Button onClick={() => { void mutate(`sub-${exercise.id}`, { action: 'substitute_exercise', exerciseKey: exercise.exercise_key, values: { name: localize(planned.substitution!, locale) } }); setSubstitutingKey('') }}>{locale === 'fa' ? `انتخاب ${localize(planned.substitution, locale)}` : `Choose ${localize(planned.substitution, locale)}`}</Button>
+                  <Button disabled={!preview && !planned.substitutionExerciseId} onClick={() => { void mutate(`sub-${exercise.id}`, { action: 'substitute_exercise', exerciseKey: exercise.exercise_key, values: { exercise_id: planned.substitutionExerciseId ?? undefined, name: localize(planned.substitution!, locale) } }); setSubstitutingKey('') }}>{locale === 'fa' ? `انتخاب ${localize(planned.substitution, locale)}` : `Choose ${localize(planned.substitution, locale)}`}</Button>
                 ) : <p>{locale === 'fa' ? 'جایگزین کاتالوگ برای این حرکت تعریف نشده است.' : 'No catalog substitute is defined for this movement.'}</p>}
                 <Button onClick={() => setSubstitutingKey('')} variant="secondary">{locale === 'fa' ? 'انصراف' : 'Cancel'}</Button>
               </div>
@@ -210,7 +224,7 @@ export function WorkoutLogger({
 
       {!closed ? <ContentCard className="workout-safety-log"><div><AlertTriangle size={20} /><div><h3>{locale === 'fa' ? 'درد یا ناراحتی' : 'Pain or discomfort'}</h3><p>{locale === 'fa' ? 'درد شدید (۴ یا ۵) تمرین را برای ایمنی متوقف می‌کند.' : 'Severe pain (4 or 5) stops the workout for safety.'}</p></div></div><div className="workout-safety-log__fields"><label><span>{locale === 'fa' ? 'محل درد' : 'Pain area'}</span><input maxLength={160} onChange={(event) => setPainArea(event.target.value)} value={painArea} /></label><label><span>{locale === 'fa' ? 'شدت ۱ تا ۵' : 'Severity 1–5'}</span><input max={5} min={1} onChange={(event) => setPainSeverity(event.target.value)} type="number" value={painSeverity} /></label><Button disabled={!painArea.trim()} onClick={() => void mutate('pain', { action: 'report_pain', values: { area: painArea.trim(), severity: Number(painSeverity) } })} variant="danger">{locale === 'fa' ? 'ثبت درد' : 'Log pain'}</Button></div></ContentCard> : null}
 
-      {!finished ? <div className="workout-finish-actions"><Button disabled={paused || finishedExercises !== session.exercises.length} loading={busy === 'finish'} onClick={() => void mutate('finish', { action: 'finish' })}><Check size={17} />{locale === 'fa' ? 'پایان تمرین' : 'Finish workout'}</Button>{paused ? null : <Button onClick={() => setPaused(true)} variant="secondary"><Pause size={17} />{locale === 'fa' ? 'مکث' : 'Pause'}</Button>}<Button onClick={() => { setReasonText(''); setReasonIntent({ kind: 'stop' }) }} variant="danger"><CircleStop size={17} />{locale === 'fa' ? 'توقف تمرین' : 'Stop workout'}</Button></div> : null}
+      {!finished ? <div className="workout-finish-actions"><Button disabled={paused || finishedExercises !== session.exercises.length} loading={busy === 'finish'} onClick={() => void mutate('finish', { action: 'finish' })}><Check size={17} />{locale === 'fa' ? 'پایان تمرین' : 'Finish workout'}</Button>{paused ? null : <Button onClick={() => void mutate('pause', { action: 'pause' })} variant="secondary"><Pause size={17} />{locale === 'fa' ? 'مکث' : 'Pause'}</Button>}<Button onClick={() => { setReasonText(''); setReasonIntent({ kind: 'stop' }) }} variant="danger"><CircleStop size={17} />{locale === 'fa' ? 'توقف تمرین' : 'Stop workout'}</Button></div> : null}
       {closed && session.stop_reason ? <p className="inline-notice"><Dumbbell size={15} />{locale === 'fa' ? 'دلیل توقف: ' : 'Stop reason: '}{session.stop_reason}</p> : null}
       {error ? <p className="inline-notice inline-notice--error" role="alert">{error}</p> : null}
       {reasonIntent ? (

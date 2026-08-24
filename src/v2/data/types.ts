@@ -42,11 +42,13 @@ export interface MealSlot {
 
 export interface WorkoutExerciseDetail {
   key: string
+  exerciseId?: string
   name: LocalizedText
   sets: number
   reps: string
   restSeconds: number
   substitution: LocalizedText | null
+  substitutionExerciseId?: string | null
   equipment?: LocalizedText[]
   adaptation?: LocalizedText | null
 }

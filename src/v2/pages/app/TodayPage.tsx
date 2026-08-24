@@ -15,7 +15,7 @@ import {
   WifiOff,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { type CSSProperties, useEffect, useState } from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
@@ -79,6 +79,18 @@ function selectedOption(meal: MealSlot, selectedMeals: Record<string, string>) {
   return meal.options.find((option) => option.id === (selectedMeals[meal.id] ?? meal.selectedOptionId)) ?? meal.options[0]
 }
 
+function retryKey(
+  attempts: Record<string, { signature: string; idempotencyKey: string }>,
+  key: string,
+  signature: string,
+) {
+  const existing = attempts[key]
+  if (existing?.signature === signature) return existing.idempotencyKey
+  const idempotencyKey = crypto.randomUUID()
+  attempts[key] = { signature, idempotencyKey }
+  return idempotencyKey
+}
+
 export function TodayPage({
   locale,
   plan,
@@ -113,6 +125,8 @@ export function TodayPage({
   const [safety, setSafety] = useState<CheckInSafety | null>(null)
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutRunStatus>('idle')
   const [mealDetail, setMealDetail] = useState<{ choice: MealChoice; label: string } | null>(null)
+  const mutationAttempts = useRef<Record<string, { signature: string; idempotencyKey: string }>>({})
+  const dailyCheckInAttempt = useRef<{ signature: string; idempotencyKey: string } | null>(null)
   const today = currentLocalDate()
 
   useEffect(() => {
@@ -193,7 +207,10 @@ export function TodayPage({
     if (preview) return
     setSavingSlot(slotId)
     try {
-      await logMealSelection(plan!.localDate ?? today, slotId, optionId)
+      const attempt = `select:${slotId}`
+      const idempotencyKey = retryKey(mutationAttempts.current, attempt, `${plan!.localDate ?? today}:${slotId}:${optionId}`)
+      await logMealSelection(plan!.localDate ?? today, slotId, optionId, idempotencyKey)
+      delete mutationAttempts.current[attempt]
       await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
     } catch {
       setSelectedMeals((current) => {
@@ -214,7 +231,12 @@ export function TodayPage({
     setSavingSlot(slotId)
     setMealError('')
     try {
-      if (!preview) await completeMeal(plan!.localDate ?? today, slotId, optionId)
+      if (!preview) {
+        const attempt = `complete:${slotId}`
+        const idempotencyKey = retryKey(mutationAttempts.current, attempt, `${plan!.localDate ?? today}:${slotId}:${optionId}`)
+        await completeMeal(plan!.localDate ?? today, slotId, optionId, idempotencyKey)
+        delete mutationAttempts.current[attempt]
+      }
       setMealOverrides((current) => ({ ...current, [slotId]: true }))
       if (!preview) await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
     } catch {
@@ -234,7 +256,10 @@ export function TodayPage({
     if (preview || !optionId) return
     setSavingSlot(slotId)
     try {
-      await undoMeal(plan!.localDate ?? today, slotId, optionId)
+      const attempt = `undo:${slotId}`
+      const idempotencyKey = retryKey(mutationAttempts.current, attempt, `${plan!.localDate ?? today}:${slotId}:${optionId}`)
+      await undoMeal(plan!.localDate ?? today, slotId, optionId, idempotencyKey)
+      delete mutationAttempts.current[attempt]
       await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
     } catch {
       setMealOverrides((current) => ({ ...current, [slotId]: previous ?? true }))
@@ -464,7 +489,17 @@ export function TodayPage({
           onClose={() => setCheckInOpen(false)}
           onSave={async (input) => {
             if (!preview) {
-              const result = await saveDailyCheckIn(input, plan.localDate ?? today, plan.timezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'))
+              const signature = JSON.stringify(input)
+              if (dailyCheckInAttempt.current?.signature !== signature) {
+                dailyCheckInAttempt.current = { signature, idempotencyKey: crypto.randomUUID() }
+              }
+              const result = await saveDailyCheckIn(
+                input,
+                plan.localDate ?? today,
+                plan.timezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'),
+                dailyCheckInAttempt.current.idempotencyKey,
+              )
+              dailyCheckInAttempt.current = null
               await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
               setCheckInSaved(true)
               if (result.safety.level !== 'normal') setSafety(result.safety)

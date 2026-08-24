@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(12);
+select extensions.plan(16);
 
 insert into auth.users(
   id, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
@@ -73,6 +73,30 @@ select extensions.ok(
 );
 
 select extensions.lives_ok(
+  $$select public.select_meal_option(
+    '12121212-1212-4121-8121-121212121212',
+    (statement_timestamp() at time zone 'UTC')::date,
+    'lunch','chicken-rice','select-meal-key-1',repeat('a',64)
+  )$$,
+  'the owner can persist a current-day meal selection'
+);
+select extensions.is(
+  (select option_key from public.daily_meal_status
+    where user_id = '12121212-1212-4121-8121-121212121212' and slot_key = 'lunch'),
+  'chicken-rice',
+  'the selected option is persisted'
+);
+select extensions.is(
+  (public.select_meal_option(
+    '12121212-1212-4121-8121-121212121212',
+    (statement_timestamp() at time zone 'UTC')::date,
+    'lunch','chicken-rice','select-meal-key-1',repeat('a',64)
+  ) ->> 'option_key'),
+  'chicken-rice',
+  'a meal selection safely replays'
+);
+
+select extensions.lives_ok(
   $$select public.complete_meal_option(
     '12121212-1212-4121-8121-121212121212',
     (statement_timestamp() at time zone 'UTC')::date,
@@ -89,6 +113,16 @@ select extensions.is(
     where user_id = '12121212-1212-4121-8121-121212121212' and slot_key = 'lunch'),
   'completed',
   'completion is persisted before undo'
+);
+
+select extensions.is(
+  (public.complete_meal_option(
+    '12121212-1212-4121-8121-121212121212',
+    (statement_timestamp() at time zone 'UTC')::date,
+    'lunch','chicken-rice','complete-meal-key-1',repeat('c',64)
+  ) ->> 'status'),
+  'completed',
+  'meal completion safely replays'
 );
 
 select extensions.lives_ok(

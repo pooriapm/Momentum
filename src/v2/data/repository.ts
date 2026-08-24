@@ -185,11 +185,13 @@ function mapPlanDay(day: DashboardPlanDay, planId: string, locale: AppLocale): M
       ),
       exerciseDetails: day.workout.exercises.map((exercise) => ({
         key: exercise.exercise_key,
+        exerciseId: exercise.exercise_id,
         name: localized(exercise.name),
         sets: exercise.sets,
         reps: exercise.reps,
         restSeconds: exercise.rest_seconds,
         substitution: exercise.substitution ? localized(exercise.substitution) : null,
+        substitutionExerciseId: exercise.substitution_exercise_id,
         equipment: exercise.equipment.map(localized),
       })),
       intensity: day.workout.intensity,
@@ -323,32 +325,47 @@ export async function loadAccountDashboard(locale: AppLocale): Promise<AccountDa
   }
 }
 
-export async function logMealSelection(date: string, slotKey: string, optionKey: string) {
+export async function logMealSelection(
+  date: string,
+  slotKey: string,
+  optionKey: string,
+  idempotencyKey: string = crypto.randomUUID(),
+) {
   assertOnline()
   const client = requireSupabase()
   const { error } = await client.functions.invoke('account-data', {
     body: { action: 'select-meal', local_date: date, slot_key: slotKey, option_key: optionKey },
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
+    headers: { 'Idempotency-Key': idempotencyKey },
   })
   if (error) throw error
 }
 
-export async function completeMeal(date: string, slotKey: string, optionKey: string) {
+export async function completeMeal(
+  date: string,
+  slotKey: string,
+  optionKey: string,
+  idempotencyKey: string = crypto.randomUUID(),
+) {
   assertOnline()
   const client = requireSupabase()
   const { error } = await client.functions.invoke('account-data', {
     body: { action: 'complete-meal', local_date: date, slot_key: slotKey, option_key: optionKey },
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
+    headers: { 'Idempotency-Key': idempotencyKey },
   })
   if (error) throw error
 }
 
-export async function undoMeal(date: string, slotKey: string, optionKey: string) {
+export async function undoMeal(
+  date: string,
+  slotKey: string,
+  optionKey: string,
+  idempotencyKey: string = crypto.randomUUID(),
+) {
   assertOnline()
   const client = requireSupabase()
   const { error } = await client.functions.invoke('account-data', {
     body: { action: 'undo-meal', local_date: date, slot_key: slotKey, option_key: optionKey },
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
+    headers: { 'Idempotency-Key': idempotencyKey },
   })
   if (error) throw error
 }
