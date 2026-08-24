@@ -222,7 +222,9 @@ async function latestNextCycleNote(
     .order('cycle_index', { ascending: false })
     .limit(1)
     .maybeSingle()
-  if (periodError) throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note is unavailable.')
+  if (periodError) {
+    throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note is unavailable.')
+  }
   if (!period) return { period_id: null, note: '' }
   const { data: input, error: inputError } = await admin
     .from('next_cycle_inputs')
@@ -230,7 +232,9 @@ async function latestNextCycleNote(
     .eq('period_id', period.id)
     .eq('user_id', userId)
     .maybeSingle()
-  if (inputError) throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note is unavailable.')
+  if (inputError) {
+    throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note is unavailable.')
+  }
   return { period_id: period.id, note: typeof input?.note === 'string' ? input.note : '' }
 }
 
@@ -244,7 +248,11 @@ async function saveNextCycleNote(
   }
   const current = await latestNextCycleNote(admin, userId)
   if (!current.period_id) {
-    throw new HttpError(409, 'next_cycle_period_unavailable', 'No plan period is available for this note.')
+    throw new HttpError(
+      409,
+      'next_cycle_period_unavailable',
+      'No plan period is available for this note.',
+    )
   }
   const { data: updated, error: updateError } = await admin
     .from('next_cycle_inputs')
@@ -253,14 +261,18 @@ async function saveNextCycleNote(
     .eq('user_id', userId)
     .select('period_id')
     .maybeSingle()
-  if (updateError) throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note could not be saved.')
+  if (updateError) {
+    throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note could not be saved.')
+  }
   if (!updated) {
     const { error: insertError } = await admin.from('next_cycle_inputs').insert({
       period_id: current.period_id,
       user_id: userId,
       note: note || null,
     })
-    if (insertError) throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note could not be saved.')
+    if (insertError) {
+      throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note could not be saved.')
+    }
   }
   return { saved: true, note }
 }
@@ -436,15 +448,30 @@ const PRODUCT_EVENT_NAMES = [
 ] as const
 
 function parseProductEvent(value: unknown) {
-  if (!isRecord(value)) throw new HttpError(422, 'invalid_product_event', 'Product event is invalid.')
+  if (!isRecord(value)) {
+    throw new HttpError(422, 'invalid_product_event', 'Product event is invalid.')
+  }
   const allowedKeys = new Set([
-    'event_name', 'locale', 'product_region', 'plan_source',
-    'surface', 'action_kind', 'outcome', 'schema_version',
+    'event_name',
+    'locale',
+    'product_region',
+    'plan_source',
+    'surface',
+    'action_kind',
+    'outcome',
+    'schema_version',
   ])
-  if (Object.keys(value).length !== allowedKeys.size || Object.keys(value).some((key) => !allowedKeys.has(key))) {
+  if (
+    Object.keys(value).length !== allowedKeys.size ||
+    Object.keys(value).some((key) => !allowedKeys.has(key))
+  ) {
     throw new HttpError(422, 'invalid_product_event', 'Product event contains a forbidden field.')
   }
-  const categorical = <T extends string>(field: string, allowed: readonly T[], nullable = false): T | null => {
+  const categorical = <T extends string>(
+    field: string,
+    allowed: readonly T[],
+    nullable = false,
+  ): T | null => {
     const candidate = value[field]
     if (nullable && candidate === null) return null
     if (typeof candidate !== 'string' || !allowed.includes(candidate as T)) {
@@ -458,7 +485,11 @@ function parseProductEvent(value: unknown) {
     product_region: categorical('product_region', ['ir', 'intl'] as const, true),
     plan_source: categorical('plan_source', ['external', 'momentum'] as const, true),
     surface: categorical('surface', ['onboarding', 'today', 'plan', 'progress'] as const),
-    action_kind: categorical('action_kind', ['plan', 'meal', 'workout', 'daily_checkin', 'weekly_checkin'] as const, true),
+    action_kind: categorical(
+      'action_kind',
+      ['plan', 'meal', 'workout', 'daily_checkin', 'weekly_checkin'] as const,
+      true,
+    ),
     outcome: categorical('outcome', ['completed', 'activated', 'viewed'] as const),
     schema_version: categorical('schema_version', ['1.0.0'] as const),
   }
@@ -1450,7 +1481,9 @@ Deno.serve(async (request) => {
     }
 
     if (body.action === 'next-cycle-note') {
-      return jsonResponse(request, { next_cycle_note: await latestNextCycleNote(auth.admin, auth.user.id) })
+      return jsonResponse(request, {
+        next_cycle_note: await latestNextCycleNote(auth.admin, auth.user.id),
+      })
     }
 
     const idempotencyKey = requireIdempotencyKey(request)
@@ -1468,7 +1501,10 @@ Deno.serve(async (request) => {
         if (error.message.includes('analytics_consent_required')) {
           throw new HttpError(403, 'analytics_consent_required', 'Optional analytics is disabled.')
         }
-        if (error.message.includes('invalid_product_event') || error.message.includes('product_events_')) {
+        if (
+          error.message.includes('invalid_product_event') ||
+          error.message.includes('product_events_')
+        ) {
           throw new HttpError(422, 'invalid_product_event', 'Product event is invalid.')
         }
         throw new HttpError(503, 'product_event_failed', 'Product event could not be recorded.')

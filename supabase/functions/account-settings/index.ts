@@ -273,9 +273,17 @@ Deno.serve(async (request) => {
       })
       if (error) {
         if (error.message.includes('idempotency_key_reused')) {
-          throw new HttpError(409, 'idempotency_key_reused', 'Idempotency key was used for different input.')
+          throw new HttpError(
+            409,
+            'idempotency_key_reused',
+            'Idempotency key was used for different input.',
+          )
         }
-        throw new HttpError(503, 'analytics_consent_update_failed', 'Analytics preference could not be updated.')
+        throw new HttpError(
+          503,
+          'analytics_consent_update_failed',
+          'Analytics preference could not be updated.',
+        )
       }
       return jsonResponse(request, { analytics: data })
     }
