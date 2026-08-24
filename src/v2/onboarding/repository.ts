@@ -5,6 +5,7 @@ import {
   bodyCompositionConfirmationSchema,
   generationResponseSchema,
   onboardingCompletionSchema,
+  starterPlanResponseSchema,
 } from '../data/contracts'
 import type { OnboardingStepKey } from './schema'
 
@@ -148,6 +149,17 @@ export async function requestPlanGeneration(locale: AppLocale, idempotencyKey: s
     await new Promise((resolve) => window.setTimeout(resolve, 1_200))
   }
   throw new Error('plan_generation_still_processing')
+}
+
+export async function createStarterPlan(idempotencyKey: string = crypto.randomUUID()) {
+  assertOnline()
+  const client = requireSupabase()
+  const { data, error } = await client.functions.invoke('account-data', {
+    body: { action: 'create-starter-plan' },
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+  if (error) throw error
+  return starterPlanResponseSchema.parse(data).starter_plan
 }
 
 export async function confirmBodyComposition(measurementId: string, idempotencyKey: string) {

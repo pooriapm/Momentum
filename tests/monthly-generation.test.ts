@@ -9,6 +9,7 @@ import {
   loadRequiredConsentVersions,
 } from '../supabase/functions/_shared/consent.ts'
 import { reserveGiftBudget, type GiftCampaignState } from '../supabase/functions/_shared/gift-campaign.ts'
+import { buildValidatedDeterministicStarter } from '../supabase/functions/_shared/deterministic-starter.ts'
 import { HttpError } from '../supabase/functions/_shared/http.ts'
 import type { AiReservation } from '../supabase/functions/_shared/limits.ts'
 import {
@@ -306,6 +307,70 @@ class MemoryGenerationStore implements GenerationStore {
 
 beforeEach(() => {
   stubEnv()
+})
+
+describe('deterministic onboarding starter plan', () => {
+  const profile = {
+    dateOfBirth: '1990-05-10',
+    locale: 'en-US' as const,
+    countryCode: 'US',
+    productRegion: 'intl' as const,
+    onboardingStatus: 'complete',
+    automationBlockReason: null,
+    planSourcePreference: 'momentum',
+    termsAcceptedAt: '2026-08-01T00:00:00Z',
+    termsVersion: CONSENT_VERSION,
+    privacyAcceptedAt: '2026-08-01T00:00:00Z',
+    privacyVersion: CONSENT_VERSION,
+    healthDataConsentAt: '2026-08-01T00:00:00Z',
+    healthConsentVersion: CONSENT_VERSION,
+  }
+
+  it('builds and validates a governed plan without provider or entitlement input', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const content = await buildValidatedDeterministicStarter({
+      profile,
+      catalog: createPlanCatalogSnapshot(catalogRows('momentum-core@v2')),
+      declaredAllergenIds: new Set(),
+      today: new Date('2026-08-24T00:00:00Z'),
+    })
+    expect(content.plan_name).toBe('Momentum starter plan')
+    expect(content.days).toHaveLength(7)
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
+  it.each([
+    [{ onboardingStatus: 'automation_blocked' }, 'onboarding_incomplete'],
+    [{ automationBlockReason: 'high_risk_condition' }, 'starter_plan_safety_blocked'],
+    [{ planSourcePreference: 'external' }, 'managed_plan_path_not_selected'],
+    [{ countryCode: 'IR' }, 'product_region_mismatch'],
+    [{ dateOfBirth: '2012-01-01' }, 'starter_plan_age_blocked'],
+    [{ termsVersion: 'stale' }, 'consent_update_required'],
+  ])('fails closed before plan construction for %o', async (patch, code) => {
+    await expect(buildValidatedDeterministicStarter({
+      profile: { ...profile, ...patch },
+      catalog: createPlanCatalogSnapshot(catalogRows('momentum-core@v2')),
+      declaredAllergenIds: new Set(),
+      today: new Date('2026-08-24T00:00:00Z'),
+    })).rejects.toMatchObject({ code })
+  })
+
+  it('fails closed when no governed starter meal avoids a declared allergen', async () => {
+    const catalog = createPlanCatalogSnapshot({
+      ...catalogRows('momentum-core@v2'),
+      ingredientAllergens: [{
+        ingredient_id: 'ingredient:almonds@v2',
+        allergen_id: 'allergen:milk@v2',
+      }],
+    })
+    await expect(buildValidatedDeterministicStarter({
+      profile,
+      catalog,
+      declaredAllergenIds: new Set(['allergen:milk@v2']),
+      today: new Date('2026-08-24T00:00:00Z'),
+    })).rejects.toMatchObject({ code: 'starter_plan_allergen_unavailable' })
+  })
 })
 
 describe('monthly generation pipeline', () => {

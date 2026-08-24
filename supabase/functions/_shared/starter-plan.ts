@@ -111,14 +111,40 @@ function exercise(
   }
 }
 
-function foodForMealType(catalog: PlanCatalogSnapshot, mealType: string, preferredId?: string) {
+function foodHasDeclaredAllergen(
+  catalog: PlanCatalogSnapshot,
+  food: CatalogFood,
+  declaredAllergenIds: ReadonlySet<string>,
+) {
+  return [...food.ingredientIds].some((ingredientId) => {
+    const ingredient = catalog.ingredients.get(ingredientId)
+    return ingredient && [...ingredient.allergenIds].some((id) => declaredAllergenIds.has(id))
+  })
+}
+
+function foodForMealType(
+  catalog: PlanCatalogSnapshot,
+  mealType: string,
+  preferredId?: string,
+  declaredAllergenIds: ReadonlySet<string> = new Set(),
+) {
   if (preferredId && catalog.foods.has(preferredId)) {
     const preferred = requiredFood(catalog, preferredId)
-    if (preferred.meal_types.includes(mealType)) return preferred
+    if (
+      preferred.meal_types.includes(mealType) &&
+      !foodHasDeclaredAllergen(catalog, preferred, declaredAllergenIds)
+    ) return preferred
   }
-  const match = [...catalog.foods.values()].find((food) => food.meal_types.includes(mealType))
+  const match = [...catalog.foods.values()].find((food) =>
+    food.meal_types.includes(mealType) &&
+    !foodHasDeclaredAllergen(catalog, food, declaredAllergenIds)
+  )
   if (!match) {
-    throw new HttpError(503, 'starter_catalog_incomplete', 'Starter plan catalog is incomplete.')
+    throw new HttpError(
+      422,
+      'starter_plan_allergen_unavailable',
+      'No governed starter food is available for the declared allergens.',
+    )
   }
   return match
 }
@@ -137,23 +163,25 @@ export function buildStarterPlan(
   catalog: PlanCatalogSnapshot,
   requestedDays: number,
   locale: 'fa-IR' | 'en-US',
+  declaredAllergenIds: ReadonlySet<string> = new Set(),
 ): Record<string, unknown> {
-  return buildMonthlyStubPlan(catalog, requestedDays, locale)
+  return buildMonthlyStubPlan(catalog, requestedDays, locale, { declaredAllergenIds })
 }
 
 export function buildMonthlyStubPlan(
   catalog: PlanCatalogSnapshot,
   requestedDays: number,
   locale: 'fa-IR' | 'en-US',
-  options: { invalidCatalogId?: boolean } = {},
+  options: { invalidCatalogId?: boolean; declaredAllergenIds?: ReadonlySet<string> } = {},
 ): Record<string, unknown> {
   if (!Number.isInteger(requestedDays) || requestedDays < 3 || requestedDays > 14) {
     throw new HttpError(400, 'invalid_days', 'Starter plan must cover 3 to 14 days.')
   }
   const foods = starterFoodIds(catalog)
-  const breakfast = foodForMealType(catalog, 'breakfast', foods[0])
-  const lunch = foodForMealType(catalog, 'lunch', foods[1])
-  const dinner = foodForMealType(catalog, 'dinner', foods[2])
+  const declaredAllergenIds = options.declaredAllergenIds ?? new Set<string>()
+  const breakfast = foodForMealType(catalog, 'breakfast', foods[0], declaredAllergenIds)
+  const lunch = foodForMealType(catalog, 'lunch', foods[1], declaredAllergenIds)
+  const dinner = foodForMealType(catalog, 'dinner', foods[2], declaredAllergenIds)
   const exerciseIds = exerciseIdsForStub(catalog)
   const foodIds = [breakfast.id, lunch.id, dinner.id]
 

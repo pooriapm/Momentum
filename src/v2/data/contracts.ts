@@ -253,6 +253,16 @@ export const externalPlanImportResponseSchema = z.object({
   }),
 })
 
+export const starterPlanResponseSchema = z.object({
+  starter_plan: z.object({
+    activation_id: z.string().uuid(),
+    plan_id: z.string().uuid(),
+    plan_version_id: z.string().uuid(),
+    activated_at: z.string(),
+    idempotent_replay: z.boolean().optional(),
+  }),
+})
+
 export const bodyCompositionConfirmationSchema = z.object({
   body_composition: z.object({
     id: z.string().uuid(),

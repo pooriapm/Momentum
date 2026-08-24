@@ -20,6 +20,10 @@ import {
 import { assertGeneratedPlan, generatedPlanJsonSchema } from '../_shared/plan-contract.ts'
 import { MONTHLY_PLAN_DAYS, PLAN_SCHEMA_VERSION } from '../_shared/plan-provider.ts'
 import {
+  buildValidatedDeterministicStarter,
+  STARTER_TEMPLATE_VERSION,
+} from '../_shared/deterministic-starter.ts'
+import {
   accountHash,
   beginDeletionRow,
   failDeletionRow,
@@ -63,6 +67,7 @@ const EXPORT_TABLES = [
   'ai_generation_jobs',
   'plans',
   'plan_versions',
+  'starter_plan_activations',
   'external_plan_imports',
   'gift_reservations',
   'monthly_plan_periods',
@@ -1129,6 +1134,99 @@ async function importExternalPlan(
   return data
 }
 
+async function createDeterministicStarterPlan(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+  idempotencyKey: string,
+) {
+  const [profile, dietary, goal] = await Promise.all([
+    admin.from('profiles').select(
+      'date_of_birth,locale,timezone,country_code,product_region,onboarding_status,automation_block_reason,plan_source_preference,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,health_data_consent_at,health_consent_version',
+    ).eq('user_id', userId).single(),
+    admin.from('dietary_preferences').select('allergies').eq('user_id', userId).single(),
+    admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1).single(),
+  ])
+  if (
+    profile.error || dietary.error || goal.error || !profile.data.date_of_birth ||
+    !profile.data.country_code
+  ) {
+    throw new HttpError(
+      409,
+      'starter_plan_profile_incomplete',
+      'Complete onboarding before creating a plan.',
+    )
+  }
+
+  const catalog = await loadPlanCatalog(admin)
+  const declaredAllergenIds = resolveDeclaredAllergenIds(
+    catalog,
+    Array.isArray(dietary.data.allergies) ? dietary.data.allergies : [],
+  )
+  const content = await buildValidatedDeterministicStarter({
+    profile: {
+      dateOfBirth: profile.data.date_of_birth,
+      locale: profile.data.locale === 'fa-IR' ? 'fa-IR' : 'en-US',
+      countryCode: profile.data.country_code,
+      productRegion: profile.data.product_region === 'ir' ? 'ir' : 'intl',
+      onboardingStatus: profile.data.onboarding_status,
+      automationBlockReason: profile.data.automation_block_reason,
+      planSourcePreference: profile.data.plan_source_preference,
+      termsAcceptedAt: profile.data.terms_accepted_at,
+      termsVersion: profile.data.terms_version,
+      privacyAcceptedAt: profile.data.privacy_accepted_at,
+      privacyVersion: profile.data.privacy_version,
+      healthDataConsentAt: profile.data.health_data_consent_at,
+      healthConsentVersion: profile.data.health_consent_version,
+    },
+    catalog,
+    declaredAllergenIds,
+    consentAdmin: admin,
+  })
+  const versions = await loadCurrentLegalVersions(admin)
+  const contentSha256 = await sha256(canonicalJson(content))
+  const validFrom = isoDateInTimezone(profile.data.timezone || 'UTC')
+  const validTo = addIsoDays(validFrom, MONTHLY_PLAN_DAYS - 1)
+  const { data, error } = await admin.rpc('persist_deterministic_starter_plan', {
+    p_user_id: userId,
+    p_idempotency_key: idempotencyKey,
+    p_goal_id: goal.data.id,
+    p_plan_name: String(content.plan_name),
+    p_valid_from: validFrom,
+    p_valid_to: validTo,
+    p_locale: profile.data.locale === 'fa-IR' ? 'fa-IR' : 'en-US',
+    p_schema_version: PLAN_SCHEMA_VERSION,
+    p_catalog_release: catalog.releaseId,
+    p_template_version: STARTER_TEMPLATE_VERSION,
+    p_terms_version: versions.terms,
+    p_privacy_version: versions.privacy,
+    p_health_consent_version: versions.health,
+    p_content: content,
+    p_content_sha256: contentSha256,
+  })
+  if (error) {
+    if (error.message.includes('idempotency_key_reused')) {
+      throw new HttpError(
+        409,
+        'idempotency_key_reused',
+        'Idempotency key was used for a different plan.',
+      )
+    }
+    if (error.message.includes('starter_plan_gate_failed')) {
+      throw new HttpError(
+        409,
+        'starter_plan_gate_failed',
+        'Starter-plan eligibility changed before activation.',
+      )
+    }
+    throw new HttpError(
+      503,
+      'starter_plan_persist_failed',
+      'The validated starter plan could not be saved.',
+    )
+  }
+  return data
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return optionsResponse(request)
 
@@ -1315,6 +1413,16 @@ Deno.serve(async (request) => {
         )
       }
       return jsonResponse(request, { onboarding: data })
+    }
+
+    if (body.action === 'create-starter-plan') {
+      return jsonResponse(request, {
+        starter_plan: await createDeterministicStarterPlan(
+          auth.admin,
+          auth.user.id,
+          idempotencyKey,
+        ),
+      }, 201)
     }
 
     if (body.action === 'confirm-body-composition') {

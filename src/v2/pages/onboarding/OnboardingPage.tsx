@@ -37,6 +37,7 @@ import { Button, PageSkeleton, StatusPill } from '../../ui/primitives'
 import {
   loadOnboardingDraft,
   completeOnboarding,
+  createStarterPlan,
   deleteOnboardingDraft,
   discardBodyReport,
   saveOnboardingDraft,
@@ -316,6 +317,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
       if (values.planSource === 'external') {
         navigate(localizedPath(locale, '/app/import-plan'))
       } else {
+        await createStarterPlan(`${onboardingFlowId}:starter-plan`)
         await deleteOnboardingDraft(user!.id)
         navigate(postOnboardingPath(locale))
       }
