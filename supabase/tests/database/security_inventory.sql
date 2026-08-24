@@ -218,53 +218,53 @@ select extensions.is(
 
 select extensions.is(
   (
-    with allowed(table_name) as (
-      values
-        ('profiles'), ('onboarding_drafts'), ('goals'), ('dietary_preferences'),
-        ('health_context'), ('body_composition_measurements'), ('training_schedule_items'),
-        ('product_prices'), ('subscriptions'), ('entitlements'), ('usage_ledger'),
-        ('ai_generation_jobs'), ('plans'), ('plan_versions'), ('daily_checkins'),
-        ('daily_meal_status'), ('extra_food_logs'), ('weekly_checkins'),
-        ('workout_sessions'), ('workout_exercise_logs'), ('workout_set_logs'),
-        ('ai_safety_reports'), ('gift_reservations'), ('monthly_plan_periods'),
-        ('monthly_plan_snapshots'), ('next_cycle_inputs'), ('export_requests'),
-        ('deletion_requests'), ('catalog_releases'), ('allergen_catalog'),
-        ('ingredient_catalog'), ('ingredient_allergens'), ('food_catalog'),
-        ('food_catalog_ingredients'), ('equipment_catalog'), ('exercise_catalog'),
-        ('exercise_equipment'), ('exercise_substitutions')
-    )
-    select count(*)::integer
-    from information_schema.role_table_grants grants
-    where grants.table_schema = 'public'
-      and grants.grantee = 'service_role'
-      and grants.privilege_type = 'SELECT'
-      and not exists (
-        select 1 from allowed where allowed.table_name = grants.table_name
-      )
+    select array_agg(c.relname order by c.relname)::text[]
+    from pg_catalog.pg_class c
+    join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relkind in ('r', 'p')
+      and has_table_privilege('service_role', c.oid, 'SELECT')
   ),
-  0,
-  'service-role public-table reads do not exceed the reviewed Edge allowlist'
+  array[
+    'ai_generation_jobs', 'ai_safety_reports', 'allergen_catalog',
+    'body_composition_measurements', 'catalog_releases', 'daily_checkins',
+    'daily_meal_status', 'deletion_requests', 'dietary_preferences',
+    'entitlements', 'equipment_catalog', 'exercise_catalog',
+    'exercise_equipment', 'exercise_substitutions', 'export_requests',
+    'extra_food_logs', 'food_catalog', 'food_catalog_ingredients',
+    'gift_reservations', 'goals', 'health_context', 'ingredient_allergens',
+    'ingredient_catalog', 'monthly_plan_periods', 'monthly_plan_snapshots',
+    'next_cycle_inputs', 'onboarding_drafts', 'plan_versions', 'plans',
+    'product_prices', 'profiles', 'subscriptions', 'training_schedule_items',
+    'usage_ledger', 'weekly_checkins', 'workout_exercise_logs',
+    'workout_sessions', 'workout_set_logs'
+  ]::text[],
+  'effective service-role public-table reads equal the reviewed Edge allowlist'
 );
 
 select extensions.is(
   (
-    select array_agg(table_name order by table_name)::text[]
-    from (
-      select table_name
-      from information_schema.role_table_grants
-      where table_schema = 'public'
-        and grantee = 'service_role'
-        and privilege_type in ('INSERT', 'UPDATE', 'DELETE')
-      union
-      select table_name
-      from information_schema.role_column_grants
-      where table_schema = 'public'
-        and grantee = 'service_role'
-        and privilege_type in ('INSERT', 'UPDATE', 'DELETE')
-    ) writable
+    select array_agg(c.relname order by c.relname)::text[]
+    from pg_catalog.pg_class c
+    join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relkind in ('r', 'p')
+      and (
+        has_table_privilege('service_role', c.oid, 'INSERT')
+        or has_table_privilege('service_role', c.oid, 'UPDATE')
+        or has_table_privilege('service_role', c.oid, 'DELETE')
+        or exists (
+          select 1
+          from pg_catalog.pg_attribute a
+          where a.attrelid = c.oid
+            and a.attnum > 0
+            and not a.attisdropped
+            and has_column_privilege('service_role', c.oid, a.attname, 'UPDATE')
+        )
+      )
   ),
   array['ai_generation_jobs', 'monthly_plan_periods']::text[],
-  'service-role direct writes are limited to generation job and monthly-period state'
+  'effective service-role writes are limited to generation job and monthly-period state'
 );
 
 select extensions.is(
