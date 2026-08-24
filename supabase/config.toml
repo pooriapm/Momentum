@@ -41,16 +41,18 @@ policy = "per_worker"
 verify_jwt = false
 
 [functions.account-data]
-verify_jwt = true
+# Application auth verifies the bearer token with auth.getUser(). Keeping the
+# gateway check off ensures CORS and structured request IDs also cover 401s.
+verify_jwt = false
 
 [functions.checkins]
-verify_jwt = true
+verify_jwt = false
 
 [functions.account-settings]
-verify_jwt = true
+verify_jwt = false
 
 [functions.generate-monthly-plan]
-verify_jwt = true
+verify_jwt = false
 
 [remotes.production]
 project_id = "osyvvzglvyonevkhdzpu"

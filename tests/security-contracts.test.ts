@@ -137,6 +137,25 @@ describe('privacy-safe Edge response contracts', () => {
 })
 
 describe('threat-model executable subset', () => {
+  it('routes protected-function authentication through the shared exact-CORS handler', () => {
+    const config = fs.readFileSync(path.join(repoRoot, 'supabase/config.toml'), 'utf8')
+    for (const functionName of [
+      'account-data',
+      'account-settings',
+      'checkins',
+      'generate-monthly-plan',
+    ]) {
+      expect(config).toMatch(new RegExp(
+        `\\[functions\\.${functionName}\\][\\s\\S]*?verify_jwt\\s*=\\s*false`,
+      ))
+      const entrypoint = fs.readFileSync(
+        path.join(repoRoot, 'supabase/functions', functionName, 'index.ts'),
+        'utf8',
+      )
+      expect(entrypoint).toMatch(/authenticate\(request\)/)
+    }
+  })
+
   it('does not expose region_blocked as a client product error', () => {
     const hits = grepDirectory(path.join(repoRoot, 'src'), /region_blocked/)
     expect(hits).toEqual([])
