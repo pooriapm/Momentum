@@ -51,3 +51,20 @@ verify_jwt = true
 
 [functions.generate-monthly-plan]
 verify_jwt = true
+
+[remotes.production]
+project_id = "osyvvzglvyonevkhdzpu"
+
+[remotes.production.auth.email]
+max_frequency = "1m"
+otp_length = 8
+
+[remotes.production.auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[remotes.production.storage]
+file_size_limit = "50MiB"
+
+[remotes.production.storage.vector]
+enabled = false

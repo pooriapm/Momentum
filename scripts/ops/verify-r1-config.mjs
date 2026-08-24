@@ -38,6 +38,10 @@ if (fs.existsSync(linkedRefPath)) {
 const config = read('supabase/config.toml')
 assert(config.includes(`site_url = "${expectedOrigin}"`), 'Production Auth site URL is missing.')
 assert(config.includes(`"${expectedOrigin}/**"`), 'Production auth redirect is missing.')
+assert(config.includes(`[remotes.production]`), 'Production remote configuration is missing.')
+assert(config.includes(`project_id = "${expectedRef}"`), 'Production remote project ref drifted.')
+assert(config.includes('[remotes.production.auth.mfa.totp]'), 'Production TOTP controls are missing.')
+assert(config.includes('[remotes.production.storage.vector]'), 'Free-tier vector override is missing.')
 const envExample = read('supabase/.env.example')
 for (const line of [
   'AI_MASTER_ENABLED=false',
