@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(9);
+select extensions.plan(11);
 
 insert into auth.users(id,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at,is_sso_user,is_anonymous)
 values ('66666666-6666-4666-8666-666666666666','settings@example.com',statement_timestamp(),'{}','{"locale":"en-US","country_code":"US"}',statement_timestamp(),statement_timestamp(),false,false);
@@ -11,11 +11,13 @@ insert into public.plans(user_id,goal_id,name,status,valid_from,valid_to,locale)
 
 select extensions.lives_ok($$select public.update_account_settings(
   '66666666-6666-4666-8666-666666666666',
-  '{"display_name":"Updated","sex":"prefer_not_to_say","height_cm":175,"locale":"fa-IR","unit_system":"imperial","goal_type":"fat_loss","custom_goal":null,"target_weight_kg":72,"dietary_pattern":"vegetarian","favorite_foods":["rice"],"allergies":["peanut"],"available_equipment":["dumbbells"],"work_schedule":"weekdays","cuisine_region":"iran","schedule":[{"weekday":1,"activity_type":"strength","local_start_time":"18:30","duration_minutes":60}]}'::jsonb,
+  '{"display_name":"Updated","sex":"prefer_not_to_say","height_cm":175,"locale":"fa-IR","unit_system":"auto","goal_type":"fat_loss","custom_goal":null,"target_weight_kg":72,"dietary_pattern":"vegetarian","favorite_foods":["rice"],"allergies":["peanut"],"available_equipment":["dumbbells"],"work_schedule":"weekdays","cuisine_region":"iran","schedule":[{"weekday":1,"activity_type":"strength","local_start_time":"18:30","duration_minutes":60}]}'::jsonb,
   'settings-update-key-1',repeat('d',64)
 )$$,'approved account settings can be updated');
 select extensions.is((select display_name from public.profiles where user_id='66666666-6666-4666-8666-666666666666'),'Updated','profile fields are updated');
 select extensions.is((select country_code from public.profiles where user_id='66666666-6666-4666-8666-666666666666'),'US','country remains protected');
+select extensions.is((select unit_system from public.profiles where user_id='66666666-6666-4666-8666-666666666666'),'auto','country-aware unit preference can be selected');
+select extensions.throws_ok($$update public.profiles set unit_system='imperial' where user_id='66666666-6666-4666-8666-666666666666'$$,'23514',null,'superseded ambiguous imperial value is rejected');
 select extensions.is((select review_required_reason from public.plans where user_id='66666666-6666-4666-8666-666666666666'),'account_settings_changed','plan-affecting changes require review');
 select extensions.is((select count(*) from private.account_audit_events where user_id='66666666-6666-4666-8666-666666666666' and event_type='account.settings_updated'),1::bigint,'settings update is audited');
 select extensions.ok(not has_function_privilege('authenticated','public.update_account_settings(uuid,jsonb,text,text)','execute'),'browser cannot call settings RPC directly');

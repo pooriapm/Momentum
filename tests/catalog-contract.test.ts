@@ -35,16 +35,16 @@ const foods = [
 ]
 
 const foodIngredients = [
-  ['food:banana-snack@v1', 'ingredient:banana@v1'],
-  ['food:chicken-rice-bowl@v1', 'ingredient:brown-rice@v1'],
-  ['food:chicken-rice-bowl@v1', 'ingredient:chicken-breast@v1'],
-  ['food:chicken-rice-bowl@v1', 'ingredient:olive-oil@v1'],
-  ['food:chicken-rice-bowl@v1', 'ingredient:spinach@v1'],
-  ['food:lentil-rice-bowl@v1', 'ingredient:brown-rice@v1'],
-  ['food:lentil-rice-bowl@v1', 'ingredient:red-lentils@v1'],
-  ['food:lentil-rice-bowl@v1', 'ingredient:olive-oil@v1'],
-  ['food:lentil-rice-bowl@v1', 'ingredient:spinach@v1'],
-].map(([food_id, ingredient_id]) => ({ food_id, ingredient_id }))
+  ['food:banana-snack@v1', 'ingredient:banana@v1', 'piece'],
+  ['food:chicken-rice-bowl@v1', 'ingredient:brown-rice@v1', 'g'],
+  ['food:chicken-rice-bowl@v1', 'ingredient:chicken-breast@v1', 'g'],
+  ['food:chicken-rice-bowl@v1', 'ingredient:olive-oil@v1', 'tsp'],
+  ['food:chicken-rice-bowl@v1', 'ingredient:spinach@v1', 'g'],
+  ['food:lentil-rice-bowl@v1', 'ingredient:brown-rice@v1', 'g'],
+  ['food:lentil-rice-bowl@v1', 'ingredient:red-lentils@v1', 'g'],
+  ['food:lentil-rice-bowl@v1', 'ingredient:olive-oil@v1', 'tsp'],
+  ['food:lentil-rice-bowl@v1', 'ingredient:spinach@v1', 'g'],
+].map(([food_id, ingredient_id, unit]) => ({ food_id, ingredient_id, amount: 1, unit }))
 
 const exercises = [
   ['exercise:bodyweight-squat@v1', 'Squat', 'اسکوات'],
@@ -76,6 +76,19 @@ function rows(ingredientAllergens: Record<string, unknown>[] = []): PlanCatalogR
       { exercise_id: exercises[2]?.id, substitute_exercise_id: exercises[0]?.id },
     ],
   }
+}
+
+function firstIngredient(plan: Record<string, unknown>): Record<string, unknown> {
+  const day = (plan.days as Record<string, unknown>[])[0] as Record<string, unknown>
+  const meal = (day.meals as Record<string, unknown>[])[0] as Record<string, unknown>
+  const option = (meal.options as Record<string, unknown>[])[0] as Record<string, unknown>
+  return (option.ingredients as Record<string, unknown>[])[0] as Record<string, unknown>
+}
+
+function firstExercise(plan: Record<string, unknown>): Record<string, unknown> {
+  const day = (plan.days as Record<string, unknown>[])[0] as Record<string, unknown>
+  const workout = day.workout as Record<string, unknown>
+  return (workout.exercises as Record<string, unknown>[])[0] as Record<string, unknown>
 }
 
 describe('governed plan catalog', () => {
@@ -115,5 +128,60 @@ describe('governed plan catalog', () => {
 
     expect(() => resolveDeclaredAllergenIds(catalog, ['unknown allergy']))
       .toThrow(expect.objectContaining({ code: 'unmapped_declared_allergen' }))
+  })
+
+  it('rejects catalog rows whose ID version or canonical unit drifts from the release', () => {
+    const wrongVersion = rows()
+    wrongVersion.ingredients = wrongVersion.ingredients.map((row, index) =>
+      index === 0 ? { ...row, id: 'ingredient:brown-rice@v2' } : row
+    )
+    expect(() => createPlanCatalogSnapshot(wrongVersion))
+      .toThrow(expect.objectContaining({ code: 'catalog_configuration_invalid' }))
+
+    const wrongUnit = rows()
+    wrongUnit.foodIngredients = wrongUnit.foodIngredients.map((row, index) =>
+      index === 0 ? { ...row, unit: 'g' } : row
+    )
+    expect(() => createPlanCatalogSnapshot(wrongUnit))
+      .toThrow(expect.objectContaining({ code: 'catalog_configuration_invalid' }))
+  })
+
+  it.each([
+    ['en-US', 'ml'],
+    ['fa-IR', 'ml'],
+  ] as const)('rejects altered ingredient amounts and units for %s plans', (locale, invalidUnit) => {
+    const catalog = createPlanCatalogSnapshot(rows())
+    const invalidAmount = buildStarterPlan(catalog, 3, locale)
+    firstIngredient(invalidAmount).amount = 0
+    expect(() => assertGeneratedPlan(invalidAmount, 3, locale, { catalog }))
+      .toThrow(expect.objectContaining({ code: 'invalid_ingredient_amount' }))
+
+    const invalidUnits = buildStarterPlan(catalog, 3, locale)
+    firstIngredient(invalidUnits).unit = invalidUnit
+    expect(() => assertGeneratedPlan(invalidUnits, 3, locale, { catalog }))
+      .toThrow(expect.objectContaining({ code: 'invalid_ingredient_unit' }))
+  })
+
+  it('accepts a Persian-digit repetition boundary and rejects invalid ranges', () => {
+    const catalog = createPlanCatalogSnapshot(rows())
+    const persian = buildStarterPlan(catalog, 3, 'fa-IR')
+    firstExercise(persian).reps = '۸–۱۲'
+    expect(() => assertGeneratedPlan(persian, 3, 'fa-IR', { catalog })).not.toThrow()
+
+    for (const reps of ['12-8', '0-12', '8-201', 'eight to twelve']) {
+      const invalid = buildStarterPlan(catalog, 3, 'en-US')
+      firstExercise(invalid).reps = reps
+      expect(() => assertGeneratedPlan(invalid, 3, 'en-US', { catalog }))
+        .toThrow(expect.objectContaining({ code: 'invalid_exercise_range' }))
+    }
+  })
+
+  it('rejects a substitution label that does not match its governed ID', () => {
+    const catalog = createPlanCatalogSnapshot(rows())
+    const plan = buildStarterPlan(catalog, 3, 'en-US')
+    firstExercise(plan).substitution = 'Invented movement'
+
+    expect(() => assertGeneratedPlan(plan, 3, 'en-US', { catalog }))
+      .toThrow(expect.objectContaining({ code: 'invalid_exercise_substitution' }))
   })
 })

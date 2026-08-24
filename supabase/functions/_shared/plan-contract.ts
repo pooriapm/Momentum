@@ -479,12 +479,50 @@ function assertCatalogIngredient(
   if (!canonical) {
     throw new HttpError(502, 'unknown_catalog_id', 'Plan contains an unknown catalog ID.')
   }
+  if (
+    typeof ingredient.amount !== 'number' ||
+    !Number.isFinite(ingredient.amount) ||
+    ingredient.amount <= 0 ||
+    ingredient.amount > 100_000
+  ) {
+    throw new HttpError(502, 'invalid_ingredient_amount', 'Ingredient amount is invalid.')
+  }
+  if (ingredient.unit !== canonical.default_unit) {
+    throw new HttpError(502, 'invalid_ingredient_unit', 'Ingredient unit is invalid.')
+  }
+  if (ingredient.name !== canonical.name_en && ingredient.name !== canonical.name_fa) {
+    throw new HttpError(502, 'catalog_ingredient_modified', 'Catalog ingredient was modified.')
+  }
   if ([...canonical.allergenIds].some((id) => declaredAllergenIds.has(id))) {
     throw new HttpError(
       502,
       'allergen_in_generated_plan',
       'Generated plan contains a declared allergen.',
     )
+  }
+}
+
+function normalizeDigits(value: string): string {
+  const persianDigits = '۰۱۲۳۴۵۶۷۸۹'
+  const arabicDigits = '٠١٢٣٤٥٦٧٨٩'
+  return value.normalize('NFKC').replace(/[۰-۹٠-٩]/g, (digit) => {
+    const persianIndex = persianDigits.indexOf(digit)
+    return String(persianIndex >= 0 ? persianIndex : arabicDigits.indexOf(digit))
+  })
+}
+
+function assertRepetitionRange(value: string): void {
+  const match = /^(\d{1,3})(?:\s*[-–—]\s*(\d{1,3}))?$/.exec(normalizeDigits(value).trim())
+  const minimum = match ? Number(match[1]) : Number.NaN
+  const maximum = match?.[2] ? Number(match[2]) : minimum
+  if (
+    !Number.isInteger(minimum) ||
+    !Number.isInteger(maximum) ||
+    minimum < 1 ||
+    maximum > 200 ||
+    minimum > maximum
+  ) {
+    throw new HttpError(502, 'invalid_exercise_range', 'Exercise repetition range is invalid.')
   }
 }
 
@@ -570,6 +608,10 @@ function assertWorkout(value: unknown, catalog: PlanCatalogSnapshot): void {
     if (!canonical) {
       throw new HttpError(502, 'unknown_catalog_id', 'Plan contains an unknown catalog ID.')
     }
+    assertRepetitionRange(exercise.reps)
+    if (exercise.name !== canonical.name_en && exercise.name !== canonical.name_fa) {
+      throw new HttpError(502, 'catalog_exercise_modified', 'Catalog exercise was modified.')
+    }
     const equipmentIds = new Set(exercise.equipment_ids)
     if (
       equipmentIds.size !== exercise.equipment_ids.length ||
@@ -587,6 +629,23 @@ function assertWorkout(value: unknown, catalog: PlanCatalogSnapshot): void {
       )
     ) {
       throw new HttpError(502, 'invalid_exercise_substitution', 'Exercise substitution is invalid.')
+    }
+    if (exercise.substitution_exercise_id === null && exercise.substitution !== null) {
+      throw new HttpError(502, 'invalid_exercise_substitution', 'Exercise substitution is invalid.')
+    }
+    if (typeof exercise.substitution_exercise_id === 'string') {
+      const substitution = catalog.exercises.get(exercise.substitution_exercise_id)
+      if (
+        !substitution ||
+        (exercise.substitution !== substitution.name_en &&
+          exercise.substitution !== substitution.name_fa)
+      ) {
+        throw new HttpError(
+          502,
+          'invalid_exercise_substitution',
+          'Exercise substitution is invalid.',
+        )
+      }
     }
     exerciseKeys.add(exercise.exercise_key)
   }

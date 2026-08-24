@@ -26,4 +26,10 @@ describe('account settings contract', () => {
   it('requires a description for a custom goal', () => {
     expect(accountSettingsUpdateSchema.safeParse({ ...valid, goalType: 'custom' }).success).toBe(false)
   })
+
+  it('accepts country-aware auto and rejects the superseded imperial value', () => {
+    expect(accountSettingsUpdateSchema.safeParse({ ...valid, unitSystem: 'auto' }).success).toBe(true)
+    expect(accountSettingsUpdateSchema.safeParse({ ...valid, unitSystem: 'us_customary' }).success).toBe(true)
+    expect(accountSettingsUpdateSchema.safeParse({ ...valid, unitSystem: 'imperial' }).success).toBe(false)
+  })
 })

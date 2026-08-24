@@ -128,7 +128,11 @@ function parseSettings(value: unknown) {
     sex: choice(value.sex, 'sex', ['female', 'male', 'other', 'prefer_not_to_say'] as const),
     height_cm: numberValue(value.heightCm, 'heightCm', 100, 250),
     locale: choice(value.locale, 'locale', ['fa-IR', 'en-US'] as const),
-    unit_system: choice(value.unitSystem, 'unitSystem', ['metric', 'imperial'] as const),
+    unit_system: choice(
+      value.unitSystem,
+      'unitSystem',
+      ['auto', 'metric', 'us_customary'] as const,
+    ),
     goal_type: goalType,
     custom_goal: customGoal,
     target_weight_kg: numberValue(value.targetWeightKg, 'targetWeightKg', 35, 350),

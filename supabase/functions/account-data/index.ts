@@ -973,13 +973,17 @@ async function loadExternalPlanContext(
 ): Promise<Record<string, unknown>> {
   const [profile, goal, dietary, health, training] = await Promise.all([
     admin.from('profiles')
-      .select('date_of_birth,sex,height_cm,locale,timezone,country_code,onboarding_status,automation_block_reason,plan_source_preference')
+      .select(
+        'date_of_birth,sex,height_cm,locale,timezone,country_code,onboarding_status,automation_block_reason,plan_source_preference',
+      )
       .eq('user_id', userId).single(),
     admin.from('goals')
       .select('goal_type,start_weight_kg,target_weight_kg,target_date')
       .eq('user_id', userId).eq('status', 'active').limit(1).maybeSingle(),
     admin.from('dietary_preferences')
-      .select('dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,restaurant_preferences,grocery_preferences,cuisine_region')
+      .select(
+        'dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,restaurant_preferences,grocery_preferences,cuisine_region',
+      )
       .eq('user_id', userId).single(),
     admin.from('health_context')
       .select('medical_considerations,medications,supplements,clinician_notes')
@@ -992,10 +996,18 @@ async function loadExternalPlanContext(
     throw new HttpError(503, 'external_plan_context_unavailable', 'Plan context is unavailable.')
   }
   if (profile.data.onboarding_status !== 'complete') {
-    throw new HttpError(409, 'onboarding_incomplete', 'Complete onboarding before creating an external plan.')
+    throw new HttpError(
+      409,
+      'onboarding_incomplete',
+      'Complete onboarding before creating an external plan.',
+    )
   }
   if (profile.data.plan_source_preference !== 'external') {
-    throw new HttpError(409, 'external_plan_path_not_selected', 'Select the free external-plan path first.')
+    throw new HttpError(
+      409,
+      'external_plan_path_not_selected',
+      'Select the free external-plan path first.',
+    )
   }
   const catalog = await loadPlanCatalog(admin)
   assertCatalogGenerationGate(catalog)
@@ -1007,8 +1019,8 @@ async function loadExternalPlanContext(
   const today = new Date()
   let age = today.getUTCFullYear() - birthDate.getUTCFullYear()
   if (
-    today.getUTCMonth() < birthDate.getUTCMonth()
-    || (today.getUTCMonth() === birthDate.getUTCMonth() && today.getUTCDate() < birthDate.getUTCDate())
+    today.getUTCMonth() < birthDate.getUTCMonth() ||
+    (today.getUTCMonth() === birthDate.getUTCMonth() && today.getUTCDate() < birthDate.getUTCDate())
   ) age -= 1
   const minimizedProfile = {
     sex: profile.data.sex,
@@ -1038,7 +1050,11 @@ async function importExternalPlan(
   idempotencyKey: string,
 ) {
   if (!isRecord(body.plan)) {
-    throw new HttpError(400, 'invalid_external_plan', 'Import a JSON object using the Momentum plan contract.')
+    throw new HttpError(
+      400,
+      'invalid_external_plan',
+      'Import a JSON object using the Momentum plan contract.',
+    )
   }
   if (body.source_kind !== 'external_ai' && body.source_kind !== 'existing_plan') {
     throw new HttpError(400, 'invalid_external_source', 'External plan source is invalid.')
@@ -1051,13 +1067,25 @@ async function importExternalPlan(
     admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1).single(),
   ])
   if (profile.error || dietary.error || goal.error) {
-    throw new HttpError(503, 'external_plan_import_unavailable', 'External plan import is unavailable.')
+    throw new HttpError(
+      503,
+      'external_plan_import_unavailable',
+      'External plan import is unavailable.',
+    )
   }
   if (profile.data.onboarding_status !== 'complete' || profile.data.automation_block_reason) {
-    throw new HttpError(409, 'external_plan_safety_blocked', 'This profile is not eligible for automated plan import.')
+    throw new HttpError(
+      409,
+      'external_plan_safety_blocked',
+      'This profile is not eligible for automated plan import.',
+    )
   }
   if (profile.data.plan_source_preference !== 'external') {
-    throw new HttpError(409, 'external_plan_path_not_selected', 'Select the free external-plan path first.')
+    throw new HttpError(
+      409,
+      'external_plan_path_not_selected',
+      'Select the free external-plan path first.',
+    )
   }
   const locale = profile.data.locale === 'fa-IR' ? 'fa-IR' : 'en-US'
   const catalog = await loadPlanCatalog(admin)
@@ -1086,9 +1114,17 @@ async function importExternalPlan(
   })
   if (error) {
     if (error.message.includes('idempotency_key_reused')) {
-      throw new HttpError(409, 'idempotency_key_reused', 'Idempotency key was used for a different plan.')
+      throw new HttpError(
+        409,
+        'idempotency_key_reused',
+        'Idempotency key was used for a different plan.',
+      )
     }
-    throw new HttpError(503, 'external_plan_import_failed', 'The validated plan could not be saved.')
+    throw new HttpError(
+      503,
+      'external_plan_import_failed',
+      'The validated plan could not be saved.',
+    )
   }
   return data
 }

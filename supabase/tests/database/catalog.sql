@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(22);
+select extensions.plan(28);
 
 select extensions.is(
   (select count(*)::integer from public.catalog_releases where status = 'active'),
@@ -172,6 +172,61 @@ select extensions.ok(
   and not has_table_privilege('authenticated', 'public.exercise_catalog', 'UPDATE')
   and not has_table_privilege('authenticated', 'public.exercise_catalog', 'DELETE'),
   'authenticated users cannot mutate governed catalogs'
+);
+
+select extensions.throws_ok(
+  $$insert into public.equipment_catalog(
+    id, catalog_release_id, slug, name_en, name_fa
+  ) values (
+    'equipment:r2-version-test@v3', 'momentum-core@v2', 'r2-version-test',
+    'Version test', 'آزمون نسخه'
+  )$$,
+  '23514',
+  'catalog_item_version_mismatch',
+  'catalog item IDs must match their release version'
+);
+
+select extensions.throws_ok(
+  $$insert into public.ingredient_allergens(ingredient_id, allergen_id, relation)
+    values ('ingredient:brown-rice@v2', 'allergen:milk@v1', 'contains')$$,
+  '23514',
+  'catalog_relation_release_mismatch',
+  'allergen mappings cannot cross catalog releases'
+);
+
+select extensions.throws_ok(
+  $$insert into public.food_catalog_ingredients(food_id, ingredient_id, amount, unit, position)
+    values ('food:banana-almonds@v2', 'ingredient:banana@v1', 1, 'piece', 90)$$,
+  '23514',
+  'catalog_relation_release_mismatch',
+  'food ingredients cannot cross catalog releases'
+);
+
+select extensions.throws_ok(
+  $$insert into public.food_catalog_ingredients(food_id, ingredient_id, amount, unit, position)
+    values ('food:banana-almonds@v2', 'ingredient:brown-rice@v2', 1, 'ml', 91)$$,
+  '23514',
+  'catalog_ingredient_unit_mismatch',
+  'food ingredient units must match their canonical ingredient unit'
+);
+
+select extensions.throws_ok(
+  $$insert into public.exercise_equipment(exercise_id, equipment_id, required)
+    values ('exercise:bodyweight-squat@v2', 'equipment:wall@v1', true)$$,
+  '23514',
+  'catalog_relation_release_mismatch',
+  'exercise equipment cannot cross catalog releases'
+);
+
+select extensions.throws_ok(
+  $$insert into public.exercise_substitutions(exercise_id, substitute_exercise_id, reason)
+    values (
+      'exercise:bodyweight-squat@v2', 'exercise:glute-bridge@v1',
+      'cross-release test'
+    )$$,
+  '23514',
+  'catalog_relation_release_mismatch',
+  'exercise substitutions cannot cross catalog releases'
 );
 
 set local role authenticated;

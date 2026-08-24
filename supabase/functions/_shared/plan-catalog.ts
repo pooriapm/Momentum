@@ -17,6 +17,19 @@ export interface CatalogIngredient {
   allergenIds: ReadonlySet<string>
 }
 
+export const CATALOG_UNITS = [
+  'g',
+  'ml',
+  'piece',
+  'tbsp',
+  'tsp',
+  'cup',
+  'slice',
+  'serving',
+] as const
+
+export type CatalogUnit = typeof CATALOG_UNITS[number]
+
 export interface CatalogFood {
   id: string
   name_en: string
@@ -37,6 +50,7 @@ export interface CatalogExercise {
 
 export interface PlanCatalogSnapshot {
   releaseId: string
+  releaseVersion: number
   allergens: ReadonlyMap<string, { terms: ReadonlySet<string> }>
   ingredients: ReadonlyMap<string, CatalogIngredient>
   foods: ReadonlyMap<string, CatalogFood>
@@ -58,6 +72,43 @@ export interface PlanCatalogRows {
 }
 
 const MAX_CATALOG_ROWS = 5_000
+const CATALOG_UNIT_SET = new Set<string>(CATALOG_UNITS)
+const MEAL_TYPE_SET = new Set([
+  'breakfast',
+  'morning_snack',
+  'lunch',
+  'afternoon_snack',
+  'dinner',
+  'pre_sleep',
+])
+
+type CatalogKind = 'allergen' | 'ingredient' | 'food' | 'equipment' | 'exercise'
+
+function configurationError(): never {
+  throw new HttpError(503, 'catalog_configuration_invalid', 'Plan catalog is invalid.')
+}
+
+function releaseVersion(releaseId: string): number {
+  const match = /@v([1-9][0-9]*)$/.exec(releaseId)
+  if (!match) configurationError()
+  return Number(match[1])
+}
+
+function assertCatalogId(id: string, kind: CatalogKind, version: number): void {
+  const match = new RegExp(`^${kind}:[a-z0-9._-]+@v([1-9][0-9]*)$`).exec(id)
+  if (!match || Number(match[1]) !== version) configurationError()
+}
+
+function addUniqueId(ids: Set<string>, id: string): void {
+  if (ids.has(id)) configurationError()
+  ids.add(id)
+}
+
+function requiredPositiveNumber(row: Record<string, unknown>, key: string): number {
+  const value = requiredNumber(row, key)
+  if (value <= 0) configurationError()
+  return value
+}
 
 function normalizedTerm(value: string): string {
   return value.normalize('NFKC').toLocaleLowerCase().replace(/[^‌\p{L}\p{N}]+/gu, ' ').trim()
@@ -94,13 +145,19 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
     throw new HttpError(503, 'catalog_configuration_invalid', 'One active catalog is required.')
   }
   const releaseId = requiredString(rows.releases[0] ?? {}, 'id')
+  const activeReleaseVersion = releaseVersion(releaseId)
 
   const allergens = new Map<string, { terms: ReadonlySet<string> }>()
   for (const row of rows.allergens) {
     const id = requiredString(row, 'id')
-    const aliases = Array.isArray(row.aliases)
-      ? row.aliases.filter((item): item is string => typeof item === 'string')
-      : []
+    assertCatalogId(id, 'allergen', activeReleaseVersion)
+    if (
+      allergens.has(id) || !Array.isArray(row.aliases) ||
+      row.aliases.some((item) => typeof item !== 'string')
+    ) {
+      configurationError()
+    }
+    const aliases = row.aliases as string[]
     const terms = new Set(
       [
         requiredString(row, 'slug'),
@@ -120,6 +177,7 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
       throw new HttpError(503, 'catalog_configuration_invalid', 'Plan catalog is invalid.')
     }
     const values = allergenIdsByIngredient.get(ingredientId) ?? new Set<string>()
+    if (values.has(allergenId)) configurationError()
     values.add(allergenId)
     allergenIdsByIngredient.set(ingredientId, values)
   }
@@ -127,11 +185,14 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
   const ingredients = new Map<string, CatalogIngredient>()
   for (const row of rows.ingredients) {
     const id = requiredString(row, 'id')
+    const defaultUnit = requiredString(row, 'default_unit')
+    assertCatalogId(id, 'ingredient', activeReleaseVersion)
+    if (ingredients.has(id) || !CATALOG_UNIT_SET.has(defaultUnit)) configurationError()
     ingredients.set(id, {
       id,
       name_en: requiredString(row, 'name_en'),
       name_fa: requiredString(row, 'name_fa'),
-      default_unit: requiredString(row, 'default_unit'),
+      default_unit: defaultUnit,
       allergenIds: allergenIdsByIngredient.get(id) ?? new Set(),
     })
   }
@@ -148,7 +209,12 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
     if (!ingredients.has(ingredientId)) {
       throw new HttpError(503, 'catalog_configuration_invalid', 'Plan catalog is invalid.')
     }
+    const ingredient = ingredients.get(ingredientId)
+    const unit = requiredString(row, 'unit')
+    requiredPositiveNumber(row, 'amount')
+    if (!ingredient || unit !== ingredient.default_unit) configurationError()
     const values = ingredientIdsByFood.get(foodId) ?? new Set<string>()
+    if (values.has(ingredientId)) configurationError()
     values.add(ingredientId)
     ingredientIdsByFood.set(foodId, values)
   }
@@ -156,9 +222,20 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
   const foods = new Map<string, CatalogFood>()
   for (const row of rows.foods) {
     const id = requiredString(row, 'id')
-    const mealTypes = Array.isArray(row.meal_types)
-      ? row.meal_types.filter((item): item is string => typeof item === 'string')
-      : []
+    assertCatalogId(id, 'food', activeReleaseVersion)
+    if (
+      foods.has(id) || !Array.isArray(row.meal_types) ||
+      row.meal_types.some((item) => typeof item !== 'string')
+    ) {
+      configurationError()
+    }
+    const mealTypes = row.meal_types as string[]
+    if (
+      new Set(mealTypes).size !== mealTypes.length ||
+      mealTypes.some((item) => !MEAL_TYPE_SET.has(item))
+    ) {
+      configurationError()
+    }
     const ingredientIds = ingredientIdsByFood.get(id)
     if (!ingredientIds?.size || !mealTypes.length) {
       throw new HttpError(503, 'catalog_configuration_invalid', 'Plan catalog is invalid.')
@@ -185,7 +262,12 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
     }
   }
 
-  const equipmentIds = new Set(rows.equipment.map((row) => requiredString(row, 'id')))
+  const equipmentIds = new Set<string>()
+  for (const row of rows.equipment) {
+    const id = requiredString(row, 'id')
+    assertCatalogId(id, 'equipment', activeReleaseVersion)
+    addUniqueId(equipmentIds, id)
+  }
   const equipmentIdsByExercise = new Map<string, Set<string>>()
   for (const row of rows.exerciseEquipment) {
     const exerciseId = requiredString(row, 'exercise_id')
@@ -194,6 +276,7 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
       throw new HttpError(503, 'catalog_configuration_invalid', 'Plan catalog is invalid.')
     }
     const values = equipmentIdsByExercise.get(exerciseId) ?? new Set<string>()
+    if (values.has(equipmentId)) configurationError()
     values.add(equipmentId)
     equipmentIdsByExercise.set(exerciseId, values)
   }
@@ -201,7 +284,9 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
   for (const row of rows.substitutions) {
     const exerciseId = requiredString(row, 'exercise_id')
     const substituteId = requiredString(row, 'substitute_exercise_id')
+    if (exerciseId === substituteId) configurationError()
     const values = substitutionsByExercise.get(exerciseId) ?? new Set<string>()
+    if (values.has(substituteId)) configurationError()
     values.add(substituteId)
     substitutionsByExercise.set(exerciseId, values)
   }
@@ -209,11 +294,15 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
   const exercises = new Map<string, CatalogExercise>()
   for (const row of rows.exercises) {
     const id = requiredString(row, 'id')
+    assertCatalogId(id, 'exercise', activeReleaseVersion)
+    if (exercises.has(id)) configurationError()
+    const exerciseEquipment = equipmentIdsByExercise.get(id)
+    if (!exerciseEquipment?.size) configurationError()
     exercises.set(id, {
       id,
       name_en: requiredString(row, 'name_en'),
       name_fa: requiredString(row, 'name_fa'),
-      equipmentIds: equipmentIdsByExercise.get(id) ?? new Set(),
+      equipmentIds: exerciseEquipment,
       substitutionIds: substitutionsByExercise.get(id) ?? new Set(),
     })
   }
@@ -222,11 +311,22 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
       throw new HttpError(503, 'catalog_configuration_invalid', 'Plan catalog is invalid.')
     }
   }
+  for (const exerciseId of equipmentIdsByExercise.keys()) {
+    if (!exercises.has(exerciseId)) configurationError()
+  }
 
   if (!foods.size || !ingredients.size || !exercises.size) {
     throw new HttpError(503, 'catalog_configuration_invalid', 'Plan catalog is empty.')
   }
-  return { releaseId, allergens, ingredients, foods, equipmentIds, exercises }
+  return {
+    releaseId,
+    releaseVersion: activeReleaseVersion,
+    allergens,
+    ingredients,
+    foods,
+    equipmentIds,
+    exercises,
+  }
 }
 
 export function resolveDeclaredAllergenIds(
@@ -255,6 +355,7 @@ export function resolveDeclaredAllergenIds(
 export function planCatalogPromptContext(catalog: PlanCatalogSnapshot): Record<string, unknown> {
   return {
     release_id: catalog.releaseId,
+    release_version: catalog.releaseVersion,
     foods: [...catalog.foods.values()].map((food) => ({
       id: food.id,
       name_en: food.name_en,
@@ -312,7 +413,7 @@ export async function loadPlanCatalog(admin: SupabaseClient): Promise<PlanCatalo
     admin.from('food_catalog')
       .select('id,name_en,name_fa,meal_types,calories,protein_g,carbs_g,fat_g,fiber_g,portable')
       .eq('catalog_release_id', releaseId).eq('active', true).limit(MAX_CATALOG_ROWS + 1),
-    admin.from('food_catalog_ingredients').select('food_id,ingredient_id')
+    admin.from('food_catalog_ingredients').select('food_id,ingredient_id,amount,unit')
       .limit(MAX_CATALOG_ROWS + 1),
     admin.from('equipment_catalog').select('id').eq('catalog_release_id', releaseId)
       .eq('active', true).limit(MAX_CATALOG_ROWS + 1),

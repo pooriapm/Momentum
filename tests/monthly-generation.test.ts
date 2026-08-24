@@ -77,17 +77,17 @@ const v2Foods = [
 ]
 
 const v2FoodIngredients = [
-  ['food:banana-almonds@v2', 'ingredient:banana@v2'],
-  ['food:banana-almonds@v2', 'ingredient:almonds@v2'],
-  ['food:chicken-rice-bowl@v2', 'ingredient:brown-rice@v2'],
-  ['food:chicken-rice-bowl@v2', 'ingredient:chicken-breast@v2'],
-  ['food:chicken-rice-bowl@v2', 'ingredient:olive-oil@v2'],
-  ['food:chicken-rice-bowl@v2', 'ingredient:spinach@v2'],
-  ['food:lentil-stew-rice@v2', 'ingredient:brown-rice@v2'],
-  ['food:lentil-stew-rice@v2', 'ingredient:red-lentils@v2'],
-  ['food:lentil-stew-rice@v2', 'ingredient:olive-oil@v2'],
-  ['food:lentil-stew-rice@v2', 'ingredient:spinach@v2'],
-].map(([food_id, ingredient_id]) => ({ food_id, ingredient_id }))
+  ['food:banana-almonds@v2', 'ingredient:banana@v2', 'piece'],
+  ['food:banana-almonds@v2', 'ingredient:almonds@v2', 'g'],
+  ['food:chicken-rice-bowl@v2', 'ingredient:brown-rice@v2', 'g'],
+  ['food:chicken-rice-bowl@v2', 'ingredient:chicken-breast@v2', 'g'],
+  ['food:chicken-rice-bowl@v2', 'ingredient:olive-oil@v2', 'tsp'],
+  ['food:chicken-rice-bowl@v2', 'ingredient:spinach@v2', 'g'],
+  ['food:lentil-stew-rice@v2', 'ingredient:brown-rice@v2', 'g'],
+  ['food:lentil-stew-rice@v2', 'ingredient:red-lentils@v2', 'g'],
+  ['food:lentil-stew-rice@v2', 'ingredient:olive-oil@v2', 'tsp'],
+  ['food:lentil-stew-rice@v2', 'ingredient:spinach@v2', 'g'],
+].map(([food_id, ingredient_id, unit]) => ({ food_id, ingredient_id, amount: 1, unit }))
 
 const v2Exercises = [
   ['exercise:bodyweight-squat@v2', 'Squat', 'اسکوات'],
@@ -110,6 +110,7 @@ function catalogRows(releaseId: 'momentum-core@v1' | 'momentum-core@v2'): PlanCa
         id: food.id.replace('@v2', '@v1'),
       })),
       foodIngredients: v2FoodIngredients.map((row) => ({
+        ...row,
         food_id: String(row.food_id).replace('@v2', '@v1'),
         ingredient_id: String(row.ingredient_id).replace('@v2', '@v1'),
       })),
