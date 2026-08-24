@@ -20,7 +20,7 @@ describe('EntitlementGate membership states', () => {
 
   it('LIFE-08 shows one offer and does not start checkout or generation', () => {
     renderGate(entitlementFixture({ membership: 'none' }))
-    expect(screen.getByRole('heading', { name: /add a payment method, or subscribe/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /your first plan is a gift/i })).toBeInTheDocument()
     expect(screen.getByText(/no core\/pro ladder/i)).toBeInTheDocument()
     expect(screen.getByText(/not a 7-day trial/i)).toBeInTheDocument()
     expect(screen.getByText(/stripe and real charges stay out of scope/i)).toBeInTheDocument()

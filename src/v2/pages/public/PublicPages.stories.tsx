@@ -28,8 +28,8 @@ function CanonicalPricing({ locale }: { locale: AppLocale }) {
     ? ['یک برنامه ترکیبی تمرین و تغذیه در هر دوره', 'شروع دوره از زمان آماده‌شدن برنامه', 'ورود خودکار پس از اعتبارسنجی', 'استفاده از نتیجه دوره قبل برای برنامه بعد']
     : ['One combined workout and nutrition plan per period', 'Period starts when the plan is ready', 'Automatic import after validation', 'Prior-period outcomes inform the next plan']
   const giftFeatures = fa
-    ? ['برنامه اول را بدون هزینه شروع می‌کنی', 'روش پرداخت ثبت می‌شود؛ کارت تا دوره بعد شارژ نمی‌شود']
-    : ['Start the first plan at no charge', 'A payment method is saved; the card is not charged until the next period']
+    ? ['برنامه اول را بدون هزینه شروع می‌کنی', 'برای دوره هدیه اطلاعات پرداخت لازم نیست']
+    : ['Start the first plan at no charge', 'No payment details are required for the gifted cycle']
 
   return (
     <div className="public-page">

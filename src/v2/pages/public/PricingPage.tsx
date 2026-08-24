@@ -72,8 +72,8 @@ export function PricingPage({
       ? ['هدیه برای کاربران جدید فعلاً بسته است', 'رزروهای قبلی و برنامه‌های ذخیره‌شده باقی می‌مانند']
       : ['New-user gifts are paused for now', 'Earlier reservations and saved plans remain'])
     : (fa
-      ? ['برنامه اول را بدون هزینه شروع می‌کنی', 'روش پرداخت ثبت می‌شود؛ کارت تا دوره بعد شارژ نمی‌شود']
-      : ['Start the first plan at no charge', 'A payment method is saved; the card is not charged until the next period'])
+      ? ['برنامه اول را بدون هزینه شروع می‌کنی', 'برای دوره هدیه اطلاعات پرداخت لازم نیست']
+      : ['Start the first plan at no charge', 'No payment details are required for the gifted cycle'])
 
   return (
     <div className="public-page" data-inventory={ids.join(' ')}>

@@ -43,6 +43,7 @@ export function appContentSurface(tab: string, snapshot: EntitlementSnapshot): A
   if (isSetupAllowedTab(tab)) return 'children'
   if (snapshot.hasSavedPlan) return 'children'
   if (snapshot.planSourcePreference === 'external' && snapshot.onboardingStatus === 'complete') return 'preplan'
+  if (snapshot.planSourcePreference === 'momentum' && snapshot.onboardingStatus === 'complete' && snapshot.membership === 'none') return 'preplan'
   if (snapshot.onboardingStatus === 'started' || snapshot.onboardingStatus === 'profile_complete') return 'preplan'
   if (snapshot.automationBlocked || snapshot.onboardingStatus === 'automation_blocked' || snapshot.aiPlanState === 'safety_blocked') {
     return 'preplan'
@@ -60,7 +61,7 @@ export function paywallInventoryId(snapshot: EntitlementSnapshot): EntitlementIn
   if (snapshot.membership === 'pending') return 'LIFE-10'
   if (snapshot.membership === 'expired') return 'LIFE-11'
   if ((snapshot.giftCampaign === 'exhausted' || snapshot.giftCampaign === 'disabled') && snapshot.membership === 'none') return 'LIFE-05'
-  if (snapshot.paymentMethod === 'missing' || snapshot.membership === 'none') return 'LIFE-08'
+  if (snapshot.membership === 'none') return 'LIFE-08'
   return 'LIFE-17'
 }
 

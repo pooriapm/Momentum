@@ -94,9 +94,9 @@ function gateCopy(id: ReturnType<typeof paywallInventoryId>, fa: boolean) {
   return {
     tone: 'brand' as const,
     eyebrow: fa ? 'عضویت Momentum' : 'Momentum membership',
-    title: fa ? 'روش پرداخت را اضافه کن یا عضو شو' : 'Add a payment method, or subscribe',
+    title: fa ? 'برنامه اول هدیه است' : 'Your first plan is a gift',
     body: fa
-      ? 'برای دریافت هدیه برنامه اول روش پرداخت ثبت کن، یا همان یک اشتراک Momentum را شروع کن. کارت تا چرخه دوم شارژ نمی‌شود.'
-      : 'Add a card to receive the first-plan gift, or start the one Momentum membership. The card is not charged until cycle 2.',
+      ? 'برای شروع برنامه اول کارت لازم نیست. ادامه از چرخه دوم به عضویت Momentum نیاز دارد.'
+      : 'No card is required to start the first plan. Momentum membership is required from cycle two.',
   }
 }

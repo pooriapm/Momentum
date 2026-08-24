@@ -24,7 +24,8 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
     membership: account.entitlementStatus ?? 'none',
     onboardingStatus: account.onboardingStatus,
   })
-  const ready = account.onboardingStatus === 'complete' && account.aiPlanAccess.state === 'ready' && entitled
+  const giftReady = account.planSourcePreference === 'momentum' && account.entitlementStatus === 'none'
+  const ready = account.onboardingStatus === 'complete' && account.aiPlanAccess.state === 'ready' && (entitled || giftReady)
   const external = account.onboardingStatus === 'complete' && account.planSourcePreference === 'external' && !blocked
 
   if (wait.session) {
@@ -52,7 +53,7 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
         {ready ? (
           <>
             <div className="inline-notice" role="status">
-              {copy.paymentRequiredBody} {copy.paymentRequiredNote}
+              {giftReady ? (fa ? 'برنامه اول هدیه است و برای شروع به اطلاعات پرداخت نیاز ندارد.' : 'Your first plan is a gift. No payment details are required to start.') : `${copy.paymentRequiredBody} ${copy.paymentRequiredNote}`}
             </div>
             <Button onClick={() => wait.start()}><Sparkles size={18} />{fa ? 'ساخت برنامه' : 'Generate plan'}</Button>
             <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/me')}>{copy.openMembership}</Link>

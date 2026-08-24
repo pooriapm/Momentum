@@ -48,6 +48,15 @@ describe('entitlement routing', () => {
     expect(appContentSurface('me', gift)).toBe('children')
   })
 
+  it('lets a completed managed account claim the no-card first-plan gift', () => {
+    const eligible = entitlementFixture({
+      membership: 'none',
+      onboardingStatus: 'complete',
+      planSourcePreference: 'momentum',
+    })
+    expect(appContentSurface('today', eligible)).toBe('preplan')
+  })
+
   it('continues onboarding instead of the paywall when setup is incomplete', () => {
     const started = entitlementFixture({ membership: 'none', onboardingStatus: 'started' })
     expect(appContentSurface('today', started)).toBe('preplan')
