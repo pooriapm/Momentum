@@ -14,7 +14,7 @@ import {
   assertAiJurisdiction,
   productRegionFromCountry,
 } from '../supabase/functions/_shared/jurisdiction.ts'
-import { assertLiveOpenAiHardDisabled } from '../supabase/functions/_shared/openai.ts'
+import { assertLiveOpenAiEnabled } from '../supabase/functions/_shared/openai.ts'
 
 const repoRoot = path.resolve(import.meta.dirname, '..')
 
@@ -182,11 +182,16 @@ describe('threat-model executable subset', () => {
     expect(clientHits.length).toBeGreaterThan(0)
   })
 
-  it('keeps the live OpenAI helper hard-disabled', () => {
-    expect(() => assertLiveOpenAiHardDisabled()).toThrow(expect.objectContaining({
-      code: 'LIVE_OPENAI_DISABLED',
-      status: 503,
-    }))
+  it('keeps the live OpenAI helper disabled by default', () => {
+    vi.stubGlobal('Deno', { env: { get: () => undefined } })
+    try {
+      expect(() => assertLiveOpenAiEnabled()).toThrow(expect.objectContaining({
+        code: 'LIVE_OPENAI_DISABLED',
+        status: 503,
+      }))
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 

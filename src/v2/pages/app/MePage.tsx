@@ -1,10 +1,11 @@
-import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Info, Languages, LifeBuoy, LockKeyhole, LogOut, MoonStar, ShieldAlert, ShieldCheck, Sun, WalletCards } from 'lucide-react'
+import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Info, Languages, LifeBuoy, LockKeyhole, LogOut, Mail, MoonStar, ShieldAlert, ShieldCheck, Sun, WalletCards } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useSearch } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useAuth } from '../../../platform/auth/auth-context'
 import { APP_CONFIG } from '../../../config/app'
+import { runtimeConfig } from '../../../platform/config/runtime'
 import { applyUiTheme, updateUiState } from '../../../lib/ui-state'
 import { InstallExperienceCard } from '../../components/InstallExperienceCard'
 import { ModalShell } from '../../components/ModalShell'
@@ -137,7 +138,7 @@ function MembershipPanel({
   const fa = locale === 'fa'
   const copy = membershipCopy(status, locale)
   const query = preview ? '?preview=1' : ''
-  const checkout = status === 'gift' || status === 'none' || status === 'expired' || status === 'pending'
+  const checkout = status === 'gift' || status === 'none' || status === 'cancelled' || status === 'expired' || status === 'pending'
   const tone = status === 'active' ? 'success' : status === 'pending' ? 'energy' : status === 'gift' ? 'brand' : 'neutral'
   return (
     <main className="app-page me-page screen-enter">
@@ -156,7 +157,7 @@ function MembershipPanel({
           ? (fa ? `مرز بعدی واجد شرایط: ${periodEnd}` : `Next eligible boundary: ${periodEnd}`)
           : (fa ? 'فقط یک اشتراک Momentum وجود دارد؛ نردبان چندسطحی نیست.' : 'There is one Momentum membership. Dual plans are not offered.')}</p>
         {status === 'pending' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت در انتظار است. ساخت برنامه جدید شروع نمی‌شود.' : 'Payment is pending. A new plan will not start.'}</div> : null}
-        {status === 'expired' ? <div className="inline-notice" role="status">{fa ? 'برنامه‌های قبلی خواندنی می‌مانند. چرخه بعد ساخته نمی‌شود.' : 'Previous plans stay readable. The next cycle is blocked.'}</div> : null}
+        {status === 'cancelled' || status === 'expired' ? <div className="inline-notice" role="status">{fa ? 'برنامه‌های قبلی خواندنی می‌مانند. چرخه بعد ساخته نمی‌شود.' : 'Previous plans stay readable. The next cycle is blocked.'}</div> : null}
         <div className="me-panel-card__actions">
           {checkout ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{status === 'pending' ? (fa ? 'بازیابی پرداخت' : 'Recover payment') : (fa ? 'شروع عضویت' : 'Start membership')}</Link> : <Button disabled variant="secondary">{fa ? 'تمدید فعال است' : 'Renewal is active'}</Button>}
           <Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, '/app/account')}${query}`}>{fa ? 'خروجی یا حذف' : 'Export or delete'}</Link>
@@ -175,13 +176,17 @@ function MembershipPanel({
 function tMembershipTitle(status: MembershipStatus, fa: boolean) {
   if (status === 'gift') return fa ? 'هدیه یک برنامه ماهانه است، نه آزمایش ۷روزه' : 'The gift is one monthly plan, not a 7-day trial'
   if (status === 'pending') return fa ? 'پرداخت را بازیابی کن' : 'Recover payment to continue'
-  if (status === 'expired') return fa ? 'عضویت برای چرخه بعد لازم است' : 'Membership is required for the next cycle'
+  if (status === 'cancelled' || status === 'expired') return fa ? 'عضویت برای چرخه بعد لازم است' : 'Membership is required for the next cycle'
   if (status === 'none') return fa ? 'روش پرداخت را اضافه کن یا عضو شو' : 'Add a payment method, or subscribe'
   return fa ? 'عضویت Momentum' : 'Momentum membership'
 }
 
 function HelpPanel({ locale, onBack }: { locale: AppLocale; onBack: () => void }) {
   const fa = locale === 'fa'
+  const supportEmail = runtimeConfig.supportEmail
+  const supportMailto = supportEmail
+    ? `mailto:${supportEmail}?subject=${encodeURIComponent('Momentum support')}`
+    : ''
   return (
     <main className="app-page me-page screen-enter">
       <section className="page-heading">
@@ -196,7 +201,19 @@ function HelpPanel({ locale, onBack }: { locale: AppLocale; onBack: () => void }
         <Link className="me-row" href={localizedPath(locale, '/safety')}><span className="me-row__icon"><ShieldAlert size={18} /></span><span className="me-row__copy"><span className="me-row__label">{fa ? 'راهنمای ایمنی' : 'Safety guidance'}</span><small>{fa ? 'چه زمانی تمرین را متوقف کنی' : 'When to stop exercising'}</small></span><ChevronRight className="directional-icon" size={18} /></Link>
         <Link className="me-row" href={localizedPath(locale, '/privacy')}><span className="me-row__icon"><LockKeyhole size={18} /></span><span className="me-row__copy"><span className="me-row__label">{fa ? 'حریم خصوصی' : 'Privacy'}</span><small>{fa ? 'خروجی، حذف و نگه‌داری داده' : 'Export, deletion, and retention'}</small></span><ChevronRight className="directional-icon" size={18} /></Link>
         <Link className="me-row" href={localizedPath(locale, '/terms')}><span className="me-row__icon"><ShieldCheck size={18} /></span><span className="me-row__copy"><span className="me-row__label">{fa ? 'شرایط استفاده' : 'Terms'}</span><small>{fa ? 'محدوده سرویس' : 'Service scope'}</small></span><ChevronRight className="directional-icon" size={18} /></Link>
+        {supportEmail ? (
+          <a className="me-row" href={supportMailto}>
+            <span className="me-row__icon"><Mail size={18} /></span>
+            <span className="me-row__copy">
+              <span className="me-row__label">{fa ? 'ایمیل پشتیبانی' : 'Email support'}</span>
+              <small>{supportEmail}</small>
+            </span>
+          </a>
+        ) : null}
       </nav>
+      {supportEmail
+        ? <div className="inline-notice" role="note">{fa ? 'جزئیات سلامت، رمز عبور یا JSON برنامه را در ایمیل نفرستید.' : 'Do not send health details, passwords, or plan JSON.'}</div>
+        : <div className="inline-notice" role="status">{fa ? 'دعوت عمومی تا وقتی اپراتور نشانی پشتیبانی را تنظیم کند در انتظار می‌ماند.' : 'Public invite waits until the operator sets the support address.'}</div>}
       <div className="inline-notice inline-notice--warning" role="note">{fa ? 'Momentum سرویس اورژانسی نیست. اگر علائم شدید یا ناگهانی داری با اورژانس محلی یا متخصص واجد صلاحیت تماس بگیر.' : 'Momentum is not an emergency service. If symptoms are severe or sudden, contact local emergency services or a qualified clinician.'}</div>
     </main>
   )

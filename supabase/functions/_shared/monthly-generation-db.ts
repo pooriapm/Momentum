@@ -79,7 +79,7 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
     async loadProfile(userId) {
       const [profileResult, prefsResult, goalResult] = await Promise.all([
         admin.from('profiles').select(
-          'user_id,locale,timezone,product_region,onboarding_status,automation_block_reason,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,health_data_consent_at,health_consent_version',
+          'user_id,locale,timezone,ai_billing_country_code,ai_country_verified_at,ai_country_verification_method,product_region,onboarding_status,automation_block_reason,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,health_data_consent_at,health_consent_version',
         ).eq('user_id', userId).single(),
         admin.from('dietary_preferences').select('allergies').eq('user_id', userId).maybeSingle(),
         admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1)
@@ -100,6 +100,10 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         : []
       return {
         userId,
+        countryCode: typeof row.ai_billing_country_code === 'string' &&
+            row.ai_country_verified_at && row.ai_country_verification_method
+          ? row.ai_billing_country_code
+          : null,
         locale: row.locale === 'fa-IR' ? 'fa-IR' : 'en-US',
         timezone: typeof row.timezone === 'string' && row.timezone ? row.timezone : 'UTC',
         productRegion: row.product_region === 'ir' ? 'ir' : 'intl',
@@ -153,6 +157,15 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
     async findJobByIdempotency(userId, key) {
       const { data, error } = await admin.from('ai_generation_jobs').select('*')
         .eq('user_id', userId).eq('idempotency_key', key).maybeSingle()
+      if (error) {
+        throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
+      }
+      return data ? mapJob(data) : null
+    },
+
+    async findJobByPeriod(userId, periodId) {
+      const { data, error } = await admin.from('ai_generation_jobs').select('*')
+        .eq('user_id', userId).eq('period_id', periodId).maybeSingle()
       if (error) {
         throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
       }
@@ -239,7 +252,7 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
       }).select('*').single()
       if (error || !data) {
         const replay = await admin.from('ai_generation_jobs').select('*')
-          .eq('user_id', input.userId).eq('idempotency_key', input.idempotencyKey).maybeSingle()
+          .eq('user_id', input.userId).eq('period_id', input.periodId).maybeSingle()
         if (replay.data) return mapJob(replay.data)
         throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
       }

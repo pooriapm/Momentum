@@ -163,7 +163,7 @@ describe('plan safety and quality evals', () => {
     }
   })
 
-  it('never issues live HTTP from the stub provider, including when live OpenAI is requested', async () => {
+  it('never issues live HTTP from the stub provider or an unapproved live market', async () => {
     const fetchSpy = forbidLiveHttp()
     const catalog = createPlanCatalogSnapshot(evalCatalogRows())
     await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'fa-IR' }))
@@ -177,7 +177,7 @@ describe('plan safety and quality evals', () => {
       OPENAI_API_KEY: 'test-key',
     })
     await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'en-US' }))
-      .rejects.toMatchObject({ code: 'LIVE_OPENAI_DISABLED' })
+      .rejects.toMatchObject({ code: 'AI_MARKET_UNVERIFIED' })
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 

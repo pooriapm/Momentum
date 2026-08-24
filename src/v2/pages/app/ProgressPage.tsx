@@ -71,7 +71,7 @@ export function ProgressPage({
   const syncedAt = lastSyncedAt
   const series = resolveWeeklySeries(plan)
   const membership = deriveMembershipStatus(plan)
-  const showNextCycle = membership === 'gift' || membership === 'expired' || membership === 'none' || plan?.progress.cycleEnding
+  const showNextCycle = membership === 'gift' || membership === 'cancelled' || membership === 'expired' || membership === 'none' || plan?.progress.cycleEnding
   const writesLocked = !online || view === 'offline' || view === 'stale' || view === 'load-error'
 
   useEffect(() => {

@@ -936,12 +936,9 @@ async function loadDashboard(
         'id,source,status,period_start,period_end,plan_generation_limit',
       )
       .eq('user_id', userId)
-      .eq('status', 'active')
       .lte('period_start', now)
-      .gt('period_end', now)
       .order('period_end', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(8),
     admin
       .from('usage_ledger')
       .select('entitlement_id,feature,status,units')
@@ -1046,7 +1043,27 @@ async function loadDashboard(
     planProjection = { ...planProjection, history: planHistory }
   }
 
-  const entitlement = entitlementResult.data
+  const entitlementStatusAt = (row: { status: string; period_end: string }) =>
+    row.status === 'active' && Date.parse(row.period_end) <= Date.parse(now) ? 'expired' : row.status
+  const entitlementPriority: Record<string, number> = {
+    active: 0,
+    grace: 1,
+    payment_pending: 1,
+    cancelled: 2,
+    expired: 3,
+    revoked: 4,
+  }
+  const entitlement = [...(entitlementResult.data ?? [])].sort((left, right) => {
+    const leftStatus = entitlementStatusAt(left)
+    const rightStatus = entitlementStatusAt(right)
+    const leftActive = leftStatus === 'active'
+    const rightActive = rightStatus === 'active'
+    if (leftActive !== rightActive) return leftActive ? -1 : 1
+    const statusOrder = (entitlementPriority[leftStatus] ?? 9) -
+      (entitlementPriority[rightStatus] ?? 9)
+    if (statusOrder !== 0) return statusOrder
+    return Date.parse(right.period_end) - Date.parse(left.period_end)
+  })[0] ?? null
   const usageRows = (usageResult.data ?? []).filter((row) =>
     entitlement && row.entitlement_id === entitlement.id
   )
@@ -1059,7 +1076,7 @@ async function loadDashboard(
       entitlement: {
         id: entitlement.id,
         source: entitlement.source,
-        status: entitlement.status,
+        status: entitlementStatusAt(entitlement),
         period_start: entitlement.period_start,
         period_end: entitlement.period_end,
       },

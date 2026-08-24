@@ -79,9 +79,13 @@ remain immutable dependencies of both the linked project and clean bootstrap; a
 | `account-settings` | target | Current authenticated settings boundary |
 | `checkins` | target | Current authenticated daily/weekly check-in boundary |
 
-The linked production history was verified through `202608180300` before the R1
-service-role migration was added. `202608240001_r1_edge_service_access.sql` must
-be reviewed and promoted through staging before production.
+The accumulated R2 release was promoted on 2026-08-24 through the connected
+Supabase integration. Clean bootstrap and the final database CI suite cover all
+28 migrations through `202608240012_r2_privacy_safe_metrics.sql`; live final-
+schema probes confirmed the corresponding R2 surfaces and hardened anonymous
+permissions. Exact linked migration-ledger inspection remains an operations
+follow-up because the current network stalls during the session-pooler TLS
+handshake. This is not represented as staging evidence.
 
 There is no target `coach`, chat/message, `analyze-body-composition`, plan-
 revision or on-demand regeneration function. Body values are entered manually or

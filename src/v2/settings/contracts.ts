@@ -62,7 +62,7 @@ export const accountSettingsResponseSchema = z.object({
       analytics_consent_version: z.literal('analytics-v1').nullable().optional(),
       terms_version: z.string().nullable().optional(),
       privacy_version: z.string().nullable().optional(),
-      payment_method_status: z.literal('not_collected').optional(),
+      payment_method_status: z.enum(['not_collected', 'pending', 'stub_recorded']).optional(),
     }),
     goal: z.object({
       goal_type: z.string(),

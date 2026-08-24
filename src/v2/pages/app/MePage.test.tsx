@@ -7,6 +7,19 @@ import { I18nProvider } from '../../../platform/i18n/I18nProvider'
 import { demoPlan } from '../../data/demo'
 import { MePage } from './MePage'
 
+const runtimeMock = vi.hoisted(() => ({
+  runtimeConfig: {
+    appEnvironment: 'test',
+    hasSupabase: false,
+    privacyEmail: '',
+    supabasePublishableKey: '',
+    supabaseUrl: '',
+    supportEmail: '',
+  },
+}))
+
+vi.mock('../../../platform/config/runtime', () => runtimeMock)
+
 function fakeUser(): User {
   return {
     app_metadata: {},
@@ -46,6 +59,8 @@ function renderMe(overrides: Partial<Parameters<typeof MePage>[0]> & { signOut?:
 
 describe('MePage inventory states', () => {
   beforeEach(async () => {
+    runtimeMock.runtimeConfig.privacyEmail = ''
+    runtimeMock.runtimeConfig.supportEmail = ''
     await i18n.changeLanguage('en')
   })
 
@@ -71,11 +86,40 @@ describe('MePage inventory states', () => {
     expect(screen.getByRole('link', { name: /recover payment/i })).toHaveAttribute('href', '/en/pricing')
   })
 
+  it('keeps cancelled membership terminal instead of presenting it as active', () => {
+    renderMe({ panel: 'subscription', membershipStatus: 'cancelled' })
+    expect(screen.getAllByText(/cancelled or expired/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/pricing')
+    expect(screen.queryByRole('button', { name: /renewal is active/i })).not.toBeInTheDocument()
+  })
+
   it('ME-08 keeps help, safety, and legal reachable from Me', () => {
     renderMe({ panel: 'help' })
     expect(screen.getByRole('link', { name: /safety guidance/i })).toHaveAttribute('href', '/en/safety')
     expect(screen.getByRole('link', { name: /privacy/i })).toHaveAttribute('href', '/en/privacy')
     expect(screen.getByRole('link', { name: /terms/i })).toHaveAttribute('href', '/en/terms')
+    expect(screen.getByText(/momentum is not an emergency service/i)).toBeInTheDocument()
+    expect(screen.getByText(/contact local emergency services/i)).toBeInTheDocument()
+  })
+
+  it('shows a mailto support path when the operator sets VITE_SUPPORT_EMAIL', () => {
+    runtimeMock.runtimeConfig.supportEmail = 'support@example.com'
+    renderMe({ panel: 'help' })
+    expect(screen.getByRole('link', { name: /email support/i })).toHaveAttribute(
+      'href',
+      'mailto:support@example.com?subject=Momentum%20support',
+    )
+    expect(screen.getByText(/do not send health details, passwords, or plan json/i)).toBeInTheDocument()
+    expect(screen.queryByText(/public invite waits until the operator sets the support address/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/momentum is not an emergency service/i)).toBeInTheDocument()
+  })
+
+  it('does not invent a support mailbox when VITE_SUPPORT_EMAIL is empty', () => {
+    renderMe({ panel: 'help' })
+    expect(screen.getByText(/public invite waits until the operator sets the support address/i)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /email support/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^mailto:/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/momentum is not an emergency service/i)).toBeInTheDocument()
   })
 
   it('ME-09 confirms this-device or all-device sign-out and recovers from failure', async () => {

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(7);
+select extensions.plan(9);
 
 insert into auth.users(
   id, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
@@ -54,9 +54,31 @@ insert into public.usage_ledger(
     statement_timestamp()
   );
 
+insert into public.monthly_plan_periods(
+  id, user_id, cycle_index, entitlement_id, status
+) values (
+  '1b1b1b1b-1b1b-41b1-81b1-1b1b1b1b1b1b',
+  '16161616-1616-4161-8161-161616161616',
+  2,
+  '17171717-1717-4171-8171-171717171717',
+  'reserved'
+);
+
+insert into public.plans(
+  id, user_id, name, status, valid_from, valid_to, locale
+) values (
+  '1c1c1c1c-1c1c-41c1-81c1-1c1c1c1c1c1c',
+  '16161616-1616-4161-8161-161616161616',
+  'Previous valid plan',
+  'active',
+  current_date - 30,
+  current_date,
+  'en-US'
+);
+
 insert into public.ai_generation_jobs(
   id, user_id, usage_ledger_id, idempotency_key, status, requested_locale,
-  requested_days, request_fingerprint, prompt_version, model, product_region
+  requested_days, request_fingerprint, prompt_version, model, product_region, period_id
 ) values (
   '19191919-1919-4191-8191-191919191919',
   '16161616-1616-4161-8161-161616161616',
@@ -68,7 +90,8 @@ insert into public.ai_generation_jobs(
   repeat('c', 64),
   'stub-1',
   'stub-monthly',
-  'intl'
+  'intl',
+  '1b1b1b1b-1b1b-41b1-81b1-1b1b1b1b1b1b'
 );
 
 select extensions.is(
@@ -112,6 +135,18 @@ select extensions.is(
   (select status from public.ai_generation_jobs where id = '19191919-1919-4191-8191-191919191919'),
   'failed',
   'in-flight jobs tied to stale reservations are marked failed'
+);
+
+select extensions.is(
+  (select status from public.monthly_plan_periods where id = '1b1b1b1b-1b1b-41b1-81b1-1b1b1b1b1b1b'),
+  'failed_provider',
+  'the original period records stale-job failure for same-job retry'
+);
+
+select extensions.is(
+  (select status from public.plans where id = '1c1c1c1c-1c1c-41c1-81c1-1c1c1c1c1c1c'),
+  'active',
+  'stale reconciliation preserves the previous valid plan'
 );
 
 select extensions.is(

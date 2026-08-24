@@ -1,6 +1,7 @@
-import { FileText, LockKeyhole, ShieldCheck } from 'lucide-react'
+import { FileText, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { FALLBACK_LEGAL_DOCUMENT_VERSIONS, loadLegalDocumentVersions } from '../../../config/legal'
+import { runtimeConfig } from '../../../platform/config/runtime'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { ContentCard, Eyebrow } from '../../ui/primitives'
@@ -14,6 +15,7 @@ export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy'
   useEffect(() => {
     void loadLegalDocumentVersions().then(setLegalVersions)
   }, [])
+  const privacyContactEmail = runtimeConfig.privacyEmail || runtimeConfig.supportEmail
   const sections = privacy
     ? [
         [fa ? 'چه داده‌ای نگهداری می‌شود؟' : 'What data is stored?', fa ? 'حساب، پروفایل و رضایت‌ها، هدف و ترجیحات، برنامه‌ها و ثبت‌های روزانه و در صورت انتخاب شما گزارش خصوصی ترکیب بدنی.' : 'Account, profile and consent records, goals and preferences, plans and daily logs, and—only if you choose—private body-composition reports.'],
@@ -41,6 +43,25 @@ export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy'
         </Reveal>
         <div className="legal-sections">
           {sections.map(([title, copy]) => <ContentCard key={title}><ShieldCheck size={21} /><div><h2>{title}</h2><p>{copy}</p></div></ContentCard>)}
+          {privacy ? (
+            <ContentCard>
+              <Mail size={21} />
+              <div>
+                <h2>{fa ? 'تماس' : 'Contact'}</h2>
+                {privacyContactEmail ? (
+                  <p>
+                    {fa ? 'برای پرسش حریم خصوصی به این نشانی بنویسید: ' : 'For privacy questions, email '}
+                    <a href={`mailto:${privacyContactEmail}?subject=${encodeURIComponent('Momentum privacy')}`}>{privacyContactEmail}</a>
+                    {fa ? '. جزئیات سلامت، رمز عبور یا JSON برنامه را نفرستید.' : '. Do not send health details, passwords, or plan JSON.'}
+                  </p>
+                ) : (
+                  <p>{fa
+                    ? 'نشانی تماس حریم خصوصی هنوز تنظیم نشده است. دعوت عمومی تا وقتی اپراتور آن را تنظیم کند در انتظار می‌ماند.'
+                    : 'A privacy contact address is not configured yet. Public invite waits until the operator sets it.'}</p>
+                )}
+              </div>
+            </ContentCard>
+          ) : null}
         </div>
       </main>
       <PublicFooter locale={locale} />

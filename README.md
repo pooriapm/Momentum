@@ -176,15 +176,21 @@ spec هستند. وضعیت دقیق در [`docs/design/CONFORMANCE.md`](docs/de
 
 نقشه کامل: [`docs/README.md`](docs/README.md).
 
-کد فعلی آلفا است و جایی که با قرارداد D1–D11 اختلاف دارد drift محسوب می‌شود.
-Design Step 5، R0 و R1 تکمیل شده‌اند. R2.1 از نظر مهندسی محلی تکمیل شده، بازبینی
-حرفه‌ای برای این مرحله non-blocking و به کار پس از R2 منتقل شده است. R2.2 تا R2.6 نیز
-از نظر مهندسی محلی بسته شده‌اند. اجرای نهایی GitHub CI و promotion پس از تأیید release باقی مانده است؛ معیارهای دقیق در
-[`docs/R2-ACCEPTANCE.md`](docs/R2-ACCEPTANCE.md) ثبت شده‌اند.
+کد فعلی آلفا است و جایی که با قرارداد D1–D14 اختلاف دارد drift محسوب می‌شود.
+Design Step 5، R0، R1 و R2 تکمیل شده‌اند. release نهایی R2 با commit
+`464d45b` در production فعال است و هر پنج job نهایی GitHub CI پاس شده‌اند.
+بازبینی حرفه‌ای در R2 non-blocking بود و به assurance پیش از public beta منتقل
+شده است. AI زنده، payment، subscription billing و coach همچنان fail-closed
+هستند. کاندیدای مهندسی R3 اکنون build، E2E و تمام 229 assertion دیتابیس را
+محلی پاس می‌کند، اما production همچنان `464d45b` است. foundationهای R4 تا R8
+نیز به‌صورت fail-closed پیاده‌سازی و تست شده‌اند: adapter زنده، پرداخت، alpha و
+beta همگی بدون evidence و approval صریح خاموش می‌مانند. شواهد در
+[`docs/R4-R8-IMPLEMENTATION-EVIDENCE.md`](docs/R4-R8-IMPLEMENTATION-EVIDENCE.md)
+و وضعیت کلان در [`docs/ROADMAP-EXECUTION.md`](docs/ROADMAP-EXECUTION.md) ثبت شده‌اند.
 
 - [`docs/README.md`](docs/README.md) — وضعیت فعلی و ترتیب ادامهٔ اجرا
 - [`docs/design/HANDOFF.md`](docs/design/HANDOFF.md) — ادامه طراحی
-- [`docs/product/PHASE-0-PRODUCT-CONTRACT.md`](docs/product/PHASE-0-PRODUCT-CONTRACT.md) — D1–D11
+- [`docs/product/PHASE-0-PRODUCT-CONTRACT.md`](docs/product/PHASE-0-PRODUCT-CONTRACT.md) — D1–D14
 - [`docs/product/PRD.md`](docs/product/PRD.md)
 - [`docs/IMPLEMENTATION-BLUEPRINT.md`](docs/IMPLEMENTATION-BLUEPRINT.md) — playbook بازنویسی
 - [`docs/ROADMAP.md`](docs/ROADMAP.md)

@@ -4,7 +4,9 @@ import './styles/app.css'
 import App from './app/App.tsx'
 import { APP_CONFIG } from './config/app'
 import { applyUiTheme, loadUiState } from './lib/ui-state'
+import { registerGlobalErrorReporting } from './platform/observability/safe-error-report'
 
+registerGlobalErrorReporting()
 applyUiTheme(loadUiState().theme)
 
 const rootElement = document.getElementById('root')

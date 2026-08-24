@@ -35,6 +35,36 @@ if (fs.existsSync(linkedRefPath)) {
   assert(fs.readFileSync(linkedRefPath, 'utf8').trim() === expectedRef, 'Supabase link targets the wrong project.')
 }
 
+function tomlSection(source, header) {
+  const marker = `[${header}]`
+  const start = source.indexOf(marker)
+  assert(start >= 0, `Missing [${header}].`)
+  const rest = source.slice(start + marker.length)
+  const next = rest.search(/\n\[/)
+  return (next < 0 ? rest : rest.slice(0, next)).trim()
+}
+
+function requireLine(section, line, message) {
+  const found = section.split('\n').some((row) => row.trim() === line)
+  assert(found, message)
+}
+
+function requireAuthHardening(section, label) {
+  requireLine(section, 'enable_confirmations = true', `${label} must keep email confirmations required.`)
+  assert(!section.includes('enable_confirmations = false'), `${label} must not disable email confirmations.`)
+  requireLine(section, 'double_confirm_changes = true', `${label} must double-confirm email changes.`)
+  requireLine(section, 'secure_password_change = true', `${label} must require a recent login to change passwords.`)
+  requireLine(section, 'otp_length = 8', `${label} OTP length drifted.`)
+  requireLine(section, 'otp_expiry = 3600', `${label} OTP expiry drifted.`)
+}
+
+function requireRateLimits(section, label) {
+  requireLine(section, 'email_sent = 30', `${label} email_sent rate limit is missing.`)
+  requireLine(section, 'sign_in_sign_ups = 15', `${label} sign_in_sign_ups rate limit is missing.`)
+  requireLine(section, 'token_verifications = 15', `${label} token_verifications rate limit is missing.`)
+  requireLine(section, 'token_refresh = 150', `${label} token_refresh rate limit is missing.`)
+}
+
 const config = read('supabase/config.toml')
 assert(config.includes(`site_url = "${expectedOrigin}"`), 'Production Auth site URL is missing.')
 assert(config.includes(`"${expectedOrigin}/**"`), 'Production auth redirect is missing.')
@@ -42,6 +72,22 @@ assert(config.includes(`[remotes.production]`), 'Production remote configuration
 assert(config.includes(`project_id = "${expectedRef}"`), 'Production remote project ref drifted.')
 assert(config.includes('[remotes.production.auth.mfa.totp]'), 'Production TOTP controls are missing.')
 assert(config.includes('[remotes.production.storage.vector]'), 'Free-tier vector override is missing.')
+
+const localAuth = tomlSection(config, 'auth')
+const localEmail = tomlSection(config, 'auth.email')
+const localRateLimit = tomlSection(config, 'auth.rate_limit')
+const productionAuth = tomlSection(config, 'remotes.production.auth')
+const productionEmail = tomlSection(config, 'remotes.production.auth.email')
+const productionRateLimit = tomlSection(config, 'remotes.production.auth.rate_limit')
+
+requireLine(localAuth, 'minimum_password_length = 8', 'Local minimum password length drifted.')
+requireLine(productionAuth, 'minimum_password_length = 8', 'Production minimum password length drifted.')
+requireAuthHardening(localEmail, 'Local auth.email')
+requireAuthHardening(productionEmail, 'Production auth.email')
+requireLine(localEmail, 'max_frequency = "1s"', 'Local confirmation/recovery email spacing drifted.')
+requireLine(productionEmail, 'max_frequency = "1m"', 'Production confirmation/recovery email spacing drifted.')
+requireRateLimits(localRateLimit, 'Local auth.rate_limit')
+requireRateLimits(productionRateLimit, 'Production auth.rate_limit')
 const envExample = read('supabase/.env.example')
 for (const line of [
   'AI_MASTER_ENABLED=false',

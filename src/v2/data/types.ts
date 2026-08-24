@@ -140,7 +140,7 @@ export interface MomentumPlanView {
     sleepMinutes: number
     energyScore: number
     entitlementLabel?: LocalizedText
-    entitlementStatus?: 'gift' | 'active' | 'pending' | 'expired' | 'none'
+    entitlementStatus?: 'gift' | 'active' | 'pending' | 'cancelled' | 'expired' | 'none'
     entitlementPeriodEnd?: string
     productRegion?: 'ir' | 'intl'
     cycleEnding?: boolean

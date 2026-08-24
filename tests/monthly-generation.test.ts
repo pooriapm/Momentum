@@ -13,6 +13,7 @@ import { buildValidatedDeterministicStarter } from '../supabase/functions/_share
 import { HttpError } from '../supabase/functions/_shared/http.ts'
 import type { AiReservation } from '../supabase/functions/_shared/limits.ts'
 import {
+  cycleDateWindow,
   runMonthlyGeneration,
   type EntitlementRecord,
   type GenerationJobRecord,
@@ -26,7 +27,7 @@ import {
   generateMonthlyPlanFromProvider,
   isLiveOpenAiRequested,
 } from '../supabase/functions/_shared/plan-provider.ts'
-import { assertLiveOpenAiHardDisabled, createStructuredResponse } from '../supabase/functions/_shared/openai.ts'
+import { assertLiveOpenAiEnabled } from '../supabase/functions/_shared/openai.ts'
 import { buildMonthlyStubPlan } from '../supabase/functions/_shared/starter-plan.ts'
 
 const CONSENT_VERSION = '2026-08-01-alpha'
@@ -156,6 +157,7 @@ function catalogRows(releaseId: 'momentum-core@v1' | 'momentum-core@v2'): PlanCa
 function entitledProfile(userId = 'user-1'): GenerationProfile {
   return {
     userId,
+    countryCode: 'US',
     locale: 'en-US',
     timezone: 'UTC',
     productRegion: 'intl',
@@ -217,6 +219,8 @@ class MemoryGenerationStore implements GenerationStore {
   }
   findJobByIdempotency = async (_userId: string, key: string) =>
     [...this.jobs.values()].find((job) => job.idempotencyKey === key) ?? null
+  findJobByPeriod = async (userId: string, periodId: string) =>
+    [...this.jobs.values()].find((job) => job.userId === userId && job.periodId === periodId) ?? null
   findInFlightJob = async (userId: string, exceptJobId?: string) =>
     [...this.jobs.values()].find((job) =>
       job.userId === userId &&
@@ -472,6 +476,7 @@ describe('monthly generation pipeline', () => {
       idempotencyKey: 'generation-key-replay',
       store,
     })
+    store.periods[0]!.endsAt = new Date(Date.now() + 30 * 86_400_000).toISOString()
     const replay = await runMonthlyGeneration({
       userId: store.profile.userId,
       emailConfirmed: true,
@@ -484,6 +489,154 @@ describe('monthly generation pipeline', () => {
     expect(store.importedPlans).toHaveLength(1)
     expect(store.jobs.size).toBe(1)
     expect(store.claimCount.size).toBe(1)
+  })
+
+  it('returns the cycle-owned job when a caller varies the idempotency key', async () => {
+    const store = new MemoryGenerationStore()
+    const first = await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-cycle-owned-1',
+      store,
+    })
+    store.periods[0]!.endsAt = new Date(Date.now() + 30 * 86_400_000).toISOString()
+    const replay = await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-cycle-varied-2',
+      store,
+    }).catch((error) => error)
+    expect(replay).toMatchObject({ code: 'PERIOD_ALREADY_CONSUMED' })
+    expect(first.body.job.status).toBe('ready')
+    expect(store.jobs.size).toBe(1)
+    expect(store.reservations.size).toBe(1)
+    expect(store.importedPlans).toHaveLength(1)
+  })
+
+  it('observes the existing in-flight job before reserving usage for a varied key', async () => {
+    const store = new MemoryGenerationStore()
+    store.periods.push({
+      id: 'period-in-flight',
+      userId: store.profile.userId,
+      cycleIndex: 1,
+      entitlementId: store.entitlement!.id,
+      generationJobId: 'job-in-flight',
+      importedPlanVersionId: null,
+      importedPlanId: null,
+      status: 'provider_started',
+      readyAt: null,
+      endsAt: null,
+    })
+    store.jobs.set('job-in-flight', {
+      id: 'job-in-flight',
+      userId: store.profile.userId,
+      periodId: 'period-in-flight',
+      usageLedgerId: 'usage-in-flight',
+      idempotencyKey: 'generation-original-key',
+      status: 'queued',
+      productRegion: 'intl',
+      requestedLocale: 'en-US',
+      requestedDays: 7,
+      requestFingerprint: 'a'.repeat(64),
+      promptVersion: 'stub-v1',
+      model: 'stub',
+      attemptCount: 0,
+      errorCode: null,
+      openaiResponseId: null,
+    })
+
+    const replay = await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-varied-key',
+      store,
+    })
+    expect(replay).toMatchObject({
+      httpStatus: 202,
+      body: { job: { id: 'job-in-flight' }, idempotent_replay: true },
+    })
+    expect(store.jobs.size).toBe(1)
+    expect(store.reservations.size).toBe(0)
+  })
+
+  it('retries a failed generation on the same durable job', async () => {
+    const store = new MemoryGenerationStore()
+    const key = 'generation-failed-same-job'
+    await expect(runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: key,
+      invalidStub: true,
+      store,
+    })).rejects.toMatchObject({ code: 'PLAN_VALIDATION_FAILED' })
+    const failedJob = await store.findJobByIdempotency(store.profile.userId, key)
+
+    const recovered = await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: key,
+      store,
+    })
+    expect(recovered.body.job.id).toBe(failedJob?.id)
+    expect(store.jobs.size).toBe(1)
+    expect(store.importedPlans).toHaveLength(1)
+  })
+
+  it('runs month one and month two only at the ready_at-derived boundary', async () => {
+    const monthOneReady = new Date('2026-01-31T20:15:00.000Z')
+    const store = new MemoryGenerationStore()
+    const monthOne = await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-month-one',
+      store,
+      now: monthOneReady,
+    })
+    const firstPeriod = store.periods[0]!
+    const window = cycleDateWindow(monthOneReady.toISOString(), 'UTC')
+    firstPeriod.readyAt = monthOneReady.toISOString()
+    firstPeriod.endsAt = window.endsAt
+
+    await expect(runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-month-two-early',
+      store,
+      now: new Date('2026-02-28T20:14:59.999Z'),
+    })).rejects.toMatchObject({ code: 'PERIOD_ALREADY_CONSUMED' })
+
+    store.entitlement = {
+      id: 'subscription-cycle-two',
+      source: 'subscription',
+      status: 'active',
+      periodStart: window.endsAt,
+      periodEnd: '2026-04-01T00:00:00.000Z',
+    }
+    const monthTwo = await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-month-two',
+      store,
+      now: new Date(window.endsAt),
+    })
+
+    expect(monthOne.body.job.period_id).toBe('period-1')
+    expect(monthTwo.body.job.period_id).toBe('period-2')
+    expect(store.jobs.size).toBe(2)
+    expect(store.importedPlans).toHaveLength(2)
+  })
+
+  it('uses calendar-month boundaries in the stored timezone across month-end and DST', () => {
+    expect(cycleDateWindow('2026-01-31T20:15:00.000Z', 'UTC')).toEqual({
+      validFrom: '2026-01-31',
+      validTo: '2026-02-27',
+      startsAt: '2026-01-31T20:15:00.000Z',
+      endsAt: '2026-02-28T20:15:00.000Z',
+    })
+    expect(cycleDateWindow('2026-02-08T06:30:00.000Z', 'America/New_York').endsAt)
+      .toBe('2026-03-08T06:30:00.000Z')
+    expect(cycleDateWindow('2026-03-29T01:30:00.000Z', 'Europe/Berlin').endsAt)
+      .toBe('2026-04-29T01:30:00.000Z')
   })
 
   it('decrements gift budget only once across repeated reserve attempts', () => {
@@ -526,30 +679,23 @@ describe('monthly generation pipeline', () => {
     expect(replay.campaign.remainingBudgetUsd).toBe(7.5)
   })
 
-  it('keeps live OpenAI hard-disabled even when env flags request it', async () => {
+  it('keeps live OpenAI denied without an approved market', async () => {
     stubEnv({
       AI_PLAN_PROVIDER: 'openai',
       AI_PLAN_LIVE_OPENAI: 'true',
       OPENAI_API_KEY: 'test-key',
+      OPENAI_PLAN_MODEL: 'gpt-test',
+      OPENAI_SAFETY_PEPPER: 'test-pepper',
     })
     expect(isLiveOpenAiRequested()).toBe(true)
-    expect(() => assertLiveOpenAiHardDisabled()).toThrow(expect.objectContaining({
-      code: 'LIVE_OPENAI_DISABLED',
-    }))
-    await expect(createStructuredResponse({
-      model: 'gpt-test',
-      reasoningEffortEnv: 'OPENAI_PLAN_REASONING_EFFORT',
-      instructions: 'x',
-      input: {},
-      schemaName: 'plan',
-      schema: { type: 'object' },
-      safetyIdentifier: 'hash',
-      promptCacheKey: 'plan',
-      maxOutputTokens: 100,
-    })).rejects.toMatchObject({ code: 'LIVE_OPENAI_DISABLED' })
+    expect(() => assertLiveOpenAiEnabled()).not.toThrow()
     const catalog = createPlanCatalogSnapshot(catalogRows('momentum-core@v2'))
-    await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'en-US' }))
-      .rejects.toMatchObject({ code: 'LIVE_OPENAI_DISABLED' })
+    await expect(generateMonthlyPlanFromProvider({
+      catalog,
+      locale: 'en-US',
+      userId: 'user-1',
+      countryCode: 'US',
+    })).rejects.toMatchObject({ code: 'AI_MARKET_NOT_APPROVED' })
   })
 
   it('builds a v2-aware stub payload from catalog IDs', () => {

@@ -7,6 +7,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
 MODE="${1:-dry-run}"
+STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 RPO_HOURS="${RPO_HOURS:-24}"
 RTO_HOURS="${RTO_HOURS:-8}"
 DRILL_CADENCE="${DRILL_CADENCE:-before launch, then at least quarterly}"
@@ -14,8 +15,10 @@ DRILL_CADENCE="${DRILL_CADENCE:-before launch, then at least quarterly}"
 cat <<EOF
 Momentum local restore drill
 ============================
-Environment: local / synthetic only. Never dump production secrets, PHI,
-prompts, or model output into tickets or this repo.
+Started (UTC): ${STARTED_AT}
+Mode: ${MODE}
+Environment: local / synthetic only. Never dump production. Never dump
+secrets, PHI, prompts, or model output into tickets or this repo.
 
 RPO placeholder: ${RPO_HOURS} hours for ordinary product records
 RTO placeholder: ${RTO_HOURS} hours for early public beta
@@ -60,7 +63,8 @@ EOF
 
 if [[ "$MODE" != "execute" ]]; then
   echo
-  echo "Dry-run complete. Commands that would run for a local rehearsal:"
+  echo "Dry-run complete. Dump outcome: skipped (default mode does not dump)."
+  echo "Commands that would run for a local rehearsal:"
   echo "  npx supabase status"
   echo "  npx supabase db dump --local --dry-run"
   echo "  # opt-in destructive local rebuild: npx supabase db reset --local"
@@ -70,22 +74,22 @@ if [[ "$MODE" != "execute" ]]; then
 fi
 
 echo
-echo "Execute mode: attempting a local dump dry-run (still non-destructive)."
+echo "Execute mode: attempting a local dump dry-run (still non-destructive; never production)."
 
 if ! command -v docker >/dev/null 2>&1; then
-  echo "Docker is not installed; skipping dump. CI pgTAP remains npx supabase test db."
+  echo "Dump outcome: skipped (Docker is not installed). CI pgTAP remains npx supabase test db."
   exit 0
 fi
 
 if ! docker info >/dev/null 2>&1; then
-  echo "Docker is not running; skipping dump. CI pgTAP remains npx supabase test db."
+  echo "Dump outcome: skipped (Docker is not running). CI pgTAP remains npx supabase test db."
   exit 0
 fi
 
 if ! npx supabase status >/dev/null 2>&1; then
-  echo "Local Supabase is not running; skipping dump. Start it with npx supabase start to rehearse."
+  echo "Dump outcome: skipped (local Supabase is not running). Start it with npx supabase start to rehearse."
   exit 0
 fi
 
 npx supabase db dump --local --dry-run
-echo "Local dump dry-run finished. Do not run db reset unless you intend to wipe local data."
+echo "Dump outcome: ran (local dump dry-run finished). Do not run db reset unless you intend to wipe local data."

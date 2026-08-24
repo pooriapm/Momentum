@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://momentum.local/schemas/release-evidence-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "stage", "releaseId", "commit", "decision", "scope", "evidence", "signoffs", "decidedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "stage": { "enum": ["R4", "R5", "R6", "R7", "R8"] },
+    "releaseId": { "type": "string", "minLength": 3, "maxLength": 120 },
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "decision": { "enum": ["go", "hold", "rollback", "blocked"] },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["countries", "locales", "liveAi", "payments"],
+      "properties": {
+        "countries": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z]{2}$" }, "uniqueItems": true },
+        "locales": { "type": "array", "items": { "enum": ["fa-IR", "en-US"] }, "uniqueItems": true },
+        "liveAi": { "type": "boolean" },
+        "payments": { "type": "boolean" }
+      }
+    },
+    "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 3, "maxLength": 240 }, "uniqueItems": true },
+    "signoffs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "name", "evidenceId", "signedAt"],
+        "properties": {
+          "role": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+          "evidenceId": { "type": "string", "minLength": 3, "maxLength": 240 },
+          "signedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

@@ -70,7 +70,12 @@ describe('one-SKU membership mapping', () => {
     expect(mapEntitlementStatus({ entitlement: { source: 'gift', status: 'reserved' } })).toBe('gift')
     expect(mapEntitlementStatus({ entitlement: { source: 'subscription', status: 'active' } })).toBe('active')
     expect(mapEntitlementStatus({ entitlement: { source: 'subscription', status: 'past_due' } })).toBe('pending')
-    expect(mapEntitlementStatus({ entitlement: { source: 'subscription', status: 'canceled' } })).toBe('expired')
+    expect(mapEntitlementStatus({ entitlement: { source: 'subscription', status: 'grace' } })).toBe('pending')
+    expect(mapEntitlementStatus({ entitlement: { source: 'subscription', status: 'payment_pending' } })).toBe('pending')
+    expect(mapEntitlementStatus({ entitlement: { source: 'subscription', status: 'canceled' } })).toBe('cancelled')
+    expect(mapEntitlementStatus({ entitlement: { source: 'subscription', status: 'expired' } })).toBe('expired')
+    expect(mapEntitlementStatus({ entitlement: { source: 'subscription', status: 'provider_drift' } })).toBe('expired')
+    expect(mapEntitlementStatus({ entitlement: { source: 'gift', status: 'provider_drift' } })).toBe('expired')
   })
 
   it('does not treat a 7-day trial source as a distinct product', () => {
@@ -82,6 +87,7 @@ describe('inventory IDs', () => {
   it('keeps LIFE-08 as the missing-method / no-membership paywall', () => {
     expect(paywallInventoryId(entitlementFixture({ membership: 'none' }))).toBe('LIFE-08')
     expect(paywallInventoryId(entitlementFixture({ membership: 'pending' }))).toBe('LIFE-10')
+    expect(paywallInventoryId(entitlementFixture({ membership: 'cancelled' }))).toBe('LIFE-11')
     expect(paywallInventoryId(entitlementFixture({ giftCampaign: 'exhausted', membership: 'none' }))).toBe('LIFE-05')
   })
 

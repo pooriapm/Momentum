@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { reportSafeError } from '../platform/observability/safe-error-report'
 
 interface AppErrorBoundaryProps {
   children: ReactNode
@@ -15,8 +16,8 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     return { failed: true }
   }
 
-  componentDidCatch() {
-    // A redacted production reporter can be attached here without health payloads.
+  componentDidCatch(error: Error) {
+    reportSafeError({ code: 'fatal_render', error })
   }
 
   render() {

@@ -1,4 +1,4 @@
-export type MembershipStatus = 'gift' | 'active' | 'pending' | 'expired' | 'none'
+export type MembershipStatus = 'gift' | 'active' | 'pending' | 'cancelled' | 'expired' | 'none'
 export type GiftCampaignStatus = 'available' | 'exhausted' | 'disabled' | 'unknown'
 export type PaymentMethodStatus = 'missing' | 'recorded' | 'pending' | 'unavailable'
 export type AppTabSurface = 'today' | 'plan' | 'progress' | 'me'

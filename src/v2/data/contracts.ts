@@ -168,7 +168,7 @@ export const dashboardResponseSchema = z.object({
       plan_source_preference: z.enum(['external', 'momentum']).default('momentum'),
       ai_country_verified: z.boolean().optional(),
       email_confirmed: z.boolean().optional(),
-      payment_method_status: z.literal('not_collected').optional(),
+      payment_method_status: z.enum(['not_collected', 'pending', 'stub_recorded']).optional(),
       consent_versions: z.object({
         terms: z.string().nullable(),
         privacy: z.string().nullable(),

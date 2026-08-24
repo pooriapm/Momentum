@@ -5,11 +5,19 @@ const supabasePublishableKey = (
   ?? ''
 ).trim()
 
+function envEmail(value: string | undefined): string {
+  const email = value?.trim() ?? ''
+  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : ''
+}
+
 export const runtimeConfig = Object.freeze({
   appEnvironment: import.meta.env.VITE_APP_ENV?.trim() || import.meta.env.MODE,
   supabaseUrl,
   supabasePublishableKey,
   hasSupabase: Boolean(supabaseUrl && supabasePublishableKey),
+  supportEmail: envEmail(import.meta.env.VITE_SUPPORT_EMAIL),
+  privacyEmail: envEmail(import.meta.env.VITE_PRIVACY_EMAIL),
+  errorIngestUrl: import.meta.env.VITE_ERROR_INGEST_URL?.trim() ?? '',
 })
 
 export type RuntimeConfig = typeof runtimeConfig

@@ -14,11 +14,12 @@ import type {
 export function mapEntitlementStatus(usage: EntitlementUsage | null | undefined): MembershipStatus {
   if (!usage?.entitlement) return 'none'
   const status = usage.entitlement.status ?? ''
-  if (usage.entitlement.source === 'gift' && status !== 'expired' && status !== 'cancelled' && status !== 'canceled') return 'gift'
-  if (status === 'past_due' || status === 'pending' || status === 'incomplete' || status === 'grace') return 'pending'
-  if (status === 'canceled' || status === 'cancelled' || status === 'expired' || status === 'unpaid') return 'expired'
+  if (usage.entitlement.source === 'gift' && (status === 'active' || status === 'trialing' || status === 'reserved')) return 'gift'
+  if (status === 'past_due' || status === 'pending' || status === 'payment_pending' || status === 'incomplete' || status === 'grace') return 'pending'
+  if (status === 'canceled' || status === 'cancelled') return 'cancelled'
+  if (status === 'expired' || status === 'unpaid' || status === 'revoked') return 'expired'
   if (status === 'active' || status === 'trialing' || status === 'reserved') return 'active'
-  return 'active'
+  return 'expired'
 }
 
 export function isSetupAllowedTab(tab: string): tab is 'me' {
@@ -59,7 +60,7 @@ export function postOnboardingPath(locale: AppLocale) {
 export function paywallInventoryId(snapshot: EntitlementSnapshot): EntitlementInventoryId {
   if (snapshot.automationBlocked || snapshot.aiPlanState === 'safety_blocked') return 'LIFE-07'
   if (snapshot.membership === 'pending') return 'LIFE-10'
-  if (snapshot.membership === 'expired') return 'LIFE-11'
+  if (snapshot.membership === 'cancelled' || snapshot.membership === 'expired') return 'LIFE-11'
   if ((snapshot.giftCampaign === 'exhausted' || snapshot.giftCampaign === 'disabled') && snapshot.membership === 'none') return 'LIFE-05'
   if (snapshot.membership === 'none') return 'LIFE-08'
   return 'LIFE-17'

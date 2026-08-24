@@ -25,6 +25,7 @@ export type GenerationJobStatus =
 
 export interface GenerationProfile {
   userId: string
+  countryCode: string | null
   locale: 'fa-IR' | 'en-US'
   timezone: string
   productRegion: 'ir' | 'intl'
@@ -91,6 +92,7 @@ export interface GenerationStore {
   loadActiveEntitlement(userId: string): Promise<EntitlementRecord | null>
   reserveGift(userId: string, productRegion: 'ir' | 'intl'): Promise<{ entitlementId: string }>
   findJobByIdempotency(userId: string, key: string): Promise<GenerationJobRecord | null>
+  findJobByPeriod(userId: string, periodId: string): Promise<GenerationJobRecord | null>
   findInFlightJob(userId: string, exceptJobId?: string): Promise<GenerationJobRecord | null>
   listPeriods(userId: string): Promise<PeriodRecord[]>
   upsertPeriod(input: {
@@ -164,6 +166,7 @@ export async function runMonthlyGeneration(input: {
   admin?: ConsentAdminClient | null
   enforceCapacity?: () => Promise<void>
   invalidStub?: boolean
+  now?: Date
 }): Promise<GenerationSuccess> {
   assertAiFeatureEnabled('AI_PLAN_ENABLED')
   if (!input.emailConfirmed) {
@@ -211,8 +214,9 @@ export async function runMonthlyGeneration(input: {
     return replayReady(existingJob, await importedFromJob(input.store, existingJob), true)
   }
 
-  const entitlement = await resolveEntitlement(input.store, profile)
-  const period = await resolvePeriod(input.store, profile, entitlement, existingJob)
+  const now = input.now ?? new Date()
+  const entitlement = await resolveEntitlement(input.store, profile, now)
+  const period = await resolvePeriod(input.store, profile, entitlement, existingJob, now)
 
   if (period.status === 'ready' && period.importedPlanVersionId) {
     throw new HttpError(
@@ -228,6 +232,23 @@ export async function runMonthlyGeneration(input: {
       'SUBSCRIPTION_INACTIVE',
       'An active membership is required for the next monthly plan.',
     )
+  }
+
+  // A cycle owns one durable job regardless of the caller's idempotency key.
+  // This check happens before usage reservation so a varied key cannot consume
+  // capacity or create a second provider execution for the same period.
+  const periodJob = existingJob ?? await input.store.findJobByPeriod(input.userId, period.id)
+  if (periodJob && periodJob.idempotencyKey !== input.idempotencyKey) {
+    if (periodJob.status === 'ready') {
+      return replayReady(periodJob, await importedFromJob(input.store, periodJob), true)
+    }
+    return {
+      httpStatus: 202,
+      body: {
+        job: { id: periodJob.id, status: periodJob.status, period_id: periodJob.periodId },
+        idempotent_replay: true,
+      },
+    }
   }
 
   const otherInFlight = await input.store.findInFlightJob(input.userId, existingJob?.id)
@@ -325,6 +346,15 @@ export async function runMonthlyGeneration(input: {
       locale,
       days: MONTHLY_PLAN_DAYS,
       invalidStub: input.invalidStub,
+      userId: input.userId,
+      countryCode: profile.countryCode,
+      context: {
+        timezone: profile.timezone,
+        product_region: profile.productRegion,
+        goal_id: profile.goalId,
+        declared_allergies: profile.allergies,
+        cycle_index: period.cycleIndex,
+      },
     })
     const safety = deterministicSafetyDecision(safetyCorpus(generated.content))
     if (safety) {
@@ -456,6 +486,7 @@ async function importedFromJob(
 async function resolveEntitlement(
   store: GenerationStore,
   profile: GenerationProfile,
+  now: Date,
 ): Promise<EntitlementRecord> {
   const existing = await store.loadActiveEntitlement(profile.userId)
   if (existing) return existing
@@ -467,8 +498,8 @@ async function resolveEntitlement(
       id: reserved.entitlementId,
       source: 'gift',
       status: 'active',
-      periodStart: new Date().toISOString(),
-      periodEnd: new Date(Date.now() + 32 * 86_400_000).toISOString(),
+      periodStart: now.toISOString(),
+      periodEnd: new Date(now.getTime() + 32 * 86_400_000).toISOString(),
     }
   } catch (error) {
     if (error instanceof HttpError && error.code === 'GIFT_BUDGET_UNAVAILABLE') {
@@ -487,6 +518,7 @@ async function resolvePeriod(
   profile: GenerationProfile,
   entitlement: EntitlementRecord,
   existingJob: GenerationJobRecord | null,
+  now: Date,
 ): Promise<PeriodRecord> {
   if (existingJob) {
     const periods = await store.listPeriods(profile.userId)
@@ -506,7 +538,7 @@ async function resolvePeriod(
   if (latest.status !== 'ready' || !latest.importedPlanVersionId) {
     return latest
   }
-  if (latest.endsAt && Date.parse(latest.endsAt) > Date.now()) {
+  if (latest.endsAt && Date.parse(latest.endsAt) > now.getTime()) {
     return latest
   }
   return store.upsertPeriod({
@@ -524,18 +556,90 @@ export function cycleDateWindow(readyAtIso: string, timeZone: string): {
 } {
   const ready = new Date(readyAtIso)
   const validFrom = localIsoDate(ready, timeZone)
-  const [year, month, day] = validFrom.split('-').map(Number)
-  const nextMonth = new Date(Date.UTC(year!, (month! - 1) + 1, day))
-  const validToDate = new Date(nextMonth.getTime() - 86_400_000)
+  const local = zonedParts(ready, timeZone)
+  const nextMonthIndex = local.month === 12 ? 1 : local.month + 1
+  const nextMonthYear = local.month === 12 ? local.year + 1 : local.year
+  const nextMonthDay = Math.min(local.day, daysInMonth(nextMonthYear, nextMonthIndex))
+  const ends = zonedDateTimeToInstant({
+    ...local,
+    year: nextMonthYear,
+    month: nextMonthIndex,
+    day: nextMonthDay,
+  }, timeZone)
+  const validToDate = new Date(Date.UTC(nextMonthYear, nextMonthIndex - 1, nextMonthDay) - 86_400_000)
   const validTo = validToDate.toISOString().slice(0, 10)
-  const ends = new Date(ready)
-  ends.setUTCMonth(ends.getUTCMonth() + 1)
   return {
     validFrom,
     validTo,
     startsAt: ready.toISOString(),
     endsAt: ends.toISOString(),
   }
+}
+
+interface ZonedParts {
+  year: number
+  month: number
+  day: number
+  hour: number
+  minute: number
+  second: number
+  millisecond: number
+}
+
+function zonedParts(value: Date, timeZone: string): ZonedParts {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(value)
+  const mapped = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return {
+    year: Number(mapped.year),
+    month: Number(mapped.month),
+    day: Number(mapped.day),
+    hour: Number(mapped.hour),
+    minute: Number(mapped.minute),
+    second: Number(mapped.second),
+    millisecond: value.getUTCMilliseconds(),
+  }
+}
+
+function daysInMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate()
+}
+
+function zonedDateTimeToInstant(local: ZonedParts, timeZone: string): Date {
+  const wallClockUtc = Date.UTC(
+    local.year,
+    local.month - 1,
+    local.day,
+    local.hour,
+    local.minute,
+    local.second,
+    local.millisecond,
+  )
+  let candidate = wallClockUtc
+  for (let iteration = 0; iteration < 4; iteration += 1) {
+    const observed = zonedParts(new Date(candidate), timeZone)
+    const observedWallClockUtc = Date.UTC(
+      observed.year,
+      observed.month - 1,
+      observed.day,
+      observed.hour,
+      observed.minute,
+      observed.second,
+      observed.millisecond,
+    )
+    const correction = wallClockUtc - observedWallClockUtc
+    if (correction === 0) break
+    candidate += correction
+  }
+  return new Date(candidate)
 }
 
 function localIsoDate(value: Date, timeZone: string): string {

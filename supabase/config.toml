@@ -24,10 +24,28 @@ additional_redirect_urls = [
 ]
 jwt_expiry = 3600
 enable_signup = true
+# CLI accepts 6+; 8 is the recommended floor for public signup.
+minimum_password_length = 8
+
+[auth.rate_limit]
+# Emails per hour when custom SMTP is enabled. Local Mailpit proofs send
+# signup + resend + recovery, so this stays above 2.
+email_sent = 30
+# Sign-up/sign-in requests per IP per 5 minutes (CLI default 30).
+sign_in_sign_ups = 15
+# OTP / magic-link verifications per IP per 5 minutes (confirm + recover).
+token_verifications = 15
+token_refresh = 150
 
 [auth.email]
 enable_signup = true
 enable_confirmations = true
+double_confirm_changes = true
+secure_password_change = true
+# Local default is 1s so auth-lifecycle resend still works; production uses 1m.
+max_frequency = "1s"
+otp_length = 8
+otp_expiry = 3600
 
 [storage]
 enabled = true
@@ -57,9 +75,24 @@ verify_jwt = false
 [remotes.production]
 project_id = "osyvvzglvyonevkhdzpu"
 
+[remotes.production.auth]
+enable_signup = true
+minimum_password_length = 8
+
+[remotes.production.auth.rate_limit]
+email_sent = 30
+sign_in_sign_ups = 15
+token_verifications = 15
+token_refresh = 150
+
 [remotes.production.auth.email]
+enable_signup = true
+enable_confirmations = true
+double_confirm_changes = true
+secure_password_change = true
 max_frequency = "1m"
 otp_length = 8
+otp_expiry = 3600
 
 [remotes.production.auth.mfa.totp]
 enroll_enabled = true

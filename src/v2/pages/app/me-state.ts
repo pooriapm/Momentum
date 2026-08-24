@@ -70,7 +70,7 @@ export function membershipCopy(status: MembershipStatus, locale: AppLocale) {
       detail: fa ? 'ساخت برنامه جدید شروع نمی‌شود تا پرداخت بازیابی شود' : 'A new plan will not start until payment is recovered',
     }
   }
-  if (status === 'expired') {
+  if (status === 'cancelled' || status === 'expired') {
     return {
       label: fa ? 'منقضی یا لغوشده' : 'Cancelled or expired',
       detail: fa ? 'تاریخچه خواندنی است؛ چرخه بعد ساخته نمی‌شود' : 'History stays readable; the next cycle is blocked',
