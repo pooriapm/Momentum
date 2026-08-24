@@ -17,6 +17,7 @@
     "design:penpot-tokens": "node scripts/design/build-penpot-tokens.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:storage-rls": "node scripts/ops/verify-storage-rls.mjs",
     "scan:secrets": "node scripts/ops/scan-secrets.mjs",
     "ci:quality": "npm run lint && npm test && npm run build && npm run build-storybook && npm run scan:secrets && npm audit --omit=dev --audit-level=high",
     "preview": "vite preview"
