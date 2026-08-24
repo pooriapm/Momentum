@@ -1,9 +1,11 @@
 # Momentum Supabase target backend
 
-Status: pre-development contract. Existing migrations/functions may still
-represent the superseded alpha and must not be deployed as the target product.
-Use [Implementation Blueprint](../docs/IMPLEMENTATION-BLUEPRINT.md) and
-[Traceability](../docs/TRACEABILITY.md) as the migration entry point.
+Status: implemented target backend for the current alpha. The clean local stack,
+Edge contracts, and database tests are engineering evidence; they are not approval
+to promote unapplied migrations, enable live AI, or call the product production-ready.
+Use [Implementation Blueprint](../docs/IMPLEMENTATION-BLUEPRINT.md),
+[Traceability](../docs/TRACEABILITY.md), and the classification below as the
+promotion entry point.
 
 This directory is the backend source of truth for authenticated Momentum data.
 The browser may retain theme/locale and an authentication session, but must not
@@ -14,7 +16,10 @@ provider responses.
 
 - Docker Desktop
 - Supabase CLI
-- An OpenAI API key for live AI calls
+- Deno 2 for Edge Function format, lint, and type checks
+
+An OpenAI key is not required for the current stub-provider baseline. Live OpenAI
+remains hard-disabled until the provider phase and its external gates are approved.
 
 ## Local setup
 
@@ -50,6 +55,31 @@ migration creates:
 | `geo-context` | public | Suggests locale, cuisine region and preview prices; never authorizes checkout |
 | `generate-monthly-plan` | JWT | The only provider route: reserves one cycle execution and imports one validated combined workout-and-nutrition plan |
 | `account-data` | JWT | Safe dashboard plus idempotent onboarding, confirmed body-value and meal select/complete mutations |
+| `account-settings` | JWT | Reads and applies server-authoritative profile, preference, and account-setting changes |
+| `checkins` | JWT | Saves daily/weekly check-ins through server-side safety and plan-cycle rules |
+
+## R0 backend artifact classification
+
+The repository retains no obsolete Edge Function endpoint. Historical migrations
+remain immutable dependencies of both the linked project and clean bootstrap; a
+`bridge` label means “retained migration foundation,” not “safe to delete.”
+
+| Artifact | Classification | Reason |
+| --- | --- | --- |
+| `202607310001_initial_platform.sql` | bridge | Historical alpha foundation required by every later target migration |
+| `202608030001_preview_price_catalog.sql` through `202608030003_security_lifecycle.sql` | target | Current preview pricing, Iran payment block, and lifecycle security controls |
+| `202608090001_governed_food_exercise_catalog.sql` through `202608090106_account_settings_control.sql` | target | Current governed catalogs, execution loop, check-ins, plan versions, safety, and settings |
+| `202608170001_phase1b_contract_alignment.sql` | bridge | Explicitly aligns the historical foundation to the current product contract |
+| `202608180001_account_privacy_lifecycle.sql` | target | Current consent, export, deletion, and payment-method lifecycle |
+| `202608180002_monthly_generation_pipeline.sql` through `202608180300_meal_undo_plan_history_stale_jobs.sql` | target | Current monthly generation, catalog v2, entitlement gates, history, undo, and stale-job behavior |
+| `geo-context` | target | Current public locale/region hint endpoint; never checkout authorization |
+| `generate-monthly-plan` | target (stub provider) | Current cycle/idempotency/import boundary; live provider remains disabled |
+| `account-data` | target | Current authenticated dashboard, onboarding, meal, export, and deletion boundary |
+| `account-settings` | target | Current authenticated settings boundary |
+| `checkins` | target | Current authenticated daily/weekly check-in boundary |
+
+Remote history currently ends at `202608180001_account_privacy_lifecycle`. Later
+target migrations must be reviewed and promoted through staging before production.
 
 There is no target `coach`, chat/message, `analyze-body-composition`, plan-
 revision or on-demand regeneration function. Body values are entered manually or
@@ -161,6 +191,8 @@ supabase db push
 supabase functions deploy geo-context
 supabase functions deploy generate-monthly-plan
 supabase functions deploy account-data
+supabase functions deploy account-settings
+supabase functions deploy checkins
 ```
 
 Configure production auth URLs and replace `ALLOWED_ORIGINS` with exact HTTPS
@@ -177,6 +209,8 @@ deno lint supabase/functions
 deno check supabase/functions/geo-context/index.ts
 deno check supabase/functions/generate-monthly-plan/index.ts
 deno check supabase/functions/account-data/index.ts
+deno check supabase/functions/account-settings/index.ts
+deno check supabase/functions/checkins/index.ts
 ```
 
 Before production, execute the multi-user RLS scenarios in

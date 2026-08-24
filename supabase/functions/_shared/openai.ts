@@ -21,6 +21,7 @@ export function assertLiveOpenAiHardDisabled(): never {
   )
 }
 
+// deno-lint-ignore require-await -- preserve the async provider contract while live OpenAI is disabled
 export async function createStructuredResponse<T>(_options: {
   model: string
   reasoningEffortEnv: string
@@ -32,6 +33,7 @@ export async function createStructuredResponse<T>(_options: {
   promptCacheKey: string
   maxOutputTokens: number
 }): Promise<StructuredResponse<T>> {
+  void _options
   // Later enablement (still unimplemented): AI_PLAN_PROVIDER=openai AND
   // AI_PLAN_LIVE_OPENAI=true AND OPENAI_API_KEY. Do not fetch until that slice.
   assertLiveOpenAiHardDisabled()

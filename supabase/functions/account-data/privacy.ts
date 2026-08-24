@@ -1,21 +1,8 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { canonicalJson, sha256 } from '../_shared/crypto.ts'
 import { HttpError } from '../_shared/http.ts'
 
-type AdminClient = {
-  rpc: (
-    fn: string,
-    args?: Record<string, unknown>,
-  ) => Promise<{ data: unknown; error: { message: string } | null }>
-  auth: {
-    admin: {
-      deleteUser: (id: string) => Promise<{ error: { message: string } | null }>
-      signOut?: (
-        userId: string,
-        scope?: 'global' | 'local' | 'others',
-      ) => Promise<{ error: { message: string } | null }>
-    }
-  }
-}
+type AdminClient = Pick<SupabaseClient, 'rpc' | 'auth'>
 
 export interface LegalDocumentVersions {
   terms: string
@@ -46,10 +33,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-function rpcError(error: { message: string } | null, fallbackCode: string, fallbackMessage: string) {
+function rpcError(
+  error: { message: string } | null,
+  fallbackCode: string,
+  fallbackMessage: string,
+) {
   if (!error) return
   if (error.message.includes('consent_policy_not_configured')) {
-    throw new HttpError(503, 'consent_policy_not_configured', 'Consent policy versions are not configured.')
+    throw new HttpError(
+      503,
+      'consent_policy_not_configured',
+      'Consent policy versions are not configured.',
+    )
   }
   if (error.message.includes('consent_version_stale')) {
     throw new HttpError(
@@ -65,7 +60,11 @@ function rpcError(error: { message: string } | null, fallbackCode: string, fallb
     throw new HttpError(404, 'deletion_request_not_found', 'No deletion request was found.')
   }
   if (error.message.includes('delete_confirmation_required')) {
-    throw new HttpError(400, 'delete_confirmation_required', 'Type DELETE to confirm account deletion.')
+    throw new HttpError(
+      400,
+      'delete_confirmation_required',
+      'Type DELETE to confirm account deletion.',
+    )
   }
   throw new HttpError(503, fallbackCode, fallbackMessage)
 }
@@ -80,7 +79,11 @@ export function parseLegalDocumentVersions(value: unknown): LegalDocumentVersion
     value.privacy.length < 1 ||
     value.health.length < 1
   ) {
-    throw new HttpError(503, 'consent_policy_not_configured', 'Consent policy versions are not configured.')
+    throw new HttpError(
+      503,
+      'consent_policy_not_configured',
+      'Consent policy versions are not configured.',
+    )
   }
   return { terms: value.terms, privacy: value.privacy, health: value.health }
 }
@@ -137,7 +140,10 @@ export async function loadCurrentLegalVersions(admin: AdminClient): Promise<Lega
   return parseLegalDocumentVersions(data)
 }
 
-export async function requestExportRow(admin: AdminClient, userId: string): Promise<ExportRequestRow> {
+export async function requestExportRow(
+  admin: AdminClient,
+  userId: string,
+): Promise<ExportRequestRow> {
   const { data, error } = await admin.rpc('request_account_export', { p_user_id: userId })
   rpcError(error, 'account_export_failed', 'Account export is unavailable.')
   const row = parseExportRequest(data)
@@ -207,16 +213,25 @@ export async function beginDeletionRow(
   })
   rpcError(error, 'account_delete_failed', 'Account deletion could not be completed.')
   const row = parseDeletionRequest(data)
-  if (!row) throw new HttpError(503, 'account_delete_failed', 'Account deletion could not be completed.')
+  if (!row) {
+    throw new HttpError(503, 'account_delete_failed', 'Account deletion could not be completed.')
+  }
   return row
 }
 
-export async function markDeletionSessionsRevoked(admin: AdminClient, userId: string): Promise<void> {
+export async function markDeletionSessionsRevoked(
+  admin: AdminClient,
+  userId: string,
+): Promise<void> {
   const { error } = await admin.rpc('mark_account_deletion_sessions_revoked', { p_user_id: userId })
   rpcError(error, 'account_delete_failed', 'Account deletion could not be completed.')
 }
 
-export async function failDeletionRow(admin: AdminClient, userId: string, errorCode: string): Promise<void> {
+export async function failDeletionRow(
+  admin: AdminClient,
+  userId: string,
+  errorCode: string,
+): Promise<void> {
   const { error } = await admin.rpc('fail_account_deletion', {
     p_user_id: userId,
     p_error_code: errorCode,
@@ -263,6 +278,8 @@ export function exportClientStatus(
   now = Date.now(),
 ): 'idle' | 'pending' | 'ready' | 'expired' | 'failed' {
   if (!row) return 'idle'
-  if (row.status === 'ready' && row.expires_at && Date.parse(row.expires_at) <= now) return 'expired'
+  if (row.status === 'ready' && row.expires_at && Date.parse(row.expires_at) <= now) {
+    return 'expired'
+  }
   return row.status
 }

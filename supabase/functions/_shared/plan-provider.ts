@@ -23,6 +23,7 @@ export function isLiveOpenAiRequested(): boolean {
     Boolean(optionalEnv('OPENAI_API_KEY'))
 }
 
+// deno-lint-ignore require-await -- keep provider implementations interchangeable at the async boundary
 export async function generateMonthlyPlanFromProvider(input: {
   catalog: PlanCatalogSnapshot
   locale: 'fa-IR' | 'en-US'

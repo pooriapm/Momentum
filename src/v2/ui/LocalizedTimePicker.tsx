@@ -46,9 +46,7 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
   const [open, setOpen] = useState(false)
   const [hour, setHour] = useState(parsed.hour)
   const [minute, setMinute] = useState(parsed.minute)
-  const selectionRef = useRef({ hour: parsed.hour, minute: parsed.minute })
   const fa = locale === 'fa'
-  selectionRef.current = { hour, minute }
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
@@ -65,12 +63,6 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
     }
   }, [])
 
-  useEffect(() => {
-    setHour(parsed.hour)
-    setMinute(parsed.minute)
-    selectionRef.current = { hour: parsed.hour, minute: parsed.minute }
-  }, [parsed.hour, parsed.minute])
-
   useLayoutEffect(() => {
     if (!open) return
     for (const node of [hourRef.current, minuteRef.current]) {
@@ -81,10 +73,19 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
   }, [hour, minute, open])
 
   function commit(nextHour: number, nextMinute: number) {
-    selectionRef.current = { hour: nextHour, minute: nextMinute }
     setHour(nextHour)
     setMinute(nextMinute)
     onChange(formatTimeValue(nextHour, nextMinute))
+  }
+
+  function togglePicker() {
+    if (open) {
+      setOpen(false)
+      return
+    }
+    setHour(parsed.hour)
+    setMinute(parsed.minute)
+    setOpen(true)
   }
 
   return (
@@ -100,7 +101,7 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
         aria-required={required || undefined}
         className={`localized-date-trigger ${value ? 'has-value' : ''}`}
         id={`${id}-value`}
-        onClick={() => setOpen((current) => !current)}
+        onClick={togglePicker}
         type="button"
       >
         <span><Clock size={19} /></span>
@@ -121,7 +122,7 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
                   aria-selected={item === hour}
                   className={item === hour ? 'is-selected' : ''}
                   key={item}
-                  onClick={() => commit(item, selectionRef.current.minute)}
+                  onClick={() => commit(item, minute)}
                   ref={item === hour ? hourRef : undefined}
                   role="option"
                   type="button"
@@ -137,7 +138,7 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
                   aria-selected={item === minute}
                   className={item === minute ? 'is-selected' : ''}
                   key={item}
-                  onClick={() => commit(selectionRef.current.hour, item)}
+                  onClick={() => commit(hour, item)}
                   ref={item === minute ? minuteRef : undefined}
                   role="option"
                   type="button"

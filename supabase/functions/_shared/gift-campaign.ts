@@ -51,7 +51,9 @@ export function reserveGiftBudget(input: {
   }
 
   const now = Date.parse(input.nowIso)
-  const starts = input.campaign.startsAt ? Date.parse(input.campaign.startsAt) : Number.NEGATIVE_INFINITY
+  const starts = input.campaign.startsAt
+    ? Date.parse(input.campaign.startsAt)
+    : Number.NEGATIVE_INFINITY
   const ends = input.campaign.endsAt ? Date.parse(input.campaign.endsAt) : Number.POSITIVE_INFINITY
   const remainingAfter = input.campaign.remainingBudgetUsd - input.campaign.reservationCostUsd
   if (

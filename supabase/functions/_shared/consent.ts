@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { optionalEnv } from './config.ts'
 import { HttpError } from './http.ts'
 
@@ -16,12 +17,7 @@ export interface RequiredConsentVersions {
   health: string
 }
 
-export interface ConsentAdminClient {
-  rpc: (
-    fn: 'current_legal_document_versions',
-    args?: Record<string, never>,
-  ) => Promise<{ data: unknown; error: { message: string } | null }>
-}
+export type ConsentAdminClient = Pick<SupabaseClient, 'rpc'>
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -37,7 +33,11 @@ function parseLegalVersions(value: unknown): RequiredConsentVersions {
     value.privacy.length < 1 ||
     value.health.length < 1
   ) {
-    throw new HttpError(503, 'consent_policy_not_configured', 'Consent policy versions are not configured.')
+    throw new HttpError(
+      503,
+      'consent_policy_not_configured',
+      'Consent policy versions are not configured.',
+    )
   }
   return { terms: value.terms, privacy: value.privacy, health: value.health }
 }

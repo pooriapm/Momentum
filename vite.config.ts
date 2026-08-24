@@ -1,9 +1,38 @@
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const packageJson = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
+const releaseCommit = process.env.VITE_APP_COMMIT_SHA?.trim() || readGitCommit()
+const releaseBuiltAt = process.env.VITE_APP_BUILD_TIME?.trim() || new Date().toISOString()
+
+function readGitCommit() {
+  try {
+    return execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], { encoding: 'utf8' }).trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
 export default defineConfig({
   plugins: [
+    {
+      name: 'momentum-release-provenance',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'release.json',
+          source: `${JSON.stringify({
+            app: 'Momentum',
+            version: packageJson.version,
+            commit: releaseCommit,
+            builtAt: releaseBuiltAt,
+          }, null, 2)}\n`,
+        })
+      },
+    },
     react(),
     ...(process.env.STORYBOOK === 'true' ? [] : VitePWA({
       registerType: 'autoUpdate',

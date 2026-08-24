@@ -8,24 +8,21 @@ import { localizedPath, switchLocalePath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
 
 function closeMenu(
-  setOpen: (value: boolean) => void,
+  setMenuPath: (value: string | null) => void,
   menuButtonRef: RefObject<HTMLButtonElement | null>,
 ) {
-  setOpen(false)
+  setMenuPath(null)
   window.requestAnimationFrame(() => menuButtonRef.current?.focus())
 }
 
 export function PublicHeader({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
   const [path] = useLocation()
-  const [open, setOpen] = useState(false)
+  const [menuPath, setMenuPath] = useState<string | null>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const linksRef = useRef<HTMLDivElement>(null)
   const otherLocale: AppLocale = locale === 'fa' ? 'en' : 'fa'
-
-  useEffect(() => {
-    setOpen(false)
-  }, [path])
+  const open = menuPath === path
 
   useEffect(() => {
     if (!open) return
@@ -34,7 +31,7 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
     document.body.style.overflow = 'hidden'
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
-      closeMenu(setOpen, menuButtonRef)
+      closeMenu(setMenuPath, menuButtonRef)
     }
     document.addEventListener('keydown', onKeyDown)
     return () => {
@@ -49,13 +46,13 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
         <button
           aria-label={locale === 'fa' ? 'بستن منو' : 'Close menu'}
           className="public-menu-backdrop"
-          onClick={() => closeMenu(setOpen, menuButtonRef)}
+          onClick={() => closeMenu(setMenuPath, menuButtonRef)}
           type="button"
         />
       ), document.body) : null}
       <header className={`public-header-wrap${open ? ' public-header-wrap--menu-open' : ''}`}>
         <nav aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Main navigation'} className="public-header glass-chrome">
-          <Link className="public-header__brand" href={localizedPath(locale)} onClick={() => setOpen(false)}>
+          <Link className="public-header__brand" href={localizedPath(locale)} onClick={() => setMenuPath(null)}>
             <BrandLockup compact />
           </Link>
           <div
@@ -63,20 +60,20 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
             className={`public-header__links ${open ? 'public-header__links--open' : ''}`}
             ref={linksRef}
           >
-            <Link href={localizedPath(locale, '/pricing')} onClick={() => setOpen(false)}>{t('nav.pricing')}</Link>
-            <Link href={localizedPath(locale, '/safety')} onClick={() => setOpen(false)}>{t('nav.safety')}</Link>
-            <Link className="locale-link" href={switchLocalePath(path, otherLocale)} onClick={() => setOpen(false)}>
+            <Link href={localizedPath(locale, '/pricing')} onClick={() => setMenuPath(null)}>{t('nav.pricing')}</Link>
+            <Link href={localizedPath(locale, '/safety')} onClick={() => setMenuPath(null)}>{t('nav.safety')}</Link>
+            <Link className="locale-link" href={switchLocalePath(path, otherLocale)} onClick={() => setMenuPath(null)}>
               <Languages aria-hidden="true" size={17} />
               {otherLocale === 'fa' ? 'فارسی' : 'English'}
             </Link>
-            <Link className="header-sign-in" href={localizedPath(locale, '/auth/sign-in')} onClick={() => setOpen(false)}>{t('common.signIn')}</Link>
-            <Link className="header-cta" href={localizedPath(locale, '/auth/sign-up')} onClick={() => setOpen(false)}>{t('common.start')}</Link>
+            <Link className="header-sign-in" href={localizedPath(locale, '/auth/sign-in')} onClick={() => setMenuPath(null)}>{t('common.signIn')}</Link>
+            <Link className="header-cta" href={localizedPath(locale, '/auth/sign-up')} onClick={() => setMenuPath(null)}>{t('common.start')}</Link>
           </div>
           <button
             aria-expanded={open}
             aria-label={open ? (locale === 'fa' ? 'بستن منو' : 'Close menu') : (locale === 'fa' ? 'بازکردن منو' : 'Open menu')}
             className="public-header__menu"
-            onClick={() => setOpen((value) => !value)}
+            onClick={() => setMenuPath(open ? null : path)}
             ref={menuButtonRef}
             type="button"
           >

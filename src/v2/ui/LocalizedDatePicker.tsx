@@ -55,10 +55,16 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+        setPanel('days')
+      }
     }
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape') {
+        setOpen(false)
+        setPanel('days')
+      }
     }
     document.addEventListener('mousedown', closeOnOutsideClick)
     document.addEventListener('keydown', closeOnEscape)
@@ -67,10 +73,6 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
       document.removeEventListener('keydown', closeOnEscape)
     }
   }, [])
-
-  useEffect(() => {
-    if (!open) setPanel('days')
-  }, [open])
 
   useLayoutEffect(() => {
     if (panel !== 'years') return
@@ -99,6 +101,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
     if (isoDate < minIso || isoDate > maxIso) return
     onChange(isoDate)
     setOpen(false)
+    setPanel('days')
   }
 
   return (

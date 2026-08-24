@@ -26,7 +26,11 @@ function parseLocale(value: unknown): 'fa-IR' | 'en-US' | undefined {
 function mapPipelineError(error: unknown): unknown {
   if (!(error instanceof HttpError)) return error
   if (error.code === 'consent_update_required') {
-    return new HttpError(409, 'CONSENT_REQUIRED', 'Current terms, privacy policy, and health-data consent must be accepted.')
+    return new HttpError(
+      409,
+      'CONSENT_REQUIRED',
+      'Current terms, privacy policy, and health-data consent must be accepted.',
+    )
   }
   if (error.code === 'authentication_required' || error.code === 'invalid_session') {
     return new HttpError(401, 'AUTH_REQUIRED', error.message)
@@ -63,7 +67,11 @@ Deno.serve(async (request) => {
     if (request.method === 'GET') {
       const job = await store.findJobByIdempotency(auth.user.id, idempotencyKey)
       if (!job) {
-        throw new HttpError(404, 'generation_job_not_found', 'No generation job exists for this key.')
+        throw new HttpError(
+          404,
+          'generation_job_not_found',
+          'No generation job exists for this key.',
+        )
       }
       return jsonResponse(request, {
         job: { id: job.id, status: job.status, period_id: job.periodId },

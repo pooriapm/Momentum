@@ -98,7 +98,9 @@ export interface GenerationStore {
     cycleIndex: number
     entitlementId: string
   }): Promise<PeriodRecord>
-  createJob(input: Omit<GenerationJobRecord, 'attemptCount' | 'errorCode' | 'openaiResponseId'>): Promise<GenerationJobRecord>
+  createJob(
+    input: Omit<GenerationJobRecord, 'attemptCount' | 'errorCode' | 'openaiResponseId'>,
+  ): Promise<GenerationJobRecord>
   reserveUsage(
     userId: string,
     idempotencyKey: string,
@@ -213,9 +215,6 @@ export async function runMonthlyGeneration(input: {
   const period = await resolvePeriod(input.store, profile, entitlement, existingJob)
 
   if (period.status === 'ready' && period.importedPlanVersionId) {
-    if (existingJob?.periodId === period.id && existingJob.status === 'ready') {
-      return replayReady(existingJob, await importedFromJob(input.store, existingJob), true)
-    }
     throw new HttpError(
       409,
       'PERIOD_ALREADY_CONSUMED',
@@ -329,7 +328,11 @@ export async function runMonthlyGeneration(input: {
     })
     const safety = deterministicSafetyDecision(safetyCorpus(generated.content))
     if (safety) {
-      throw new HttpError(422, 'PLAN_VALIDATION_FAILED', 'The generated plan could not be validated.')
+      throw new HttpError(
+        422,
+        'PLAN_VALIDATION_FAILED',
+        'The generated plan could not be validated.',
+      )
     }
     const declaredAllergenIds = resolveDeclaredAllergenIds(catalog, profile.allergies)
     assertGeneratedPlan(generated.content, MONTHLY_PLAN_DAYS, locale, {

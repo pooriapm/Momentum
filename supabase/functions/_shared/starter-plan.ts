@@ -30,7 +30,9 @@ function starterFoodIds(catalog: PlanCatalogSnapshot): readonly string[] {
 }
 
 function starterExerciseIds(catalog: PlanCatalogSnapshot): readonly string[] {
-  return catalog.releaseId === 'momentum-core@v2' ? STARTER_EXERCISE_IDS_V2 : STARTER_EXERCISE_IDS_V1
+  return catalog.releaseId === 'momentum-core@v2'
+    ? STARTER_EXERCISE_IDS_V2
+    : STARTER_EXERCISE_IDS_V1
 }
 
 function requiredFood(catalog: PlanCatalogSnapshot, id: string): CatalogFood {
@@ -189,7 +191,8 @@ export function buildMonthlyStubPlan(
 
   const targets = {
     calories: breakfast.nutrition.calories + lunch.nutrition.calories + dinner.nutrition.calories,
-    protein_g: breakfast.nutrition.protein_g + lunch.nutrition.protein_g + dinner.nutrition.protein_g,
+    protein_g: breakfast.nutrition.protein_g + lunch.nutrition.protein_g +
+      dinner.nutrition.protein_g,
     carbs_g: breakfast.nutrition.carbs_g + lunch.nutrition.carbs_g + dinner.nutrition.carbs_g,
     fat_g: breakfast.nutrition.fat_g + lunch.nutrition.fat_g + dinner.nutrition.fat_g,
     fiber_g: breakfast.nutrition.fiber_g + lunch.nutrition.fiber_g + dinner.nutrition.fiber_g,

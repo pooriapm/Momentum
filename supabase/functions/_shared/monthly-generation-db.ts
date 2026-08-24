@@ -3,6 +3,7 @@ import { mapGiftReservationError } from './gift-campaign.ts'
 import { HttpError } from './http.ts'
 import { finalizeAiUsage, reserveAiUsage } from './limits.ts'
 import {
+  cycleDateWindow,
   type EntitlementRecord,
   type GenerationJobRecord,
   type GenerationJobStatus,
@@ -11,7 +12,6 @@ import {
   type ImportedPlan,
   type PeriodRecord,
   PLAN_SCHEMA_VERSION,
-  cycleDateWindow,
 } from './monthly-generation.ts'
 import { loadPlanCatalog } from './plan-catalog.ts'
 
@@ -82,14 +82,21 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
           'user_id,locale,timezone,product_region,onboarding_status,automation_block_reason,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,health_data_consent_at,health_consent_version',
         ).eq('user_id', userId).single(),
         admin.from('dietary_preferences').select('allergies').eq('user_id', userId).maybeSingle(),
-        admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1).maybeSingle(),
+        admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1)
+          .maybeSingle(),
       ])
       if (profileResult.error || !profileResult.data) {
-        throw new HttpError(409, 'CONSENT_REQUIRED', 'Complete onboarding before generating a plan.')
+        throw new HttpError(
+          409,
+          'CONSENT_REQUIRED',
+          'Complete onboarding before generating a plan.',
+        )
       }
       const row = profileResult.data
       const allergies = Array.isArray(prefsResult.data?.allergies)
-        ? prefsResult.data.allergies.filter((item: unknown): item is string => typeof item === 'string')
+        ? prefsResult.data.allergies.filter((item: unknown): item is string =>
+          typeof item === 'string'
+        )
         : []
       return {
         userId,
@@ -146,7 +153,9 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
     async findJobByIdempotency(userId, key) {
       const { data, error } = await admin.from('ai_generation_jobs').select('*')
         .eq('user_id', userId).eq('idempotency_key', key).maybeSingle()
-      if (error) throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
+      if (error) {
+        throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
+      }
       return data ? mapJob(data) : null
     },
 
@@ -156,7 +165,9 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         .order('created_at', { ascending: false }).limit(1)
       if (exceptJobId) query = query.neq('id', exceptJobId)
       const { data, error } = await query.maybeSingle()
-      if (error) throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
+      if (error) {
+        throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
+      }
       return data ? mapJob(data) : null
     },
 
@@ -169,7 +180,10 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         (id): id is string => typeof id === 'string',
       )
       const versions = versionIds.length
-        ? await admin.from('plan_versions').select('id,plan_id').in('id', versionIds).eq('user_id', userId)
+        ? await admin.from('plan_versions').select('id,plan_id').in('id', versionIds).eq(
+          'user_id',
+          userId,
+        )
         : { data: [], error: null }
       if (versions.error) {
         throw new HttpError(503, 'period_unavailable', 'Plan periods are unavailable.')
@@ -178,14 +192,21 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         (versions.data ?? []).map((row) => [String(row.id), String(row.plan_id)]),
       )
       return rows.map((row) =>
-        mapPeriod(row, row.imported_plan_version_id ? planByVersion.get(String(row.imported_plan_version_id)) ?? null : null)
+        mapPeriod(
+          row,
+          row.imported_plan_version_id
+            ? planByVersion.get(String(row.imported_plan_version_id)) ?? null
+            : null,
+        )
       )
     },
 
     async upsertPeriod(input) {
       const { data: existing, error: existingError } = await admin.from('monthly_plan_periods')
         .select('*').eq('user_id', input.userId).eq('cycle_index', input.cycleIndex).maybeSingle()
-      if (existingError) throw new HttpError(503, 'period_unavailable', 'Plan periods are unavailable.')
+      if (existingError) {
+        throw new HttpError(503, 'period_unavailable', 'Plan periods are unavailable.')
+      }
       if (existing) return mapPeriod(existing)
       const { data, error } = await admin.from('monthly_plan_periods').insert({
         user_id: input.userId,
@@ -193,7 +214,9 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         entitlement_id: input.entitlementId,
         status: 'reserved',
       }).select('*').single()
-      if (error || !data) throw new HttpError(503, 'period_unavailable', 'Plan periods are unavailable.')
+      if (error || !data) {
+        throw new HttpError(503, 'period_unavailable', 'Plan periods are unavailable.')
+      }
       return mapPeriod(data)
     },
 
@@ -250,7 +273,9 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
       if (patch.promptVersion !== undefined) update.prompt_version = patch.promptVersion
       if (mapped === 'ready' || mapped === 'failed') update.finished_at = new Date().toISOString()
       const { error } = await admin.from('ai_generation_jobs').update(update).eq('id', jobId)
-      if (error) throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
+      if (error) {
+        throw new HttpError(503, 'generation_job_unavailable', 'Generation jobs are unavailable.')
+      }
       if (mapped === 'failed') {
         await admin.from('monthly_plan_periods').update({
           status: patch.errorCode === 'PLAN_VALIDATION_FAILED'
@@ -285,14 +310,19 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         p_cached_input_tokens: input.usage.cachedInputTokens ?? null,
         p_reasoning_tokens: input.usage.reasoningTokens ?? null,
       })
-      if (error || !isRecord(data) || typeof data.plan_id !== 'string' || typeof data.plan_version_id !== 'string') {
+      if (
+        error || !isRecord(data) || typeof data.plan_id !== 'string' ||
+        typeof data.plan_version_id !== 'string'
+      ) {
         await finalizeAiUsage(admin, input.reservation, 'released').catch(() => undefined)
         throw new HttpError(500, 'PLAN_IMPORT_FAILED', 'The validated plan could not be imported.')
       }
       return {
         planId: data.plan_id,
         planVersionId: data.plan_version_id,
-        importedAt: typeof data.imported_at === 'string' ? data.imported_at : new Date().toISOString(),
+        importedAt: typeof data.imported_at === 'string'
+          ? data.imported_at
+          : new Date().toISOString(),
       } satisfies ImportedPlan
     },
   }
