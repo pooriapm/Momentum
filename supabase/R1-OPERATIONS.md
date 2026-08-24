@@ -9,7 +9,7 @@ boundaries. It contains identifiers and secret names only, never secret values.
 | --- | --- | --- | --- |
 | Local | Supabase project ID `momentum`; `127.0.0.1:54321` | Available | Clean reset, auth-email, RLS, Storage and Edge proofs |
 | Staging | No project or branch provisioned | Blocked | Must exist before a hosted R1 acceptance run |
-| Production | Project ref `osyvvzglvyonevkhdzpu`; web origin `https://momentum.pooria-pm.workers.dev` | Active | Promotion target only after staging acceptance |
+| Production | Project ref `osyvvzglvyonevkhdzpu`; web origin `https://momentum.pooria-pm.workers.dev` | Active | Owner-authorized R1 deployment; AI and payments remain fail-closed |
 
 Do not reuse the unrelated `english-vocabulary` or `termledger` Supabase
 projects. Do not call production "staging" and do not create a paid project or
@@ -84,6 +84,16 @@ restore service only after ownership and data boundaries are re-proven.
 
 ## R1 acceptance status
 
-Local engineering acceptance is executable through `npm run test:r1-local`.
-Hosted acceptance remains **blocked** until an isolated staging environment is
-provisioned. Production has not been mutated as part of this local completion.
+R1 engineering and production deployment completed on 2026-08-24. Local
+acceptance remains executable through `npm run test:r1-local`; the final GitHub
+quality run passed all five jobs. Production contains all target migrations and
+the five target Edge Functions. Exact-origin CORS, public geo access, missing and
+invalid token behavior, request IDs, service-role least privilege, Auth URL/MFA,
+Storage configuration and fail-closed AI switches were verified.
+
+No isolated staging project or branch exists. The owner explicitly authorized a
+constrained direct-production deployment because provisioning another hosted
+environment was not available. This is an exception, not evidence that staging
+exists: destructive lifecycle drills, restore rehearsal and promotion/rollback
+practice remain blocked until an isolated environment is available. R2 work may
+continue locally and in CI, but it must not weaken the production safety switches.

@@ -177,9 +177,10 @@ spec هستند. وضعیت دقیق در [`docs/design/CONFORMANCE.md`](docs/de
 نقشه کامل: [`docs/README.md`](docs/README.md).
 
 کد فعلی آلفا است و جایی که با قرارداد D1–D11 اختلاف دارد drift محسوب می‌شود.
-قدم بعدی تکمیل طراحی است؛ بازنویسی اپ فقط بعد از امضای Step 5.
+Design Step 5، R0 و R1 تکمیل شده‌اند. قدم فعال، R2 deterministic product core
+است؛ معیارهای دقیق آن در [`docs/R2-ACCEPTANCE.md`](docs/R2-ACCEPTANCE.md) ثبت شده‌اند.
 
-- [`docs/README.md`](docs/README.md) — دو قدم بعدی: تکمیل طراحی، سپس بازنویسی
+- [`docs/README.md`](docs/README.md) — وضعیت فعلی و ترتیب ادامهٔ اجرا
 - [`docs/design/HANDOFF.md`](docs/design/HANDOFF.md) — ادامه طراحی
 - [`docs/product/PHASE-0-PRODUCT-CONTRACT.md`](docs/product/PHASE-0-PRODUCT-CONTRACT.md) — D1–D11
 - [`docs/product/PRD.md`](docs/product/PRD.md)
