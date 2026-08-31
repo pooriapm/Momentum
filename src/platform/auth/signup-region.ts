@@ -8,7 +8,8 @@ export interface SignupRegion {
   source: 'ip_at_signup'
 }
 
-export async function resolveSignupRegion(fallbackLocale: 'fa' | 'en'): Promise<SignupRegion> {
+export async function resolveSignupRegion(_fallbackLocale: 'fa' | 'en'): Promise<SignupRegion> {
+  void _fallbackLocale
   try {
     const context = await loadPricingContext()
     if (context?.suggested_product_region === 'ir' || context?.suggested_product_region === 'intl') {
@@ -31,7 +32,7 @@ export async function resolveSignupRegion(fallbackLocale: 'fa' | 'en'): Promise<
 
   return {
     countryCode: null,
-    productRegion: fallbackLocale === 'fa' ? 'ir' : 'intl',
+    productRegion: 'intl',
     source: 'ip_at_signup',
   }
 }

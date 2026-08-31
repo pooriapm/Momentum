@@ -176,9 +176,9 @@ export function PlanNutritionView({
   return (
     <div className="plan-stack" data-inventory="PLAN-02">
       <ContentCard>
-        <StatusPill tone="energy">{fa ? 'یک ماه تقویمی از زمان آماده‌شدن' : 'One calendar month from plan ready time'}</StatusPill>
+        <StatusPill tone="energy">{fa ? 'برنامه کامل ۳۰روزه' : 'Complete 30-day plan'}</StatusPill>
         <h2>{fa ? 'الگوی ماهانه تغذیه' : 'Monthly nutrition pattern'}</h2>
-        <p>{fa ? 'این دوره از لحظه آماده‌شدن تا همان تاریخ در ماه بعد ادامه دارد. هر وعده چند گزینه هم‌ارزش دارد تا برنامه بدون بازتولید قابل اجرا بماند.' : 'This period runs from the moment the plan is ready to the matching date in the next month. Every meal includes equivalent options so the plan remains practical without regeneration.'}</p>
+        <p>{fa ? 'این دوره از لحظه آماده‌شدن، ۳۰ روز کامل را پوشش می‌دهد. هر وعده چند گزینه هم‌ارزش دارد تا برنامه بدون بازتولید قابل اجرا بماند.' : 'This period covers 30 complete days from the moment the plan is ready. Every meal includes equivalent options so the plan remains practical without regeneration.'}</p>
         <ul className="plan-pattern-list">
           {weeks.map((week, index) => (
             <li key={`nutrition-week-${index}`}>
@@ -254,7 +254,7 @@ export function PlanTrainingView({
   return (
     <div className="plan-stack" data-inventory="PLAN-03">
       <ContentCard>
-        <StatusPill tone="brand">{fa ? 'یک ماه تقویمی از زمان آماده‌شدن' : 'One calendar month from plan ready time'}</StatusPill>
+        <StatusPill tone="brand">{fa ? 'برنامه کامل ۳۰روزه' : 'Complete 30-day plan'}</StatusPill>
         <h2>{fa ? `${days.filter((day) => day.workout).length} روز تمرین در این دوره` : `${days.filter((day) => day.workout).length} workout days this period`}</h2>
         <ul className="plan-pattern-list">
           {weeks.map((week, index) => {

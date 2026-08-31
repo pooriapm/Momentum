@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(33);
@@ -154,7 +156,7 @@ select extensions.is(
   'user B sees only their own private object'
 );
 
-reset role;
+set local role postgres;
 set local role anon;
 select set_config('request.jwt.claim.sub', '', true);
 
@@ -186,26 +188,40 @@ select extensions.ok(
   'anonymous clients have no write privilege on onboarding data'
 );
 
-reset role;
+set local role postgres;
 set local role service_role;
 
 select extensions.is(
-  (select count(*)::integer from public.profiles),
+  (select count(*)::integer from public.profiles where user_id in (
+    '66666666-6666-4666-8666-666666666666',
+    '77777777-7777-4777-8777-777777777777'
+  )),
   2,
   'service role can read both profiles for trusted Edge work'
 );
 select extensions.is(
-  (select count(*)::integer from public.goals),
+  (select count(*)::integer from public.goals where user_id in (
+    '66666666-6666-4666-8666-666666666666',
+    '77777777-7777-4777-8777-777777777777'
+  )),
   2,
   'service role can read both goals for trusted Edge work'
 );
 select extensions.is(
-  (select count(*)::integer from public.onboarding_drafts),
+  (select count(*)::integer from public.onboarding_drafts where user_id in (
+    '66666666-6666-4666-8666-666666666666',
+    '77777777-7777-4777-8777-777777777777'
+  )),
   2,
   'service role can read both onboarding drafts for trusted Edge work'
 );
 select extensions.is(
-  (select count(*)::integer from storage.objects where bucket_id = 'body-composition'),
+  (select count(*)::integer from storage.objects
+   where bucket_id = 'body-composition'
+     and (storage.foldername(name))[1] in (
+       '66666666-6666-4666-8666-666666666666',
+       '77777777-7777-4777-8777-777777777777'
+     )),
   3,
   'service role can read storage objects across user prefixes'
 );
@@ -223,6 +239,6 @@ select extensions.ok(
   'service role cannot mutate protected profile state directly'
 );
 
-reset role;
+set local role postgres;
 select * from extensions.finish();
 rollback;

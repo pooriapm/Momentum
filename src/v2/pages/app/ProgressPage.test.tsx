@@ -28,11 +28,27 @@ describe('ProgressPage inventory states', () => {
     await i18n.changeLanguage('en')
   })
 
-  it('PROG-01 shows a four-week overview and a bold weekly report CTA', () => {
+  it('PROG-01 shows the available monthly-plan segments and a bold weekly report CTA', () => {
     renderProgress()
-    expect(screen.getByText(/week 4 of 4/i)).toBeInTheDocument()
+    expect(screen.getByText(/week 4 of 5/i)).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /save weekly report/i }).length).toBeGreaterThan(0)
     expect(screen.queryByText(/current streak/i)).not.toBeInTheDocument()
+  })
+
+  it('supports the fifth two-day segment of a complete 30-day plan', () => {
+    const fifthWeekPlan = {
+      ...demoPlan,
+      progress: {
+        ...demoPlan.progress,
+        weeklySeries: [
+          ...(demoPlan.progress.weeklySeries ?? []).map((point) => ({ ...point, partial: false })),
+          { week: 5, workoutsCompleted: 1, workoutsPlanned: 1, mealsCompleted: 6, mealsPlanned: 8, energy: 7.5, adherence: 78, partial: true },
+        ],
+      },
+    }
+    renderProgress({ plan: fifthWeekPlan })
+    expect(screen.getByText(/week 5 of 5/i)).toBeInTheDocument()
+    expect(screen.getByText(/week 5 · partial/i)).toBeInTheDocument()
   })
 
   it('PROG-02 keeps chart, text, and table alternatives of the same data', () => {
@@ -74,7 +90,7 @@ describe('ProgressPage inventory states', () => {
     expect(screen.getByRole('heading', { name: /the free month is ending/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/pricing')
     expect(screen.getByLabelText(/note for next month/i)).toBeInTheDocument()
-    expect(screen.getByText(/not a 7-day trial/i)).toBeInTheDocument()
+    expect(screen.getByText(/complete 30-day first-month plan/i)).toBeInTheDocument()
   })
 
   it('uses the account unit preference for weight without changing stored metric values', () => {

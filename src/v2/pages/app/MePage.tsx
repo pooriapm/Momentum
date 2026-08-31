@@ -174,7 +174,7 @@ function MembershipPanel({
 }
 
 function tMembershipTitle(status: MembershipStatus, fa: boolean) {
-  if (status === 'gift') return fa ? 'هدیه یک برنامه ماهانه است، نه آزمایش ۷روزه' : 'The gift is one monthly plan, not a 7-day trial'
+  if (status === 'gift') return fa ? 'هدیه، برنامه کامل ۳۰روزه ماه اول است' : 'The gift is the complete 30-day plan for your first month'
   if (status === 'pending') return fa ? 'پرداخت را بازیابی کن' : 'Recover payment to continue'
   if (status === 'cancelled' || status === 'expired') return fa ? 'عضویت برای چرخه بعد لازم است' : 'Membership is required for the next cycle'
   if (status === 'none') return fa ? 'روش پرداخت را اضافه کن یا عضو شو' : 'Add a payment method, or subscribe'

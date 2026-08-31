@@ -12,31 +12,22 @@ afterEach(() => vi.unstubAllGlobals())
 describe('R6-R8 enrollment gates', () => {
   it('fails closed when alpha and beta switches are absent', () => {
     env({})
-    expect(() => assertClosedAlphaAccess(userId, 'US')).toThrow(expect.objectContaining({ code: 'ALPHA_DISABLED' }))
-    expect(() => assertPublicBetaAccess('US')).toThrow(expect.objectContaining({ code: 'PUBLIC_BETA_DISABLED' }))
+    expect(() => assertClosedAlphaAccess(userId)).toThrow(expect.objectContaining({ code: 'ALPHA_DISABLED' }))
+    expect(() => assertPublicBetaAccess()).toThrow(expect.objectContaining({ code: 'PUBLIC_BETA_DISABLED' }))
   })
 
-  it('requires both an invited alpha user and an approved country', () => {
+  it('requires an invited alpha user without country filtering', () => {
     env({
       ALPHA_ENROLLMENT_ENABLED: 'true',
       ALPHA_COHORT_IDS: userId,
-      ALPHA_COUNTRY_ALLOWLIST: 'US,CA',
     })
-    expect(() => assertClosedAlphaAccess(userId, 'US')).not.toThrow()
-    expect(() => assertClosedAlphaAccess('22222222-2222-4222-8222-222222222222', 'US'))
+    expect(() => assertClosedAlphaAccess(userId)).not.toThrow()
+    expect(() => assertClosedAlphaAccess('22222222-2222-4222-8222-222222222222'))
       .toThrow(expect.objectContaining({ code: 'ALPHA_NOT_INVITED' }))
-    expect(() => assertClosedAlphaAccess(userId, 'DE'))
-      .toThrow(expect.objectContaining({ code: 'ALPHA_COUNTRY_BLOCKED' }))
-    expect(() => assertClosedAlphaAccess(userId, 'IR'))
-      .toThrow(expect.objectContaining({ code: 'RELEASE_COUNTRY_BLOCKED' }))
   })
 
-  it('requires an exact server-owned beta country allowlist', () => {
-    env({ PUBLIC_BETA_ENABLED: 'true', BETA_COUNTRY_ALLOWLIST: 'US,CA' })
-    expect(() => assertPublicBetaAccess('ca')).not.toThrow()
-    expect(() => assertPublicBetaAccess('DE'))
-      .toThrow(expect.objectContaining({ code: 'BETA_COUNTRY_BLOCKED' }))
-    expect(() => assertPublicBetaAccess('IR'))
-      .toThrow(expect.objectContaining({ code: 'RELEASE_COUNTRY_BLOCKED' }))
+  it('uses one global server-owned beta switch', () => {
+    env({ PUBLIC_BETA_ENABLED: 'true' })
+    expect(() => assertPublicBetaAccess()).not.toThrow()
   })
 })

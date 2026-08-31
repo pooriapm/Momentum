@@ -10,6 +10,7 @@ const pricingContextSchema = z.object({
   suggested_market: z.enum(['ir', 'global']),
   suggested_product_region: z.enum(['ir', 'intl']).optional(),
   suggested_currency: z.enum(['IRR', 'USD']),
+  suggested_payment_provider: z.enum(['zarinpal', 'stripe']).optional(),
   suggested_cuisine_region: z.enum(['iran', 'international']),
   ai_service_available: z.boolean(),
   authoritative_for_checkout: z.literal(false),
@@ -30,6 +31,17 @@ const pricingContextSchema = z.object({
 
 export type PricingContext = z.infer<typeof pricingContextSchema>
 export type MembershipPrice = PricingContext['prices'][number]
+
+export function suggestedLocaleFromContext(
+  context: PricingContext | null | undefined,
+  fallback: 'fa' | 'en',
+): 'fa' | 'en' {
+  return context?.suggested_locale === 'fa-IR'
+    ? 'fa'
+    : context?.suggested_locale === 'en-US'
+    ? 'en'
+    : fallback
+}
 
 export async function loadPricingContext(manualCountry?: string): Promise<PricingContext | null> {
   if (!runtimeConfig.hasSupabase) return null

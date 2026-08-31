@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(13);
@@ -31,6 +33,18 @@ where user_id in (
   '32323232-3232-4232-8232-323232323232'
 );
 
+insert into public.entitlements(
+  id, user_id, source, status, period_start, period_end, plan_generation_limit
+) values (
+  '30303030-3030-4030-8030-303030303030',
+  '31313131-3131-4131-8131-313131313131',
+  'subscription',
+  'active',
+  statement_timestamp(),
+  statement_timestamp() + interval '30 days',
+  1
+);
+
 select extensions.is(
   private.payment_method_blocks_paid_generation('31313131-3131-4131-8131-313131313131'),
   true,
@@ -53,6 +67,9 @@ select extensions.is(
   'server-owned stub record opens the paid gate without a live provider'
 );
 
+delete from public.entitlements
+where id = '30303030-3030-4030-8030-303030303030';
+
 select extensions.lives_ok($$
   insert into public.entitlements(user_id,source,status,period_start,period_end,plan_generation_limit)
   values
@@ -68,7 +85,6 @@ set enabled = true,
     remaining_budget_usd = 2.50,
     reservation_cost_usd = 2.50,
     min_remaining_usd = 0,
-    allowed_markets = array['intl']::text[],
     starts_at = null,
     ends_at = null
 where id = '20000000-0000-4000-8000-000000000001';
@@ -136,8 +152,8 @@ select extensions.is(
 select extensions.is(
   (select period_end from public.entitlements
    where user_id = '31313131-3131-4131-8131-313131313131' and source = 'gift'),
-  '2026-02-28T20:15:00Z'::timestamptz,
-  'gift entitlement ends at the ready_at-derived calendar-month boundary'
+  '2026-03-02T20:15:00Z'::timestamptz,
+  'gift entitlement ends at the ready_at-derived 30-day boundary'
 );
 
 select extensions.has_index(

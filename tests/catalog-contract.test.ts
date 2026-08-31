@@ -94,20 +94,20 @@ function firstExercise(plan: Record<string, unknown>): Record<string, unknown> {
 describe('governed plan catalog', () => {
   it('builds a deterministic non-AI starter plan that passes the same contract', () => {
     const catalog = createPlanCatalogSnapshot(rows())
-    const plan = buildStarterPlan(catalog, 3, 'en-US')
+    const plan = buildStarterPlan(catalog, 30, 'en-US')
 
-    expect(() => assertGeneratedPlan(plan, 3, 'en-US', { catalog })).not.toThrow()
+    expect(() => assertGeneratedPlan(plan, 30, 'en-US', { catalog })).not.toThrow()
   })
 
   it('fails closed when generated output contains an unknown catalog ID', () => {
     const catalog = createPlanCatalogSnapshot(rows())
-    const plan = buildStarterPlan(catalog, 3, 'en-US')
+    const plan = buildStarterPlan(catalog, 30, 'en-US')
     const days = plan.days as Record<string, unknown>[]
     const meals = days[0]?.meals as Record<string, unknown>[]
     const options = meals[0]?.options as Record<string, unknown>[]
     if (options[0]) options[0].food_id = 'food:invented@v1'
 
-    expect(() => assertGeneratedPlan(plan, 3, 'en-US', { catalog }))
+    expect(() => assertGeneratedPlan(plan, 30, 'en-US', { catalog }))
       .toThrow(expect.objectContaining({ code: 'unknown_catalog_id' }))
   })
 
@@ -116,10 +116,10 @@ describe('governed plan catalog', () => {
       ingredient_id: 'ingredient:brown-rice@v1',
       allergen_id: 'allergen:milk@v1',
     }]))
-    const plan = buildStarterPlan(catalog, 3, 'fa-IR')
+    const plan = buildStarterPlan(catalog, 30, 'fa-IR')
     const declaredAllergenIds = resolveDeclaredAllergenIds(catalog, ['لبنیات'])
 
-    expect(() => assertGeneratedPlan(plan, 3, 'fa-IR', { catalog, declaredAllergenIds }))
+    expect(() => assertGeneratedPlan(plan, 30, 'fa-IR', { catalog, declaredAllergenIds }))
       .toThrow(expect.objectContaining({ code: 'allergen_in_generated_plan' }))
   })
 
@@ -151,37 +151,37 @@ describe('governed plan catalog', () => {
     ['fa-IR', 'ml'],
   ] as const)('rejects altered ingredient amounts and units for %s plans', (locale, invalidUnit) => {
     const catalog = createPlanCatalogSnapshot(rows())
-    const invalidAmount = buildStarterPlan(catalog, 3, locale)
+    const invalidAmount = buildStarterPlan(catalog, 30, locale)
     firstIngredient(invalidAmount).amount = 0
-    expect(() => assertGeneratedPlan(invalidAmount, 3, locale, { catalog }))
+    expect(() => assertGeneratedPlan(invalidAmount, 30, locale, { catalog }))
       .toThrow(expect.objectContaining({ code: 'invalid_ingredient_amount' }))
 
-    const invalidUnits = buildStarterPlan(catalog, 3, locale)
+    const invalidUnits = buildStarterPlan(catalog, 30, locale)
     firstIngredient(invalidUnits).unit = invalidUnit
-    expect(() => assertGeneratedPlan(invalidUnits, 3, locale, { catalog }))
+    expect(() => assertGeneratedPlan(invalidUnits, 30, locale, { catalog }))
       .toThrow(expect.objectContaining({ code: 'invalid_ingredient_unit' }))
   })
 
   it('accepts a Persian-digit repetition boundary and rejects invalid ranges', () => {
     const catalog = createPlanCatalogSnapshot(rows())
-    const persian = buildStarterPlan(catalog, 3, 'fa-IR')
+    const persian = buildStarterPlan(catalog, 30, 'fa-IR')
     firstExercise(persian).reps = '۸–۱۲'
-    expect(() => assertGeneratedPlan(persian, 3, 'fa-IR', { catalog })).not.toThrow()
+    expect(() => assertGeneratedPlan(persian, 30, 'fa-IR', { catalog })).not.toThrow()
 
     for (const reps of ['12-8', '0-12', '8-201', 'eight to twelve']) {
-      const invalid = buildStarterPlan(catalog, 3, 'en-US')
+      const invalid = buildStarterPlan(catalog, 30, 'en-US')
       firstExercise(invalid).reps = reps
-      expect(() => assertGeneratedPlan(invalid, 3, 'en-US', { catalog }))
+      expect(() => assertGeneratedPlan(invalid, 30, 'en-US', { catalog }))
         .toThrow(expect.objectContaining({ code: 'invalid_exercise_range' }))
     }
   })
 
   it('rejects a substitution label that does not match its governed ID', () => {
     const catalog = createPlanCatalogSnapshot(rows())
-    const plan = buildStarterPlan(catalog, 3, 'en-US')
+    const plan = buildStarterPlan(catalog, 30, 'en-US')
     firstExercise(plan).substitution = 'Invented movement'
 
-    expect(() => assertGeneratedPlan(plan, 3, 'en-US', { catalog }))
+    expect(() => assertGeneratedPlan(plan, 30, 'en-US', { catalog }))
       .toThrow(expect.objectContaining({ code: 'invalid_exercise_substitution' }))
   })
 })

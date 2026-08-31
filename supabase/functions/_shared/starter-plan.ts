@@ -1,4 +1,5 @@
 import { HttpError } from './http.ts'
+import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import type { CatalogFood, PlanCatalogSnapshot } from './plan-catalog.ts'
 
 const STARTER_FOOD_IDS_V1 = [
@@ -174,8 +175,8 @@ export function buildMonthlyStubPlan(
   locale: 'fa-IR' | 'en-US',
   options: { invalidCatalogId?: boolean; declaredAllergenIds?: ReadonlySet<string> } = {},
 ): Record<string, unknown> {
-  if (!Number.isInteger(requestedDays) || requestedDays < 3 || requestedDays > 14) {
-    throw new HttpError(400, 'invalid_days', 'Starter plan must cover 3 to 14 days.')
+  if (requestedDays !== MONTHLY_PLAN_DAYS) {
+    throw new HttpError(400, 'invalid_days', 'Monthly plans must cover exactly 30 days.')
   }
   const foods = starterFoodIds(catalog)
   const declaredAllergenIds = options.declaredAllergenIds ?? new Set<string>()

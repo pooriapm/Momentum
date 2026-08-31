@@ -303,10 +303,11 @@ async function deleteAccountStorageAndIdentity(
 async function completeAccountDeletion(
   admin: Awaited<ReturnType<typeof authenticate>>['admin'],
   userId: string,
+  accessToken: string,
 ): Promise<void> {
   const hash = await accountHash(userId)
   try {
-    await revokeAccountSessions(admin, userId)
+    await revokeAccountSessions(admin, accessToken)
     await markDeletionSessionsRevoked(admin, userId)
     await deleteAccountStorageAndIdentity(admin, userId)
   } catch (error) {
@@ -766,10 +767,8 @@ function projectPlanDay(options: {
   if (typeof options.plan.valid_from !== 'string') return null
   const dayOffset = differenceInDays(options.plan.valid_from, options.localDate)
   if (dayOffset < 0) return null
-  const templateLength = content.days.length
-  const wrappedIndex = templateLength > 0 ? dayOffset % templateLength : dayOffset
   const rawDay = content.days.find(
-    (item) => isRecord(item) && item.day_index === wrappedIndex,
+    (item) => isRecord(item) && item.day_index === dayOffset,
   )
   if (!isRecord(rawDay) || !Array.isArray(rawDay.meals)) return null
   const statuses = new Map(
@@ -891,7 +890,7 @@ async function loadDashboard(
     admin
       .from('profiles')
       .select(
-        'display_name,date_of_birth,sex,height_cm,locale,timezone,country_code,pricing_market,product_region,unit_system,onboarding_status,automation_block_reason,plan_source_preference,ai_billing_country_code,ai_country_verified_at,ai_country_verification_method,payment_method_status,terms_version,privacy_version,health_consent_version,health_data_consent_at',
+        'display_name,date_of_birth,sex,height_cm,locale,timezone,country_code,pricing_market,product_region,unit_system,onboarding_status,automation_block_reason,plan_source_preference,payment_method_status,terms_version,privacy_version,health_consent_version,health_data_consent_at',
       )
       .eq('user_id', userId)
       .single(),
@@ -1008,30 +1007,38 @@ async function loadDashboard(
       .eq('id', activePlan.active_version_id)
       .eq('user_id', userId)
       .single()
-    if (!error && version) {
-      const currentProjection = projectPlanDay({
+    if (error || !version) {
+      throw new HttpError(503, 'dashboard_unavailable', 'Dashboard data is unavailable.')
+    }
+    const validFrom = String(activePlan.valid_from)
+    const validTo = String(activePlan.valid_to)
+    const dayCount = differenceInDays(validFrom, validTo) + 1
+    if (dayCount !== 30) {
+      throw new HttpError(503, 'plan_projection_invalid', 'The stored monthly plan is incomplete.')
+    }
+    const currentProjection = projectPlanDay({
+      plan: activePlan,
+      version,
+      localDate: input.localDate,
+      statuses: statusesResult.data ?? [],
+    })
+    if (!currentProjection) {
+      throw new HttpError(503, 'plan_projection_invalid', 'The stored monthly plan is incomplete.')
+    }
+    const days = Array.from({ length: dayCount }, (_, index) => {
+      const localDate = addIsoDays(validFrom, index)
+      const projection = projectPlanDay({
         plan: activePlan,
         version,
-        localDate: input.localDate,
-        statuses: statusesResult.data ?? [],
+        localDate,
+        statuses: localDate === input.localDate ? (statusesResult.data ?? []) : [],
       })
-      if (currentProjection) {
-        const validFrom = String(activePlan.valid_from)
-        const validTo = String(activePlan.valid_to)
-        const dayCount = Math.min(31, differenceInDays(validFrom, validTo) + 1)
-        const days = Array.from({ length: Math.max(0, dayCount) }, (_, index) => {
-          const localDate = addIsoDays(validFrom, index)
-          const projection = projectPlanDay({
-            plan: activePlan,
-            version,
-            localDate,
-            statuses: localDate === input.localDate ? (statusesResult.data ?? []) : [],
-          })
-          return projection && isRecord(projection.day) ? projection.day : null
-        }).filter((day): day is Record<string, unknown> => day !== null)
-        planProjection = { ...currentProjection, days }
-      }
+      return projection && isRecord(projection.day) ? projection.day : null
+    }).filter((day): day is Record<string, unknown> => day !== null)
+    if (days.length !== 30) {
+      throw new HttpError(503, 'plan_projection_invalid', 'The stored monthly plan is incomplete.')
     }
+    planProjection = { ...currentProjection, days }
   }
 
   const planHistory = projectPlanHistory({
@@ -1113,11 +1120,6 @@ async function loadDashboard(
         automation_block_reason: profileResult.data.automation_block_reason,
         plan_source_preference: profileResult.data.plan_source_preference ?? 'momentum',
         email_confirmed: emailConfirmed,
-        ai_country_verified: Boolean(
-          profileResult.data.ai_billing_country_code &&
-            profileResult.data.ai_country_verified_at &&
-            profileResult.data.ai_country_verification_method,
-        ),
         payment_method_status: profileResult.data.payment_method_status ?? 'not_collected',
         consent_versions: {
           terms: profileResult.data.terms_version ?? null,
@@ -1565,7 +1567,7 @@ Deno.serve(async (request) => {
       }
       const deletion = await beginDeletionRow(auth.admin, auth.user.id, 'DELETE')
       if (deletion.status === 'pending') {
-        await completeAccountDeletion(auth.admin, auth.user.id)
+        await completeAccountDeletion(auth.admin, auth.user.id, auth.accessToken)
       }
       return jsonResponse(request, { deleted: true, deletion_request: { status: 'completed' } })
     }
@@ -1610,10 +1612,7 @@ Deno.serve(async (request) => {
             'Current terms, privacy policy, and health-data consent must be accepted.',
           )
         }
-        if (
-          error.message.includes('onboarding_draft_invalid') ||
-          error.message.includes('verified_country_required')
-        ) {
+        if (error.message.includes('onboarding_draft_invalid')) {
           throw new HttpError(
             422,
             'onboarding_draft_invalid',
@@ -1626,7 +1625,14 @@ Deno.serve(async (request) => {
           'Onboarding could not be completed.',
         )
       }
-      return jsonResponse(request, { onboarding: data })
+      const onboarding = isRecord(data)
+        ? Object.fromEntries(Object.entries(data).filter(([key]) => ![
+          'ai_country_verified',
+          'ai_billing_country_code',
+          'ai_country_verification_method',
+        ].includes(key)))
+        : data
+      return jsonResponse(request, { onboarding })
     }
 
     if (body.action === 'create-starter-plan') {

@@ -3,6 +3,7 @@ import {
   assertNormalizedPaymentEvent,
   assertPaymentMarketAllowed,
   DisabledPaymentProvider,
+  resolvePaymentRoute,
   reduceBillingState,
   type NormalizedPaymentEvent,
 } from '../supabase/functions/_shared/billing.ts'
@@ -14,12 +15,24 @@ function env(values: Record<string, string | undefined>) {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('R5 billing lifecycle', () => {
-  it('is disabled by default and blocks Iran regardless of configuration', () => {
+  it('is disabled by default without restricting any valid country', () => {
     env({})
     expect(() => assertPaymentMarketAllowed('US')).toThrow(expect.objectContaining({ code: 'PAYMENTS_DISABLED' }))
-    env({ PAYMENTS_MASTER_ENABLED: 'true', PAYMENTS_ENABLED_MARKETS: 'US,IR' })
+    env({ PAYMENTS_MASTER_ENABLED: 'true' })
     expect(assertPaymentMarketAllowed('US')).toBe('US')
-    expect(() => assertPaymentMarketAllowed('IR')).toThrow(expect.objectContaining({ code: 'PAYMENT_MARKET_BLOCKED' }))
+    expect(assertPaymentMarketAllowed('IR')).toBe('IR')
+  })
+
+  it('routes Iran to Zarinpal/IRR and every other country to Stripe/USD', () => {
+    env({})
+    expect(resolvePaymentRoute('ir')).toEqual({
+      countryCode: 'IR', market: 'ir', currency: 'IRR', provider: 'zarinpal',
+    })
+    expect(resolvePaymentRoute('DE')).toEqual({
+      countryCode: 'DE', market: 'global', currency: 'USD', provider: 'stripe',
+    })
+    expect(() => resolvePaymentRoute(null))
+      .toThrow(expect.objectContaining({ code: 'PAYMENT_COUNTRY_REQUIRED' }))
   })
 
   it('reduces checkout, renewal failure, recovery, cancellation and expiry deterministically', () => {

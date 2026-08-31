@@ -42,7 +42,7 @@ export function OnboardingResumePage({ locale }: { locale: AppLocale }) {
   if (!user) return <Redirect replace to={localizedPath(locale, '/auth/sign-in')} />
   if (draft.isError) {
     return (
-      <main className="guard-page">
+      <main className="guard-page screen-enter">
         <ContentCard>
           <h1>{fa ? 'ادامه آنبوردینگ در دسترس نیست' : 'Onboarding is temporarily unavailable'}</h1>
           <p>{fa ? 'اطلاعات ذخیره‌شده خوانده نشد. دوباره تلاش کن؛ فرم خالی جایگزین داده‌ها نمی‌شود.' : 'Saved answers could not be loaded. Retry; an empty form will not replace them.'}</p>
@@ -57,7 +57,7 @@ export function OnboardingResumePage({ locale }: { locale: AppLocale }) {
   }
 
   return (
-    <main className="onboarding-page">
+    <main className="onboarding-page screen-enter">
       <header className="onboarding-header glass-chrome">
         <Link href={localizedPath(locale)}><BrandLockup compact /></Link>
       </header>

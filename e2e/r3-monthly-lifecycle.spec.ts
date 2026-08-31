@@ -61,7 +61,7 @@ test.describe('authenticated R3 month-one/month-two lifecycle', () => {
       update public.first_plan_campaigns
       set enabled=true,total_budget_usd=100,remaining_budget_usd=100,
           reservation_cost_usd=2.50,min_remaining_usd=0,
-          allowed_markets=array['intl']::text[],starts_at=null,ends_at=null
+          starts_at=null,ends_at=null
       where id='20000000-0000-4000-8000-000000000001';
       insert into public.onboarding_drafts(user_id,current_step,payload) values (
         '${userId}','review',jsonb_build_object(
@@ -136,8 +136,7 @@ test.describe('authenticated R3 month-one/month-two lifecycle', () => {
         where user_id in ('${auxiliaryIds[0]}','${auxiliaryIds[1]}');
         update public.first_plan_campaigns
         set enabled=true,total_budget_usd=2.50,remaining_budget_usd=2.50,
-            reservation_cost_usd=2.50,min_remaining_usd=0,
-            allowed_markets=array['intl']::text[]
+            reservation_cost_usd=2.50,min_remaining_usd=0
         where id='20000000-0000-4000-8000-000000000001';
       `)
       const results = await Promise.all(auxiliaryIds.map((id) => admin.rpc('reserve_first_plan_gift', {
@@ -191,11 +190,12 @@ test.describe('authenticated R3 month-one/month-two lifecycle', () => {
     expect(firstPeriod?.ready_at).toBe(firstPeriod?.starts_at)
     expect(Date.parse(firstPeriod!.ends_at)).toBeGreaterThan(Date.parse(firstPeriod!.ready_at))
 
-    const boundary = new Date(Date.parse(firstPeriod!.ready_at) + 100).toISOString()
     sql(`
-      update public.monthly_plan_periods set ends_at='${boundary}'
+      update public.monthly_plan_periods
+      set ready_at=statement_timestamp()-interval '31 days',
+          starts_at=statement_timestamp()-interval '31 days'
       where user_id='${userId}' and cycle_index=1;
-      update public.entitlements set status='expired',period_end='${boundary}'
+      update public.entitlements set status='expired',period_end=statement_timestamp()-interval '1 day'
       where user_id='${userId}' and source='gift';
       insert into public.entitlements(user_id,source,status,period_start,period_end,plan_generation_limit)
       values ('${userId}','subscription','active',statement_timestamp()-interval '1 minute',statement_timestamp()+interval '40 days',1);

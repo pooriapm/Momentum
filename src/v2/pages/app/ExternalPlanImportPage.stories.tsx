@@ -11,7 +11,7 @@ import { momentumEvidence } from '../../../stories/product/coverage'
 
 const contextFixture = {
   schema_version: '1.0.0' as const,
-  requested_days: 7,
+  requested_days: 30 as const,
   output_schema: { type: 'object' },
   catalog: { release_id: 'momentum-core@v2', foods: [], ingredients: [], exercises: [], equipment_ids: [] },
   declared_allergen_ids: ['allergen:peanut@v2'],

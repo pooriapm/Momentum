@@ -1,22 +1,23 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { WeeklyMealPlan } from '../../../types/domain'
-import { validateWeeklyMealPlan } from './weekly-plan-schema'
+import type { MonthlyMealPlan } from '../../../types/domain'
+import { validateMonthlyMealPlan } from './monthly-plan-schema'
 
-const samplePath = resolve('src/test/fixtures/legacy-momentum-week-example.json')
+const samplePath = resolve('src/test/fixtures/momentum-month-example.json')
 
-function loadSample(): WeeklyMealPlan {
-  return JSON.parse(readFileSync(samplePath, 'utf8')) as WeeklyMealPlan
+function loadSample(): MonthlyMealPlan {
+  return JSON.parse(readFileSync(samplePath, 'utf8')) as MonthlyMealPlan
 }
 
-describe('weekly meal plan validation', () => {
+describe('monthly meal plan validation', () => {
   it('accepts the bundled sample with a dynamic meal count', () => {
-    const result = validateWeeklyMealPlan(loadSample())
+    const result = validateMonthlyMealPlan(loadSample())
 
     expect(result.success).toBe(true)
-    expect(result.data?.planId).toBe('momentum-week-example')
-    expect(result.data?.days.map((day) => day.meals.length)).toEqual([3, 5])
+    expect(result.data?.planId).toBe('momentum-month-example')
+    expect(result.data?.days).toHaveLength(30)
+    expect(result.data?.days.slice(0, 2).map((day) => day.meals.length)).toEqual([3, 5])
     expect(result.warnings).toEqual([])
   })
 
@@ -36,7 +37,7 @@ describe('weekly meal plan validation', () => {
       },
     }
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(true)
     expect(result.data?.profile.name).toBe('کاربر فایل')
@@ -52,7 +53,7 @@ describe('weekly meal plan validation', () => {
       },
     }
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(false)
     expect(result.errors.some((error) => error.path === 'profile.heightCm')).toBe(true)
@@ -62,7 +63,7 @@ describe('weekly meal plan validation', () => {
     const plan = structuredClone(loadSample())
     plan.days[0].meals[0].options[0].nutrition.calories = -1
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(false)
     expect(result.errors).toContainEqual({
@@ -75,7 +76,7 @@ describe('weekly meal plan validation', () => {
     const plan = structuredClone(loadSample())
     plan.days[0].meals.push(structuredClone(plan.days[0].meals[0]))
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(false)
     expect(result.errors.some((error) => error.path === 'days[0].meals')).toBe(true)
@@ -83,9 +84,9 @@ describe('weekly meal plan validation', () => {
 
   it('rejects days outside the declared range', () => {
     const plan = structuredClone(loadSample())
-    plan.days[0].date = '2026-08-15'
+    plan.days[0].date = '2026-09-15'
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(false)
     expect(result.errors).toContainEqual({
@@ -98,15 +99,15 @@ describe('weekly meal plan validation', () => {
     const unsupported = { ...loadSample(), schemaVersion: '0.1.1' }
     const unsafe = { ...loadSample(), description: 'javascript:alert(1)' }
 
-    expect(validateWeeklyMealPlan(unsupported).success).toBe(false)
-    expect(validateWeeklyMealPlan(unsafe).errors[0].path).toBe('description')
+    expect(validateMonthlyMealPlan(unsupported).success).toBe(false)
+    expect(validateMonthlyMealPlan(unsafe).errors[0].path).toBe('description')
   })
 
   it('rejects files without the current required profile contract', () => {
-    const plan = structuredClone(loadSample()) as Partial<WeeklyMealPlan>
+    const plan = structuredClone(loadSample()) as Partial<MonthlyMealPlan>
     delete plan.profile
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(false)
     expect(result.errors.some((error) => error.path === 'profile')).toBe(true)
@@ -117,9 +118,9 @@ describe('weekly meal plan validation', () => {
     plan.days[0].targets = {
       protein: 145,
       waterMl: 3100,
-    } as WeeklyMealPlan['days'][number]['targets']
+    } as MonthlyMealPlan['days'][number]['targets']
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(true)
     expect(result.data?.days[0].targets).toMatchObject({
@@ -139,7 +140,7 @@ describe('weekly meal plan validation', () => {
     }
     delete plan.profile.age
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(false)
     expect(result.errors).toEqual([])
@@ -155,7 +156,7 @@ describe('weekly meal plan validation', () => {
     if (!option.recipe) throw new Error('Sample recipe is missing.')
     option.recipe.difficulty = 'impossible' as 'easy'
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(false)
     expect(result.errors).toContainEqual({
@@ -168,7 +169,7 @@ describe('weekly meal plan validation', () => {
     const plan = structuredClone(loadSample())
     plan.days[0].meals[0].options[0].nutrition.calories = 20_000
 
-    const result = validateWeeklyMealPlan(plan)
+    const result = validateMonthlyMealPlan(plan)
 
     expect(result.success).toBe(false)
     expect(result.errors).toContainEqual({

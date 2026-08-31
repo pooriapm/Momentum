@@ -60,7 +60,7 @@ describe('PricingPage inventory states', () => {
     expect(screen.getByText(/\$14\.99/)).toBeInTheDocument()
     expect(screen.getByText(/reservation happens only after authenticated review/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/auth/sign-up')
-    expect(screen.queryByText(/Core\/Pro|7-day trial/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Core\/Pro/i)).not.toBeInTheDocument()
   })
 
   it('PUB-09 keeps the paid offer when the gift is exhausted', () => {
@@ -70,11 +70,11 @@ describe('PricingPage inventory states', () => {
     expect(screen.getByText(/\$14\.99/)).toBeInTheDocument()
   })
 
-  it('PUB-10 shows Iranian list prices without a geo-block', () => {
+  it('PUB-10 shows the Iranian gateway and toman without a geo-block', () => {
     const { container } = renderPricing(irMembershipCatalog, { giftCampaign: 'available' })
     expect(container.firstChild).toHaveAttribute('data-inventory', expect.stringContaining('PUB-10'))
     expect(screen.getByText(/490,000 toman/i)).toBeInTheDocument()
-    expect(screen.getByText(/rial prices/i)).toBeInTheDocument()
+    expect(screen.getByText(/Iranian gateway and toman/i)).toBeInTheDocument()
     expect(screen.queryByText(/not available in your region|unavailable market/i)).not.toBeInTheDocument()
   })
 

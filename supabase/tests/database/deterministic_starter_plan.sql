@@ -1,6 +1,21 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(11);
+
+create function pg_temp.monthly_fixture(p_name text)
+returns jsonb
+language sql
+immutable
+as $fixture$
+  select jsonb_build_object(
+    'plan_name', p_name,
+    'default_targets', '{}'::jsonb,
+    'days', jsonb_agg(jsonb_build_object('day_index', day_index) order by day_index)
+  )
+  from generate_series(0,29) day_index;
+$fixture$;
 
 insert into auth.users(
   id,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,
@@ -51,13 +66,13 @@ begin
   values (
     '77777777-7777-4777-8777-777777777772',
     (select id from public.goals where user_id='77777777-7777-4777-8777-777777777772'),
-    'Previous valid plan','draft',current_date,current_date+6,'en-US'
+    'Previous valid plan','draft',current_date,current_date+29,'en-US'
   ) returning id into v_plan_id;
   insert into public.plan_versions(
     plan_id,user_id,version,schema_version,source,content,content_sha256
   ) values (
     v_plan_id,'77777777-7777-4777-8777-777777777772',1,'1.0.0','admin',
-    '{"plan_name":"Previous","default_targets":{},"days":[]}'::jsonb,repeat('c',64)
+    pg_temp.monthly_fixture('Previous'),repeat('c',64)
   ) returning id into v_version_id;
   update public.plans set active_version_id=v_version_id,status='active' where id=v_plan_id;
 end;
@@ -66,9 +81,9 @@ $$;
 select extensions.lives_ok($$select public.persist_deterministic_starter_plan(
   '77777777-7777-4777-8777-777777777771', 'starter-plan-key-1',
   (select id from public.goals where user_id='77777777-7777-4777-8777-777777777771'),
-  'Starter', current_date, current_date+6, 'en-US', '1.0.0', 'momentum-core@v2',
+  'Starter', current_date, current_date+29, 'en-US', '1.0.0', 'momentum-core@v2',
   'momentum-starter/1.0.0', 'terms-v1', 'privacy-v1', 'health-v1',
-  '{"plan_name":"Starter","default_targets":{},"days":[]}'::jsonb, repeat('a',64)
+  pg_temp.monthly_fixture('Starter'), repeat('a',64)
 )$$,'eligible managed onboarding can activate a deterministic starter plan');
 
 select extensions.is(
@@ -91,9 +106,9 @@ select extensions.ok(
 select extensions.lives_ok($$select public.persist_deterministic_starter_plan(
   '77777777-7777-4777-8777-777777777771', 'starter-plan-key-1',
   (select id from public.goals where user_id='77777777-7777-4777-8777-777777777771'),
-  'Starter', current_date, current_date+6, 'en-US', '1.0.0', 'momentum-core@v2',
+  'Starter', current_date, current_date+29, 'en-US', '1.0.0', 'momentum-core@v2',
   'momentum-starter/1.0.0', 'terms-v1', 'privacy-v1', 'health-v1',
-  '{"plan_name":"Starter","default_targets":{},"days":[]}'::jsonb, repeat('a',64)
+  pg_temp.monthly_fixture('Starter'), repeat('a',64)
 )$$,'same request replays idempotently');
 select extensions.is(
   (select count(*) from public.plans where user_id='77777777-7777-4777-8777-777777777771'),
@@ -104,9 +119,9 @@ select extensions.is(
 select extensions.throws_ok($$select public.persist_deterministic_starter_plan(
   '77777777-7777-4777-8777-777777777772', 'starter-minor-key-1',
   (select id from public.goals where user_id='77777777-7777-4777-8777-777777777772'),
-  'Minor starter', current_date, current_date+6, 'en-US', '1.0.0', 'momentum-core@v2',
+  'Minor starter', current_date, current_date+29, 'en-US', '1.0.0', 'momentum-core@v2',
   'momentum-starter/1.0.0', 'terms-v1', 'privacy-v1', 'health-v1',
-  '{"plan_name":"Minor","default_targets":{},"days":[]}'::jsonb, repeat('b',64)
+  pg_temp.monthly_fixture('Minor'), repeat('b',64)
 )$$,'P0001',null,'database gate rejects a minor even if the Edge layer is bypassed');
 select extensions.is(
   (select count(*) from public.plans where user_id='77777777-7777-4777-8777-777777777772' and status='active'),

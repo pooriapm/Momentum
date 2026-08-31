@@ -7,9 +7,9 @@ import {
   Sparkles,
   WifiOff,
 } from 'lucide-react'
-import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
+import { type MouseEvent, type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearch } from 'wouter'
+import { Link, useLocation, useSearch } from 'wouter'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { useAuth } from '../../platform/auth/auth-context'
 import { demoPlan } from '../data/demo'
@@ -22,6 +22,7 @@ import { appContentSurface, isMembershipRequiredTab, type EntitlementSnapshot } 
 import { EntitlementGate } from '../pages/app/EntitlementGate'
 import { PrePlanState } from '../pages/app/PrePlanState'
 import { useOfflineBanner } from './useOfflineBanner'
+import { animateScrollToTop, ROUTE_SCROLL_DURATION_MS } from '../router/route-scroll'
 
 export type AppTab = 'today' | 'plan' | 'progress' | 'me'
 
@@ -107,6 +108,7 @@ function attachChromeMinimize(layout: HTMLElement, setMinimized: (value: boolean
 export function AppFrame({ locale, tab, children }: AppFrameProps) {
   const { t } = useTranslation()
   const { status, user } = useAuth()
+  const [, navigate] = useLocation()
   const search = useSearch()
   const preview = new URLSearchParams(search).get('preview') === '1'
   const planQuery = useQuery({
@@ -117,11 +119,40 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   })
   const [chromeMinimized, setChromeMinimized] = useState(false)
   const layoutRef = useRef<HTMLDivElement>(null)
+  const navigationTimerRef = useRef<number | null>(null)
   const offlineBanner = useOfflineBanner()
   const operationalTab = isMembershipRequiredTab(tab)
   const loading = !preview && (planQuery.isLoading || planQuery.isFetching) && !planQuery.data
   const loadError = !preview && planQuery.isError
   const showChrome = preview || (status !== 'loading' && Boolean(user) && (!planQuery.isLoading || operationalTab))
+
+  function handleRouteIntent(event: MouseEvent<HTMLDivElement>) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    const target = event.target instanceof Element ? event.target : null
+    const anchor = target?.closest<HTMLAnchorElement>('a[href]')
+    if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return
+    const destination = new URL(anchor.href, window.location.href)
+    if (destination.origin !== window.location.origin) return
+    const current = `${window.location.pathname}${window.location.search}`
+    if (`${destination.pathname}${destination.search}` === current) return
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    const workspace = layoutRef.current?.querySelector<HTMLElement>('.app-workspace')
+    const documentScrollTop = (document.scrollingElement as HTMLElement | null)?.scrollTop ?? window.scrollY
+    const hasDistanceToTravel = (workspace?.scrollTop ?? 0) > 1 || documentScrollTop > 1
+    event.preventDefault()
+    if (workspace) animateScrollToTop(workspace, { reducedMotion })
+    animateScrollToTop(window, { reducedMotion })
+    const destinationPath = `${destination.pathname}${destination.search}${destination.hash}`
+    if (reducedMotion || !hasDistanceToTravel) {
+      navigate(destinationPath)
+      return
+    }
+    if (navigationTimerRef.current) window.clearTimeout(navigationTimerRef.current)
+    navigationTimerRef.current = window.setTimeout(() => {
+      navigationTimerRef.current = null
+      navigate(destinationPath)
+    }, ROUTE_SCROLL_DURATION_MS)
+  }
 
   useLayoutEffect(() => {
     if (!showChrome) return
@@ -130,10 +161,14 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
     return attachChromeMinimize(layout, setChromeMinimized, offlineBanner.dismissOnScrollTop)
   }, [showChrome, offlineBanner.dismissOnScrollTop])
 
+  useLayoutEffect(() => () => {
+    if (navigationTimerRef.current) window.clearTimeout(navigationTimerRef.current)
+  }, [])
+
   if (!preview && status === 'loading') return <PageSkeleton />
   if (!preview && !user) {
     return (
-      <main className="guard-page">
+      <main className="guard-page screen-enter">
         <BrandLockup />
         <h1>{t('auth.titleIn')}</h1>
         <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-in')}>{t('common.signIn')}</Link>
@@ -169,7 +204,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   const pageOwnsPlanQuery = !preview && operationalTab && (loading || (loadError && !planQuery.data))
 
   return (
-    <div className="app-layout" ref={layoutRef}>
+    <div className="app-layout" onClickCapture={handleRouteIntent} ref={layoutRef}>
       <aside className="app-sidebar glass-chrome">
         <Link className="app-sidebar__brand" href={localizedPath(locale)}><BrandLockup compact /></Link>
         <nav aria-label="App navigation">

@@ -34,7 +34,7 @@ const recipeApiSchema = z.object({
 
 const dashboardPlanDaySchema = z.object({
   local_date: isoDate,
-  day_index: z.number().int().nonnegative(),
+  day_index: z.number().int().min(0).max(29),
   title: z.string().nullable(),
   training_type: z.string(),
   target_strategy: z.object({ mode: z.string(), rationale: z.string() }).nullable(),
@@ -99,7 +99,7 @@ export const planHistoryItemSchema = z.object({
   })).min(1).max(8),
 })
 
-const dashboardPlanSchema = z.object({
+export const dashboardPlanSchema = z.object({
   id: z.string().uuid(),
   version_id: z.string().uuid(),
   schema_version: z.string(),
@@ -119,7 +119,17 @@ const dashboardPlanSchema = z.object({
     note: z.string(),
   })),
   day: dashboardPlanDaySchema,
-  days: z.array(dashboardPlanDaySchema).min(1).max(31),
+  days: z.array(dashboardPlanDaySchema).length(30).superRefine((days, context) => {
+    days.forEach((day, index) => {
+      if (day.day_index !== index) {
+        context.addIssue({
+          code: 'custom',
+          message: 'Monthly plan days must be ordered with indexes 0 through 29.',
+          path: [index, 'day_index'],
+        })
+      }
+    })
+  }),
   history: z.array(planHistoryItemSchema).max(24).optional(),
 })
 
@@ -137,7 +147,7 @@ const checkinSchema = z.object({
 })
 
 const progressSeriesPointSchema = z.object({
-  week: z.number().int().min(1).max(4),
+  week: z.number().int().min(1).max(5),
   week_start: isoDate,
   week_end: isoDate,
   workouts_completed: z.number().int().nonnegative(),
@@ -166,7 +176,6 @@ export const dashboardResponseSchema = z.object({
       onboarding_status: z.string(),
       automation_block_reason: z.string().nullable(),
       plan_source_preference: z.enum(['external', 'momentum']).default('momentum'),
-      ai_country_verified: z.boolean().optional(),
       email_confirmed: z.boolean().optional(),
       payment_method_status: z.enum(['not_collected', 'pending', 'stub_recorded']).optional(),
       consent_versions: z.object({
@@ -208,7 +217,7 @@ export const dashboardResponseSchema = z.object({
     }),
     plan: dashboardPlanSchema.nullable(),
     plan_history: z.array(planHistoryItemSchema).max(24).default([]),
-    progress_series: z.array(progressSeriesPointSchema).max(4).default([]),
+    progress_series: z.array(progressSeriesPointSchema).max(5).default([]),
   }),
 })
 
@@ -218,7 +227,6 @@ export const onboardingCompletionSchema = z.object({
     automation_block_reason: z.string().nullable(),
     goal_id: z.string().uuid(),
     country_code: z.string().length(2),
-    ai_country_verified: z.boolean(),
     product_region: z.enum(['ir', 'intl']).optional(),
     consent_versions: z.object({
       terms: z.string(),
@@ -246,7 +254,7 @@ export const generationResponseSchema = z.union([
 export const externalPlanContextResponseSchema = z.object({
   external_plan_context: z.object({
     schema_version: z.literal('1.0.0'),
-    requested_days: z.number().int().min(1).max(31),
+    requested_days: z.literal(30),
     output_schema: z.record(z.string(), z.unknown()),
     catalog: z.record(z.string(), z.unknown()),
     declared_allergen_ids: z.array(z.string()),

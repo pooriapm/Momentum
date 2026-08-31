@@ -67,12 +67,12 @@ describe('Momentum public product', () => {
     expect(screen.queryByText(/سرویس ابری این نسخه هنوز تنظیم نشده/)).not.toBeInTheDocument()
   })
 
-  it('exposes transparent pricing and Iranian rial version copy', async () => {
+  it('exposes transparent pricing and the Iranian payment route', async () => {
     window.history.replaceState({}, '', '/fa/pricing')
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: 'یک اشتراک، یک مسیر روشن' })).toBeInTheDocument()
-    expect(screen.getByText(/نسخه ایرانی قیمت را به ریال نشان می‌دهد/)).toBeInTheDocument()
+    expect(screen.getByText(/برای ایران پرداخت با درگاه ایرانی و تومان انجام می‌شود/)).toBeInTheDocument()
   })
 
   it('shows a floating offline state and confirms reconnection', async () => {

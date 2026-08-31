@@ -22,7 +22,7 @@ describe('EntitlementGate membership states', () => {
     renderGate(entitlementFixture({ membership: 'none' }))
     expect(screen.getByRole('heading', { name: /your first plan is a gift/i })).toBeInTheDocument()
     expect(screen.getByText(/no core\/pro ladder/i)).toBeInTheDocument()
-    expect(screen.getByText(/not a 7-day trial/i)).toBeInTheDocument()
+    expect(screen.getByText(/complete 30-day plan/i)).toBeInTheDocument()
     expect(screen.getByText(/stripe and real charges stay out of scope/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /generate plan/i })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/app/me')

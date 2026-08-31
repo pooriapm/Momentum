@@ -10,29 +10,20 @@ import {
   jsonResponse,
   requireIdempotencyKey,
 } from '../supabase/functions/_shared/http.ts'
-import {
-  assertAiJurisdiction,
-  productRegionFromCountry,
-} from '../supabase/functions/_shared/jurisdiction.ts'
+import { productRegionFromCountry } from '../supabase/functions/_shared/jurisdiction.ts'
 import { assertLiveOpenAiEnabled } from '../supabase/functions/_shared/openai.ts'
+import { revokeAccountSessions } from '../supabase/functions/account-data/privacy.ts'
 
 const repoRoot = path.resolve(import.meta.dirname, '..')
 
 describe('jurisdiction and idempotency boundaries', () => {
   it('treats Iran as a served product region, not a geo-block', () => {
     expect(productRegionFromCountry('IR')).toBe('ir')
-    expect(() => assertAiJurisdiction('IR', '2026-08-09T00:00:00.000Z', 'admin_review'))
-      .not.toThrow()
   })
 
-  it('maps every other ISO country to the international product version', () => {
+  it('maps every other ISO country to the international payment route', () => {
     expect(productRegionFromCountry('US')).toBe('intl')
     expect(productRegionFromCountry('GB')).toBe('intl')
-  })
-
-  it('still requires a complete billing-country verification tuple', () => {
-    expect(() => assertAiJurisdiction('US', null, 'payment_provider'))
-      .toThrow(expect.objectContaining({ code: 'verified_country_required', status: 409 }))
   })
 
   it('rejects missing, short, or unsafe idempotency keys', () => {
@@ -161,6 +152,32 @@ describe('threat-model executable subset', () => {
     expect(hits).toEqual([])
   })
 
+  it('cannot persist or expose the retired AI-country gate', () => {
+    expect(fs.existsSync(path.join(
+      repoRoot,
+      'supabase/functions/_shared/ai-market.ts',
+    ))).toBe(false)
+    const migration = fs.readFileSync(path.join(
+      repoRoot,
+      'supabase/migrations/202608260001_non_regional_product_policy.sql',
+    ), 'utf8')
+    expect(migration).toContain('profiles_clear_legacy_ai_country_gate')
+    expect(migration).toContain('new.ai_country_verified_at := null')
+    const databaseFixes = fs.readFileSync(path.join(
+      repoRoot,
+      'supabase/migrations/202608310003_database_contract_fixes.sql',
+    ), 'utf8')
+    expect(databaseFixes).toContain('e.source = \'subscription\'')
+    expect(databaseFixes).toMatch(
+      /revoke all on function private\.clear_legacy_ai_country_gate\(\)[\s\S]*from public, anon, authenticated/,
+    )
+    const accountData = fs.readFileSync(path.join(
+      repoRoot,
+      'supabase/functions/account-data/index.ts',
+    ), 'utf8')
+    expect(accountData).toContain("'ai_country_verified'")
+  })
+
   it('does not register coach product routes', () => {
     const router = fs.readFileSync(path.join(repoRoot, 'src/v2/router/MomentumRouter.tsx'), 'utf8')
     expect(router).not.toMatch(/path=["'`][^"'`]*coach/i)
@@ -180,6 +197,44 @@ describe('threat-model executable subset', () => {
     expect(fs.readFileSync(functionPath, 'utf8')).toContain('generate-monthly-plan')
     const clientHits = grepDirectory(path.join(repoRoot, 'src'), /functions\.invoke\(\s*['"]generate-monthly-plan['"]/)
     expect(clientHits.length).toBeGreaterThan(0)
+  })
+
+  it('fails closed when an active monthly plan cannot be projected completely', () => {
+    const accountData = fs.readFileSync(path.join(
+      repoRoot,
+      'supabase/functions/account-data/index.ts',
+    ), 'utf8')
+    expect(accountData).toContain("dayCount !== 30")
+    expect(accountData).toContain("days.length !== 30")
+    expect(accountData).toContain("'plan_projection_invalid'")
+  })
+
+  it('enforces the complete 30-day monthly plan at the database boundary', () => {
+    const migration = fs.readFileSync(path.join(
+      repoRoot,
+      'supabase/migrations/202608310001_thirty_day_monthly_plan.sql',
+    ), 'utf8')
+    expect(migration).toContain('check (requested_days = 30) not valid')
+    expect(migration).toContain('check (valid_to - valid_from = 29) not valid')
+    expect(migration).toContain("jsonb_array_length(content -> 'days') = 30")
+    expect(migration).toContain('{"day_index":29}')
+    const progressMigration = fs.readFileSync(path.join(
+      repoRoot,
+      'supabase/migrations/202608310002_exact_monthly_progress.sql',
+    ), 'utf8')
+    expect(progressMigration).toContain("interval '30 days'")
+    expect(progressMigration).toContain('monthly_periods_enforce_thirty_day_window')
+  })
+
+  it('does not mark account deletion session revocation as successful after an auth failure', async () => {
+    const signOut = vi.fn().mockResolvedValue({ error: { message: 'auth unavailable' } })
+    await expect(revokeAccountSessions({
+      auth: { admin: { signOut } },
+    } as never, 'verified-access-token')).rejects.toMatchObject({
+      code: 'account_delete_session_revoke_failed',
+      status: 503,
+    })
+    expect(signOut).toHaveBeenCalledWith('verified-access-token', 'global')
   })
 
   it('keeps the live OpenAI helper disabled by default', () => {

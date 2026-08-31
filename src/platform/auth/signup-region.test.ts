@@ -9,7 +9,7 @@ vi.mock('../../v2/data/pricing', () => ({
 const mockedLoadPricingContext = vi.mocked(loadPricingContext)
 
 describe('resolveSignupRegion', () => {
-  it('locks the Iranian product version from geo-context', async () => {
+  it('records the Iranian payment route from geo-context without choosing UI language', async () => {
     mockedLoadPricingContext.mockResolvedValueOnce({
       ai_service_available: true,
       authoritative_for_checkout: false,
@@ -30,11 +30,11 @@ describe('resolveSignupRegion', () => {
     })
   })
 
-  it('falls back to locale when geo-context is unavailable', async () => {
+  it('does not infer payment country from language when geo-context is unavailable', async () => {
     mockedLoadPricingContext.mockRejectedValueOnce(new Error('offline'))
     await expect(resolveSignupRegion('fa')).resolves.toEqual({
       countryCode: null,
-      productRegion: 'ir',
+      productRegion: 'intl',
       source: 'ip_at_signup',
     })
   })

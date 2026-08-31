@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { assertLiveAiMarketAllowed } from '../supabase/functions/_shared/ai-market.ts'
 import { createStructuredResponse } from '../supabase/functions/_shared/openai.ts'
 
 function env(values: Record<string, string | undefined>) {
@@ -75,10 +74,4 @@ describe('R4 OpenAI Responses boundary', () => {
     await expect(createStructuredResponse(options)).rejects.toMatchObject({ code: 'OPENAI_UNAVAILABLE' })
   })
 
-  it('requires an explicit approved country and always blocks Iran', () => {
-    env({ AI_ENABLED_MARKETS: 'US,CA' })
-    expect(assertLiveAiMarketAllowed('us')).toBe('US')
-    expect(() => assertLiveAiMarketAllowed('DE')).toThrow(expect.objectContaining({ code: 'AI_MARKET_NOT_APPROVED' }))
-    expect(() => assertLiveAiMarketAllowed('IR')).toThrow(expect.objectContaining({ code: 'AI_MARKET_BLOCKED' }))
-  })
 })

@@ -1,7 +1,7 @@
 import { getTodayIso } from '../../lib/dates/jalali'
 import type {
   UserProfile,
-  WeeklyMealPlan,
+  MonthlyMealPlan,
 } from '../../types/domain'
 import {
   getValueAtPath,
@@ -48,7 +48,7 @@ export function getMissingPromptQuestions(profile: UserProfile) {
   )
 }
 
-function scheduleToText(plan?: WeeklyMealPlan) {
+function scheduleToText(plan?: MonthlyMealPlan) {
   if (!plan || plan.planningContext.trainingSchedule.length === 0) {
     return undefined
   }
@@ -73,7 +73,7 @@ function scheduleToText(plan?: WeeklyMealPlan) {
 
 export function mergeProfileWithPlanContext(
   profile: UserProfile,
-  plan?: WeeklyMealPlan,
+  plan?: MonthlyMealPlan,
 ): UserProfile {
   const context = plan?.planningContext
   const existing = profile.planningPreferences ?? {}

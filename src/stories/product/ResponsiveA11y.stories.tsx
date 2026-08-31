@@ -72,7 +72,7 @@ function ChartAndTable({ locale }: { locale: SpecLocale }) {
     <ProductFrame active="progress" locale={locale} title={tx(locale, 'پیشرفت', 'Progress')}>
       <SpecHeader
         body={tx(locale, 'نمودار و جدول باید همان چهار مقدار را نشان دهند.', 'The chart and table must show the same four values.')}
-        eyebrow={tx(locale, 'چهار هفته', 'Four weeks')}
+        eyebrow={tx(locale, 'برنامه ماهانه', 'Monthly plan')}
         title={tx(locale, 'پایبندی با جایگزین متنی', 'Adherence with a text alternative')}
       />
       <div className="mo-spec__grid">
@@ -152,7 +152,7 @@ function LocaleCalendarUnits({ locale }: { locale: SpecLocale }) {
   return (
     <ProductFrame active="me" locale={locale} nav={false} title={tx(locale, 'زبان و واحدها', 'Language & units')}>
       <SpecHeader
-        body={tx(locale, 'زبان و ارز فهرست از نسخه قفل‌شده حساب می‌آیند. تقویم و واحدها جدا می‌مانند. نمونه زنده تقویم در Components/Localized date picker است.', 'Language and list currency follow the locked account version. Calendar and units stay separate. Live calendar evidence is Components/Localized date picker.')}
+        body={tx(locale, 'زبان انتخابی کاربر است و ارز از کشور پرداخت می‌آید. تقویم و واحدها جدا می‌مانند. نمونه زنده تقویم در Components/Localized date picker است.', 'Language follows the saved user choice; currency follows payment country. Calendar and units stay separate. Live calendar evidence is Components/Localized date picker.')}
         eyebrow={tx(locale, 'ME-03', 'ME-03')}
         title={tx(locale, 'تاریخ، رقم و واحد محلی', 'Local date, digits and units')}
       />

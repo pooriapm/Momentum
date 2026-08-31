@@ -146,7 +146,7 @@ export function GenerationWait({
         <p className="orbit-eyebrow">{fa ? phaseEyebrow[phase].fa : phaseEyebrow[phase].en}</p>
         <h1>
           {phase === 'ready'
-            ? (fa ? 'برنامه یک‌ماهه آماده است' : 'Your one-month plan is ready')
+            ? (fa ? 'برنامه ۳۰روزه آماده است' : 'Your 30-day plan is ready')
             : copy?.title ?? (fa ? 'لطفاً منتظر بمانید. برنامه شخصی‌سازی‌شده شما در حال تولید است.' : 'Please wait. Your personalized plan is being created.')}
         </h1>
         <p className="today-wait-card__rotating" aria-live="polite">

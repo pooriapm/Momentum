@@ -15,35 +15,17 @@ function enabled(name: string): boolean {
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-function releaseCountry(countryCode: string): string {
-  const country = countryCode.trim().toUpperCase()
-  if (!/^[A-Z]{2}$/.test(country) || country === 'IR') {
-    throw new HttpError(
-      403,
-      'RELEASE_COUNTRY_BLOCKED',
-      'Release access is unavailable in this market.',
-    )
-  }
-  return country
-}
-
-export function assertClosedAlphaAccess(userId: string, countryCode: string): void {
+export function assertClosedAlphaAccess(userId: string): void {
   if (!enabled('ALPHA_ENROLLMENT_ENABLED')) {
     throw new HttpError(403, 'ALPHA_DISABLED', 'Closed alpha access is unavailable.')
   }
   if (!values('ALPHA_COHORT_IDS', UUID_PATTERN).has(userId)) {
     throw new HttpError(403, 'ALPHA_NOT_INVITED', 'Closed alpha access is unavailable.')
   }
-  if (!values('ALPHA_COUNTRY_ALLOWLIST', /^[A-Z]{2}$/).has(releaseCountry(countryCode))) {
-    throw new HttpError(403, 'ALPHA_COUNTRY_BLOCKED', 'Closed alpha access is unavailable.')
-  }
 }
 
-export function assertPublicBetaAccess(countryCode: string): void {
+export function assertPublicBetaAccess(): void {
   if (!enabled('PUBLIC_BETA_ENABLED')) {
     throw new HttpError(403, 'PUBLIC_BETA_DISABLED', 'Public beta access is unavailable.')
-  }
-  if (!values('BETA_COUNTRY_ALLOWLIST', /^[A-Z]{2}$/).has(releaseCountry(countryCode))) {
-    throw new HttpError(403, 'BETA_COUNTRY_BLOCKED', 'Public beta access is unavailable.')
   }
 }

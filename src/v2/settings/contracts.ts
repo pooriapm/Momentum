@@ -55,7 +55,6 @@ export const accountSettingsResponseSchema = z.object({
       product_region: z.enum(['ir', 'intl']).optional(),
       country_code: z.string().length(2).nullable(),
       pricing_market: z.string(),
-      ai_country_verified: z.boolean(),
       health_data_consent_at: z.string().nullable(),
       health_consent_version: z.string().nullable(),
       analytics_consent_at: z.string().nullable().optional(),

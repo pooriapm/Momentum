@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(29);
@@ -17,7 +19,7 @@ insert into public.plans(id,user_id,name,status,valid_from,valid_to,locale,activ
 values (
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','22222222-2222-4222-8222-222222222222',
   'Workout test','active',(statement_timestamp() at time zone 'UTC')::date,
-  (statement_timestamp() at time zone 'UTC')::date,'en-US','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+  (statement_timestamp() at time zone 'UTC')::date + 29,'en-US','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 );
 insert into public.plan_versions(id,plan_id,user_id,version,schema_version,source,content,content_sha256)
 values (
@@ -38,7 +40,10 @@ values (
           'substitution_exercise_id','exercise:knee-pushup@v2','substitution','Knee push-up'
         )
       )
-    )))
+    ))) || (
+      select jsonb_agg(jsonb_build_object('day_index',day_index) order by day_index)
+      from generate_series(1,29) day_index
+    )
   ), repeat('a',64)
 );
 

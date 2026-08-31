@@ -69,16 +69,6 @@ export async function buildValidatedDeterministicStarter(input: {
   if (!/^[A-Z]{2}$/.test(profile.countryCode)) {
     throw new HttpError(422, 'verified_country_required', 'A verified account country is required.')
   }
-  if (
-    (profile.countryCode === 'IR' && profile.productRegion !== 'ir') ||
-    (profile.countryCode !== 'IR' && profile.productRegion !== 'intl')
-  ) {
-    throw new HttpError(
-      409,
-      'product_region_mismatch',
-      'The sticky product region is inconsistent.',
-    )
-  }
   const age = ageOn(profile.dateOfBirth, input.today ?? new Date())
   if (!Number.isFinite(age) || age < 18 || age > 100) {
     throw new HttpError(

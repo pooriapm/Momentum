@@ -18,7 +18,7 @@ function LandingSpec({ locale }: { locale: SpecLocale }) {
     <PublicFrame locale={locale}>
       <section className="mo-spec__hero">
         <div>
-          <SpecBadge tone="energy">{tx(locale, "برنامه یک‌ماهه شخصی", "A personal one-month plan")}</SpecBadge>
+          <SpecBadge tone="energy">{tx(locale, "برنامه شخصی ۳۰روزه", "A personal 30-day plan")}</SpecBadge>
           <h1>{tx(locale, "قدرتی که با زندگی واقعی هماهنگ است", "Strength that fits real life")}</h1>
           <p>{tx(locale, "Momentum یک برنامه کامل تمرین و تغذیه می‌سازد، آن را برای ساختار و ایمنی بررسی می‌کند و در حساب تو قرار می‌دهد—فقط یک بار در هر دوره.", "Momentum creates one complete workout and nutrition plan, validates its structure and safety, and imports it into your account—once per period.")}</p>
           <div className="mo-spec__actions">
@@ -63,7 +63,7 @@ function PricingSpec({ locale, state }: { locale: SpecLocale; state: PricingStat
   const available = state === "available";
   return (
     <PublicFrame locale={locale}>
-      <SpecHeader body={tx(locale, "یک عضویت Momentum، یک درخواست ترکیبی تمرین و تغذیه در هر دوره یک‌ماهه.", "One Momentum membership, with one combined workout and nutrition request per one-calendar-month period.")} eyebrow={tx(locale, "عضویت شفاف", "Clear membership")} title={tx(locale, "برنامه‌ای برای یک دوره کامل", "One plan for the full period")} />
+      <SpecHeader body={tx(locale, "یک عضویت Momentum، یک درخواست ترکیبی تمرین و تغذیه برای هر برنامه کامل ۳۰روزه.", "One Momentum membership, with one combined workout and nutrition request per complete 30-day plan.")} eyebrow={tx(locale, "عضویت شفاف", "Clear membership")} title={tx(locale, "برنامه‌ای برای یک دوره کامل", "One plan for the full period")} />
       <div className="mo-spec__grid">
         <SpecCard className="is-wide" tone="brand">
           <SpecBadge tone="brand">{tx(locale, "عضویت Momentum", "Momentum membership")}</SpecBadge>
@@ -74,14 +74,14 @@ function PricingSpec({ locale, state }: { locale: SpecLocale; state: PricingStat
               {
                 icon: <Check />,
                 tone: "success",
-                label: tx(locale, "یک برنامه کامل یک‌ماهه", "One complete one-month plan"),
+                label: tx(locale, "یک برنامه کامل ۳۰روزه", "One complete 30-day plan"),
                 detail: tx(locale, "تمرین، تغذیه و فهرست خرید", "Workout, nutrition, and grocery list"),
               },
               {
                 icon: <Check />,
                 tone: "success",
                 label: tx(locale, "شروع دوره پس از آماده‌شدن", "Period starts when the plan is ready"),
-                detail: tx(locale, "یک ماه تقویمی از زمان آماده‌شدن", "One calendar month from when the plan is ready"),
+                detail: tx(locale, "۳۰ روز از زمان آماده‌شدن", "30 days from when the plan is ready"),
               },
               {
                 icon: <Check />,
@@ -214,7 +214,7 @@ function PublicStateScreen({ locale, state }: { locale: SpecLocale; state: Publi
   const pricingError = state === "pricing-error";
   return (
     <PublicFrame locale={locale}>
-      <SpecHeader eyebrow={region ? tx(locale, "نسخه ایرانی", "Iranian version") : pricingError ? tx(locale, "قیمت", "Pricing") : tx(locale, "بررسی منطقه", "Region check")} title={region ? tx(locale, "نسخه فارسی با قیمت ریالی", "Persian version with rial prices") : pricingError ? tx(locale, "قیمت معتبر دریافت نشد", "Authoritative pricing is unavailable") : tx(locale, "در حال انتخاب نسخه محصول…", "Choosing your product version…")} body={region ? tx(locale, "از این نسخه می‌توانی حساب بسازی، هدیه برنامه اول را بگیری و عضویت را شروع کنی. پس از ثبت‌نام این نسخه روی حساب قفل می‌شود.", "You can create an account, take the first-plan gift, and start membership. After signup this version locks on the account.") : pricingError ? tx(locale, "تا دریافت قیمت معتبر، ارز یا مبلغ حدس نمی‌زنیم و پرداخت را شروع نمی‌کنیم.", "We do not guess currency or amount, and checkout cannot start until trusted pricing loads.") : tx(locale, "IP فقط نسخه فارسی و ریال یا انگلیسی و دلار را انتخاب می‌کند. محدودیت منطقه‌ای دیگری اعمال نمی‌شود.", "IP only chooses Persian and rial, or English and dollars. No other regional limit is applied.")} />
+      <SpecHeader eyebrow={region ? tx(locale, "مسیر پرداخت ایران", "Iran payment route") : pricingError ? tx(locale, "قیمت", "Pricing") : tx(locale, "پیشنهاد اولیه", "Initial suggestion")} title={region ? tx(locale, "درگاه ایرانی با قیمت تومانی", "Iranian gateway with toman prices") : pricingError ? tx(locale, "قیمت معتبر دریافت نشد", "Authoritative pricing is unavailable") : tx(locale, "در حال پیشنهاد زبان و پرداخت…", "Suggesting language and payment route…")} body={region ? tx(locale, "حساب، هدیه و ساخت برنامه بدون محدودیت منطقه‌ای در دسترس‌اند. زبان مستقل است و هر زمان قابل تغییر است.", "Account access, the gift, and plan generation are not region-gated. Language is independent and always editable.") : pricingError ? tx(locale, "تا دریافت قیمت معتبر، ارز یا مبلغ حدس نمی‌زنیم و پرداخت را شروع نمی‌کنیم.", "We do not guess currency or amount, and checkout cannot start until trusted pricing loads.") : tx(locale, "IP فقط زبان اولیه و مسیر پرداخت را پیشنهاد می‌کند. محدودیت منطقه‌ای اعمال نمی‌شود.", "IP only suggests the initial language and payment route. It never limits access.")} />
       <SpecCard className="mo-spec__state-card">
         <span className={`mo-spec__state-icon mo-spec__state-icon--${region ? "brand" : pricingError ? "danger" : "info"}`}>{region ? <Globe2 /> : pricingError ? <AlertTriangle /> : <LoaderCircle className="orbit-spin" />}</span>
         <div className="mo-spec__actions">
@@ -530,9 +530,9 @@ function OnboardingBody({ locale, state }: { locale: SpecLocale; state: Exclude<
               {
                 icon: <Globe2 />,
                 tone: "success",
-                label: tx(locale, "نسخه حساب", "Account version"),
-                detail: tx(locale, "ایران · فارسی و ریال", "Iran · Persian and rial"),
-                value: tx(locale, "قفل‌شده", "Locked"),
+                label: tx(locale, "مسیر پرداخت", "Payment route"),
+                detail: tx(locale, "ایران · درگاه ایرانی و تومان", "Iran · Iranian gateway and toman"),
+                value: tx(locale, "بر اساس کشور", "From country"),
               },
               {
                 icon: <LockKeyhole />,
@@ -912,7 +912,7 @@ export const LandingRegionChecking: Story = {
   render: renderPublic("region-checking"),
 };
 export const LandingRegionUnavailable: Story = {
-  name: "Landing Iranian version",
+  name: "Landing Iran payment route",
   parameters: momentumEvidence(["PUB-05"], "/[locale]"),
   render: renderPublic("region-unavailable"),
 };

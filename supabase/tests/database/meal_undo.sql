@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(16);
@@ -30,7 +32,7 @@ insert into public.plans(
   'Undo meal plan',
   'active',
   (statement_timestamp() at time zone 'UTC')::date,
-  (statement_timestamp() at time zone 'UTC')::date + 7,
+  (statement_timestamp() at time zone 'UTC')::date + 29,
   'en-US',
   '15151515-1515-4151-8151-151515151515'
 );
@@ -58,7 +60,10 @@ insert into public.plan_versions(
           'nutrition', jsonb_build_object('calories', 620, 'protein_g', 42)
         ))
       ))
-    ))
+    )) || (
+      select jsonb_agg(jsonb_build_object('day_index', day_index) order by day_index)
+      from generate_series(1,29) day_index
+    )
   ),
   repeat('b', 64)
 );

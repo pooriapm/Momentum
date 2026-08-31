@@ -30,7 +30,7 @@ describe('GenerationWait inventory copy', () => {
   it('LIFE-16 shows ready_at and an immutable version', () => {
     render(<GenerationWait locale="en" phase="ready" readyAt="08:42" versionLabel="v2" />)
     expect(document.querySelector('[data-inventory]')?.getAttribute('data-inventory')).toBe('LIFE-16')
-    expect(screen.getByText(/your one-month plan is ready/i)).toBeInTheDocument()
+    expect(screen.getByText(/your 30-day plan is ready/i)).toBeInTheDocument()
     expect(screen.getByText(/started 08:42 · v2/i)).toBeInTheDocument()
     expect(screen.getByText(/this version is immutable/i)).toBeInTheDocument()
     expect(screen.getByText(/open today/i).closest('a')).toHaveAttribute('href', '/en/app/today')

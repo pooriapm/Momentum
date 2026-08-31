@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { applyPlanImport, createEmptyDailyLog } from '../../features/plans/state/plan-state'
 import { createAppState } from '../storage/app-state'
-import type { UserProfile, WeeklyMealPlan } from '../../types/domain'
+import type { UserProfile, MonthlyMealPlan } from '../../types/domain'
 import { calculateDailyNutrition } from './nutrition'
 
 const profile: UserProfile = {
@@ -14,7 +14,7 @@ const profile: UserProfile = {
   goalDate: '2026-11-01',
 }
 
-const plan: WeeklyMealPlan = {
+const plan: MonthlyMealPlan = {
   schemaVersion: '0.1.0',
   planId: 'nutrition-test',
   planName: 'برنامه تست',

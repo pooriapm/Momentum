@@ -3,6 +3,7 @@ export const APP_CONFIG = {
   wordmark: 'MOMENTUM',
   version: '0.3.0',
   tagline: 'برنامه ماهانه برای حرکت‌های ماندگار',
+  monthlyPlanDays: 30,
   locale: 'fa-IR',
   storageNamespace: 'momentum',
   brandMotion: {

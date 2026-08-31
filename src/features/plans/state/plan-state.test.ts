@@ -2,15 +2,15 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { createAppState } from '../../../lib/storage/app-state'
-import type { UserProfile, WeeklyMealPlan } from '../../../types/domain'
+import type { UserProfile, MonthlyMealPlan } from '../../../types/domain'
 import {
   applyPlanImport,
   getPlanForDate,
   planRangesOverlap,
 } from './plan-state'
 
-const samplePath = resolve('src/test/fixtures/legacy-momentum-week-example.json')
-const sample = JSON.parse(readFileSync(samplePath, 'utf8')) as WeeklyMealPlan
+const samplePath = resolve('src/test/fixtures/momentum-month-example.json')
+const sample = JSON.parse(readFileSync(samplePath, 'utf8')) as MonthlyMealPlan
 const profile: UserProfile = {
   name: 'کاربر نمونه',
   startWeightKg: 82,
@@ -23,13 +23,13 @@ const profile: UserProfile = {
 
 describe('plan state priority and conflicts', () => {
   it('detects overlapping date ranges', () => {
-    const overlapping = { ...sample, planId: 'overlap', validFrom: '2026-08-01' } as WeeklyMealPlan
+    const overlapping = { ...sample, planId: 'overlap', validFrom: '2026-08-01' } as MonthlyMealPlan
     const separate = {
       ...sample,
       planId: 'separate',
       validFrom: '2026-09-01',
       validTo: '2026-09-07',
-    } as WeeklyMealPlan
+    } as MonthlyMealPlan
 
     expect(planRangesOverlap(sample, overlapping)).toBe(true)
     expect(planRangesOverlap(sample, separate)).toBe(false)
@@ -42,7 +42,7 @@ describe('plan state priority and conflicts', () => {
       ...sample,
       planName: 'برنامه جدید',
       planVersion: '0.1.0-alpha.2',
-    } as WeeklyMealPlan
+    } as MonthlyMealPlan
     const secondImport = applyPlanImport(firstImport.state, newer, 'existing-first')
 
     expect(Object.keys(secondImport.state.plans)).toHaveLength(2)
@@ -58,7 +58,7 @@ describe('plan state priority and conflicts', () => {
       ...sample,
       planName: 'جایگزین',
       planVersion: '0.1.0-alpha.3',
-    } as WeeklyMealPlan
+    } as MonthlyMealPlan
     const result = applyPlanImport(initial.state, replacement, 'replace-conflicts')
 
     expect(Object.keys(result.state.plans)).toHaveLength(2)

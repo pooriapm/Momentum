@@ -19,7 +19,6 @@ vi.mock('../../../platform/pwa/network', () => ({
 const generate = vi.mocked(requestPlanGeneration)
 
 const readyAccount: AccountDashboardView = {
-  aiCountryVerified: true,
   aiPlanAccess: { reason: 'eligible', state: 'ready' },
   automationBlockReason: null,
   countryCode: 'DE',

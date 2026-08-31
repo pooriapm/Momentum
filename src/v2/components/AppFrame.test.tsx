@@ -38,7 +38,6 @@ const user = {
 
 function dashboard(plan: AccountDashboardView['plan'] = demoPlan): AccountDashboardView {
   return {
-    aiCountryVerified: true,
     aiPlanAccess: { reason: 'eligible', state: 'ready' },
     automationBlockReason: null,
     countryCode: 'DE',

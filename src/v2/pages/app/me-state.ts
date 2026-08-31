@@ -137,7 +137,7 @@ export function writeMePreferences(value: MePreferences) {
 export function productVersionCopy(region: 'ir' | 'intl' | undefined, locale: AppLocale) {
   const resolved = region ?? (locale === 'fa' ? 'ir' : 'intl')
   if (resolved === 'ir') {
-    return locale === 'fa' ? 'ایران · فارسی و ریال' : 'Iran · Persian and IRR'
+    return locale === 'fa' ? 'پرداخت ایران · تومان' : 'Iran payment · toman'
   }
-  return locale === 'fa' ? 'بین‌المللی · انگلیسی و دلار' : 'International · English and USD'
+  return locale === 'fa' ? 'پرداخت بین‌المللی · دلار' : 'International payment · USD'
 }

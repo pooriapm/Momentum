@@ -16,9 +16,9 @@ import {
 } from '../../questions/question-schema'
 import { sanitizeLocalizedNumberInput } from '../../../lib/numbers/localized-number'
 import {
-  validateWeeklyMealPlan,
+  validateMonthlyMealPlan,
   type PlanValidationResult,
-} from '../validation/weekly-plan-schema'
+} from '../validation/monthly-plan-schema'
 
 export function ImportCompletionWizard({
   questions,
@@ -72,7 +72,7 @@ export function ImportCompletionWizard({
     }
 
     onResult({
-      ...validateWeeklyMealPlan(nextDraft),
+      ...validateMonthlyMealPlan(nextDraft),
       fileName,
     })
   }

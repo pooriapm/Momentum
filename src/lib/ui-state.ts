@@ -38,6 +38,17 @@ export function loadUiState(): UiState {
   }
 }
 
+export function hasStoredLocalePreference(): boolean {
+  try {
+    const rawState = localStorage.getItem(UI_STATE_KEY)
+    if (!rawState) return false
+    const candidate = JSON.parse(rawState) as Partial<UiState>
+    return candidate.locale === 'fa' || candidate.locale === 'en'
+  } catch {
+    return false
+  }
+}
+
 export function updateUiState(update: Partial<UiState>): UiState {
   const nextState = { ...loadUiState(), ...update }
 

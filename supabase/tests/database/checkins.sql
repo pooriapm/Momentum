@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(14);
@@ -113,7 +115,7 @@ select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333
 select extensions.is((select count(*) from public.weekly_checkins), 1::bigint, 'the owner can read their weekly check-in');
 select set_config('request.jwt.claim.sub', '44444444-4444-4444-8444-444444444444', true);
 select extensions.is((select count(*) from public.weekly_checkins), 0::bigint, 'another user cannot read the weekly check-in');
-reset role;
+set local role postgres;
 
 select * from extensions.finish();
 rollback;

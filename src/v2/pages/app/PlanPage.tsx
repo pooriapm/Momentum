@@ -268,9 +268,9 @@ export function PlanPage({
         ))}
       </div>
 
-      {showHistory ? <PlanHistoryView history={history} locale={locale} /> : null}
+      {showHistory ? <div className="motion-panel"><PlanHistoryView history={history} locale={locale} /></div> : null}
       {!showHistory && segment === 'week' ? (
-        <div aria-labelledby="plan-tab-week" id="plan-panel-week" role="tabpanel">
+        <div aria-labelledby="plan-tab-week" className="motion-panel" id="plan-panel-week" role="tabpanel">
           <PlanWeekView
             days={availableDays}
             locale={locale}
@@ -281,7 +281,7 @@ export function PlanPage({
         </div>
       ) : null}
       {!showHistory && segment === 'nutrition' ? (
-        <div aria-labelledby="plan-tab-nutrition" id="plan-panel-nutrition" role="tabpanel">
+        <div aria-labelledby="plan-tab-nutrition" className="motion-panel" id="plan-panel-nutrition" role="tabpanel">
           <PlanNutritionView
             completedSlots={completedSlots}
             days={availableDays}
@@ -299,7 +299,7 @@ export function PlanPage({
         </div>
       ) : null}
       {!showHistory && segment === 'training' ? (
-        <div aria-labelledby="plan-tab-training" id="plan-panel-training" role="tabpanel">
+        <div aria-labelledby="plan-tab-training" className="motion-panel" id="plan-panel-training" role="tabpanel">
           <PlanTrainingView
             days={availableDays}
             locale={locale}
@@ -319,7 +319,7 @@ export function PlanPage({
         </div>
       ) : null}
       {!showHistory && segment === 'grocery' ? (
-        <div aria-labelledby="plan-tab-grocery" id="plan-panel-grocery" role="tabpanel">
+        <div aria-labelledby="plan-tab-grocery" className="motion-panel" id="plan-panel-grocery" role="tabpanel">
           <PlanGroceryView
             checkedItems={groceryChecks}
             locale={locale}
@@ -330,7 +330,7 @@ export function PlanPage({
         </div>
       ) : null}
       {!showHistory && segment === 'calendar' ? (
-        <div aria-labelledby="plan-tab-calendar" id="plan-panel-calendar" role="tabpanel">
+        <div aria-labelledby="plan-tab-calendar" className="motion-panel" id="plan-panel-calendar" role="tabpanel">
           <PlanCalendarView
             days={availableDays}
             locale={locale}

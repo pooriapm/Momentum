@@ -1,4 +1,4 @@
-import type { MealOption, WeeklyMealPlan } from '../../../types/domain'
+import type { MealOption, MonthlyMealPlan } from '../../../types/domain'
 
 export type PlanHealthSeverity = 'positive' | 'notice' | 'warning'
 
@@ -22,7 +22,7 @@ function average(values: number[]) {
   return values.reduce((sum, value) => sum + value, 0) / values.length
 }
 
-function defaultOptions(plan: WeeklyMealPlan): MealOption[] {
+function defaultOptions(plan: MonthlyMealPlan): MealOption[] {
   return plan.days.flatMap((day) =>
     day.meals.map(
       (meal) =>
@@ -37,7 +37,7 @@ function minutes(time: string) {
   return hour * 60 + minute
 }
 
-export function analyzePlanHealth(plan: WeeklyMealPlan): PlanHealthScore {
+export function analyzePlanHealth(plan: MonthlyMealPlan): PlanHealthScore {
   const insights: PlanHealthInsight[] = []
   const ordinaryDays = plan.days.filter(
     (day) =>
@@ -240,7 +240,7 @@ export function analyzePlanHealth(plan: WeeklyMealPlan): PlanHealthScore {
 }
 
 export function createPlanImprovementPrompt(
-  plan: WeeklyMealPlan,
+  plan: MonthlyMealPlan,
   analysis: PlanHealthScore,
 ) {
   const issues = analysis.insights.filter(

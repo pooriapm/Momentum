@@ -70,6 +70,7 @@ export function ProgressPage({
   const view = surface && surface !== 'overview' ? surface : derived
   const syncedAt = lastSyncedAt
   const series = resolveWeeklySeries(plan)
+  const totalWeeks = 5
   const membership = deriveMembershipStatus(plan)
   const showNextCycle = membership === 'gift' || membership === 'cancelled' || membership === 'expired' || membership === 'none' || plan?.progress.cycleEnding
   const writesLocked = !online || view === 'offline' || view === 'stale' || view === 'load-error'
@@ -163,7 +164,7 @@ export function ProgressPage({
           <p>{fa ? 'پیشرفت روند است نه نمره. جدول و خلاصه متنی همان اطلاعات نمودار را دارند.' : 'Progress is a trend, not a grade. The table and text summary carry the same information as the chart.'}</p>
         </div>
         <div className="progress-heading-actions">
-          <StatusPill tone="success">{fa ? `هفته ${formatNumber(weekIndex + 1, locale)} از ۴` : `Week ${weekIndex + 1} of 4`}</StatusPill>
+          <StatusPill tone="success">{fa ? `هفته ${formatNumber(weekIndex + 1, locale)} از ${formatNumber(totalWeeks, locale)}` : `Week ${weekIndex + 1} of ${totalWeeks}`}</StatusPill>
           <Button disabled={writesLocked} onClick={() => setWeeklyOpen(true)} variant="secondary">
             <CalendarCheck2 size={17} />{weeklySaved ? (fa ? 'گزارش هفته ثبت شد' : 'Weekly report saved') : (fa ? 'گزارش هفتگی' : 'Weekly report')}
           </Button>
@@ -180,7 +181,7 @@ export function ProgressPage({
         <ContentCard className="progress-next-cycle">
           <StatusPill tone="brand">{membership === 'gift' ? (fa ? 'هدیه ماه اول استفاده شد' : 'First-month gift used') : (fa ? 'ماه بعد' : 'Next month')}</StatusPill>
           <h2>{fa ? 'ماه رایگان تمام می‌شود؛ برنامه بعد با عضویت ساخته می‌شود' : 'The free month is ending; the next plan needs membership'}</h2>
-          <p>{fa ? 'از آخرین گزارش هفتگی می‌فهمی ماه بعد چیست. هدیه آزمایش ۷روزه نیست.' : 'The last weekly report is where you see what happens next. The gift is not a 7-day trial.'}</p>
+          <p>{fa ? 'از آخرین گزارش هفتگی می‌فهمی ماه بعد چیست. هدیه، برنامه کامل ۳۰روزه ماه اول بود.' : 'The last weekly report is where you see what happens next. The gift covered the complete 30-day first-month plan.'}</p>
           <Textarea
             label={fa ? 'یادداشت برای ماه بعد (اختیاری)' : 'Note for next month (optional)'}
             maxLength={NEXT_CYCLE_NOTE_MAX}
@@ -207,8 +208,8 @@ export function ProgressPage({
       <ContentCard className="trend-card">
         <div className="section-title-row">
           <div>
-            <p className="orbit-eyebrow">{fa ? 'پایبندی چهار هفته' : 'Four-week adherence'}</p>
-            <h2>{chartView === 'text' ? (fa ? 'خلاصه متنی' : 'Text summary') : chartView === 'table' ? (fa ? 'جدول داده' : 'Data table') : (fa ? 'پایبندی چهار هفته' : 'Four-week adherence')}</h2>
+            <p className="orbit-eyebrow">{fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence'}</p>
+            <h2>{chartView === 'text' ? (fa ? 'خلاصه متنی' : 'Text summary') : chartView === 'table' ? (fa ? 'جدول داده' : 'Data table') : (fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence')}</h2>
           </div>
         </div>
         <div className="progress-chart-content" key={chartView}>

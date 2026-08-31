@@ -9,7 +9,7 @@ const emptyScreens: Record<
     icon: UtensilsCrossed,
     eyebrow: 'برنامه غذایی',
     title: 'برنامه‌ای وارد نشده است',
-    body: 'فایل هفتگی JSON را از تنظیمات انتخاب کن تا پس از اعتبارسنجی اینجا نمایش داده شود.',
+    body: 'فایل ماهانه JSON را از تنظیمات انتخاب کن تا پس از اعتبارسنجی اینجا نمایش داده شود.',
   },
   progress: {
     icon: TrendingUp,

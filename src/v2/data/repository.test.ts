@@ -63,6 +63,13 @@ const day = {
   }],
 }
 
+const days = Array.from({ length: 30 }, (_, index) => ({
+  ...day,
+  day_index: index,
+  local_date: new Date(Date.UTC(2026, 7, 18 + index)).toISOString().slice(0, 10),
+  title: `Day ${index + 1}`,
+}))
+
 const history = [
   {
     id: currentVersionId,
@@ -152,7 +159,7 @@ const dashboard: DashboardResponse['dashboard'] = {
     grocery_list: [],
     health_safety_notes: [],
     day,
-    days: [day],
+    days,
     history,
   },
   plan_history: history,
@@ -181,6 +188,14 @@ describe('plan history mapping', () => {
   it('accepts dashboard plan_history items', () => {
     expect(planHistoryItemSchema.parse(history[0]).cycle).toBe(2)
     expect(dashboardResponseSchema.parse({ dashboard }).dashboard.plan_history).toHaveLength(2)
+  })
+
+  it('rejects an incomplete plan projection instead of displaying a repeated short plan', () => {
+    const incomplete = {
+      ...dashboard,
+      plan: dashboard.plan ? { ...dashboard.plan, days: [day] } : null,
+    }
+    expect(dashboardResponseSchema.safeParse({ dashboard: incomplete }).success).toBe(false)
   })
 
   it('maps prior versions and deterministic cycle/catalog changes', () => {

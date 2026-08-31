@@ -29,7 +29,7 @@ const meta = {
   title: 'Screens/App shell',
   parameters: { controls: { disable: true }, layout: 'fullscreen', docs: { description: { component: 'The complete production application chrome with functional Liquid Glass reserved for sidebar and compact navigation. Account data is local and deterministic.' } } },
   beforeEach: () => {
-    mocked(loadAccountDashboard).mockResolvedValue({ aiCountryVerified: true, aiPlanAccess: { reason: 'eligible', state: 'ready' }, automationBlockReason: null, countryCode: 'DE', onboardingStatus: 'complete', plan: demoPlan })
+    mocked(loadAccountDashboard).mockResolvedValue({ aiPlanAccess: { reason: 'eligible', state: 'ready' }, automationBlockReason: null, countryCode: 'DE', onboardingStatus: 'complete', plan: demoPlan })
     return () => mocked(loadAccountDashboard).mockReset()
   },
 } satisfies Meta

@@ -7,7 +7,7 @@ function demoIsoDate(offset: number) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-const demoDates = Array.from({ length: 7 }, (_, index) => demoIsoDate(index))
+const demoDates = Array.from({ length: 30 }, (_, index) => demoIsoDate(index))
 const demoTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
 export const demoPlan: MomentumPlanView = {
@@ -154,7 +154,7 @@ demoPlan.days = demoDates.map((localDate, index) => {
     : { ...demoPlan.targets, calories: demoPlan.targets.calories + (index % 3) * 70 }
   return {
     localDate,
-    dateLabel: demoDayLabels[index],
+    dateLabel: demoDayLabels[index % demoDayLabels.length],
     adjustmentReason: restDay
       ? { fa: 'انرژی امروز برای ریکاوری تنظیم شده؛ پروتئین ثابت و کربوهیدرات کمی کمتر است.', en: 'Today is tuned for recovery: protein stays steady while carbohydrates are slightly lower.' }
       : { fa: 'هدف‌های امروز با شدت تمرین و روند ریکاوری هماهنگ شده‌اند.', en: 'Today’s targets are aligned with training intensity and recovery.' },
@@ -170,7 +170,7 @@ demoPlan.version = {
   label: 'v2',
   cycle: 2,
   validFrom: demoDates[0],
-  validTo: demoIsoDate(30),
+  validTo: demoIsoDate(29),
   readyAt: `${demoDates[0]}T08:42:00.000Z`,
   source: { fa: 'چرخه دوم تأییدشده', en: 'Confirmed second cycle' },
   active: true,

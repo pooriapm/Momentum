@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { intlMembershipCatalog, irMembershipCatalog } from '../entitlement'
-import { formatPrice, giftCampaignFromContext, membershipPriceFromContext } from './pricing'
+import {
+  formatPrice,
+  giftCampaignFromContext,
+  membershipPriceFromContext,
+  suggestedLocaleFromContext,
+} from './pricing'
 
 describe('pricing catalog helpers', () => {
   it('reads the single membership SKU and does not invent a price', () => {
@@ -13,5 +18,13 @@ describe('pricing catalog helpers', () => {
   it('treats missing campaign payload as unknown instead of a client-side budget', () => {
     expect(giftCampaignFromContext(intlMembershipCatalog)).toBe('unknown')
     expect(giftCampaignFromContext({ ...irMembershipCatalog, gift_campaign: { status: 'exhausted' } })).toBe('exhausted')
+  })
+
+  it('uses IP context only as an initial locale suggestion', () => {
+    expect(suggestedLocaleFromContext({
+      ...intlMembershipCatalog,
+      suggested_locale: 'fa-IR',
+    }, 'en')).toBe('fa')
+    expect(suggestedLocaleFromContext(null, 'en')).toBe('en')
   })
 })

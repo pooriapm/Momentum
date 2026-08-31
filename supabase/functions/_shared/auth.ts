@@ -4,6 +4,7 @@ import { HttpError } from './http.ts'
 
 export interface AuthContext {
   user: User
+  accessToken: string
   userClient: SupabaseClient
   admin: SupabaseClient
 }
@@ -11,6 +12,10 @@ export interface AuthContext {
 export async function authenticate(request: Request): Promise<AuthContext> {
   const authorization = request.headers.get('authorization')
   if (!authorization?.startsWith('Bearer ')) {
+    throw new HttpError(401, 'authentication_required', 'Authentication is required.')
+  }
+  const accessToken = authorization.slice('Bearer '.length).trim()
+  if (!accessToken) {
     throw new HttpError(401, 'authentication_required', 'Authentication is required.')
   }
 
@@ -34,5 +39,5 @@ export async function authenticate(request: Request): Promise<AuthContext> {
     throw new HttpError(401, 'invalid_session', 'The session is invalid or expired.')
   }
 
-  return { user: data.user, userClient, admin }
+  return { user: data.user, accessToken, userClient, admin }
 }

@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(9);
@@ -71,7 +73,7 @@ insert into public.plans(
   '16161616-1616-4161-8161-161616161616',
   'Previous valid plan',
   'active',
-  current_date - 30,
+  current_date - 29,
   current_date,
   'en-US'
 );
@@ -86,7 +88,7 @@ insert into public.ai_generation_jobs(
   'stale-job-key-01',
   'queued',
   'en-US',
-  7,
+  30,
   repeat('c', 64),
   'stub-1',
   'stub-monthly',

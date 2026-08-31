@@ -78,7 +78,7 @@ export function PricingPage({
   return (
     <div className="public-page" data-inventory={ids.join(' ')}>
       <PublicHeader locale={locale} />
-      <main className="simple-public-page pricing-page">
+      <main className="simple-public-page pricing-page screen-enter">
         <Reveal className="simple-public-page__heading">
           <Eyebrow>{t('pricing.eyebrow')}</Eyebrow>
           <h1>{t('pricing.title')}</h1>
@@ -131,7 +131,7 @@ export function PricingPage({
             </ContentCard>
           </div>
         ) : null}
-        <p className="pricing-local-note"><ShieldCheck size={18} />{pricingContext?.source === 'edge_hint' ? (locale === 'fa' ? 'منطقه با IP فقط پیشنهاد شده و در ساخت حساب قفل می‌شود. ' : 'IP only suggests a region; signup locks product_region. ') : ''}{t('pricing.regionNote')}</p>
+        <p className="pricing-local-note"><ShieldCheck size={18} />{pricingContext?.source === 'edge_hint' ? (locale === 'fa' ? 'IP فقط زبان اولیه و مسیر پرداخت را پیشنهاد می‌کند؛ زبان همیشه قابل تغییر است. ' : 'IP only suggests the initial language and payment route; language is always editable. ') : ''}{t('pricing.regionNote')}</p>
         {!PAYMENTS_LIVE ? <p className="pricing-local-note">{t('pricing.paymentsNotLive')}</p> : null}
       </main>
       <PublicFooter locale={locale} />

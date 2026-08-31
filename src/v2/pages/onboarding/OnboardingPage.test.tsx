@@ -10,6 +10,7 @@ import { loadPricingContext } from '../../data/pricing'
 import {
   completeOnboarding,
   deleteOnboardingDraft,
+  discardBodyReport,
   loadOnboardingDraft,
   requestPlanGeneration,
   saveOnboardingDraft,
@@ -42,6 +43,7 @@ const loadDraft = vi.mocked(loadOnboardingDraft)
 const saveDraft = vi.mocked(saveOnboardingDraft)
 const complete = vi.mocked(completeOnboarding)
 const generate = vi.mocked(requestPlanGeneration)
+const discardReport = vi.mocked(discardBodyReport)
 const pricing = vi.mocked(loadPricingContext)
 
 const user = {
@@ -126,8 +128,9 @@ describe('OnboardingPage inventory states', () => {
     await i18n.changeLanguage('en')
     online.mockReturnValue(true)
     saveDraft.mockResolvedValue(undefined)
+    discardReport.mockReset()
+    discardReport.mockResolvedValue(undefined)
     complete.mockResolvedValue({
-      ai_country_verified: true,
       automation_block_reason: null,
       country_code: 'IR',
       goal_id: '513bc02f-9b72-42f7-b518-ab2542f4cb08',
@@ -237,6 +240,25 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.getByRole('button', { name: 'Skip this step' })).toBeInTheDocument()
   })
 
+  it('keeps a private report attached when deletion cannot be confirmed', async () => {
+    discardReport.mockRejectedValueOnce(new Error('storage unavailable'))
+    renderStep('body', {
+      ...completeDraft,
+      bodyReportId: '31313131-3131-4131-8131-313131313131',
+      bodyReportPath: `${user.id}/body-report.pdf`,
+      bodySource: 'report',
+      bodySkipped: '',
+    })
+    fireEvent.click(await screen.findByRole('button', { name: /remove file/i }))
+    expect(await screen.findByText(/file was not removed/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /remove file/i })).toBeInTheDocument()
+    expect(discardReport).toHaveBeenCalledWith(
+      user.id,
+      '31313131-3131-4131-8131-313131313131',
+      `${user.id}/body-report.pdf`,
+    )
+  })
+
   it('ONB-27 and ONB-28 finish into the lifecycle gate without generating a plan', async () => {
     renderStep('review')
     expect(await screen.findByRole('button', { name: 'Confirm and continue' })).toBeInTheDocument()
@@ -245,7 +267,7 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.getByText('No payment details')).toBeInTheDocument()
     expect(screen.queryByText(/add a payment method/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/authoritative source/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/7-day trial/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/one month free/i)).toBeInTheDocument()
     expect(screen.queryByText(/iranian version/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /generate my plan/i })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Confirm and continue' }))

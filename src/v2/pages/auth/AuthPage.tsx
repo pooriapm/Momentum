@@ -156,7 +156,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
   return (
     <div className="public-page auth-page">
       <PublicHeader locale={locale} />
-      <main className="auth-layout">
+      <main className="auth-layout screen-enter">
         <Reveal as="section" className="auth-layout__story">
           <OrbitMark animated size={76} />
           <p className="orbit-eyebrow"><ShieldCheck size={15} />{locale === 'fa' ? 'خصوصی، شخصی و همراه' : 'Private, personal, portable'}</p>

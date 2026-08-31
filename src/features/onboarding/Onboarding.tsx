@@ -27,7 +27,7 @@ import {
   getTodayIso,
   toPersianDigits,
 } from '../../lib/dates/jalali'
-import type { UserProfile, WeeklyMealPlan } from '../../types/domain'
+import type { UserProfile, MonthlyMealPlan } from '../../types/domain'
 
 const PlanImportPanel = lazy(() =>
   import('../plans/import/PlanImportPanel').then((module) => ({
@@ -36,7 +36,7 @@ const PlanImportPanel = lazy(() =>
 )
 
 interface OnboardingProps {
-  onComplete: (profile: UserProfile, plan?: WeeklyMealPlan) => void
+  onComplete: (profile: UserProfile, plan?: MonthlyMealPlan) => void
 }
 
 const promptSteps = [
@@ -62,7 +62,7 @@ const onboardingSteps = ['welcome', 'import', 'review'] as const
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0)
-  const [stagedPlan, setStagedPlan] = useState<WeeklyMealPlan>()
+  const [stagedPlan, setStagedPlan] = useState<MonthlyMealPlan>()
   const progress = ((step + 1) / onboardingSteps.length) * 100
 
   const goNext = () => {

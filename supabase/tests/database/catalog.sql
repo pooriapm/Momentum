@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(28);
@@ -250,6 +252,6 @@ select extensions.ok(
   'authenticated RLS exposes v2 exercises and the D11 allergen picker set'
 );
 
-reset role;
+set local role postgres;
 select * from extensions.finish();
 rollback;

@@ -377,7 +377,7 @@ export const promptQuestions: SchemaQuestion[] = [
     path: 'planningPreferences.trainingSchedule',
     group: 'training',
     label: 'برنامه تمرین',
-    question: 'برنامه هفتگی تمرین را توضیح دهید.',
+    question: 'برنامه ماهانه تمرین را توضیح دهید.',
     inputType: 'textarea',
     required: true,
     placeholder: 'مثلاً شنبه کراس‌فیت ساعت ۱۸، دوشنبه پیاده‌روی ۴۵ دقیقه',

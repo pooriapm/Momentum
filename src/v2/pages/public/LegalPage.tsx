@@ -35,7 +35,7 @@ export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy'
   return (
     <div className="public-page">
       <PublicHeader locale={locale} />
-      <main className="simple-public-page legal-page">
+      <main className="simple-public-page legal-page screen-enter">
         <Reveal className="simple-public-page__heading">
           <Eyebrow>{privacy ? <LockKeyhole size={15} /> : <FileText size={15} />}{fa ? 'نسخه آلفا' : 'Alpha notice'}</Eyebrow>
           <h1>{privacy ? (fa ? 'اطلاعیه حریم خصوصی' : 'Privacy notice') : (fa ? 'شرایط استفاده' : 'Terms of use')}</h1>

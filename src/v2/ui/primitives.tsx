@@ -62,7 +62,7 @@ export function StatusPill({ tone = 'brand', children }: PropsWithChildren<{ ton
 
 export function PageSkeleton() {
   return (
-    <main aria-busy="true" aria-label="Loading" className="app-page app-skeleton">
+    <main aria-busy="true" aria-label="Loading" className="app-page app-skeleton screen-enter">
       <div className="skeleton-line skeleton-line--short" />
       <div className="skeleton-line skeleton-line--title" />
       <div className="skeleton-grid">

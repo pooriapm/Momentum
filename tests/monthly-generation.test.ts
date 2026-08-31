@@ -339,7 +339,7 @@ describe('deterministic onboarding starter plan', () => {
       today: new Date('2026-08-24T00:00:00Z'),
     })
     expect(content.plan_name).toBe('Momentum starter plan')
-    expect(content.days).toHaveLength(7)
+    expect(content.days).toHaveLength(30)
     expect(fetchSpy).not.toHaveBeenCalled()
     fetchSpy.mockRestore()
   })
@@ -348,7 +348,6 @@ describe('deterministic onboarding starter plan', () => {
     [{ onboardingStatus: 'automation_blocked' }, 'onboarding_incomplete'],
     [{ automationBlockReason: 'high_risk_condition' }, 'starter_plan_safety_blocked'],
     [{ planSourcePreference: 'external' }, 'managed_plan_path_not_selected'],
-    [{ countryCode: 'IR' }, 'product_region_mismatch'],
     [{ dateOfBirth: '2012-01-01' }, 'starter_plan_age_blocked'],
     [{ termsVersion: 'stale' }, 'consent_update_required'],
   ])('fails closed before plan construction for %o', async (patch, code) => {
@@ -536,7 +535,7 @@ describe('monthly generation pipeline', () => {
       status: 'queued',
       productRegion: 'intl',
       requestedLocale: 'en-US',
-      requestedDays: 7,
+      requestedDays: 30,
       requestFingerprint: 'a'.repeat(64),
       promptVersion: 'stub-v1',
       model: 'stub',
@@ -626,17 +625,17 @@ describe('monthly generation pipeline', () => {
     expect(store.importedPlans).toHaveLength(2)
   })
 
-  it('uses calendar-month boundaries in the stored timezone across month-end and DST', () => {
+  it('uses one exact 30-day window in the stored timezone across month-end and DST', () => {
     expect(cycleDateWindow('2026-01-31T20:15:00.000Z', 'UTC')).toEqual({
       validFrom: '2026-01-31',
-      validTo: '2026-02-27',
+      validTo: '2026-03-01',
       startsAt: '2026-01-31T20:15:00.000Z',
-      endsAt: '2026-02-28T20:15:00.000Z',
+      endsAt: '2026-03-02T20:15:00.000Z',
     })
     expect(cycleDateWindow('2026-02-08T06:30:00.000Z', 'America/New_York').endsAt)
-      .toBe('2026-03-08T06:30:00.000Z')
+      .toBe('2026-03-10T05:30:00.000Z')
     expect(cycleDateWindow('2026-03-29T01:30:00.000Z', 'Europe/Berlin').endsAt)
-      .toBe('2026-04-29T01:30:00.000Z')
+      .toBe('2026-04-28T01:30:00.000Z')
   })
 
   it('decrements gift budget only once across repeated reserve attempts', () => {
@@ -646,7 +645,6 @@ describe('monthly generation pipeline', () => {
       remainingBudgetUsd: 10,
       reservationCostUsd: 2.5,
       minRemainingUsd: 0,
-      allowedMarkets: ['ir', 'intl'],
       startsAt: null,
       endsAt: null,
     }
@@ -656,7 +654,6 @@ describe('monthly generation pipeline', () => {
       campaign: state,
       existing: reservation,
       userId: 'user-gift',
-      productRegion: 'ir',
       nowIso: '2026-08-18T00:00:00.000Z',
       newReservationId: 'gift-1',
       entitlementId: 'ent-gift-1',
@@ -670,7 +667,6 @@ describe('monthly generation pipeline', () => {
       campaign: state,
       existing: reservation,
       userId: 'user-gift',
-      productRegion: 'ir',
       nowIso: '2026-08-18T00:00:00.000Z',
       newReservationId: 'gift-1',
       entitlementId: 'ent-gift-1',
@@ -679,28 +675,27 @@ describe('monthly generation pipeline', () => {
     expect(replay.campaign.remainingBudgetUsd).toBe(7.5)
   })
 
-  it('keeps live OpenAI denied without an approved market', async () => {
+  it('fails closed when OpenAI is selected but the live provider switch is off', async () => {
     stubEnv({
       AI_PLAN_PROVIDER: 'openai',
-      AI_PLAN_LIVE_OPENAI: 'true',
+      AI_PLAN_LIVE_OPENAI: 'false',
       OPENAI_API_KEY: 'test-key',
       OPENAI_PLAN_MODEL: 'gpt-test',
       OPENAI_SAFETY_PEPPER: 'test-pepper',
     })
-    expect(isLiveOpenAiRequested()).toBe(true)
-    expect(() => assertLiveOpenAiEnabled()).not.toThrow()
+    expect(isLiveOpenAiRequested()).toBe(false)
+    expect(() => assertLiveOpenAiEnabled()).toThrow(expect.objectContaining({ code: 'LIVE_OPENAI_DISABLED' }))
     const catalog = createPlanCatalogSnapshot(catalogRows('momentum-core@v2'))
     await expect(generateMonthlyPlanFromProvider({
       catalog,
       locale: 'en-US',
       userId: 'user-1',
-      countryCode: 'US',
-    })).rejects.toMatchObject({ code: 'AI_MARKET_NOT_APPROVED' })
+    })).rejects.toMatchObject({ code: 'LIVE_OPENAI_DISABLED' })
   })
 
   it('builds a v2-aware stub payload from catalog IDs', () => {
     const catalog = createPlanCatalogSnapshot(catalogRows('momentum-core@v2'))
-    const plan = buildMonthlyStubPlan(catalog, 7, 'en-US')
+    const plan = buildMonthlyStubPlan(catalog, 30, 'en-US')
     const days = plan.days as Array<{ meals: Array<{ options: Array<{ food_id: string }> }> }>
     expect(days[0]?.meals[0]?.options[0]?.food_id).toBe('food:banana-almonds@v2')
   })
@@ -767,7 +762,7 @@ describe('monthly generation pipeline', () => {
     })
   })
 
-  it('blocks generation when payment method is not collected', async () => {
+  it('preserves the paid-cycle payment error if a legacy reservation layer reports it', async () => {
     const store = new MemoryGenerationStore()
     store.reserveUsage = async () => {
       throw new HttpError(402, 'PAYMENT_METHOD_REQUIRED', 'Add a payment method before generating a plan.')

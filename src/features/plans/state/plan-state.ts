@@ -3,20 +3,20 @@ import type {
   DailyLog,
   ISODate,
   PlanConflictResolution,
-  WeeklyMealPlan,
+  MonthlyMealPlan,
 } from '../../../types/domain'
 
-export function planRangesOverlap(first: WeeklyMealPlan, second: WeeklyMealPlan) {
+export function planRangesOverlap(first: MonthlyMealPlan, second: MonthlyMealPlan) {
   return first.validFrom <= second.validTo && second.validFrom <= first.validTo
 }
 
-export function getConflictingPlanKeys(state: AppState, plan: WeeklyMealPlan) {
+export function getConflictingPlanKeys(state: AppState, plan: MonthlyMealPlan) {
   return Object.entries(state.plans)
     .filter(([, existingPlan]) => planRangesOverlap(existingPlan, plan))
     .map(([key]) => key)
 }
 
-function createStorageKey(state: AppState, plan: WeeklyMealPlan) {
+function createStorageKey(state: AppState, plan: MonthlyMealPlan) {
   if (!state.plans[plan.planId]) {
     return plan.planId
   }
@@ -34,7 +34,7 @@ function createStorageKey(state: AppState, plan: WeeklyMealPlan) {
 
 export function applyPlanImport(
   state: AppState,
-  plan: WeeklyMealPlan,
+  plan: MonthlyMealPlan,
   resolution: PlanConflictResolution = 'imported-first',
 ) {
   const storageKey = createStorageKey(state, plan)

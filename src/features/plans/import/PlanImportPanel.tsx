@@ -18,7 +18,7 @@ import { formatJalaliDate, toPersianDigits } from '../../../lib/dates/jalali'
 import type {
   AppState,
   PlanConflictResolution,
-  WeeklyMealPlan,
+  MonthlyMealPlan,
 } from '../../../types/domain'
 import { getConflictingPlanKeys } from '../state/plan-state'
 import {
@@ -32,9 +32,9 @@ import { ImportCompletionWizard } from './ImportCompletionWizard'
 
 interface PlanImportPanelProps {
   existingState?: AppState | null
-  onConfirm: (plan: WeeklyMealPlan, resolution: PlanConflictResolution) => void
+  onConfirm: (plan: MonthlyMealPlan, resolution: PlanConflictResolution) => void
   confirmLabel?: string
-  stagedPlan?: WeeklyMealPlan
+  stagedPlan?: MonthlyMealPlan
   onClearStagedPlan?: () => void
 }
 
@@ -114,7 +114,7 @@ export function PlanImportPanel({
             <UploadCloud aria-hidden="true" size={25} />
           </IconTile>
           <p className="mt-4 text-sm font-black text-[var(--color-text)]">
-            فایل برنامه هفتگی JSON
+            فایل برنامه ماهانه JSON
           </p>
           <p className="mx-auto mt-2 max-w-sm text-[10px] leading-5 text-[var(--color-text-muted)]">
             فایل فقط روی همین دستگاه خوانده می‌شود و حداکثر حجم مجاز{' '}

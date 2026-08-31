@@ -95,7 +95,6 @@ export const MeAndPreferences: Story = {
   beforeEach: () => {
     mocked(useOnlineStatus).mockReturnValue(true)
     mocked(loadAccountDashboard).mockResolvedValue({
-      aiCountryVerified: true,
       aiPlanAccess: { reason: 'eligible', state: 'ready' },
       automationBlockReason: null,
       countryCode: 'DE',
@@ -142,7 +141,6 @@ export const TodayMobile: Story = {
   beforeEach: () => {
     mocked(useOnlineStatus).mockReturnValue(true)
     mocked(loadAccountDashboard).mockResolvedValue({
-      aiCountryVerified: true,
       aiPlanAccess: { reason: 'eligible', state: 'ready' },
       automationBlockReason: null,
       countryCode: 'DE',

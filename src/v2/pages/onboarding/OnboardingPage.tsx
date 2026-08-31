@@ -147,7 +147,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   }
   if (!user) {
     return (
-      <main className="guard-page">
+      <main className="guard-page screen-enter">
         <BrandLockup />
         <p>{t('auth.subtitle')}</p>
         <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-in')}>{t('common.signIn')}</Link>
@@ -156,7 +156,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   }
   if (draftQuery.isError) {
     return (
-      <main className="guard-page">
+      <main className="guard-page screen-enter">
         <BrandLockup />
         <p>{locale === 'fa' ? 'اطلاعات ذخیره‌شده خوانده نشد؛ برای جلوگیری از بازنویسی با فرم خالی، دوباره تلاش کن.' : 'Saved answers could not be loaded. Retry so an empty form never overwrites them.'}</p>
         <Button onClick={() => void draftQuery.refetch()}>{locale === 'fa' ? 'تلاش دوباره' : 'Retry'}</Button>
@@ -239,7 +239,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
     try {
       const uploaded = await uploadBodyReport(user!.id, file, values.bodyReportDate)
       if (uploadCancelled.current) {
-        await discardBodyReport(uploaded.id, uploaded.path)
+        await discardBodyReport(user!.id, uploaded.id, uploaded.path)
         setUploadState('idle')
         setReportName('')
         return
@@ -259,7 +259,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
         })
       } catch (error) {
-        await discardBodyReport(uploaded.id, uploaded.path)
+        await discardBodyReport(user!.id, uploaded.id, uploaded.path)
         throw error
       }
       setValueEdits((current) => ({ ...current, ...uploadedValues }))
@@ -282,9 +282,12 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   async function removeReport() {
     if (values.bodyReportId && values.bodyReportPath) {
       try {
-        await discardBodyReport(values.bodyReportId, values.bodyReportPath)
+        await discardBodyReport(user!.id, values.bodyReportId, values.bodyReportPath)
       } catch {
-        /* keep local values even if remote delete fails */
+        setPageError(locale === 'fa'
+          ? 'فایل حذف نشد. اطلاعات روی صفحه حفظ شده است؛ اتصال را بررسی و دوباره تلاش کن.'
+          : 'The file was not removed. Its details remain on this page; check your connection and try again.')
+        return
       }
     }
     setValueEdits((current) => ({ ...current, bodyReportId: '', bodyReportPath: '', bodySource: current.bodySource === 'report' ? 'manual' : current.bodySource }))
@@ -333,7 +336,9 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
 
   const healthStopped = section.key === 'health' && isHealthCollectingStopped(values)
   const showContinue = section.key !== 'review' && !healthStopped
-  const productRegion = geoQuery.data?.suggested_product_region ?? (values.country === 'IR' ? 'ir' : undefined)
+  const productRegion = values.country
+    ? values.country === 'IR' ? 'ir' : 'intl'
+    : geoQuery.data?.suggested_product_region
   const giftCampaign = giftCampaignFromUnknown(geoQuery.data?.gift_campaign?.status)
   const reviewIds = reviewInventoryIds({
     automationBlocked: Boolean(blockedReason),
@@ -343,7 +348,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   })
 
   return (
-    <div className="onboarding-page">
+    <div className="onboarding-page screen-enter">
       <header className="onboarding-header glass-chrome">
         <Link href={localizedPath(locale)}><BrandLockup compact /></Link>
         <span><LockKeyhole size={15} />{locale === 'fa' ? 'ذخیره‌ی امن در حساب' : 'Secure account storage'}</span>

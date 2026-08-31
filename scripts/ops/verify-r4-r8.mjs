@@ -6,10 +6,11 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8')
 const requiredDefaults = [
-  'AI_PLAN_PROVIDER=stub', 'AI_PLAN_LIVE_OPENAI=false', 'AI_ENABLED_MARKETS=',
-  'PAYMENTS_MASTER_ENABLED=false', 'PAYMENTS_ENABLED_MARKETS=',
-  'ALPHA_ENROLLMENT_ENABLED=false', 'ALPHA_COHORT_IDS=', 'ALPHA_COUNTRY_ALLOWLIST=',
-  'PUBLIC_BETA_ENABLED=false', 'BETA_COUNTRY_ALLOWLIST=',
+  'AI_PLAN_PROVIDER=stub', 'AI_PLAN_LIVE_OPENAI=false',
+  'PAYMENTS_MASTER_ENABLED=false', 'IR_PAYMENT_PROVIDER=zarinpal',
+  'INTERNATIONAL_PAYMENT_PROVIDER=stripe',
+  'ALPHA_ENROLLMENT_ENABLED=false', 'ALPHA_COHORT_IDS=',
+  'PUBLIC_BETA_ENABLED=false',
 ]
 const env = read('supabase/.env.example')
 for (const line of requiredDefaults) {
@@ -19,8 +20,16 @@ for (const line of requiredDefaults) {
 const openai = read('supabase/functions/_shared/openai.ts')
 assert(openai.includes('store: false'), 'R4 provider requests must disable storage.')
 assert(openai.includes("type: 'json_schema'"), 'R4 provider requests must use strict JSON schema.')
-assert(read('supabase/functions/_shared/ai-market.ts').includes("country === 'IR'"), 'R4 must hard-block IR.')
-assert(read('supabase/functions/_shared/billing.ts').includes("country === 'IR'"), 'R5 must hard-block IR.')
+const planProvider = read('supabase/functions/_shared/plan-provider.ts')
+assert(planProvider.includes('assertLiveOpenAiEnabled()'), 'R4 live-provider switch must fail closed.')
+assert(!planProvider.includes('AI_PLAN_FALLBACK_TO_STUB'), 'R4 live-provider failure must not publish a stub plan.')
+assert.equal(read('supabase/functions/_shared/plan-period.ts').trim(), 'export const MONTHLY_PLAN_DAYS = 30', 'Monthly plan duration must be exactly 30 days.')
+const planContract = read('supabase/functions/_shared/plan-contract.ts')
+assert(planContract.includes('minItems: MONTHLY_PLAN_DAYS') && planContract.includes('maxItems: MONTHLY_PLAN_DAYS'), 'Monthly provider schema must require exactly 30 days.')
+assert(!read('supabase/functions/account-data/index.ts').includes('% content.days.length'), 'Account projection must not repeat a short plan across a monthly period.')
+const billing = read('supabase/functions/_shared/billing.ts')
+assert(billing.includes("IR_PAYMENT_PROVIDER") && billing.includes("?? 'zarinpal'"), 'R5 Iran payment route is missing.')
+assert(billing.includes("INTERNATIONAL_PAYMENT_PROVIDER") && billing.includes("?? 'stripe'"), 'R5 international payment route is missing.')
 assert(read('supabase/functions/_shared/release-gates.ts').includes('PUBLIC_BETA_ENABLED'), 'R8 server gate missing.')
 JSON.parse(read('release-evidence/schema.json'))
 

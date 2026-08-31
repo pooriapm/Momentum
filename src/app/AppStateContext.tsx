@@ -21,7 +21,7 @@ import type {
   MealOption,
   PlanConflictResolution,
   UserProfile,
-  WeeklyMealPlan,
+  MonthlyMealPlan,
 } from '../types/domain'
 import { AppStateContext } from './app-state-context'
 
@@ -43,7 +43,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return true
   }
 
-  const completeOnboarding = (profile: UserProfile, plan?: WeeklyMealPlan) => {
+  const completeOnboarding = (profile: UserProfile, plan?: MonthlyMealPlan) => {
     const initialState = createAppState(profile)
     const nextState = plan
       ? applyPlanImport(initialState, plan, 'imported-first').state
@@ -59,7 +59,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return persistState({ ...appState, profile })
   }
 
-  const importPlan = (plan: WeeklyMealPlan, resolution: PlanConflictResolution) => {
+  const importPlan = (plan: MonthlyMealPlan, resolution: PlanConflictResolution) => {
     if (!appState) {
       return false
     }

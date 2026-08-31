@@ -8,7 +8,6 @@ export interface GiftCampaignState {
   remainingBudgetUsd: number
   reservationCostUsd: number
   minRemainingUsd: number
-  allowedMarkets: Array<'ir' | 'intl'>
   startsAt: string | null
   endsAt: string | null
 }
@@ -41,7 +40,6 @@ export function reserveGiftBudget(input: {
   campaign: GiftCampaignState
   existing: GiftReservationRecord | null
   userId: string
-  productRegion: 'ir' | 'intl'
   nowIso: string
   newReservationId: string
   entitlementId: string
@@ -61,7 +59,6 @@ export function reserveGiftBudget(input: {
     !Number.isFinite(now) ||
     now < starts ||
     now >= ends ||
-    !input.campaign.allowedMarkets.includes(input.productRegion) ||
     remainingAfter < input.campaign.minRemainingUsd
   ) {
     throw new HttpError(

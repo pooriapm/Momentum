@@ -78,7 +78,7 @@ describe('one-SKU membership mapping', () => {
     expect(mapEntitlementStatus({ entitlement: { source: 'gift', status: 'provider_drift' } })).toBe('expired')
   })
 
-  it('does not treat a 7-day trial source as a distinct product', () => {
+  it('maps a legacy trial source to the same active membership state', () => {
     expect(mapEntitlementStatus({ entitlement: { source: 'trial', status: 'active' } })).toBe('active')
   })
 })
@@ -91,7 +91,7 @@ describe('inventory IDs', () => {
     expect(paywallInventoryId(entitlementFixture({ giftCampaign: 'exhausted', membership: 'none' }))).toBe('LIFE-05')
   })
 
-  it('annotates review with gift, Iranian version, and payment-method IDs', () => {
+  it('annotates review with gift, Iran payment route, and payment-method IDs', () => {
     expect(reviewInventoryIds({
       automationBlocked: false,
       giftCampaign: 'available',

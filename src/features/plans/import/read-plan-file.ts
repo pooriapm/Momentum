@@ -1,10 +1,10 @@
 import { APP_CONFIG } from '../../../config/app'
 import { getTodayIso } from '../../../lib/dates/jalali'
-import type { ISODate, WeeklyMealPlan } from '../../../types/domain'
+import type { ISODate, MonthlyMealPlan } from '../../../types/domain'
 import {
-  validateWeeklyMealPlan,
+  validateMonthlyMealPlan,
   type PlanValidationResult,
-} from '../validation/weekly-plan-schema'
+} from '../validation/monthly-plan-schema'
 import {
   getPlanImportAdapter,
   getSupportedPlanExtensions,
@@ -31,9 +31,9 @@ function differenceInIsoDays(from: ISODate, to: ISODate) {
 }
 
 export function rebaseSamplePlanToToday(
-  plan: WeeklyMealPlan,
+  plan: MonthlyMealPlan,
   today: ISODate = getTodayIso(),
-): WeeklyMealPlan {
+): MonthlyMealPlan {
   const originalStart = plan.validFrom
 
   return {
@@ -98,7 +98,7 @@ export async function readPlanFile(file: File): Promise<PlanFileResult> {
 
   try {
     const parsed = await adapter.parse(file)
-    return { ...validateWeeklyMealPlan(parsed), fileName: file.name }
+    return { ...validateMonthlyMealPlan(parsed), fileName: file.name }
   } catch (error) {
     return {
       success: false,
@@ -120,7 +120,7 @@ export async function readPlanFile(file: File): Promise<PlanFileResult> {
 
 export async function loadSamplePlan(): Promise<PlanFileResult> {
   try {
-    const response = await fetch('/samples/momentum-week-example.json', {
+    const response = await fetch('/samples/momentum-month-example.json', {
       cache: 'no-store',
     })
 
@@ -129,20 +129,20 @@ export async function loadSamplePlan(): Promise<PlanFileResult> {
     }
 
     const parsed = (await response.json()) as unknown
-    const validation = validateWeeklyMealPlan(parsed)
+    const validation = validateMonthlyMealPlan(parsed)
 
     if (!validation.success || !validation.data) {
       return {
         ...validation,
-        fileName: 'momentum-week-example.json',
+        fileName: 'momentum-month-example.json',
       }
     }
 
     return {
-      ...validateWeeklyMealPlan(
-        rebaseSamplePlanToToday(parsed as WeeklyMealPlan),
+      ...validateMonthlyMealPlan(
+        rebaseSamplePlanToToday(parsed as MonthlyMealPlan),
       ),
-      fileName: 'momentum-week-example.json',
+      fileName: 'momentum-month-example.json',
     }
   } catch {
     return {
@@ -153,7 +153,7 @@ export async function loadSamplePlan(): Promise<PlanFileResult> {
   }
 }
 
-export function countMealOptions(plan: WeeklyMealPlan) {
+export function countMealOptions(plan: MonthlyMealPlan) {
   return plan.days.reduce(
     (total, day) =>
       total + day.meals.reduce((dayTotal, meal) => dayTotal + meal.options.length, 0),

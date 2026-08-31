@@ -53,7 +53,7 @@ migration creates:
 | Function | Auth | Purpose |
 | --- | --- | --- |
 | `geo-context` | public | Suggests locale, cuisine region and preview prices; never authorizes checkout |
-| `generate-monthly-plan` | JWT | The only provider route: reserves one cycle execution and imports one validated combined workout-and-nutrition plan |
+| `generate-monthly-plan` | JWT | The only provider route: reserves one cycle execution and imports one validated combined 30-day workout-and-nutrition plan |
 | `account-data` | JWT | Safe dashboard plus idempotent onboarding, confirmed body-value and meal select/complete mutations |
 | `account-settings` | JWT | Reads and applies server-authoritative profile, preference, and account-setting changes |
 | `checkins` | JWT | Saves daily/weekly check-ins through server-side safety and plan-cycle rules |
@@ -67,7 +67,7 @@ remain immutable dependencies of both the linked project and clean bootstrap; a
 | Artifact | Classification | Reason |
 | --- | --- | --- |
 | `202607310001_initial_platform.sql` | bridge | Historical alpha foundation required by every later target migration |
-| `202608030001_preview_price_catalog.sql` through `202608030003_security_lifecycle.sql` | target | Current preview pricing, Iran payment block, and lifecycle security controls |
+| `202608030001_preview_price_catalog.sql` through `202608030003_security_lifecycle.sql` | historical | Preview pricing and a former regional payment restriction; superseded by the non-regional policy migration |
 | `202608090001_governed_food_exercise_catalog.sql` through `202608090106_account_settings_control.sql` | target | Current governed catalogs, execution loop, check-ins, plan versions, safety, and settings |
 | `202608170001_phase1b_contract_alignment.sql` | bridge | Explicitly aligns the historical foundation to the current product contract |
 | `202608180001_account_privacy_lifecycle.sql` | target | Current consent, export, deletion, and payment-method lifecycle |
@@ -97,10 +97,16 @@ rejected; concurrent replays do not make a second provider call. After provider
 execution begins, failure is terminal for that cycle and a new key cannot invoke
 the provider again.
 
+Every monthly plan is a fixed 30-day contract: generation and import require 30
+independent day records indexed 0 through 29, stored validity is inclusive from
+day 1 through day 30, and account projection never wraps shorter content with a
+modulo repeat.
+
 AI is disabled by default. Before enabling monthly generation, configure a confirmed
 email flow, the required `CURRENT_*_VERSION` secrets, exact origins, the master/feature
-switches and the global request circuit breaker. Sticky `product_region` (`ir` or
-`intl`) is locale and list-currency, not an AI geo-block. Iran is a served version.
+switches and the global request circuit breaker. `product_region` remains a
+compatibility field for payment routing only; language is independent and no
+country is an AI or product-access gate.
 
 Dashboard projection (no raw `plan_versions.content` is exposed to clients):
 
@@ -125,7 +131,7 @@ The canonical dashboard response is:
   local_date,
   profile: { display_name, date_of_birth, sex, height_cm, locale, timezone,
              country_code, pricing_market, unit_system, onboarding_status,
-             automation_block_reason, email_confirmed, ai_country_verified },
+             automation_block_reason, email_confirmed },
   active_goal, checkin, recent_checkins, latest_body_weight,
   entitlement_usage,
   ai_access: { plan: { state, reason } },
@@ -173,12 +179,12 @@ Onboarding completion requires a confirmed email and an idempotency header:
 
 The RPC validates and normalizes the server-loaded draft, stores the configured
 consent versions, blocks minor/high-risk automation, attempts an atomic first-
-plan gift reservation when campaign/market/budget policy permits, deletes the
+plan gift reservation when campaign/budget policy permits, deletes the
 draft and returns:
 
 ```text
 { onboarding: { status, automation_block_reason, goal_id, country_code,
-                ai_country_verified, consent_versions } }
+                consent_versions } }
 ```
 
 Body-report evidence, when enabled, is uploaded to the owner's private

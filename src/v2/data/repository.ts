@@ -319,7 +319,6 @@ export interface AccountDashboardView {
   onboardingStatus: string
   automationBlockReason: string | null
   countryCode: string | null
-  aiCountryVerified: boolean
   aiPlanAccess: Dashboard['ai_access']['plan']
   entitlementStatus?: MembershipStatus
   entitlementPeriodEnd?: string
@@ -339,7 +338,6 @@ export async function loadAccountDashboard(locale: AppLocale): Promise<AccountDa
     onboardingStatus: parsed.dashboard.profile.onboarding_status,
     automationBlockReason: parsed.dashboard.profile.automation_block_reason,
     countryCode: parsed.dashboard.profile.country_code,
-    aiCountryVerified: parsed.dashboard.profile.ai_country_verified ?? false,
     aiPlanAccess: parsed.dashboard.ai_access.plan,
     entitlementStatus: planEntitlementStatus(parsed.dashboard.entitlement_usage),
     entitlementPeriodEnd: parsed.dashboard.entitlement_usage?.entitlement.period_end,

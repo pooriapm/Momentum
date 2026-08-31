@@ -182,9 +182,9 @@ try {
   )
   const lockedRegion = assertSuccess(
     await admin.from('profiles').select('product_region').eq('user_id', userA.id).single(),
-    'Could not verify the sticky signup region',
+    'Could not verify the persisted payment route',
   )
-  assert(lockedRegion.product_region === 'intl', 'Later auth metadata changed the signup region')
+  assert(lockedRegion.product_region === 'intl', 'Later auth metadata changed the account payment route')
   assertSuccess(
     await admin.rpc('current_legal_document_versions'),
     'Service role could not use an approved public RPC',

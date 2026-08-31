@@ -9,6 +9,13 @@ import {
 } from '../data/contracts'
 import type { OnboardingStepKey } from './schema'
 
+const MAX_BODY_REPORT_BYTES = 10 * 1024 * 1024
+
+function isOwnedBodyReportPath(userId: string, path: string) {
+  const parts = path.split('/')
+  return parts.length === 2 && parts[0] === userId && parts[1].length > 0
+}
+
 export async function loadOnboardingDraft(userId: string) {
   const client = requireSupabase()
   const { data, error } = await client
@@ -82,6 +89,7 @@ export async function deleteOnboardingDraft(userId: string) {
 
 export async function uploadBodyReport(userId: string, file: File, measuredAt?: string) {
   assertOnline()
+  if (file.size > MAX_BODY_REPORT_BYTES) throw new Error('report_too_large')
   const client = requireSupabase()
   const sanitizedFile = await privacySafeBodyReport(file)
   const extension = sanitizedFile.type === 'application/pdf'
@@ -112,16 +120,27 @@ export async function uploadBodyReport(userId: string, file: File, measuredAt?: 
     .select('id')
     .single()
   if (recordError) {
-    await client.storage.from('body-composition').remove([path])
+    const { error: cleanupError } = await client.storage.from('body-composition').remove([path])
+    if (cleanupError) throw cleanupError
     throw recordError
   }
   return { id: measurement.id, path }
 }
 
-export async function discardBodyReport(measurementId: string, path: string) {
+export async function discardBodyReport(userId: string, measurementId: string, path: string) {
+  assertOnline()
+  if (!isOwnedBodyReportPath(userId, path)) throw new Error('body_report_path_not_owned')
   const client = requireSupabase()
-  await client.storage.from('body-composition').remove([path])
-  await client.from('body_composition_measurements').delete().eq('id', measurementId)
+  const { error: storageError } = await client.storage.from('body-composition').remove([path])
+  if (storageError) throw storageError
+  const { data, error: recordError } = await client
+    .from('body_composition_measurements')
+    .delete()
+    .eq('id', measurementId)
+    .eq('user_id', userId)
+    .select('id')
+  if (recordError) throw recordError
+  if (!Array.isArray(data) || data.length !== 1) throw new Error('body_report_delete_not_confirmed')
 }
 
 export async function completeOnboarding(idempotencyKey: string = crypto.randomUUID()) {

@@ -1,20 +1,20 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { WeeklyMealPlan } from '../../../types/domain'
+import type { MonthlyMealPlan } from '../../../types/domain'
 import {
   loadSamplePlan,
   rebaseSamplePlanToToday,
 } from './read-plan-file'
-import { validateWeeklyMealPlan } from '../validation/weekly-plan-schema'
+import { validateMonthlyMealPlan } from '../validation/monthly-plan-schema'
 
-function loadSample(): WeeklyMealPlan {
+function loadSample(): MonthlyMealPlan {
   return JSON.parse(
     readFileSync(
-      resolve('src/test/fixtures/legacy-momentum-week-example.json'),
+      resolve('src/test/fixtures/momentum-month-example.json'),
       'utf8',
     ),
-  ) as WeeklyMealPlan
+  ) as MonthlyMealPlan
 }
 
 describe('sample plan', () => {
@@ -26,16 +26,15 @@ describe('sample plan', () => {
     const rebased = rebaseSamplePlanToToday(loadSample(), '2026-07-29')
 
     expect(rebased.validFrom).toBe('2026-07-29')
-    expect(rebased.validTo).toBe('2026-07-30')
-    expect(rebased.days.map((day) => day.date)).toEqual([
-      '2026-07-29',
-      '2026-07-30',
-    ])
+    expect(rebased.validTo).toBe('2026-08-27')
+    expect(rebased.days).toHaveLength(30)
+    expect(rebased.days[0]?.date).toBe('2026-07-29')
+    expect(rebased.days.at(-1)?.date).toBe('2026-08-27')
     expect(rebased.days[0].meals).toHaveLength(3)
     expect(rebased.days[0].meals[0].options.length).toBeGreaterThan(1)
     expect(rebased.profile.goalDate).toBe('2026-10-27')
     expect(rebased.profile.bodyComposition?.measuredAt).toBe('2026-07-28')
-    expect(validateWeeklyMealPlan(rebased).success).toBe(true)
+    expect(validateMonthlyMealPlan(rebased).success).toBe(true)
   })
 
   it('loads the bundled demo without revalidating normalized runtime fields', async () => {

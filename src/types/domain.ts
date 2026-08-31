@@ -178,7 +178,7 @@ export interface PlanningContext {
   }>
 }
 
-export interface WeeklyMealPlan {
+export interface MonthlyMealPlan {
   schemaVersion: '0.1.0' | '0.2.0'
   planId: string
   planName: string
@@ -333,7 +333,7 @@ export interface AppState {
   storageVersion: '0.1.0'
   profile: UserProfile
   settings: AppSettings
-  plans: Record<string, WeeklyMealPlan>
+  plans: Record<string, MonthlyMealPlan>
   planPriority: string[]
   dailyLogs: Record<string, DailyLog>
   achievements: AchievementState

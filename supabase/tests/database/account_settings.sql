@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(11);
 
@@ -7,7 +9,7 @@ values ('66666666-6666-4666-8666-666666666666','settings@example.com',statement_
 update public.profiles set locale='en-US', timezone='UTC', country_code='US', pricing_market='global', health_data_consent_at=statement_timestamp(), health_consent_version='health-v1' where user_id='66666666-6666-4666-8666-666666666666';
 insert into public.goals(user_id,goal_type,start_weight_kg,target_weight_kg,journey_start_date,target_date,status) values ('66666666-6666-4666-8666-666666666666','maintenance',80,80,current_date,current_date+84,'active');
 insert into public.dietary_preferences(user_id,dietary_pattern) values ('66666666-6666-4666-8666-666666666666','omnivore');
-insert into public.plans(user_id,goal_id,name,status,valid_from,valid_to,locale) select user_id,id,'Settings test','active',current_date,current_date+6,'en-US' from public.goals where user_id='66666666-6666-4666-8666-666666666666';
+insert into public.plans(user_id,goal_id,name,status,valid_from,valid_to,locale) select user_id,id,'Settings test','active',current_date,current_date+29,'en-US' from public.goals where user_id='66666666-6666-4666-8666-666666666666';
 
 select extensions.lives_ok($$select public.update_account_settings(
   '66666666-6666-4666-8666-666666666666',

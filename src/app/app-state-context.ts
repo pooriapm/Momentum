@@ -6,15 +6,15 @@ import type {
   MealOption,
   PlanConflictResolution,
   UserProfile,
-  WeeklyMealPlan,
+  MonthlyMealPlan,
 } from '../types/domain'
 
 export interface AppStateContextValue {
   appState: AppState | null
   storageError?: string
-  completeOnboarding: (profile: UserProfile, plan?: WeeklyMealPlan) => void
+  completeOnboarding: (profile: UserProfile, plan?: MonthlyMealPlan) => void
   updateProfile: (profile: UserProfile) => boolean
-  importPlan: (plan: WeeklyMealPlan, resolution: PlanConflictResolution) => boolean
+  importPlan: (plan: MonthlyMealPlan, resolution: PlanConflictResolution) => boolean
   removePlan: (storageKey: string) => boolean
   prioritizePlan: (storageKey: string) => boolean
   selectMealOption: (date: ISODate, mealId: string, optionId: string) => boolean

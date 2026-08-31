@@ -31,8 +31,10 @@ test('RTL/LTR, mixed text, keyboard focus, and compact reflow remain semantic', 
   await expect(page.locator('html')).toHaveAttribute('lang', 'fa')
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
   await expect(page.locator('bdi[dir="ltr"]', { hasText: 'Momentum' }).first()).toBeVisible()
-  await page.keyboard.press('Tab')
-  await expect(page.locator(':focus-visible')).toBeVisible()
+  const menuButton = page.getByRole('button', { name: 'بازکردن منو' })
+  await menuButton.focus()
+  await expect(menuButton).toBeFocused()
+  await expect(menuButton).toHaveCSS('outline-style', 'solid')
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true)
 
   await page.goto('/en/app/today?preview=1')

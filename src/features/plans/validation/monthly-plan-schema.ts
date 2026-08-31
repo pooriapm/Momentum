@@ -1,6 +1,7 @@
 import { z } from 'zod'
+import { APP_CONFIG } from '../../../config/app'
 import { calculateDynamicTargets } from '../../../lib/calculations/target-engine'
-import type { WeeklyMealPlan } from '../../../types/domain'
+import type { MonthlyMealPlan } from '../../../types/domain'
 import {
   getImportCompletionQuestion,
   getValueAtPath,
@@ -357,7 +358,7 @@ const planningContextSchema = z
   })
   .strict()
 
-export const weeklyMealPlanSchema = z
+export const monthlyMealPlanSchema = z
   .object({
     schemaVersion: z.enum(['0.1.0', '0.2.0'], {
       error: 'schemaVersion باید یکی از نسخه‌های پشتیبانی‌شده 0.1.0 یا 0.2.0 باشد.',
@@ -382,7 +383,10 @@ export const weeklyMealPlanSchema = z
     author: requiredText('نام نویسنده', 200).optional(),
     description: requiredText('توضیحات برنامه', 1000).optional(),
     defaultTargets: dayTargetsSchema,
-    days: z.array(planDaySchema).min(1, 'برنامه باید حداقل یک روز داشته باشد.').max(60),
+    days: z.array(planDaySchema).length(
+      APP_CONFIG.monthlyPlanDays,
+      `برنامه ماهانه باید دقیقاً ${APP_CONFIG.monthlyPlanDays} روز داشته باشد.`,
+    ),
     emergencyOptions: z.array(emergencyOptionSchema).max(100),
     restaurantGuide: z.array(restaurantChoiceSchema).max(100).optional(),
     groceryList: z
@@ -404,6 +408,19 @@ export const weeklyMealPlanSchema = z
         code: 'custom',
         path: ['validTo'],
         message: 'validTo نباید قبل از validFrom باشد.',
+      })
+    }
+
+    const coverageDays = Math.floor(
+      (new Date(`${plan.validTo}T00:00:00Z`).getTime() -
+        new Date(`${plan.validFrom}T00:00:00Z`).getTime()) /
+        86_400_000,
+    ) + 1
+    if (coverageDays !== APP_CONFIG.monthlyPlanDays) {
+      context.addIssue({
+        code: 'custom',
+        path: ['validTo'],
+        message: `بازه برنامه ماهانه باید دقیقاً ${APP_CONFIG.monthlyPlanDays} روز باشد.`,
       })
     }
 
@@ -475,7 +492,7 @@ export const weeklyMealPlanSchema = z
 
 export interface PlanValidationResult {
   success: boolean
-  data?: WeeklyMealPlan
+  data?: MonthlyMealPlan
   errors: Array<{ path: string; message: string }>
   warnings: string[]
   recoverableFields?: SchemaQuestion[]
@@ -503,14 +520,14 @@ function findUnsafeText(value: unknown, path = ''): Array<{ path: string; messag
   return []
 }
 
-export function validateWeeklyMealPlan(value: unknown): PlanValidationResult {
+export function validateMonthlyMealPlan(value: unknown): PlanValidationResult {
   const unsafeErrors = findUnsafeText(value)
 
   if (unsafeErrors.length > 0) {
     return { success: false, errors: unsafeErrors, warnings: [] }
   }
 
-  const result = weeklyMealPlanSchema.safeParse(value)
+  const result = monthlyMealPlanSchema.safeParse(value)
 
   if (!result.success) {
     const issues = result.error.issues.map((issue) => {
@@ -610,18 +627,7 @@ export function validateWeeklyMealPlan(value: unknown): PlanValidationResult {
       }
     }),
     emergencyOptions: rawPlan.emergencyOptions.map(normalizeOption),
-  } as WeeklyMealPlan
-  const coverageDays =
-    Math.floor(
-      (new Date(`${plan.validTo}T00:00:00Z`).getTime() -
-        new Date(`${plan.validFrom}T00:00:00Z`).getTime()) /
-        86_400_000,
-    ) + 1
-
-  if (plan.days.length < coverageDays) {
-    warnings.push('برای بعضی روزهای بازه اعلام‌شده، برنامه غذایی تعریف نشده است.')
-  }
-
+  } as MonthlyMealPlan
   if (plan.emergencyOptions.length === 0) {
     warnings.push('گزینه‌ای برای گرسنگی اضطراری در فایل وجود ندارد.')
   }

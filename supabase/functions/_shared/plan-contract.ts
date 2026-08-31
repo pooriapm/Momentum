@@ -1,4 +1,5 @@
 import { HttpError } from './http.ts'
+import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 
 const nutritionSchema = {
@@ -225,12 +226,12 @@ export const generatedPlanJsonSchema: Record<string, unknown> = {
     default_targets: targetSchema,
     days: {
       type: 'array',
-      minItems: 3,
-      maxItems: 14,
+      minItems: MONTHLY_PLAN_DAYS,
+      maxItems: MONTHLY_PLAN_DAYS,
       items: {
         type: 'object',
         properties: {
-          day_index: { type: 'integer', minimum: 0, maximum: 13 },
+          day_index: { type: 'integer', minimum: 0, maximum: MONTHLY_PLAN_DAYS - 1 },
           title: { type: 'string', minLength: 1, maxLength: 120 },
           training_type: {
             type: 'string',

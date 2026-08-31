@@ -3,7 +3,7 @@ import { buildExternalPlanPrompt, type ExternalPlanContext } from './external-pl
 
 const context: ExternalPlanContext = {
   schema_version: '1.0.0',
-  requested_days: 7,
+  requested_days: 30,
   output_schema: { type: 'object', required: ['days'] },
   catalog: { release_id: 'momentum-core@v2', foods: [{ id: 'food:rice@v2' }] },
   declared_allergen_ids: ['allergen:peanut@v2'],
@@ -21,6 +21,7 @@ describe('external plan prompt', () => {
     expect(prompt).toContain('momentum-core@v2')
     expect(prompt).toContain('allergen:peanut@v2')
     expect(prompt).toContain('Return exactly one raw JSON object')
+    expect(prompt).toContain('Days: 30.')
     expect(prompt).not.toMatch(/chatgpt|openai|claude|gemini/i)
   })
 })

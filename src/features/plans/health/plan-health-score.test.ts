@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { WeeklyMealPlan } from '../../../types/domain'
-import { validateWeeklyMealPlan } from '../validation/weekly-plan-schema'
+import type { MonthlyMealPlan } from '../../../types/domain'
+import { validateMonthlyMealPlan } from '../validation/monthly-plan-schema'
 import {
   analyzePlanHealth,
   createPlanImprovementPrompt,
@@ -11,11 +11,11 @@ import {
 function loadPlan() {
   const raw = JSON.parse(
     readFileSync(
-      resolve('src/test/fixtures/legacy-momentum-week-example.json'),
+      resolve('src/test/fixtures/momentum-month-example.json'),
       'utf8',
     ),
-  ) as WeeklyMealPlan
-  const result = validateWeeklyMealPlan(raw)
+  ) as MonthlyMealPlan
+  const result = validateMonthlyMealPlan(raw)
   if (!result.data) throw new Error('sample should be valid')
   return result.data
 }

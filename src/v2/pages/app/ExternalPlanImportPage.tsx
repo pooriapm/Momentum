@@ -94,7 +94,7 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
         <Link href={localizedPath(locale, '/app/today')}><BrandLockup compact /></Link>
         <span><LockKeyhole size={15} />{fa ? 'واردکردن امن برنامه' : 'Secure plan import'}</span>
       </header>
-      <main>
+      <main className="screen-enter">
         <div className="external-plan-heading">
           <StatusPill tone="energy">{fa ? 'رایگان برای همیشه' : 'Free forever'}</StatusPill>
           <h1>{fa ? 'برنامه‌ات را بساز و وارد کن' : 'Create and import your plan'}</h1>

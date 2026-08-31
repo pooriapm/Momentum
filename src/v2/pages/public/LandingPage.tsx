@@ -40,7 +40,7 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
   return (
     <div className="public-page">
       <PublicHeader locale={locale} />
-      <main>
+      <main className="screen-enter">
         <section className="landing-hero">
           <div className="landing-aura landing-aura--one" />
           <div className="landing-aura landing-aura--two" />

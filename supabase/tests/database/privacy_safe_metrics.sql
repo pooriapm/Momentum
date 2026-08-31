@@ -1,4 +1,6 @@
 begin;
+set local role postgres;
+set local search_path = extensions, public;
 create extension if not exists pgtap with schema extensions;
 select extensions.plan(13);
 
@@ -19,7 +21,7 @@ update public.profiles set
 where user_id = '12121212-1212-4212-8212-121212121212';
 
 insert into public.plans(user_id,name,status,valid_from,valid_to,locale)
-values ('12121212-1212-4212-8212-121212121212','Metrics plan','active',current_date,current_date+6,'en-US');
+values ('12121212-1212-4212-8212-121212121212','Metrics plan','active',current_date,current_date+29,'en-US');
 insert into public.daily_meal_status(user_id,local_date,slot_key,option_key,status,completed_at)
 values
   ('12121212-1212-4212-8212-121212121212',current_date,'breakfast','one','completed',statement_timestamp()),

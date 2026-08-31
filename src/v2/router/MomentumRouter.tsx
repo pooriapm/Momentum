@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { Redirect, Route, Switch } from 'wouter'
 import { DocumentLocale } from '../../platform/i18n/I18nProvider'
 import { isAppLocale, type AppLocale } from '../../platform/i18n/catalog'
@@ -6,7 +6,9 @@ import type { AppTab } from '../components/AppFrame'
 import { onboardingSections, type OnboardingStepKey } from '../onboarding/schema'
 import { PageSkeleton } from '../ui/primitives'
 import { localizedPath } from './route-utils'
-import { loadUiState } from '../../lib/ui-state'
+import { hasStoredLocalePreference, loadUiState } from '../../lib/ui-state'
+import { loadPricingContext, suggestedLocaleFromContext } from '../data/pricing'
+import { RouteScrollManager } from './RouteScrollManager'
 
 const AppFrame = lazy(async () => ({ default: (await import('../components/AppFrame')).AppFrame }))
 const AccountBoundary = lazy(async () => ({ default: (await import('../components/AccountBoundary')).AccountBoundary }))
@@ -32,19 +34,45 @@ function withLocale(localeParam: string | undefined, render: (locale: AppLocale)
 
 const appTabs: readonly AppTab[] = ['today', 'plan', 'progress', 'me']
 
+function RootLocaleRedirect() {
+  const storedLocale = loadUiState().locale
+  const [locale, setLocale] = useState<AppLocale | null>(
+    hasStoredLocalePreference() ? storedLocale : null,
+  )
+
+  useEffect(() => {
+    if (locale) return
+    let active = true
+    void loadPricingContext()
+      .then((context) => {
+        if (active) setLocale(suggestedLocaleFromContext(context, storedLocale))
+      })
+      .catch(() => {
+        if (active) setLocale(storedLocale)
+      })
+    return () => {
+      active = false
+    }
+  }, [locale, storedLocale])
+
+  return locale ? <Redirect replace to={`/${locale}`} /> : <PageSkeleton />
+}
+
 export function MomentumRouter() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <Switch>
+    <>
+      <RouteScrollManager />
+      <Suspense fallback={<PageSkeleton />}>
+        <Switch>
       <Route path="/">
-        <Redirect replace to={`/${loadUiState().locale}`} />
+        <RootLocaleRedirect />
       </Route>
       <Route path="/:locale/auth/:mode">
         {(params) => withLocale(params.locale, (locale) => {
           const mode = params.mode === 'sign-up' || params.mode === 'recover' || params.mode === 'update-password' || params.mode === 'verify'
             ? params.mode
             : 'sign-in'
-          return <AccountBoundary><AuthPage locale={locale} mode={mode} /></AccountBoundary>
+          return <AccountBoundary><AuthPage key={mode} locale={locale} mode={mode} /></AccountBoundary>
         })}
       </Route>
       <Route path="/:locale/onboarding">
@@ -54,7 +82,7 @@ export function MomentumRouter() {
         {(params) => withLocale(params.locale, (locale) => {
           const isStep = onboardingSections.some((section) => section.key === params.step)
           if (!isStep) return <Redirect replace to={localizedPath(locale, '/onboarding/basics')} />
-          return <AccountBoundary><OnboardingPage locale={locale} step={params.step as OnboardingStepKey} /></AccountBoundary>
+          return <AccountBoundary><OnboardingPage key={params.step} locale={locale} step={params.step as OnboardingStepKey} /></AccountBoundary>
         })}
       </Route>
       <Route path="/:locale/app/account">
@@ -107,7 +135,8 @@ export function MomentumRouter() {
         {(params) => withLocale(params.locale, (locale) => <LandingPage locale={locale} />)}
       </Route>
       <Route><Redirect replace to="/fa" /></Route>
-      </Switch>
-    </Suspense>
+        </Switch>
+      </Suspense>
+    </>
   )
 }

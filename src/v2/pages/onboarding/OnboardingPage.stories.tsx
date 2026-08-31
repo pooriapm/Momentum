@@ -145,7 +145,6 @@ function installStoryMocks(values: Record<string, string>) {
   mocked(discardBodyReport).mockResolvedValue(undefined)
   mocked(deleteOnboardingDraft).mockResolvedValue(undefined)
   mocked(completeOnboarding).mockResolvedValue({
-    ai_country_verified: true,
     automation_block_reason: null,
     country_code: values.country || 'IR',
     goal_id: '513bc02f-9b72-42f7-b518-ab2542f4cb08',
@@ -153,7 +152,6 @@ function installStoryMocks(values: Record<string, string>) {
   })
   mocked(loadPricingContext).mockResolvedValue({ ...pricingFixture, country: values.country || 'IR' })
   mocked(loadAccountDashboard).mockResolvedValue({
-    aiCountryVerified: true,
     aiPlanAccess: { reason: 'storybook-fixture', state: 'ready' },
     automationBlockReason: null,
     countryCode: values.country || 'IR',

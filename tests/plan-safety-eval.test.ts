@@ -129,6 +129,8 @@ describe('plan safety and quality evals', () => {
     const en = loadPlanFixture('valid-en-stub.json')
     expect(fa.content_locale).toBe('fa-IR')
     expect(en.content_locale).toBe('en-US')
+    expect(fa.days).toHaveLength(MONTHLY_PLAN_DAYS)
+    expect(en.days).toHaveLength(MONTHLY_PLAN_DAYS)
     expect(() => assertGeneratedPlan(fa, MONTHLY_PLAN_DAYS, 'fa-IR', { catalog })).not.toThrow()
     expect(() => assertGeneratedPlan(en, MONTHLY_PLAN_DAYS, 'en-US', { catalog })).not.toThrow()
     expect(deterministicSafetyDecision(JSON.stringify(fa))).toBeNull()
@@ -163,7 +165,7 @@ describe('plan safety and quality evals', () => {
     }
   })
 
-  it('never issues live HTTP from the stub provider or an unapproved live market', async () => {
+  it('uses deterministic output only for the explicit stub provider and fails closed on live-provider failure', async () => {
     const fetchSpy = forbidLiveHttp()
     const catalog = createPlanCatalogSnapshot(evalCatalogRows())
     await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'fa-IR' }))
@@ -175,10 +177,12 @@ describe('plan safety and quality evals', () => {
       AI_PLAN_PROVIDER: 'openai',
       AI_PLAN_LIVE_OPENAI: 'true',
       OPENAI_API_KEY: 'test-key',
+      OPENAI_PLAN_MODEL: 'gpt-test',
+      OPENAI_SAFETY_PEPPER: 'test-pepper',
     })
-    await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'en-US' }))
-      .rejects.toMatchObject({ code: 'AI_MARKET_UNVERIFIED' })
-    expect(fetchSpy).not.toHaveBeenCalled()
+    await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'en-US', userId: 'user-1' }))
+      .rejects.toMatchObject({ code: 'OPENAI_UNAVAILABLE', status: 503 })
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
   })
 
   it('fails closed on an open or unavailable circuit breaker without calling OpenAI', async () => {

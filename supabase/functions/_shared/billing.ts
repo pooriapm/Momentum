@@ -43,37 +43,37 @@ export interface PaymentProviderAdapter {
   verifyAndNormalize(rawBody: Uint8Array, headers: Headers): Promise<NormalizedPaymentEvent>
 }
 
-function configuredCountries(): ReadonlySet<string> {
-  return new Set(
-    (optionalEnv('PAYMENTS_ENABLED_MARKETS') ?? '').split(',')
-      .map((value) => value.trim().toUpperCase())
-      .filter((value) => /^[A-Z]{2}$/.test(value)),
-  )
+export type PaymentMarket = 'ir' | 'global'
+export type PaymentCurrency = 'IRR' | 'USD'
+export type PaymentProviderName = 'zarinpal' | 'stripe'
+
+export interface PaymentRoute {
+  countryCode: string
+  market: PaymentMarket
+  currency: PaymentCurrency
+  provider: PaymentProviderName
+}
+
+export function resolvePaymentRoute(countryCode: string | null | undefined): PaymentRoute {
+  const country = countryCode?.trim().toUpperCase() ?? ''
+  if (!/^[A-Z]{2}$/.test(country)) {
+    throw new HttpError(422, 'PAYMENT_COUNTRY_REQUIRED', 'Choose a valid billing country.')
+  }
+  const iranProvider = optionalEnv('IR_PAYMENT_PROVIDER')?.toLowerCase() ?? 'zarinpal'
+  const internationalProvider = optionalEnv('INTERNATIONAL_PAYMENT_PROVIDER')?.toLowerCase() ?? 'stripe'
+  if (iranProvider !== 'zarinpal' || internationalProvider !== 'stripe') {
+    throw new HttpError(503, 'PAYMENT_PROVIDER_INVALID', 'Payment routing is unavailable.')
+  }
+  return country === 'IR'
+    ? { countryCode: country, market: 'ir', currency: 'IRR', provider: iranProvider }
+    : { countryCode: country, market: 'global', currency: 'USD', provider: internationalProvider }
 }
 
 export function assertPaymentMarketAllowed(countryCode: string | null | undefined): string {
   if (optionalEnv('PAYMENTS_MASTER_ENABLED')?.toLowerCase() !== 'true') {
     throw new HttpError(503, 'PAYMENTS_DISABLED', 'Payments are unavailable.')
   }
-  const country = countryCode?.trim().toUpperCase() ?? ''
-  if (!/^[A-Z]{2}$/.test(country)) {
-    throw new HttpError(
-      403,
-      'PAYMENT_MARKET_UNVERIFIED',
-      'Payments are unavailable in this market.',
-    )
-  }
-  if (country === 'IR') {
-    throw new HttpError(403, 'PAYMENT_MARKET_BLOCKED', 'Payments are unavailable in this market.')
-  }
-  if (!configuredCountries().has(country)) {
-    throw new HttpError(
-      403,
-      'PAYMENT_MARKET_NOT_APPROVED',
-      'Payments are unavailable in this market.',
-    )
-  }
-  return country
+  return resolvePaymentRoute(countryCode).countryCode
 }
 
 export function reduceBillingState(state: BillingState, event: PaymentEventType): BillingState {

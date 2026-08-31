@@ -206,19 +206,15 @@ legend {
 }
 
 .screen-enter {
-  animation: orbit-page-enter var(--motion-emphasis) cubic-bezier(.22, 1, .36, 1) both;
-}
-
-.app-layout .screen-enter {
-  animation: none;
+  animation: orbit-page-enter var(--motion-glass-release) var(--motion-glass-spring) both;
 }
 
 .scroll-reveal {
   opacity: 0;
   transform: translate3d(0, 12px, 0);
   transition:
-    opacity 420ms var(--motion-glass-spring),
-    transform 420ms var(--motion-glass-spring);
+    opacity var(--motion-glass-release) var(--motion-glass-spring),
+    transform var(--motion-glass-release) var(--motion-glass-spring);
   will-change: opacity, transform;
 }
 
@@ -227,6 +223,16 @@ legend {
   transform: none;
   will-change: auto;
 }
+
+.screen-enter > :where(.page-heading, section:not(.scroll-reveal), form, .segmented-control, .inline-notice),
+.motion-panel,
+:where(.external-plan-preview, .external-plan-success, .consent-withdraw-confirm, .auth-verification-state) {
+  animation: orbit-component-enter var(--motion-glass-release) var(--motion-glass-spring) both;
+}
+
+.screen-enter > :where(.page-heading, section:not(.scroll-reveal), form, .segmented-control, .inline-notice):nth-child(2) { animation-delay: 35ms; }
+.screen-enter > :where(.page-heading, section:not(.scroll-reveal), form, .segmented-control, .inline-notice):nth-child(3) { animation-delay: 70ms; }
+.screen-enter > :where(.page-heading, section:not(.scroll-reveal), form, .segmented-control, .inline-notice):nth-child(n + 4) { animation-delay: 105ms; }
 
 .lazy-picture {
   display: block;
@@ -2398,7 +2404,8 @@ legend {
   .app-bottom-nav.glass-chrome::after { display: none; }
 }
 
-@keyframes orbit-page-enter { from { transform: translateY(8px); } to { transform: none; } }
+@keyframes orbit-page-enter { from { opacity: .01; transform: translate3d(0, 10px, 0) scale(.995); } to { opacity: 1; transform: none; } }
+@keyframes orbit-component-enter { from { opacity: .01; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
 @keyframes orbit-spin { to { transform: rotate(360deg); } }
 @keyframes orbit-draw { from { opacity: .3; stroke-dashoffset: 150; } to { opacity: 1; stroke-dashoffset: 0; } }
 @keyframes orbit-satellite { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }

@@ -39,6 +39,20 @@ function assertSuccess(result, message) {
   return result.data
 }
 
+async function assertFunctionSuccess(result, message) {
+  if (!result.error) return result.data
+  let detail = ''
+  const response = result.error.context
+  if (response instanceof Response) {
+    try {
+      detail = await response.clone().text()
+    } catch {
+      // Keep the SDK error when the response body is unavailable.
+    }
+  }
+  throw new Error(`${message}: ${detail || result.error.message}`)
+}
+
 function stringValues(value, output = []) {
   if (typeof value === 'string') output.push(value)
   else if (Array.isArray(value)) value.forEach((item) => stringValues(item, output))
@@ -189,8 +203,8 @@ try {
       'X-Request-ID': `auth-delete:${suffix}`,
     },
   })
-  assertSuccess(deletion, 'Account deletion failed')
-  assert(deletion.data?.deleted === true, 'Account deletion did not return a completed result.')
+  const deletionData = await assertFunctionSuccess(deletion, 'Account deletion failed')
+  assert(deletionData?.deleted === true, 'Account deletion did not return a completed result.')
   deleted = true
 
   const deletedLookup = await admin.auth.admin.getUserById(userId)

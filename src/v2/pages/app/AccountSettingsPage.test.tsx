@@ -32,10 +32,11 @@ describe('AccountSettingsPage inventory states', () => {
     expect(screen.getByText(/the current plan is not regenerated and no ai call is created/i)).toBeInTheDocument()
   })
 
-  it('ME-03 keeps product_region read-only and calendar/units separate', () => {
+  it('ME-03 keeps payment country read-only while language, calendar, and units stay independent', () => {
     renderSettings()
-    expect(screen.getByLabelText(/account version/i)).toHaveAttribute('disabled')
-    expect(screen.getByLabelText(/account version/i)).toHaveValue('International · English and USD')
+    expect(screen.getByLabelText(/payment country/i)).toHaveAttribute('disabled')
+    expect(screen.getByLabelText(/payment route/i)).toHaveValue('International payment · USD')
+    expect(screen.getByLabelText(/language for future plans/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/date display/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/appearance/i)).toBeInTheDocument()
     expect(screen.queryByText(/rtl|ltr/i)).not.toBeInTheDocument()

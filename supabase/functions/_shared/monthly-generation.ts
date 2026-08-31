@@ -347,8 +347,8 @@ export async function runMonthlyGeneration(input: {
       days: MONTHLY_PLAN_DAYS,
       invalidStub: input.invalidStub,
       userId: input.userId,
-      countryCode: profile.countryCode,
       context: {
+        country_code: profile.countryCode,
         timezone: profile.timezone,
         product_region: profile.productRegion,
         goal_id: profile.goalId,
@@ -557,17 +557,19 @@ export function cycleDateWindow(readyAtIso: string, timeZone: string): {
   const ready = new Date(readyAtIso)
   const validFrom = localIsoDate(ready, timeZone)
   const local = zonedParts(ready, timeZone)
-  const nextMonthIndex = local.month === 12 ? 1 : local.month + 1
-  const nextMonthYear = local.month === 12 ? local.year + 1 : local.year
-  const nextMonthDay = Math.min(local.day, daysInMonth(nextMonthYear, nextMonthIndex))
+  const endLocalDate = new Date(Date.UTC(
+    local.year,
+    local.month - 1,
+    local.day + MONTHLY_PLAN_DAYS,
+  ))
   const ends = zonedDateTimeToInstant({
     ...local,
-    year: nextMonthYear,
-    month: nextMonthIndex,
-    day: nextMonthDay,
+    year: endLocalDate.getUTCFullYear(),
+    month: endLocalDate.getUTCMonth() + 1,
+    day: endLocalDate.getUTCDate(),
   }, timeZone)
   const validToDate = new Date(
-    Date.UTC(nextMonthYear, nextMonthIndex - 1, nextMonthDay) - 86_400_000,
+    Date.UTC(local.year, local.month - 1, local.day + MONTHLY_PLAN_DAYS - 1),
   )
   const validTo = validToDate.toISOString().slice(0, 10)
   return {
@@ -609,10 +611,6 @@ function zonedParts(value: Date, timeZone: string): ZonedParts {
     second: Number(mapped.second),
     millisecond: value.getUTCMilliseconds(),
   }
-}
-
-function daysInMonth(year: number, month: number): number {
-  return new Date(Date.UTC(year, month, 0)).getUTCDate()
 }
 
 function zonedDateTimeToInstant(local: ZonedParts, timeZone: string): Date {

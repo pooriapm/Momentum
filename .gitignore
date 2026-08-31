@@ -8,6 +8,12 @@ storybook-static/
 test-results/
 playwright-report/
 blob-report/
+.vite/
+.turbo/
+.cache/
+.nyc_output/
+.eslintcache
+.stylelintcache
 *.tsbuildinfo
 
 # Environment files and private local data
@@ -26,6 +32,29 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.pid
+*.pid.lock
+
+# Temporary, backup, and local export files
+tmp/
+temp/
+.tmp/
+.temp/
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+/artifacts/
+/exports/
+/screenshots/
+/recordings/
+/traces/
+*.har
+*.trace
+/*.zip
+/*.tar.gz
+/*.tgz
 
 # Editors and operating systems
 .DS_Store
@@ -45,10 +74,19 @@ Agent.md
 .codex/
 graphify-out/
 
-# Internal product, design, legal, and ops documentation.
-# Keep these on the machine only; the GitHub remote is public.
-/docs/*.md
-/docs/**/*.md
+# Internal product, design, legal, ops, and exported documents.
+# Keep these on the machine only; the GitHub remote is public. The canonical
+# design-token inputs remain versioned because builds and drift tests use them.
+/docs/**
+!/docs/design/
+!/docs/design/tokens.json
+!/docs/design/penpot/
+!/docs/design/penpot/momentum.tokens.json
+
+# Local deployment-provider state
+.wrangler/
+.vercel/
+.netlify/
 
 # Supabase local runtime and generated state
 supabase/.branches/

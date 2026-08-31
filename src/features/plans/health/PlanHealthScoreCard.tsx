@@ -1,7 +1,7 @@
 import { AlertTriangle, CheckCircle2, Download, Sparkles } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import { Surface } from '../../../components/ui/Surface'
-import type { WeeklyMealPlan } from '../../../types/domain'
+import type { MonthlyMealPlan } from '../../../types/domain'
 import {
   analyzePlanHealth,
   createPlanImprovementPrompt,
@@ -18,7 +18,7 @@ function downloadText(content: string, fileName: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function PlanHealthScoreCard({ plan }: { plan: WeeklyMealPlan }) {
+export function PlanHealthScoreCard({ plan }: { plan: MonthlyMealPlan }) {
   const analysis = analyzePlanHealth(plan)
   const issues = analysis.insights.filter(
     (insight) => insight.severity !== 'positive',

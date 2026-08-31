@@ -8,6 +8,7 @@ import {
   optionsResponse,
 } from '../_shared/http.ts'
 import { productRegionFromCountry } from '../_shared/jurisdiction.ts'
+import { resolvePaymentRoute } from '../_shared/billing.ts'
 
 const COUNTRY_PATTERN = /^[A-Z]{2}$/
 
@@ -40,8 +41,9 @@ Deno.serve(async (request) => {
     const country = manualCountry ?? edgeCountry ?? 'US'
     const source = manualCountry ? 'manual' : edgeCountry ? 'edge_hint' : 'fallback'
     const productRegion = productRegionFromCountry(country)
-    const market = productRegion === 'ir' ? 'ir' : 'global'
-    const currency = market === 'ir' ? 'IRR' : 'USD'
+    const paymentRoute = resolvePaymentRoute(country)
+    const market = paymentRoute.market
+    const currency = paymentRoute.currency
     const locale = preferredLocale(request, productRegion)
 
     const admin = createClient(
@@ -79,6 +81,7 @@ Deno.serve(async (request) => {
         suggested_market: market,
         suggested_product_region: productRegion,
         suggested_currency: currency,
+        suggested_payment_provider: paymentRoute.provider,
         suggested_cuisine_region: country === 'IR' ? 'iran' : 'international',
         ai_service_available: true,
         prices: prices ?? [],

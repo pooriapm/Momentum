@@ -73,7 +73,7 @@ function Probe() {
   )
 }
 
-describe('AuthProvider signup lock and resend', { timeout: 15_000 }, () => {
+describe('AuthProvider signup payment route and resend', { timeout: 15_000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks()
     authApi.getSession.mockResolvedValue({ data: { session: null }, error: null })
@@ -87,7 +87,7 @@ describe('AuthProvider signup lock and resend', { timeout: 15_000 }, () => {
     })
   })
 
-  it('stores sticky product region and legal versions on signup metadata', async () => {
+  it('stores suggested payment route and explicit language with legal versions', async () => {
     authApi.signUp.mockResolvedValue({ data: { session: null }, error: null })
     const client = new QueryClient()
     render(

@@ -85,10 +85,10 @@ function gateCopy(id: ReturnType<typeof paywallInventoryId>, fa: boolean) {
     return {
       tone: 'energy' as const,
       eyebrow: fa ? 'اطلاعات تکمیلی' : 'More information needed',
-      title: fa ? 'پیش از شروع یک مورد را اصلاح کن' : 'Fix one item before generation',
+      title: fa ? 'پیش از دوره پولی یک مورد را اصلاح کن' : 'Fix one item before the paid cycle',
       body: fa
-        ? 'روش پرداخت ثبت نشده است. ایمیل، روش پرداخت و کشور صورتحساب فیلدهای جدا هستند.'
-        : 'A payment method is missing. Email, payment method, and billing country are distinct named fields.',
+        ? 'روش پرداخت چرخه پولی ثبت نشده است. ایمیل، روش پرداخت و کشور صورتحساب فیلدهای جدا هستند.'
+        : 'The paid-cycle payment method is missing. Email, payment method, and billing country are distinct named fields.',
     }
   }
   return {
