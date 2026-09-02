@@ -150,6 +150,8 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
     if (navigationTimerRef.current) window.clearTimeout(navigationTimerRef.current)
     navigationTimerRef.current = window.setTimeout(() => {
       navigationTimerRef.current = null
+      if (workspace) animateScrollToTop(workspace, { reducedMotion: true })
+      animateScrollToTop(window, { reducedMotion: true })
       navigate(destinationPath)
     }, ROUTE_SCROLL_DURATION_MS)
   }

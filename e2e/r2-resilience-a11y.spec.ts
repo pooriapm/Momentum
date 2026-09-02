@@ -1,6 +1,17 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
+const STABLE_A11Y_SNAPSHOT_CSS = `
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+`
+
 for (const locale of ['fa', 'en'] as const) {
   test(`${locale} public and product preview pass automated WCAG 2.2 AA checks`, async ({ page }) => {
     test.setTimeout(120_000)
@@ -16,8 +27,8 @@ for (const locale of ['fa', 'en'] as const) {
       `/${locale}/app/account?preview=1`,
     ]) {
       await page.goto(path)
+      await page.addStyleTag({ content: STABLE_A11Y_SNAPSHOT_CSS })
       await expect(page.locator('main')).toBeVisible()
-      await page.waitForTimeout(800)
       const result = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
         .analyze()

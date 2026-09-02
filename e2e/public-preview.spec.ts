@@ -49,10 +49,11 @@ test('mobile tab navigation returns to the top with the shared motion language',
 test('public page navigation also returns the browser viewport to the top', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 780 })
   await page.goto('/en')
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+  const footer = page.locator('.public-footer')
+  await footer.scrollIntoViewIfNeeded()
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 
-  await page.locator('.public-footer').getByRole('link', { name: 'Pricing' }).click()
+  await footer.getByRole('link', { name: 'Pricing' }).click()
   await expect(page.getByRole('heading', { name: /one subscription, one clear path/i })).toBeVisible()
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
   await expect(page.locator('.pricing-page')).toHaveCSS('animation-name', 'orbit-page-enter')
