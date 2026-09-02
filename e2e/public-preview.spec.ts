@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+const PREVIEW_READY_TIMEOUT_MS = 15_000
+
 test('public shell and Persian in-memory preview remain usable', async ({ page }) => {
   await page.goto('/fa')
   await expect(page.getByRole('heading', { name: /هر روز، Momentum می‌داند/ })).toBeVisible()
@@ -25,6 +27,7 @@ test('mobile tab navigation returns to the top with the shared motion language',
   await page.setViewportSize({ width: 390, height: 780 })
   await page.goto('/en/app/today?preview=1')
   const workspace = page.locator('.app-workspace')
+  await expect(page.locator('.today-page')).toBeVisible({ timeout: PREVIEW_READY_TIMEOUT_MS })
   await expect(page.getByRole('heading', { name: /good morning, ava/i })).toBeVisible()
   await workspace.evaluate((node) => { node.scrollTop = node.scrollHeight })
   await expect.poll(() => workspace.evaluate((node) => node.scrollTop)).toBeGreaterThan(0)

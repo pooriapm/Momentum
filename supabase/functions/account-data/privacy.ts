@@ -264,7 +264,10 @@ export async function getDeletionRow(
   return parseDeletionRequest(data.deletion_request)
 }
 
-export async function revokeAccountSessions(admin: AdminClient, accessToken: string): Promise<void> {
+export async function revokeAccountSessions(
+  admin: AdminClient,
+  accessToken: string,
+): Promise<void> {
   if (typeof admin.auth.admin.signOut !== 'function') return
   const { error } = await admin.auth.admin.signOut(accessToken, 'global')
   if (error) {

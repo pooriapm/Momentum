@@ -11,6 +11,10 @@ export default defineConfig([
     'dev-dist',
     'coverage',
     'storybook-static',
+    'test-results',
+    'playwright-report',
+    'blob-report',
+    'graphify-out',
     'supabase/.temp/**',
     'supabase/.branches/**',
     // Penpot execute_code snippets intentionally use top-level return.

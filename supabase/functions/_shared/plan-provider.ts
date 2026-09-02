@@ -1,7 +1,11 @@
 import { integerEnv, optionalEnv, requiredEnv } from './config.ts'
 import { HttpError } from './http.ts'
 import type { ProviderUsage } from './limits.ts'
-import { assertLiveOpenAiEnabled, createStructuredResponse, hashedSafetyIdentifier } from './openai.ts'
+import {
+  assertLiveOpenAiEnabled,
+  createStructuredResponse,
+  hashedSafetyIdentifier,
+} from './openai.ts'
 import { planCatalogPromptContext, type PlanCatalogSnapshot } from './plan-catalog.ts'
 import { generatedPlanJsonSchema } from './plan-contract.ts'
 import { MONTHLY_PLAN_DAYS } from './plan-period.ts'

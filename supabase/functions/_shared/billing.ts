@@ -60,7 +60,8 @@ export function resolvePaymentRoute(countryCode: string | null | undefined): Pay
     throw new HttpError(422, 'PAYMENT_COUNTRY_REQUIRED', 'Choose a valid billing country.')
   }
   const iranProvider = optionalEnv('IR_PAYMENT_PROVIDER')?.toLowerCase() ?? 'zarinpal'
-  const internationalProvider = optionalEnv('INTERNATIONAL_PAYMENT_PROVIDER')?.toLowerCase() ?? 'stripe'
+  const internationalProvider = optionalEnv('INTERNATIONAL_PAYMENT_PROVIDER')?.toLowerCase() ??
+    'stripe'
   if (iranProvider !== 'zarinpal' || internationalProvider !== 'stripe') {
     throw new HttpError(503, 'PAYMENT_PROVIDER_INVALID', 'Payment routing is unavailable.')
   }

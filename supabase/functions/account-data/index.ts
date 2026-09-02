@@ -1626,11 +1626,15 @@ Deno.serve(async (request) => {
         )
       }
       const onboarding = isRecord(data)
-        ? Object.fromEntries(Object.entries(data).filter(([key]) => ![
-          'ai_country_verified',
-          'ai_billing_country_code',
-          'ai_country_verification_method',
-        ].includes(key)))
+        ? Object.fromEntries(
+          Object.entries(data).filter(([key]) =>
+            ![
+              'ai_country_verified',
+              'ai_billing_country_code',
+              'ai_country_verification_method',
+            ].includes(key)
+          ),
+        )
         : data
       return jsonResponse(request, { onboarding })
     }

@@ -42,7 +42,7 @@ Supabase Auth + PostgreSQL + private Storage
 
 ## اجرای وب‌اپ
 
-پیش‌نیاز وب: Node.js `>=22.12` و npm سازگار با lockfile. برای backend محلی،
+پیش‌نیاز وب: Node.js `>=24.18` و npm سازگار با lockfile. برای backend محلی،
 Docker Desktop، Supabase CLI و Deno 2 (برای lint/check مستقیم Edge Functionها)
 نیز لازم‌اند. حداقل نسخهٔ Node و نسخهٔ package manager در `package.json` ثبت
 شده‌اند و نسخهٔ ابزارهای backend باید در CI/release نیز pin شوند.
@@ -107,7 +107,7 @@ Frontend یک static Vite build است و می‌تواند روی Cloudflare Pa
 
 - Build command: `npm run build`
 - Output directory: `dist`
-- Node.js: `>=22.12`
+- Node.js: `>=24.18`
 - Environment: دو مقدار عمومی Supabase و برچسب محیط بالا
 
 Database و Edge Functionها جداگانه در Supabase deploy می‌شوند. برای callbackهای Auth، دامنه‌ی production را در Supabase URL Configuration اضافه کنید.
@@ -189,6 +189,9 @@ R8 نیز به‌صورت fail-closed در همین build پیاده‌سازی 
 پرداخت، alpha و beta همگی بدون evidence و approval صریح خاموش می‌مانند. شواهد در
 [`docs/R4-R8-IMPLEMENTATION-EVIDENCE.md`](docs/R4-R8-IMPLEMENTATION-EVIDENCE.md)
 و وضعیت کلان در [`docs/ROADMAP-EXECUTION.md`](docs/ROADMAP-EXECUTION.md) ثبت شده‌اند.
+نسخهٔ production اکنون commit `d01f210` را گزارش می‌کند. اولین Quality run این
+revision در Browser E2E و Edge formatting شکست خورد؛ اصلاح P0 فعلی باید پیش از
+release-verified دانستن این revision یک CI کاملاً سبز دریافت کند.
 
 - [`docs/README.md`](docs/README.md) — وضعیت فعلی و ترتیب ادامهٔ اجرا
 - [`docs/design/HANDOFF.md`](docs/design/HANDOFF.md) — ادامه طراحی
