@@ -54,7 +54,10 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
       - name: Public, preview, accessibility, and offline browser matrix
-        run: npx playwright test --grep-invert "FLOW-02 terminal"
+        env:
+          R2_AUTHENTICATED_E2E: "0"
+          R3_AUTHENTICATED_E2E: "0"
+        run: npx playwright test --grep-invert "FLOW-02 terminal|authenticated R[23]"
       - name: Start isolated Supabase browser fixture
         run: |
           npx supabase start
@@ -84,6 +87,8 @@ jobs:
           done
           curl --fail --silent --output /dev/null -X OPTIONS -H 'Origin: http://127.0.0.1:4173' "${VITE_SUPABASE_URL}/functions/v1/account-data"
           npx playwright test e2e/r2-authenticated-flows.spec.ts --project=mobile-chromium --workers=1
+      - name: Authenticated R3 monthly lifecycle
+        run: npm run test:r3-lifecycle
       - name: Stop isolated Supabase browser fixture
         if: always()
         run: npx supabase stop --no-backup

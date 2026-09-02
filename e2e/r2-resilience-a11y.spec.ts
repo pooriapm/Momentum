@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test'
 for (const locale of ['fa', 'en'] as const) {
   test(`${locale} public and product preview pass automated WCAG 2.2 AA checks`, async ({ page }) => {
     test.setTimeout(120_000)
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     for (const path of [
       `/${locale}`,
       `/${locale}/auth/sign-up`,

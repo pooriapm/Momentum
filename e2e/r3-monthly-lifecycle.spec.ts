@@ -27,9 +27,12 @@ function sql(value: string) {
 test.describe('authenticated R3 month-one/month-two lifecycle', () => {
   test.describe.configure({ mode: 'serial' })
   test.skip(
-    ({ browserName }) => process.env.R3_AUTHENTICATED_E2E !== '1' || browserName !== 'chromium',
-    'Requires the isolated local Supabase R3 fixture and runs on desktop/mobile Chromium.',
+    process.env.R3_AUTHENTICATED_E2E !== '1',
+    'Requires the isolated local Supabase R3 fixture.',
   )
+  test.beforeEach(({ browserName }) => {
+    test.skip(browserName !== 'chromium', 'Runs only on desktop/mobile Chromium.')
+  })
 
   let environment: Record<string, string>
   let admin: ReturnType<typeof createClient>

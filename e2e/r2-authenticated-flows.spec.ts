@@ -20,7 +20,13 @@ function sql(value: string) {
 
 test.describe('authenticated R2 release flows', () => {
   test.describe.configure({ mode: 'serial' })
-  test.skip(({ browserName }) => process.env.R2_AUTHENTICATED_E2E !== '1' || browserName !== 'chromium', 'Requires the isolated local Supabase release fixture and runs only on desktop/mobile Chromium.')
+  test.skip(
+    process.env.R2_AUTHENTICATED_E2E !== '1',
+    'Requires the isolated local Supabase release fixture.',
+  )
+  test.beforeEach(({ browserName }) => {
+    test.skip(browserName !== 'chromium', 'Runs only on desktop/mobile Chromium.')
+  })
   let admin: ReturnType<typeof createClient>
   let email = ''
   let password = ''
