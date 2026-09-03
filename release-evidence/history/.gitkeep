@@ -1,0 +1,3 @@
+# Append-only release decision history.
+# Store immutable copies as <releaseId>.json when a stage decision is recorded.
+# Do not overwrite prior IDs; mint a new releaseId for corrections.

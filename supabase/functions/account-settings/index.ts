@@ -11,6 +11,7 @@ import {
   requireIdempotencyKey,
 } from '../_shared/http.ts'
 import { enforceRateLimit } from '../_shared/limits.ts'
+import { assertAccountSettingsEnrollmentAccess } from '../_shared/release-gates.ts'
 
 interface SettingsBody {
   action?: unknown
@@ -193,6 +194,7 @@ Deno.serve(async (request) => {
     }
     const auth = await authenticate(request)
     const body = await readJsonBody<SettingsBody>(request, 32_768)
+    assertAccountSettingsEnrollmentAccess(auth.user.id, body.action)
     await enforceRateLimit(
       auth.admin,
       auth.user.id,

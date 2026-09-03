@@ -12,6 +12,7 @@ import {
 import { enforceAiCircuitBreaker, enforceRateLimit } from '../_shared/limits.ts'
 import { createSupabaseGenerationStore } from '../_shared/monthly-generation-db.ts'
 import { runMonthlyGeneration } from '../_shared/monthly-generation.ts'
+import { assertProductEnrollmentAccess } from '../_shared/release-gates.ts'
 
 interface GenerateBody {
   locale?: unknown
@@ -48,6 +49,7 @@ Deno.serve(async (request) => {
     }
 
     const auth = await authenticate(request)
+    assertProductEnrollmentAccess(auth.user.id)
     const idempotencyKey = requireIdempotencyKey(request)
     await enforceRateLimit(
       auth.admin,

@@ -1,5 +1,6 @@
 import { authenticate } from '../_shared/auth.ts'
 import { integerEnv, optionalEnv } from '../_shared/config.ts'
+import { assertAccountDataEnrollmentAccess } from '../_shared/release-gates.ts'
 import { canonicalJson, sha256 } from '../_shared/crypto.ts'
 import {
   assertAllowedOrigin,
@@ -1387,6 +1388,7 @@ Deno.serve(async (request) => {
 
     const auth = await authenticate(request)
     const body = await readJsonBody<AccountDataBody>(request, 2_000_000)
+    assertAccountDataEnrollmentAccess(auth.user.id, body.action)
     await enforceRateLimit(
       auth.admin,
       auth.user.id,

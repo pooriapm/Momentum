@@ -12,6 +12,7 @@ import {
   requireIdempotencyKey,
 } from '../_shared/http.ts'
 import { enforceRateLimit } from '../_shared/limits.ts'
+import { assertProductEnrollmentAccess } from '../_shared/release-gates.ts'
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
@@ -55,6 +56,7 @@ Deno.serve(async (request) => {
       throw new HttpError(405, 'method_not_allowed', 'Only POST is supported.')
     }
     const auth = await authenticate(request)
+    assertProductEnrollmentAccess(auth.user.id)
     const body = await readJsonBody<CheckInBody>(request, 16_384)
     await enforceRateLimit(
       auth.admin,

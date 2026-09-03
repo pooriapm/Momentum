@@ -7,6 +7,10 @@ record without genuine evidence and named sign-offs.
 Expected records are `R4.json` through `R8.json` when those stages are actually
 decided. R6–R8 may scope live AI or payments to `false`; that does not make R4
 or R5 live. Corrections append a new release ID rather than rewriting history.
+Immutable prior decisions belong under `history/` as `<releaseId>.json` copies;
+`npm run verify:r4-r8-release` rejects reused IDs with changed content and
+rejects structurally valid `hold` / `blocked` / `rollback` decisions for
+promotion (promotion still requires `decision: "go"`).
 
-Run `npm run verify:r4-r8-release` to require five valid records. Until real
+Run `npm run verify:r4-r8-release` to require five valid `go` records. Until real
 records exist, that command must fail and the related features remain disabled.

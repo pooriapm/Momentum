@@ -29,3 +29,32 @@ export function assertPublicBetaAccess(): void {
     throw new HttpError(403, 'PUBLIC_BETA_DISABLED', 'Public beta access is unavailable.')
   }
 }
+
+/** Public beta opens the product; otherwise closed alpha requires an invited cohort. */
+export function assertProductEnrollmentAccess(userId: string): void {
+  if (enabled('PUBLIC_BETA_ENABLED')) return
+  assertClosedAlphaAccess(userId)
+}
+
+const ACCOUNT_DATA_UNGATED_ACTIONS = new Set([
+  'legal-versions',
+  'export-status',
+  'export-download',
+  'export-account',
+  'deletion-status',
+  'delete-account',
+])
+
+const ACCOUNT_SETTINGS_UNGATED_ACTIONS = new Set([
+  'withdraw-health-consent',
+])
+
+export function assertAccountDataEnrollmentAccess(userId: string, action: unknown): void {
+  if (typeof action === 'string' && ACCOUNT_DATA_UNGATED_ACTIONS.has(action)) return
+  assertProductEnrollmentAccess(userId)
+}
+
+export function assertAccountSettingsEnrollmentAccess(userId: string, action: unknown): void {
+  if (typeof action === 'string' && ACCOUNT_SETTINGS_UNGATED_ACTIONS.has(action)) return
+  assertProductEnrollmentAccess(userId)
+}
