@@ -13,6 +13,7 @@ import { runtimeConfig } from '../config/runtime'
 import { requireSupabase, supabase } from '../data/supabase'
 import { assertOnline } from '../pwa/network'
 import { AuthContext, type AuthContextValue, type AuthStatus } from './auth-context'
+import { subscribeForeignSessionExpiry } from './session-sync'
 import { resolveSignupRegion } from './signup-region'
 
 export function AuthProvider({ children }: PropsWithChildren) {
@@ -48,9 +49,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setStatus(nextSession ? 'authenticated' : 'anonymous')
     })
 
+    const unsubscribeForeignExpiry = subscribeForeignSessionExpiry(() => {
+      if (!active) return
+      activeUserId.current = null
+      setSession(null)
+      setStatus('anonymous')
+      queryClient.clear()
+    })
+
     return () => {
       active = false
       data.subscription.unsubscribe()
+      unsubscribeForeignExpiry()
     }
   }, [queryClient])
 

@@ -7,6 +7,8 @@ Done in this package:
 - Inventory locked at **137** via `tests/inventory-coverage.test.ts` and `scripts/design/reconcile-inventory.mjs`
 - Coverage report copy no longer treats historical **132** as a reopen baseline
 - Plan-source Storybook/product stories updated in Package A
+- Multi-tab session expiry client sync (`src/platform/auth/session-sync.ts`) wired in `AuthProvider`
+- Consent-version migration detection + app banner (`src/config/consent-migration.ts`, `AppFrame`)
 
 Still owner/device-gated (do not fake with clip wrappers or emulation alone):
 
@@ -14,7 +16,7 @@ Still owner/device-gated (do not fake with clip wrappers or emulation alone):
 - Forced Colors on a real OS setting
 - Install/update/offline on physical iOS/Android
 - Full D14 visual audit across FA/RTL + EN/LTR at 320/375/390/768/1440, zoom 200%, reduced motion
-- Multi-tab session expiry and consent-version migration hosted proofs
+- Hosted multi-tab + consent-migration proofs against a live staging project
 
 Added coverage in this pass:
 

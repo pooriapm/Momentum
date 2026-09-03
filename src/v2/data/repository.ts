@@ -324,6 +324,12 @@ export interface AccountDashboardView {
   entitlementPeriodEnd?: string
   productRegion?: 'ir' | 'intl'
   planSourcePreference?: 'external' | 'momentum'
+  consentVersions?: {
+    terms: string | null
+    privacy: string | null
+    health: string | null
+  }
+  healthDataConsentAt?: string | null
 }
 
 export async function loadAccountDashboard(locale: AppLocale): Promise<AccountDashboardView> {
@@ -343,6 +349,8 @@ export async function loadAccountDashboard(locale: AppLocale): Promise<AccountDa
     entitlementPeriodEnd: parsed.dashboard.entitlement_usage?.entitlement.period_end,
     productRegion: parsed.dashboard.profile.product_region,
     planSourcePreference: parsed.dashboard.profile.plan_source_preference,
+    consentVersions: parsed.dashboard.profile.consent_versions,
+    healthDataConsentAt: parsed.dashboard.profile.health_data_consent_at ?? null,
   }
 }
 

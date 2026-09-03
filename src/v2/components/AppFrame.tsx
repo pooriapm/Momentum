@@ -7,9 +7,11 @@ import {
   Sparkles,
   WifiOff,
 } from 'lucide-react'
-import { type MouseEvent, type ReactNode, useLayoutEffect, useRef, useState } from 'react'
+import { type MouseEvent, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useSearch } from 'wouter'
+import { evaluateConsentMigration } from '../../config/consent-migration'
+import { FALLBACK_LEGAL_DOCUMENT_VERSIONS, loadLegalDocumentVersions } from '../../config/legal'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { useAuth } from '../../platform/auth/auth-context'
 import { demoPlan } from '../data/demo'
@@ -117,6 +119,12 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
     enabled: Boolean(user) && !preview,
     refetchInterval: 5 * 60 * 1_000,
   })
+  const legalVersionsQuery = useQuery({
+    queryKey: ['legal-document-versions'],
+    queryFn: loadLegalDocumentVersions,
+    enabled: Boolean(user) && !preview,
+    staleTime: 30 * 60 * 1_000,
+  })
   const [chromeMinimized, setChromeMinimized] = useState(false)
   const layoutRef = useRef<HTMLDivElement>(null)
   const navigationTimerRef = useRef<number | null>(null)
@@ -167,6 +175,18 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
     if (navigationTimerRef.current) window.clearTimeout(navigationTimerRef.current)
   }, [])
 
+  const account = planQuery.data
+  const requiredLegalVersions = legalVersionsQuery.data ?? FALLBACK_LEGAL_DOCUMENT_VERSIONS
+  const consentMigration = useMemo(() => {
+    if (preview || !account?.consentVersions) return null
+    return evaluateConsentMigration({
+      terms: account.consentVersions.terms,
+      privacy: account.consentVersions.privacy,
+      health: account.consentVersions.health,
+      healthAcceptedAt: account.healthDataConsentAt,
+    }, requiredLegalVersions)
+  }, [account, preview, requiredLegalVersions])
+
   if (!preview && status === 'loading') return <PageSkeleton />
   if (!preview && !user) {
     return (
@@ -181,7 +201,6 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   if (!preview && planQuery.isLoading && !operationalTab) return <PageSkeleton />
 
   const plan = preview ? demoPlan : (planQuery.data?.plan ?? null)
-  const account = planQuery.data
   const entitlement: EntitlementSnapshot = {
     aiPlanState: account?.aiPlanAccess.state,
     automationBlocked: account?.onboardingStatus === 'automation_blocked' || account?.aiPlanAccess.state === 'safety_blocked',
@@ -228,6 +247,18 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
           <div className="app-offline-banner inline-notice" role="status">
             <WifiOff size={16} />
             <span>{locale === 'fa' ? 'Momentum آفلاین اجرا می‌شود' : 'Momentum is running offline'}</span>
+          </div>
+        ) : null}
+        {consentMigration?.required ? (
+          <div className="app-consent-banner inline-notice inline-notice--warning" role="status">
+            <span>
+              {locale === 'fa'
+                ? 'نسخهٔ جدید اسناد حقوقی فعال است. برای ادامهٔ شخصی‌سازی خودکار، رضایت‌ها را دوباره تأیید کن.'
+                : 'Updated legal documents are active. Re-confirm consent to keep automated personalization.'}
+            </span>
+            <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/settings')}>
+              {locale === 'fa' ? 'باز کردن تنظیمات' : 'Open settings'}
+            </Link>
           </div>
         ) : null}
         {preview ? <GlassChrome className="preview-notice"><Sparkles size={16} /><span>{t('app.previewNotice')}</span></GlassChrome> : null}

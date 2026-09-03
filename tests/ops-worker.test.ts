@@ -43,7 +43,7 @@ describe('ops worker', () => {
         stack: '    at /src/app/App.tsx',
         href: 'https://momentum.pooria-pm.workers.dev/en/app',
         env: 'production',
-        release: '0.3.0',
+        release: '0.4.0',
         request_id: '11111111-1111-4111-8111-111111111111',
       }),
     }), env())

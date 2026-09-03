@@ -1,7 +1,7 @@
 export const APP_CONFIG = {
   name: 'Momentum',
   wordmark: 'MOMENTUM',
-  version: '0.3.0',
+  version: '0.4.0',
   tagline: 'برنامه ماهانه برای حرکت‌های ماندگار',
   monthlyPlanDays: 30,
   locale: 'fa-IR',

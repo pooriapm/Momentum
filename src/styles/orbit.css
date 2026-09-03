@@ -841,6 +841,14 @@ legend {
 .inline-notice--warning { color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 25%, transparent); background: var(--color-warning-soft); }
 .inline-notice--error { color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 25%, transparent); background: var(--color-danger-soft); }
 .inline-notice--success { color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 25%, transparent); background: var(--color-success-soft); }
+.app-consent-banner {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin: var(--space-3) var(--space-4) 0;
+}
 
 /* Public chrome and landing */
 .public-page {
