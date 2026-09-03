@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   assert,
@@ -30,12 +32,11 @@ function localEnvironment() {
   return environment
 }
 
-function docker(args, input) {
+function docker(args) {
   try {
     return execFileSync('docker', args, {
-      input,
       encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ['ignore', 'pipe', 'pipe'],
       timeout: 30_000,
     }).trim()
   } catch {
@@ -72,12 +73,21 @@ try {
   // and its Auth container are unchanged, so other proofs keep their own quota.
   const fixtureEnv = source.Config.Env.filter((entry) => !entry.startsWith('GOTRUE_RATE_LIMIT_HEADER='))
   fixtureEnv.push('GOTRUE_RATE_LIMIT_HEADER=X-Forwarded-For')
-  docker([
-    'run', '--detach', '--rm', '--name', fixtureName,
-    '--network', network, '--publish', '127.0.0.1::9999',
-    '--env-file', '/dev/stdin', source.Config.Image,
-  ], `${fixtureEnv.join('\n')}\n`)
-  fixtureStarted = true
+  // Node child-process stdin is a socket on Linux; Docker cannot reopen it as
+  // /dev/stdin. Use a private temporary file and remove it immediately after use.
+  const envDirectory = mkdtempSync(join(tmpdir(), 'momentum-auth-abuse-'))
+  try {
+    const envFile = join(envDirectory, 'auth.env')
+    writeFileSync(envFile, `${fixtureEnv.join('\n')}\n`, { mode: 0o600 })
+    docker([
+      'run', '--detach', '--rm', '--name', fixtureName,
+      '--network', network, '--publish', '127.0.0.1::9999',
+      '--env-file', envFile, source.Config.Image,
+    ])
+    fixtureStarted = true
+  } finally {
+    rmSync(envDirectory, { recursive: true, force: true })
+  }
   const address = docker(['port', fixtureName, '9999/tcp'])
   assert(/^127\.0\.0\.1:\d+$/.test(address), 'Auth fixture must bind only to loopback.')
   const fixtureUrl = `http://${address}`
