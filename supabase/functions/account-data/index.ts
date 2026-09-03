@@ -24,6 +24,7 @@ import {
   STARTER_TEMPLATE_VERSION,
 } from '../_shared/deterministic-starter.ts'
 import {
+  ACCOUNT_EXPORT_TABLES,
   accountHash,
   beginDeletionRow,
   failDeletionRow,
@@ -31,7 +32,6 @@ import {
   finalizeExportRow,
   getDeletionRow,
   getExportRow,
-  ACCOUNT_EXPORT_TABLES,
   loadCurrentLegalVersions,
   markDeletionSessionsRevoked,
   purgeAccountOwnedRows,

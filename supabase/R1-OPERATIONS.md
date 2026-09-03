@@ -88,7 +88,12 @@ That command targets project `osyvvzglvyonevkhdzpu` only. It uses
 `generateLink` so SMTP bodies never enter Git or logs, then deletes the
 disposable users. It does **not** burst production IP rate limits; the
 `sign_in_sign_ups` burst is `npm run test:auth-abuse` against local
-Supabase. CI skips the hosted proof unless `MOMENTUM_HOSTED_AUTH_PROOF=1`.
+Supabase. The CLI's Auth container does not set `GOTRUE_RATE_LIMIT_HEADER`,
+so this proof starts a disposable Auth container with the same local configuration
+and an IP header, bound only to loopback. It exhausts the initial 30-request
+bucket, requires `over_request_rate_limit`, and confirms another IP can still
+sign up. The fixture and its users are removed afterward; the normal Auth
+container is unchanged. CI skips the hosted proof unless `MOMENTUM_HOSTED_AUTH_PROOF=1`.
 
 Export/deletion across Auth, database, Storage, and provider metadata:
 

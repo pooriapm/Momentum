@@ -32,7 +32,11 @@ session, unverified sign-in is blocked, confirmation resend is rate-limited,
 invalid OTP fails, verification and recovery succeed via `generateLink`, and
 global sign-out revokes the refresh token. Disposable users are deleted.
 SMTP bodies are never read. The IP burst for `sign_in_sign_ups` stays on local
-Supabase so production user traffic is not locked out.
+Supabase so production user traffic is not locked out. The proof uses a
+disposable, loopback-only Auth container with IP limiting enabled (the CLI
+omits the required header), exhausts its 30-request burst bucket, and checks
+that a second IP is still allowed. It removes the container and test users
+without consuming the normal local Auth process's quota.
 
 CI skips the hosted proof unless `MOMENTUM_HOSTED_AUTH_PROOF=1`.
 
