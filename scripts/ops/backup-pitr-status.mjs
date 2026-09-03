@@ -15,6 +15,13 @@ function assert(condition, message) {
   if (!condition) throw new Error(message)
 }
 
+function backupTimestamp(entry) {
+  const raw = entry?.inserted_at ?? entry?.created_at ?? entry?.completed_at ?? entry?.time ?? null
+  if (typeof raw !== 'string' && typeof raw !== 'number') return 0
+  const ms = new Date(raw).getTime()
+  return Number.isFinite(ms) ? ms : 0
+}
+
 assert(projectRef === environments.production.project_ref, 'Backup project ref drifted from environments.json.')
 
 const token = process.env.SUPABASE_ACCESS_TOKEN?.trim() || ''
@@ -47,8 +54,12 @@ if (!response.ok) {
 
 const backups = await response.json()
 const pitrEnabled = Boolean(backups?.pitr_enabled ?? backups?.pitrEnabled)
-const latest = Array.isArray(backups?.backups) ? backups.backups[0] : null
+const list = Array.isArray(backups?.backups) ? [...backups.backups] : []
+list.sort((left, right) => backupTimestamp(right) - backupTimestamp(left))
+const latest = list[0] ?? null
 const latestStatus = latest?.status ?? latest?.backup_status ?? null
+const latestTs = latest ? backupTimestamp(latest) : 0
+const ageHours = latestTs > 0 ? (Date.now() - latestTs) / 3_600_000 : Number.POSITIVE_INFINITY
 
 const payload = {
   liveVerification: 'ran',
@@ -56,6 +67,7 @@ const payload = {
   pitrEnabled,
   pitrRequired: contract.backup.pitrRequired,
   latestBackupStatus: typeof latestStatus === 'string' ? latestStatus : 'unknown',
+  latestBackupAgeHours: Number.isFinite(ageHours) ? Number(ageHours.toFixed(2)) : null,
   hostedRestoreStatus: contract.backup.hostedRestoreStatus,
 }
 
@@ -64,6 +76,11 @@ console.log(JSON.stringify(payload, null, 2))
 if (contract.backup.pitrRequired && !pitrEnabled) {
   throw new Error('PITR is required on production and the live check reported it disabled.')
 }
-if (contract.backup.dailyBackupRequired && latestStatus && !/completed|success|complete/i.test(String(latestStatus))) {
-  throw new Error('Latest provider backup is not in a successful state.')
+if (contract.backup.dailyBackupRequired) {
+  if (!latestStatus || !/completed|success|complete/i.test(String(latestStatus))) {
+    throw new Error('Latest provider backup is missing or not in a successful state.')
+  }
+  if (!(latestTs > 0) || ageHours > contract.backup.rpoHoursOrdinary) {
+    throw new Error(`Latest successful backup is older than the ordinary RPO (${contract.backup.rpoHoursOrdinary}h).`)
+  }
 }

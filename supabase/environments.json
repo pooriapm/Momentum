@@ -8,7 +8,11 @@
   "staging": {
     "status": "not_provisioned",
     "project_ref": null,
-    "api_origin": null
+    "api_origin": null,
+    "web_origin": null,
+    "worker_name": "momentum-staging",
+    "auth_redirect_origins": [],
+    "notes": "Provision an isolated Supabase project + Cloudflare worker before flipping status to active. Requires owner approval for paid project spend."
   },
   "production": {
     "status": "active",
@@ -26,5 +30,11 @@
     "analyze-body-composition",
     "coach",
     "generate-plan"
-  ]
+  ],
+  "promotion": {
+    "same_sha_required": true,
+    "quality_workflow": "Quality",
+    "frontend_artifact_prefix": "momentum-dist-",
+    "blocked_reason": "staging_not_provisioned"
+  }
 }

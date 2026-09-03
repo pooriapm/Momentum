@@ -1,0 +1,78 @@
+name: Promote frontend
+
+# Same-SHA promotion only. Does not invent staging; exits blocked while
+# supabase/environments.json staging.status is not_provisioned.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      commit_sha:
+        description: Exact 40-char commit SHA that already passed Quality
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: promote-${{ github.event.inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promote ${{ github.event.inputs.target }} @ ${{ github.event.inputs.commit_sha }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ github.event.inputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.commit_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: npm
+      - run: npm ci
+      - name: Require exact SHA input
+        run: |
+          test "${{ github.event.inputs.commit_sha }}" = "$(git rev-parse HEAD)"
+          echo "Gate SHA=$(git rev-parse HEAD)"
+      - name: Download same-SHA Quality artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: momentum-dist-${{ github.event.inputs.commit_sha }}
+          path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.run_id }}
+        continue-on-error: true
+      - name: Resolve artifact from successful Quality run for this SHA
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -d dist && -f dist/release.json ]]; then
+            echo "Using workspace artifact"
+            exit 0
+          fi
+          run_id="$(gh run list --workflow=quality.yml --commit "${{ github.event.inputs.commit_sha }}" --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          test -n "$run_id"
+          gh run download "$run_id" --name "momentum-dist-${{ github.event.inputs.commit_sha }}" --dir .
+          test -f dist/release.json
+      - name: Promote with same-SHA guard
+        env:
+          GITHUB_SHA: ${{ github.event.inputs.commit_sha }}
+          VITE_APP_COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [[ "${{ github.event.inputs.target }}" == "staging" ]]; then
+            node scripts/ops/promote-frontend.mjs --staging
+          else
+            node scripts/ops/promote-frontend.mjs --production
+          fi

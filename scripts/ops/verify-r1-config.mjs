@@ -21,7 +21,17 @@ function assert(condition, message) {
 
 assert(environment.production.project_ref === expectedRef, 'Production project ref drifted.')
 assert(environment.production.web_origin === expectedOrigin, 'Production web origin drifted.')
-assert(environment.staging.status === 'not_provisioned', 'Review staging identity/status change.')
+if (environment.staging.status === 'not_provisioned') {
+  assert(environment.staging.project_ref == null, 'Unprovisioned staging must not set project_ref.')
+  assert(environment.staging.api_origin == null, 'Unprovisioned staging must not set api_origin.')
+} else if (environment.staging.status === 'active') {
+  assert(typeof environment.staging.project_ref === 'string' && environment.staging.project_ref.length >= 8, 'Active staging requires project_ref.')
+  assert(typeof environment.staging.api_origin === 'string' && environment.staging.api_origin.startsWith('https://'), 'Active staging requires api_origin.')
+  assert(typeof environment.staging.web_origin === 'string' && environment.staging.web_origin.startsWith('https://'), 'Active staging requires web_origin.')
+} else {
+  throw new Error(`Unknown staging status: ${environment.staging.status}`)
+}
+assert(environment.promotion?.same_sha_required === true, 'Promotion must require the same commit SHA.')
 assert(JSON.stringify(environment.edge_functions) === JSON.stringify(expectedFunctions), 'Edge allowlist drifted.')
 
 const functionDirs = fs.readdirSync(path.join(root, 'supabase/functions'), { withFileTypes: true })
@@ -101,5 +111,5 @@ for (const line of [
 }
 assert(!envExample.includes('ALLOWED_ORIGINS=*'), 'Wildcard CORS is forbidden.')
 
-console.log('R1 configuration contract passed (staging intentionally recorded as not provisioned).')
+console.log(`R1 configuration contract passed (staging status: ${environment.staging.status}).`)
 process.exitCode = 0

@@ -18,6 +18,7 @@ const ALLOWED_REPORT_KEYS = [
 
 const MAX_BODY_BYTES = 8_192
 const MAX_STACK = 1_200
+const SENSITIVE_PATTERN = /(authorization|bearer\s+[a-z0-9._~+/=-]+|access_token|refresh_token|api[_-]?key|password|service_role|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/gi
 
 type AllowedErrorCode = (typeof ALLOWED_ERROR_CODES)[number]
 type AssetsEnv = { ASSETS: { fetch: (request: Request) => Promise<Response> } }
@@ -39,6 +40,30 @@ function isAllowedErrorCode(value: unknown): value is AllowedErrorCode {
 function asSafeString(value: unknown, max: number): string {
   if (typeof value !== 'string') return ''
   return value.length <= max ? value : value.slice(0, max)
+}
+
+export function sanitizeHref(value: unknown, max = 180): string {
+  const raw = asSafeString(value, max * 2)
+  if (!raw) return ''
+  try {
+    const url = new URL(raw)
+    url.search = ''
+    url.hash = ''
+    return asSafeString(`${url.origin}${url.pathname}`, max)
+  } catch {
+    return asSafeString(raw.replace(/[?#].*$/, '').replace(SENSITIVE_PATTERN, '[redacted]'), max)
+  }
+}
+
+export function redactStack(value: unknown, max = MAX_STACK): string {
+  const raw = asSafeString(value, max * 2)
+  if (!raw) return ''
+  return asSafeString(
+    raw
+      .replace(SENSITIVE_PATTERN, '[redacted]')
+      .replace(/([?&][^=\s]+=)[^&\s]+/g, '$1[redacted]'),
+    max,
+  )
 }
 
 async function handleClientError(request: Request): Promise<Response> {
@@ -86,8 +111,8 @@ async function handleClientError(request: Request): Promise<Response> {
     env: asSafeString(parsed.env, 40),
     release: asSafeString(parsed.release, 40),
     request_id: asSafeString(parsed.request_id, 80),
-    href: asSafeString(parsed.href, 180),
-    stack: asSafeString(parsed.stack, MAX_STACK),
+    href: sanitizeHref(parsed.href, 180),
+    stack: redactStack(parsed.stack, MAX_STACK),
   }))
 
   return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } })

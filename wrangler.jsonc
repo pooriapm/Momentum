@@ -15,5 +15,14 @@
       "enabled": true,
       "invocation_logs": true
     }
+  },
+  "env": {
+    "staging": {
+      "name": "momentum-staging",
+      "workers_dev": true,
+      "vars": {
+        "MOMENTUM_ENVIRONMENT": "staging"
+      }
+    }
   }
 }

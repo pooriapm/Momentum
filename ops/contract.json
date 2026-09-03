@@ -18,7 +18,7 @@
     "cadence": "before_launch_then_quarterly",
     "evidenceDir": "artifacts/restore-drills",
     "neverProductionDump": true,
-    "localModes": ["dry-run", "execute"]
+    "localModes": ["dry-run", "execute", "local-restore"]
   },
   "monitoring": {
     "healthPath": "/ops/health",
@@ -45,7 +45,14 @@
       "client_error_code",
       "restore_drill_age",
       "support_mailbox"
-    ]
+    ],
+    "destinations": {
+      "status": "configured_via_env",
+      "pageWebhookEnv": "MOMENTUM_ALERT_PAGE_WEBHOOK",
+      "notifyWebhookEnv": "MOMENTUM_ALERT_NOTIFY_WEBHOOK",
+      "proofRequired": true,
+      "notes": "Wire approved webhook URLs in deployment secrets. Do not send unsolicited alerts from CI or agent sessions."
+    }
   },
   "alerts": [
     {

@@ -55,8 +55,9 @@
         "neverProductionDump": { "const": true },
         "localModes": {
           "type": "array",
-          "minItems": 2,
-          "items": { "enum": ["dry-run", "execute"] }
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": { "enum": ["dry-run", "execute", "local-restore"] }
         }
       }
     },
@@ -68,7 +69,8 @@
         "errorIngestPath",
         "allowedErrorCodes",
         "forbiddenFields",
-        "signals"
+        "signals",
+        "destinations"
       ],
       "properties": {
         "healthPath": { "const": "/ops/health" },
@@ -90,6 +92,18 @@
           "minItems": 4,
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 3, "maxLength": 80 }
+        },
+        "destinations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "pageWebhookEnv", "notifyWebhookEnv", "proofRequired"],
+          "properties": {
+            "status": { "enum": ["configured_via_env", "unconfigured"] },
+            "pageWebhookEnv": { "type": "string", "minLength": 8, "maxLength": 80 },
+            "notifyWebhookEnv": { "type": "string", "minLength": 8, "maxLength": 80 },
+            "proofRequired": { "type": "boolean" },
+            "notes": { "type": "string", "minLength": 8, "maxLength": 240 }
+          }
         }
       }
     },

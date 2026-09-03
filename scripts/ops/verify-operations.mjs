@@ -20,16 +20,28 @@ assert(schema.$id.includes('operations-contract'), 'Operations schema id drifted
 assert(contract.schemaVersion === '1.0.0', 'Operations contract schema version drifted.')
 assert(contract.service === 'momentum', 'Operations contract service drifted.')
 assert(contract.backup.projectRef === environments.production.project_ref, 'Backup project ref drifted.')
-assert(contract.backup.hostedRestoreStatus === 'blocked_no_staging', 'Do not claim a hosted restore while staging is unprovisioned.')
-assert(environments.staging.status === 'not_provisioned', 'Review hosted restore status if staging is provisioned.')
+if (environments.staging.status === 'not_provisioned') {
+  assert(contract.backup.hostedRestoreStatus === 'blocked_no_staging', 'Do not claim a hosted restore while staging is unprovisioned.')
+} else if (environments.staging.status === 'active') {
+  assert(
+    ['blocked_no_staging', 'rehearsed', 'verified'].includes(contract.backup.hostedRestoreStatus),
+    'Hosted restore status must stay within the contract enum after staging is provisioned.',
+  )
+} else {
+  throw new Error(`Unknown staging status: ${environments.staging.status}`)
+}
 assert(exists(contract.restoreDrill.script), 'Restore-drill script is missing.')
 assert(exists(contract.support.macrosFile), 'Support macros file is missing.')
 assert(contract.restoreDrill.neverProductionDump === true, 'Restore drill must never dump production.')
+assert(environments.promotion?.same_sha_required === true, 'Promotion must require the same commit SHA.')
+assert(exists('scripts/ops/promote-frontend.mjs'), 'Same-SHA promote helper is missing.')
+assert(exists('.github/workflows/promote.yml'), 'Promote workflow is missing.')
 
 const wrangler = read('wrangler.jsonc')
 assert(wrangler.includes('"main": "workers/ops.ts"'), 'Wrangler must route ops through workers/ops.ts.')
 assert(wrangler.includes('"binding": "ASSETS"'), 'Wrangler assets binding is missing.')
 assert(wrangler.includes('"observability"'), 'Wrangler observability block is missing.')
+assert(wrangler.includes('momentum-staging'), 'Wrangler staging env is missing.')
 assert(read('vite.config.ts').includes('/ops/'), 'PWA must fetch /ops/ from the network, not the page cache.')
 
 const worker = read('workers/ops.ts')
@@ -37,11 +49,16 @@ assert(worker.includes("pathname === '/ops/health'"), 'Health endpoint is missin
 assert(worker.includes("pathname === '/ops/client-errors'"), 'Error ingest endpoint is missing.')
 assert(worker.includes('unknown_fields'), 'Error ingest must reject extra fields.')
 assert(worker.includes('unsafe_message'), 'Error ingest must reject non-categorical messages.')
+assert(worker.includes('sanitizeHref') || worker.includes('redactStack'), 'Error ingest must scrub href/stack server-side.')
 
 for (const code of contract.monitoring.allowedErrorCodes) {
   assert(read('src/platform/observability/safe-error-report.ts').includes(`'${code}'`), `Client allowlist missing ${code}.`)
   assert(worker.includes(`'${code}'`), `Worker allowlist missing ${code}.`)
 }
+assert(contract.monitoring.destinations?.pageWebhookEnv === 'MOMENTUM_ALERT_PAGE_WEBHOOK', 'Paging webhook env drifted.')
+assert(contract.monitoring.destinations?.notifyWebhookEnv === 'MOMENTUM_ALERT_NOTIFY_WEBHOOK', 'Notify webhook env drifted.')
+assert(contract.monitoring.destinations?.proofRequired === true, 'Alert destination proof must remain required.')
+assert(contract.restoreDrill.localModes.includes('local-restore'), 'Restore drill must expose local-restore mode.')
 
 const oncallRoles = new Set(contract.oncall.roles)
 assert(oncallRoles.has(contract.oncall.primaryRole), 'Primary on-call role is not in the roster.')

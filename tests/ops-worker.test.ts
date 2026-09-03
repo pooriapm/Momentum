@@ -65,6 +65,27 @@ describe('ops worker', () => {
     log.mockRestore()
   })
 
+  it('scrubs query strings and secrets from href and stack before logging', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const accepted = await worker.fetch(request('/ops/client-errors', {
+      method: 'POST',
+      body: JSON.stringify({
+        event: 'unhandled_error',
+        code: 'unhandled_error',
+        message: 'unhandled_error',
+        href: 'https://momentum.pooria-pm.workers.dev/en/app?access_token=secret-token#frag',
+        stack: 'Error at App\nAuthorization: Bearer abc.def.ghi\nuser=ava@example.com',
+      }),
+    }), env())
+    expect(accepted.status).toBe(204)
+    const logged = JSON.parse(String(log.mock.calls[0]?.[0] ?? '{}')) as { href: string; stack: string }
+    expect(logged.href).toBe('https://momentum.pooria-pm.workers.dev/en/app')
+    expect(logged.href).not.toContain('access_token')
+    expect(logged.stack).not.toMatch(/Bearer abc|ava@example.com/i)
+    expect(logged.stack).toContain('[redacted]')
+    log.mockRestore()
+  })
+
   it('rejects health text disguised as the error message', async () => {
     const response = await worker.fetch(request('/ops/client-errors', {
       method: 'POST',
