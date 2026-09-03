@@ -59,6 +59,7 @@ assert(contract.monitoring.destinations?.pageWebhookEnv === 'MOMENTUM_ALERT_PAGE
 assert(contract.monitoring.destinations?.notifyWebhookEnv === 'MOMENTUM_ALERT_NOTIFY_WEBHOOK', 'Notify webhook env drifted.')
 assert(contract.monitoring.destinations?.proofRequired === true, 'Alert destination proof must remain required.')
 assert(contract.restoreDrill.localModes.includes('local-restore'), 'Restore drill must expose local-restore mode.')
+assert(exists('scripts/ops/prove-alert-destination.mjs'), 'Alert destination proof script is missing.')
 
 const oncallRoles = new Set(contract.oncall.roles)
 assert(oncallRoles.has(contract.oncall.primaryRole), 'Primary on-call role is not in the roster.')

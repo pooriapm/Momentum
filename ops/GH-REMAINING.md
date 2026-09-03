@@ -14,6 +14,13 @@ Still owner/device-gated (do not fake with clip wrappers or emulation alone):
 - Forced Colors on a real OS setting
 - Install/update/offline on physical iOS/Android
 - Full D14 visual audit across FA/RTL + EN/LTR at 320/375/390/768/1440, zoom 200%, reduced motion
+- Multi-tab session expiry and consent-version migration hosted proofs
+
+Added coverage in this pass:
+
+- `e2e/onboarding-plan-source.spec.ts` for ONB-29 explicit selection + reload persistence (requires `R2_AUTHENTICATED_E2E=1`)
+- `tests/release-gates-api.test.ts` enrollment boundary matrix
+- `npm run ops:alert-proof` dry-run destination check (send only with `--send` + approved webhook env)
 
 No identity redesign outside Step 5 freeze.
 
