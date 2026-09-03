@@ -50,12 +50,14 @@ const pricingFixture: PricingContext = {
   ai_service_available: true,
   authoritative_for_checkout: false,
   country: 'DE',
+  gift_campaign: { status: 'available' },
   prices: [],
   source: 'fallback',
   suggested_cuisine_region: 'international',
   suggested_currency: 'USD',
   suggested_locale: 'en-US',
   suggested_market: 'global',
+  suggested_product_region: 'intl',
 }
 
 const completeDraft: Record<string, string> = {
@@ -229,6 +231,22 @@ export const Consent: Story = { beforeEach: beforeEachWithDraft(), render: rende
 export const PlanSource: Story = { beforeEach: beforeEachWithDraft({ planSource: '' }), parameters: momentumEvidence(['ONB-29'], '/[locale]/onboarding/plan-source'), render: renderStep('plan-source') }
 
 export const PlanSourceExternalSelected: Story = { beforeEach: beforeEachWithDraft({ planSource: 'external' }), render: renderStep('plan-source') }
+
+export const PlanSourceMomentumSelected: Story = { beforeEach: beforeEachWithDraft({ planSource: 'momentum' }), render: renderStep('plan-source') }
+
+export const PlanSourceGiftExhausted: Story = {
+  beforeEach: async (context) => {
+    const cleanup = await beforeEachWithDraft({ planSource: '' })(context)
+    mocked(loadPricingContext).mockResolvedValue({
+      ...pricingFixture,
+      country: 'IR',
+      gift_campaign: { status: 'exhausted' },
+      suggested_product_region: 'ir',
+    })
+    return cleanup
+  },
+  render: renderStep('plan-source'),
+}
 
 export const Goal: Story = { beforeEach: beforeEachWithDraft(), render: renderStep('goal') }
 

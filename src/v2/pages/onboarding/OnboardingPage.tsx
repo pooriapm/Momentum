@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Check,
   FileCheck2,
+  FileUp,
   Gift,
   HeartPulse,
   Import,
@@ -12,6 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
   UploadCloud,
+  WandSparkles,
   WifiOff,
 } from 'lucide-react'
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
@@ -336,6 +338,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
 
   const healthStopped = section.key === 'health' && isHealthCollectingStopped(values)
   const showContinue = section.key !== 'review' && !healthStopped
+  const planSourceMissing = section.key === 'plan-source' && !values.planSource
   const productRegion = values.country
     ? values.country === 'IR' ? 'ir' : 'intl'
     : geoQuery.data?.suggested_product_region
@@ -367,7 +370,12 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           {section.key === 'basics' ? <div className="inline-notice"><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</div> : null}
           {section.key === 'consent' ? <div className="inline-notice"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</div> : null}
           {section.key === 'plan-source' ? (
-            <PlanSourceChoice error={errors.planSource} locale={locale} onChange={(value) => updateValue(section.fields[0], value)} value={values.planSource ?? ''} />
+            <PlanSourceChoice
+              error={errors.planSource}
+              giftCampaign={giftCampaign}
+              onChange={(value) => updateValue(section.fields[0], value)}
+              value={values.planSource ?? ''}
+            />
           ) : null}
           {section.key === 'food' ? <div className="inline-notice inline-notice--success"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</div> : null}
           {visibleFields.length > 0 && section.key !== 'plan-source' ? (
@@ -457,7 +465,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           ) : showContinue ? (
             <div className="onboarding-actions">
               <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
-              <Button disabled={!online} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
+              <Button disabled={!online || planSourceMissing} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
             </div>
           ) : (
             <div className="onboarding-actions"><Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button></div>
@@ -468,27 +476,65 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   )
 }
 
-function PlanSourceChoice({ error, locale, value, onChange }: { error?: string; locale: AppLocale; value: string; onChange: (value: string) => void }) {
-  const fa = locale === 'fa'
+function PlanSourceChoice({
+  error,
+  giftCampaign,
+  value,
+  onChange,
+}: {
+  error?: string
+  giftCampaign: ReturnType<typeof giftCampaignFromUnknown>
+  value: string
+  onChange: (value: string) => void
+}) {
+  const { t } = useTranslation()
+  const selectedLabel = value === 'external'
+    ? t('onboarding.planSourceExternal')
+    : value === 'momentum'
+      ? t('onboarding.planSourceMomentum')
+      : ''
+  const momentumFoot = giftCampaign === 'exhausted' || giftCampaign === 'disabled'
+    ? t('onboarding.planSourceMomentumMembershipFoot')
+    : t('onboarding.planSourceMomentumGiftFoot')
+
   return (
-    <div className="plan-source-choice" data-inventory="ONB-29">
-      <p>{fa ? 'هر دو مسیر از ابزارهای ثبت و پیگیری Momentum استفاده می‌کنند. فقط روش ساخت برنامه فرق دارد.' : 'Both paths include Momentum tracking and plan tools. Only the plan-creation method changes.'}</p>
-      <div className="plan-source-choice__grid" role="radiogroup" aria-label={fa ? 'روش ساخت برنامه' : 'Plan creation method'}>
-        <button aria-checked={value === 'external'} className={value === 'external' ? 'is-selected' : ''} onClick={() => onChange('external')} role="radio" type="button">
-          <Import size={24} />
-          <strong>{fa ? 'رایگان برای همیشه' : 'Free forever'}</strong>
-          <span>{fa ? 'پرامپت آماده را در ابزار دلخواهت اجرا کن یا برنامه موجود را وارد کن.' : 'Use our ready prompt in a tool you choose, or import an existing plan.'}</span>
-          <small>{fa ? 'بدون ساخت خودکار Momentum و بدون نیاز به اشتراک' : 'No Momentum automation and no subscription required'}</small>
-        </button>
-        <button aria-checked={value === 'momentum'} className={value === 'momentum' ? 'is-selected' : ''} onClick={() => onChange('momentum')} role="radio" type="button">
-          <Sparkles size={24} />
-          <strong>{fa ? 'ساخت و مدیریت با Momentum' : 'Momentum-managed'}</strong>
-          <span>{fa ? 'Momentum پاسخ‌ها را می‌گیرد، برنامه را می‌سازد و هر دوره با نتایجت به‌روزرسانی می‌کند.' : 'Momentum uses your answers to create the plan and update each cycle from your outcomes.'}</span>
-          <small>{fa ? 'برنامه اول هدیه؛ از دوره دوم اشتراک لازم است' : 'First plan is a gift; subscription required from cycle two'}</small>
-        </button>
+    <fieldset className={`plan-source-choice${error ? ' has-error' : ''}`} data-inventory="ONB-29">
+      <legend>{t('onboarding.planSourceChoose')}</legend>
+      <p className="plan-source-choice__intro">{t('onboarding.planSourceIntro')}</p>
+      <div className="plan-source-choice__grid">
+        <label className={`plan-source-choice__option${value === 'external' ? ' is-selected' : ''}`}>
+          <input checked={value === 'external'} name="plan-source" onChange={() => onChange('external')} required type="radio" value="external" />
+          <span className="plan-source-choice__top" aria-hidden="true">
+            <span className="plan-source-choice__icon"><FileUp size={23} /></span>
+            <span className="plan-source-choice__indicator">{value === 'external' ? <Check size={15} strokeWidth={3} /> : null}</span>
+          </span>
+          <span className="plan-source-choice__copy">
+            <span className="plan-source-choice__kicker">{t('onboarding.planSourceExternalKicker')}</span>
+            <strong>{t('onboarding.planSourceExternal')}</strong>
+            <span>{t('onboarding.planSourceExternalBody')}</span>
+          </span>
+          <small>{t('onboarding.planSourceExternalFoot')}</small>
+        </label>
+        <label className={`plan-source-choice__option${value === 'momentum' ? ' is-selected' : ''}`}>
+          <input checked={value === 'momentum'} name="plan-source" onChange={() => onChange('momentum')} required type="radio" value="momentum" />
+          <span className="plan-source-choice__top" aria-hidden="true">
+            <span className="plan-source-choice__icon"><WandSparkles size={23} /></span>
+            <span className="plan-source-choice__indicator">{value === 'momentum' ? <Check size={15} strokeWidth={3} /> : null}</span>
+          </span>
+          <span className="plan-source-choice__copy">
+            <span className="plan-source-choice__kicker">{t('onboarding.planSourceMomentumKicker')}</span>
+            <strong>{t('onboarding.planSourceMomentum')}</strong>
+            <span>{t('onboarding.planSourceMomentumBody')}</span>
+          </span>
+          <small>{momentumFoot}</small>
+        </label>
       </div>
+      <p className={`plan-source-choice__guidance${value ? ' is-selected' : ''}`} aria-live="polite">
+        {value ? <Check aria-hidden="true" size={16} strokeWidth={3} /> : null}
+        {value ? t('onboarding.planSourceGuidanceSelected', { label: selectedLabel }) : t('onboarding.planSourceGuidanceChoose')}
+      </p>
       {error ? <span className="orbit-field__error" role="alert">{error}</span> : null}
-    </div>
+    </fieldset>
   )
 }
 
@@ -768,6 +814,7 @@ function ReviewGrid({
   }
 
   const items = [
+    { step: 'plan-source' as const, label: t('onboarding.planSource'), value: optionLabel('planSource', values.planSource) },
     { step: 'goal' as const, label: locale === 'fa' ? 'هدف' : 'Goal', value: optionLabel('goalType', values.goalType) },
     { step: 'health' as const, label: locale === 'fa' ? 'سلامت' : 'Health', value: healthScreeningOutcome(values) === 'eligible' ? (locale === 'fa' ? 'مانع ایمنی ثبت نشده' : 'No safety block') : (locale === 'fa' ? 'نیاز به مسیر انسانی' : 'Human path required') },
     { step: 'food' as const, label: locale === 'fa' ? 'سبک غذایی' : 'Diet', value: optionLabel('dietStyle', values.dietStyle) },

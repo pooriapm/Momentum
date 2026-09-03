@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState, type ReactNode } from "react";
-import { AlertOctagon, AlertTriangle, BadgeCheck, CircleHelp, Check, ChevronLeft, Clock3, Dumbbell, FileCheck2, FileUp, Gift, Globe2, HeartPulse, Home, LoaderCircle, LockKeyhole, RefreshCw, Salad, Save, ShieldCheck, Sparkles, WalletCards, WifiOff } from "lucide-react";
+import { AlertOctagon, AlertTriangle, BadgeCheck, CircleHelp, Check, ChevronLeft, Clock3, Dumbbell, FileCheck2, FileUp, Gift, Globe2, HeartPulse, Home, LoaderCircle, LockKeyhole, RefreshCw, Salad, Save, ShieldCheck, Sparkles, WalletCards, WandSparkles, WifiOff } from "lucide-react";
 import { momentumEvidence, momentumSupportingVariant } from "./coverage";
 import { CountryCombobox } from "../../v2/ui/CountryCombobox";
 import { localeFromStory, ProductFrame, PublicFrame, SpecBadge, SpecButton, SpecCallout, SpecCard, SpecChips, SpecConsentOption, SpecField, SpecHeader, SpecList, SpecOverlay, SpecProgress, SpecSelect, SpecTable, SpecTabs, Timeline, tx, type SpecLocale } from "./ProductSpec";
 
 type PricingState = "available" | "exhausted" | "region" | "loading";
-type OnboardingState = "entry" | "resume" | "basics-validation" | "consent-required" | "health-caution" | "food-allergy" | "training-home" | "training-gym" | "training-custom" | "body-manual" | "body-upload-review" | "review-gift" | "review-subscription" | "saved-offline" | "save-error" | "generation-handoff";
+type OnboardingState = "entry" | "resume" | "basics-validation" | "consent-required" | "plan-source" | "health-caution" | "food-allergy" | "training-home" | "training-gym" | "training-custom" | "body-manual" | "body-upload-review" | "review-gift" | "review-subscription" | "saved-offline" | "save-error" | "generation-handoff";
 
 function CountryOfUseField({ defaultOpen = false, locale }: { defaultOpen?: boolean; locale: SpecLocale }) {
   const [country, setCountry] = useState(locale === "fa" ? "IR" : "DE");
@@ -239,11 +239,12 @@ function setupStep(state: string): number {
   if (state.startsWith("basics")) return 1;
   if (state.startsWith("health")) return 2;
   if (state.startsWith("consent")) return 3;
-  if (state.startsWith("goal")) return 4;
-  if (state.startsWith("food")) return 5;
-  if (state.startsWith("training")) return 6;
-  if (state.startsWith("body")) return 7;
-  return 8;
+  if (state.startsWith("plan-source") || state === "plan-source") return 4;
+  if (state.startsWith("goal")) return 5;
+  if (state.startsWith("food")) return 6;
+  if (state.startsWith("training")) return 7;
+  if (state.startsWith("body")) return 8;
+  return 9;
 }
 
 function allergenChips(locale: SpecLocale, selected: string[], blocked?: string) {
@@ -299,6 +300,7 @@ function OnboardingScreen({ locale, state }: { locale: SpecLocale; state: Onboar
   const titles: Record<Exclude<OnboardingState, "entry" | "resume" | "generation-handoff">, string> = {
     "basics-validation": tx(locale, "اطلاعات پایه", "Basic information"),
     "consent-required": tx(locale, "رضایت و حریم خصوصی", "Consent & privacy"),
+    "plan-source": tx(locale, "روش ساخت برنامه", "How your plan is created"),
     "health-caution": tx(locale, "سلامت و محدودیت‌ها", "Health & limitations"),
     "food-allergy": tx(locale, "غذا و حساسیت‌ها", "Food & allergies"),
     "training-home": tx(locale, "تمرین در خانه", "Training at home"),
@@ -377,6 +379,28 @@ function OnboardingBody({ locale, state }: { locale: SpecLocale; state: Exclude<
           <SpecConsentOption checked={false} description={tx(locale, "برای ساخت برنامه لازم است و هر زمان از حساب قابل پس‌گرفتن است.", "Required for plan creation and withdrawable from your account.")} error={tx(locale, "رضایت پردازش داده سلامت لازم است.", "Health-data consent is required.")} label={tx(locale, "پردازش داده‌های سلامت", "Health-data processing")} version="v1.0 · 2026-08-14" />
         </div>
         <SpecCallout icon={<AlertTriangle />} title={tx(locale, "دو انتخاب ضروری باقی مانده", "Two required choices remain")} tone="warning" />
+        <StepActions locale={locale} />
+      </SpecCard>
+    );
+  if (state === "plan-source")
+    return (
+      <SpecCard>
+        <p>{tx(locale, "یکی را الان انتخاب کن. تا قبل از پایان راه‌اندازی می‌توانی با بازگشت تغییرش بدهی.", "Pick one now. You can change it with Back before you finish setup.")}</p>
+        <div className="mo-spec__grid" style={{ marginBlockStart: "1rem" }}>
+          <SpecCard>
+            <span className="mo-spec__state-icon"><FileUp /></span>
+            <h2>{tx(locale, "برنامه خودم را استفاده می‌کنم", "Use my own plan")}</h2>
+            <p>{tx(locale, "برنامه‌ات را وارد کن یا پرامپت ما را در ابزار دیگری اجرا کن.", "Import a plan, or use our prompt in another AI tool.")}</p>
+            <SpecBadge>{tx(locale, "همیشه رایگان · بدون اشتراک", "Always free · No subscription")}</SpecBadge>
+          </SpecCard>
+          <SpecCard tone="brand">
+            <span className="mo-spec__state-icon mo-spec__state-icon--brand"><WandSparkles /></span>
+            <h2>{tx(locale, "Momentum برنامه‌ام را بسازد", "Create my plan")}</h2>
+            <p>{tx(locale, "Momentum از پاسخ‌هایت یک برنامه شخصی ۳۰روزه می‌سازد.", "Momentum creates a personal 30-day plan from your answers.")}</p>
+            <SpecBadge tone="brand">{tx(locale, "هدیه برنامه اول در صورت باقی‌ماندن بودجه · عضویت از دوره دوم", "First-plan gift when campaign budget remains · Membership from cycle two")}</SpecBadge>
+          </SpecCard>
+        </div>
+        <SpecCallout icon={<Check />} title={tx(locale, "برای ادامه یکی را انتخاب کن.", "Choose one option to continue.")} tone="info" />
         <StepActions locale={locale} />
       </SpecCard>
     );
@@ -992,6 +1016,10 @@ export const ConsentDefault: Story = {
 export const ConsentRequired: Story = {
   parameters: momentumEvidence(["ONB-08"], "/[locale]/onboarding/consent"),
   render: renderOnboarding("consent-required"),
+};
+export const PlanSourceChoice: Story = {
+  parameters: momentumEvidence(["ONB-29"], "/[locale]/onboarding/plan-source"),
+  render: renderOnboarding("plan-source"),
 };
 export const HealthDefault: Story = {
   parameters: momentumEvidence(["ONB-09"], "/[locale]/onboarding/health"),

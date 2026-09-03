@@ -199,12 +199,81 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.getByText(/other is not mapped to the catalog/i)).toBeInTheDocument()
   })
 
-  it('ONB-29 presents free external import and Momentum-managed paths as equal choices', async () => {
+  it('ONB-29 requires one clearly selected plan path before continuing', async () => {
     renderStep('plan-source', { ...completeDraft, planSource: '' })
-    expect(await screen.findByRole('radio', { name: /free forever/i })).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: /momentum-managed/i })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('radio', { name: /free forever/i }))
-    expect(screen.getByRole('radio', { name: /free forever/i })).toHaveAttribute('aria-checked', 'true')
+    const external = await screen.findByRole('radio', { name: /use my own plan/i })
+    const managed = screen.getByRole('radio', { name: /create my plan/i })
+    const continueButton = screen.getByRole('button', { name: 'Continue' })
+
+    expect(external).not.toBeChecked()
+    expect(managed).not.toBeChecked()
+    expect(continueButton).toBeDisabled()
+    expect(screen.getByText('Choose one option to continue.')).toBeInTheDocument()
+    expect(screen.getByText(/First-plan gift when campaign budget remains/i)).toBeInTheDocument()
+
+    fireEvent.click(external)
+    expect(external).toBeChecked()
+    expect(managed).not.toBeChecked()
+    expect(continueButton).toBeEnabled()
+    expect(screen.getByText('Selected: Use my own plan')).toBeInTheDocument()
+
+    fireEvent.click(managed)
+    expect(external).not.toBeChecked()
+    expect(managed).toBeChecked()
+    expect(screen.getByText('Selected: Create my plan')).toBeInTheDocument()
+
+    fireEvent.click(continueButton)
+    await waitFor(() => {
+      expect(saveDraft).toHaveBeenCalledWith(
+        user.id,
+        'goal',
+        expect.objectContaining({ planSource: 'momentum' }),
+      )
+    })
+  })
+
+  it('ONB-29 persists plan source on Back and shows membership copy when gift is exhausted', async () => {
+    pricing.mockResolvedValue({
+      ai_service_available: true,
+      authoritative_for_checkout: false,
+      country: 'IR',
+      gift_campaign: { status: 'exhausted' },
+      prices: [],
+      source: 'fallback',
+      suggested_cuisine_region: 'iran',
+      suggested_currency: 'IRR',
+      suggested_locale: 'fa-IR',
+      suggested_market: 'ir',
+      suggested_product_region: 'ir',
+    })
+    renderStep('plan-source', { ...completeDraft, planSource: 'external' })
+    expect(await screen.findByText(/Gift unavailable · Membership required/i)).toBeInTheDocument()
+    expect(screen.getByText(/change it with Back before you finish setup/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await waitFor(() => {
+      expect(saveDraft).toHaveBeenCalledWith(
+        user.id,
+        'consent',
+        expect.objectContaining({ planSource: 'external' }),
+      )
+    })
+  })
+
+  it('ONB-29 resumes a saved plan-source selection from the draft', async () => {
+    renderStep('plan-source', { ...completeDraft, planSource: 'momentum' })
+    const managed = await screen.findByRole('radio', { name: /create my plan/i })
+    expect(managed).toBeChecked()
+    expect(screen.getByRole('radio', { name: /use my own plan/i })).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled()
+    expect(screen.getByText('Selected: Create my plan')).toBeInTheDocument()
+  })
+
+  it('review edit links include plan source', async () => {
+    renderStep('review', { ...completeDraft, bodySkipped: 'yes', bodyReportPath: '' })
+    expect(await screen.findByText('How your plan is created')).toBeInTheDocument()
+    expect(screen.getByText('Create my plan')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Edit' })[0]).toHaveAttribute('href', '/en/onboarding/plan-source')
   })
 
   it('changes options per meal only with plus and minus between 1 and 4', async () => {
