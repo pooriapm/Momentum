@@ -264,6 +264,46 @@ export async function getDeletionRow(
   return parseDeletionRequest(data.deletion_request)
 }
 
+export const ACCOUNT_EXPORT_TABLES = [
+  'profiles',
+  'onboarding_drafts',
+  'goals',
+  'dietary_preferences',
+  'health_context',
+  'body_composition_measurements',
+  'training_schedule_items',
+  'subscriptions',
+  'entitlements',
+  'usage_ledger',
+  'ai_generation_jobs',
+  'plans',
+  'plan_versions',
+  'starter_plan_activations',
+  'external_plan_imports',
+  'gift_reservations',
+  'monthly_plan_periods',
+  'monthly_plan_snapshots',
+  'next_cycle_inputs',
+  'daily_checkins',
+  'weekly_checkins',
+  'daily_meal_status',
+  'extra_food_logs',
+  'workout_sessions',
+  'workout_exercise_logs',
+  'workout_set_logs',
+  'ai_safety_reports',
+  'export_requests',
+  'deletion_requests',
+] as const
+
+export async function purgeAccountOwnedRows(
+  admin: AdminClient,
+  userId: string,
+): Promise<void> {
+  const { error } = await admin.rpc('purge_account_owned_rows', { p_user_id: userId })
+  rpcError(error, 'account_delete_failed', 'Account deletion could not be completed.')
+}
+
 export async function revokeAccountSessions(
   admin: AdminClient,
   accessToken: string,

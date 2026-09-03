@@ -77,10 +77,43 @@ document. The repository secret scan and frontend `VITE_` checks are mandatory.
 6. Smoke-test signup/verification/sign-in/recovery/sign-out/deletion and the
    five functions. Keep AI off.
 
+Hosted Auth abuse, rate-limit, verification, recovery and session-revocation
+proof:
+
+```bash
+npm run test:auth-hosted
+```
+
+That command targets project `osyvvzglvyonevkhdzpu` only. It uses
+`generateLink` so SMTP bodies never enter Git or logs, then deletes the
+disposable users. It does **not** burst production IP rate limits; the
+`sign_in_sign_ups` burst is `npm run test:auth-abuse` against local
+Supabase. CI skips the hosted proof unless `MOMENTUM_HOSTED_AUTH_PROOF=1`.
+
+Export/deletion across Auth, database, Storage, and provider metadata:
+
+```bash
+npm run test:privacy-lifecycle
+```
+
+That local drill is the R-306 executable proof. Hosted production remains
+opt-in (`npm run test:privacy-hosted`) and still lacks staging. Do not deploy
+the matching Edge Function until `purge_account_owned_rows` is applied on the
+target database.
+
+Private body-report upload/download/delete and 30-day unconfirmed retention:
+
+```bash
+npm run test:body-report
+```
+
 Rollback functions to the previously recorded deployment first. For database
 changes, prefer a reviewed forward repair; never reset or destructively rewind
 production. Disable the affected function/feature, preserve audit evidence, and
 restore service only after ownership and data boundaries are re-proven.
+
+Backup/PITR, restore drills, monitoring, alerts, on-call and bilingual support
+are tracked in `R7-OPERATIONS.md` and executed with `npm run test:ops`.
 
 ## R1 acceptance status
 

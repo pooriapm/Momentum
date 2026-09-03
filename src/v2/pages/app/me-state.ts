@@ -4,6 +4,22 @@ import type { MembershipStatus } from '../../entitlement/types'
 
 export type { MembershipStatus }
 export type MePanel = 'hub' | 'subscription' | 'help'
+
+export const SUPPORT_ISSUE_CODES = [
+  { id: 'PLAN-IMPORT-207', fa: 'ورود برنامه ناموفق', en: 'Plan import failed' },
+  { id: 'GENERATION-FAILED', fa: 'تولید برنامه ناموفق', en: 'Plan generation failed' },
+  { id: 'SIGNOUT-17', fa: 'خروج از حساب', en: 'Sign-out problem' },
+  { id: 'ACCOUNT-EXPORT', fa: 'خروجی داده', en: 'Data export' },
+  { id: 'ACCOUNT-DELETE', fa: 'حذف حساب', en: 'Account deletion' },
+  { id: 'SAFETY-BOUNDARY', fa: 'مرز ایمنی', en: 'Safety boundary' },
+] as const
+
+export function supportMailtoHref(email: string, locale: AppLocale, issueCode?: string): string {
+  const subject = locale === 'fa' ? 'پشتیبانی Momentum' : 'Momentum support'
+  const withCode = issueCode ? `${subject} ${issueCode}` : subject
+  return `mailto:${email}?subject=${encodeURIComponent(withCode)}`
+}
+
 export type ExportStatus = 'idle' | 'pending' | 'ready' | 'expired' | 'failed'
 export type DeleteStatus = 'idle' | 'review' | 'pending' | 'complete' | 'failed'
 export type SignOutScope = 'local' | 'global'

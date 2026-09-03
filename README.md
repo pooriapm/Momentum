@@ -173,6 +173,29 @@ spec هستند. وضعیت دقیق در [`docs/design/CONFORMANCE.md`](docs/de
 [`public/brand/momentum-orbit-master.svg`](public/brand/momentum-orbit-master.svg)
 است؛ splash، favicon و PNGهای PWA derivative هستند.
 
+## عملیات (backup، مانیتورینگ، on-call، پشتیبانی)
+
+قرارداد اجراییِ عمومی در [`supabase/R7-OPERATIONS.md`](supabase/R7-OPERATIONS.md)
+و `ops/contract.json` است. جزئیات داخلی در [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
+می‌ماند و commit نمی‌شود.
+
+```bash
+npm run test:ops
+npm run test:auth-hosted
+npm run ops:backup
+npm run ops:restore-drill
+npm run ops:oncall
+npm run ops:support -- PLAN-IMPORT-207 fa
+```
+
+`npm run test:auth-hosted` signup بدون تأیید، rate-limit ارسال ایمیل، verification،
+recovery و لغو session را روی پروژهٔ production می‌سنجد. انفجار `sign_in_sign_ups`
+عمداً محلی است (`npm run test:auth-abuse`) تا IP عمومی قفل نشود.
+
+بررسی زنده PITR فقط با `SUPABASE_ACCESS_TOKEN` انجام می‌شود. restore میزبانی‌شده
+تا وقتی staging ساخته نشده `blocked_no_staging` می‌ماند. صندوق پشتیبانی تا تنظیم
+`VITE_SUPPORT_EMAIL` در UI ساخته نمی‌شود.
+
 ## اسناد
 
 نقشه کامل: [`docs/README.md`](docs/README.md).
@@ -201,6 +224,7 @@ release-verified دانستن این revision یک CI کاملاً سبز دری
 - [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - [`docs/product/MONETIZATION.md`](docs/product/MONETIZATION.md)
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
+- [`supabase/R7-OPERATIONS.md`](supabase/R7-OPERATIONS.md)
 - [`docs/legal/PRIVACY.md`](docs/legal/PRIVACY.md)
 - [`docs/legal/TERMS.md`](docs/legal/TERMS.md)
 - [`docs/legal/COUNTRY_GO_NO_GO.md`](docs/legal/COUNTRY_GO_NO_GO.md)

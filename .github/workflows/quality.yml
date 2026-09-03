@@ -32,6 +32,7 @@ jobs:
       - run: npm run build
       - run: npm run build-storybook
       - run: npm run scan:secrets
+      - run: npm run test:ops
       - run: npm audit --omit=dev --audit-level=high
       - uses: actions/upload-artifact@v4
         with:
@@ -142,7 +143,12 @@ jobs:
       - run: npx supabase test db
       - run: npm run test:security-rls
       - run: npm run test:auth-lifecycle
+      - run: npm run test:privacy-lifecycle
+      - run: npm run test:body-report
+      - run: npm run test:auth-abuse
       - run: npm run test:r1-config
+      - name: Local restore drill
+        run: bash scripts/ops/restore-drill.sh execute
       - name: Stop local Supabase
         if: always()
         run: npx supabase stop --no-backup

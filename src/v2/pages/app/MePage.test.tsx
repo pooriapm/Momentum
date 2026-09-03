@@ -109,6 +109,10 @@ describe('MePage inventory states', () => {
       'href',
       'mailto:support@example.com?subject=Momentum%20support',
     )
+    expect(screen.getByRole('link', { name: 'PLAN-IMPORT-207' })).toHaveAttribute(
+      'href',
+      'mailto:support@example.com?subject=Momentum%20support%20PLAN-IMPORT-207',
+    )
     expect(screen.getByText(/do not send health details, passwords, or plan json/i)).toBeInTheDocument()
     expect(screen.queryByText(/public invite waits until the operator sets the support address/i)).not.toBeInTheDocument()
     expect(screen.getByText(/momentum is not an emergency service/i)).toBeInTheDocument()
@@ -119,7 +123,18 @@ describe('MePage inventory states', () => {
     expect(screen.getByText(/public invite waits until the operator sets the support address/i)).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /email support/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /^mailto:/i })).not.toBeInTheDocument()
+    expect(screen.getByText('PLAN-IMPORT-207')).toBeInTheDocument()
     expect(screen.getByText(/momentum is not an emergency service/i)).toBeInTheDocument()
+  })
+
+  it('keeps Persian support codes and emergency copy on the help panel', async () => {
+    await i18n.changeLanguage('fa')
+    renderMe({ locale: 'fa', panel: 'help' })
+    expect(screen.getByRole('heading', { name: /راهنما، ایمنی و قوانین/ })).toBeInTheDocument()
+    expect(screen.getByText('PLAN-IMPORT-207')).toBeInTheDocument()
+    expect(screen.getByText(/ورود برنامه ناموفق/)).toBeInTheDocument()
+    expect(screen.getByText(/سرویس اورژانسی نیست/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /ایمیل پشتیبانی/ })).not.toBeInTheDocument()
   })
 
   it('ME-09 confirms this-device or all-device sign-out and recovers from failure', async () => {

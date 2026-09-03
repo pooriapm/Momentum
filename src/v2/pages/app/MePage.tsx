@@ -15,6 +15,8 @@ import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import {
   deriveMembershipStatus,
   membershipCopy,
+  SUPPORT_ISSUE_CODES,
+  supportMailtoHref,
   type MePanel,
   type MembershipStatus,
   type SignOutScope,
@@ -184,9 +186,7 @@ function tMembershipTitle(status: MembershipStatus, fa: boolean) {
 function HelpPanel({ locale, onBack }: { locale: AppLocale; onBack: () => void }) {
   const fa = locale === 'fa'
   const supportEmail = runtimeConfig.supportEmail
-  const supportMailto = supportEmail
-    ? `mailto:${supportEmail}?subject=${encodeURIComponent('Momentum support')}`
-    : ''
+  const supportMailto = supportEmail ? supportMailtoHref(supportEmail, locale) : ''
   return (
     <main className="app-page me-page screen-enter">
       <section className="page-heading">
@@ -211,6 +211,22 @@ function HelpPanel({ locale, onBack }: { locale: AppLocale; onBack: () => void }
           </a>
         ) : null}
       </nav>
+      <section aria-label={fa ? 'کدهای پشتیبانی' : 'Support codes'} className="me-panel-card">
+        <h2>{fa ? 'کد موضوع را در ایمیل بنویس' : 'Put the issue code in the email'}</h2>
+        <p>{fa ? 'پاسخ هدف در صورت فعال بودن صندوق، تا ۲۴ ساعت است. کد را بنویسید؛ متن سلامت، رمز یا JSON برنامه لازم نیست.' : 'When a mailbox is staffed, the reply target is 24 hours. Send the code; health text, passwords, or plan JSON are not required.'}</p>
+        <ul className="me-support-codes">
+          {SUPPORT_ISSUE_CODES.map((issue) => (
+            <li key={issue.id}>
+              {supportEmail ? (
+                <a href={supportMailtoHref(supportEmail, locale, issue.id)}>{issue.id}</a>
+              ) : (
+                <code>{issue.id}</code>
+              )}
+              <span>{fa ? issue.fa : issue.en}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
       {supportEmail
         ? <div className="inline-notice" role="note">{fa ? 'جزئیات سلامت، رمز عبور یا JSON برنامه را در ایمیل نفرستید.' : 'Do not send health details, passwords, or plan JSON.'}</div>
         : <div className="inline-notice" role="status">{fa ? 'دعوت عمومی تا وقتی اپراتور نشانی پشتیبانی را تنظیم کند در انتظار می‌ماند.' : 'Public invite waits until the operator sets the support address.'}</div>}

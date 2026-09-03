@@ -32,4 +32,10 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['workers/**/*.ts'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

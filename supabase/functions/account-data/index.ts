@@ -31,8 +31,10 @@ import {
   finalizeExportRow,
   getDeletionRow,
   getExportRow,
+  ACCOUNT_EXPORT_TABLES,
   loadCurrentLegalVersions,
   markDeletionSessionsRevoked,
+  purgeAccountOwnedRows,
   recordDeletionReceipt,
   requestExportRow,
   revokeAccountSessions,
@@ -56,37 +58,7 @@ interface AccountDataBody {
   event?: unknown
 }
 
-const EXPORT_TABLES = [
-  'profiles',
-  'onboarding_drafts',
-  'goals',
-  'dietary_preferences',
-  'health_context',
-  'body_composition_measurements',
-  'training_schedule_items',
-  'subscriptions',
-  'entitlements',
-  'usage_ledger',
-  'ai_generation_jobs',
-  'plans',
-  'plan_versions',
-  'starter_plan_activations',
-  'external_plan_imports',
-  'gift_reservations',
-  'monthly_plan_periods',
-  'monthly_plan_snapshots',
-  'next_cycle_inputs',
-  'daily_checkins',
-  'weekly_checkins',
-  'daily_meal_status',
-  'extra_food_logs',
-  'workout_sessions',
-  'workout_exercise_logs',
-  'workout_set_logs',
-  'ai_safety_reports',
-  'export_requests',
-  'deletion_requests',
-] as const
+const EXPORT_TABLES = ACCOUNT_EXPORT_TABLES
 
 const EXPORT_PAGE_SIZE = 500
 const MAX_EXPORT_ROWS_PER_TABLE = 50_000
@@ -277,7 +249,7 @@ async function saveNextCycleNote(
   return { saved: true, note }
 }
 
-async function deleteAccountStorageAndIdentity(
+async function deleteAccountStorage(
   admin: Awaited<ReturnType<typeof authenticate>>['admin'],
   userId: string,
 ): Promise<void> {
@@ -294,6 +266,12 @@ async function deleteAccountStorageAndIdentity(
       )
     }
   }
+}
+
+async function deleteAccountIdentity(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+): Promise<void> {
   const { error } = await admin.auth.admin.deleteUser(userId)
   if (error) {
     throw new HttpError(503, 'account_delete_failed', 'Account deletion could not be completed.')
@@ -309,7 +287,9 @@ async function completeAccountDeletion(
   try {
     await revokeAccountSessions(admin, accessToken)
     await markDeletionSessionsRevoked(admin, userId)
-    await deleteAccountStorageAndIdentity(admin, userId)
+    await deleteAccountStorage(admin, userId)
+    await purgeAccountOwnedRows(admin, userId)
+    await deleteAccountIdentity(admin, userId)
   } catch (error) {
     await failDeletionRow(
       admin,

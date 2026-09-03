@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "1.0.0",
+  "service": "momentum",
+  "backup": {
+    "provider": "supabase",
+    "projectRef": "osyvvzglvyonevkhdzpu",
+    "dailyBackupRequired": true,
+    "pitrRequired": true,
+    "pitrRetentionDays": 7,
+    "rpoHoursOrdinary": 24,
+    "rpoHoursPaidTransactions": 1,
+    "rtoHours": 8,
+    "hostedRestoreTarget": "staging",
+    "hostedRestoreStatus": "blocked_no_staging"
+  },
+  "restoreDrill": {
+    "script": "scripts/ops/restore-drill.sh",
+    "cadence": "before_launch_then_quarterly",
+    "evidenceDir": "artifacts/restore-drills",
+    "neverProductionDump": true,
+    "localModes": ["dry-run", "execute"]
+  },
+  "monitoring": {
+    "healthPath": "/ops/health",
+    "errorIngestPath": "/ops/client-errors",
+    "allowedErrorCodes": [
+      "fatal_render",
+      "unhandled_error",
+      "unhandled_rejection",
+      "auth_rate_limited"
+    ],
+    "forbiddenFields": [
+      "email",
+      "prompt",
+      "health_text",
+      "plan_json",
+      "password",
+      "authorization",
+      "token"
+    ],
+    "signals": [
+      "auth_failure",
+      "edge_error",
+      "backup_freshness",
+      "client_error_code",
+      "restore_drill_age",
+      "support_mailbox"
+    ]
+  },
+  "alerts": [
+    {
+      "id": "backup_stale",
+      "severity": "P1",
+      "ownerRole": "engineering_oncall",
+      "condition": "No successful provider backup within RPO hours",
+      "page": true
+    },
+    {
+      "id": "pitr_disabled",
+      "severity": "P0",
+      "ownerRole": "engineering_oncall",
+      "condition": "Live PITR check reports disabled on production after token verification",
+      "page": true
+    },
+    {
+      "id": "restore_drill_overdue",
+      "severity": "P2",
+      "ownerRole": "platform_operations",
+      "condition": "No dated restore evidence within quarterly cadence",
+      "page": false
+    },
+    {
+      "id": "client_error_burst",
+      "severity": "P1",
+      "ownerRole": "engineering_oncall",
+      "condition": "Allowlisted client error codes burst above baseline on /ops/client-errors",
+      "page": true
+    },
+    {
+      "id": "edge_5xx",
+      "severity": "P1",
+      "ownerRole": "engineering_oncall",
+      "condition": "Target Edge Function 5xx or timeout spike",
+      "page": true
+    },
+    {
+      "id": "secret_or_rls_failure",
+      "severity": "P0",
+      "ownerRole": "incident_lead",
+      "condition": "Secret scan, RLS bypass, or cross-user access evidence",
+      "page": true
+    },
+    {
+      "id": "ai_circuit_open",
+      "severity": "P1",
+      "ownerRole": "engineering_oncall",
+      "condition": "Generation circuit breaker opens or live-provider errors while switch is on",
+      "page": true
+    },
+    {
+      "id": "support_mailbox_unconfigured",
+      "severity": "P2",
+      "ownerRole": "support_lead",
+      "condition": "Public invite path has no VITE_SUPPORT_EMAIL",
+      "page": false
+    }
+  ],
+  "oncall": {
+    "primaryRole": "engineering_oncall",
+    "contactEnv": "MOMENTUM_ONCALL_CONTACT",
+    "ackMinutes": {
+      "P0": 15,
+      "P1": 60,
+      "P2": 240
+    },
+    "roles": [
+      "incident_lead",
+      "engineering_oncall",
+      "platform_operations",
+      "safety_lead",
+      "privacy_legal_lead",
+      "product_lead",
+      "support_lead",
+      "provider_account_owner"
+    ],
+    "escalation": [
+      "engineering_oncall",
+      "incident_lead",
+      "provider_account_owner"
+    ]
+  },
+  "support": {
+    "locales": ["fa", "en"],
+    "macrosFile": "ops/support-macros.json",
+    "responseTargetHours": 24,
+    "mailboxEnv": "VITE_SUPPORT_EMAIL",
+    "privacyMailboxEnv": "VITE_PRIVACY_EMAIL"
+  }
+}

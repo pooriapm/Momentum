@@ -46,6 +46,25 @@ test('mobile tab navigation returns to the top with the shared motion language',
   expect(await workspace.evaluate((node) => node.scrollTop)).toBe(0)
 })
 
+test('preview help keeps bilingual support codes without inventing a mailbox', async ({ page }) => {
+  await page.goto('/en/app/me?preview=1')
+  await page.getByRole('button', { name: /help, safety & legal/i }).click()
+  await expect(page.getByRole('heading', { name: /help, safety & legal/i })).toBeVisible()
+  await expect(page.getByText(/public invite waits until the operator sets the support address/i)).toBeVisible()
+  await expect(page.getByText('PLAN-IMPORT-207')).toBeVisible()
+  await expect(page.getByText('SAFETY-BOUNDARY')).toBeVisible()
+  await expect(page.getByRole('link', { name: /email support/i })).toHaveCount(0)
+  await expect(page.getByText(/momentum is not an emergency service/i)).toBeVisible()
+
+  await page.goto('/fa/app/me?preview=1')
+  await page.getByRole('button', { name: 'راهنما، ایمنی و قوانین' }).click()
+  await expect(page.getByRole('heading', { name: 'راهنما، ایمنی و قوانین' })).toBeVisible()
+  await expect(page.getByText(/دعوت عمومی تا وقتی اپراتور نشانی پشتیبانی را تنظیم کند/)).toBeVisible()
+  await expect(page.getByText('PLAN-IMPORT-207')).toBeVisible()
+  await expect(page.getByText('ورود برنامه ناموفق')).toBeVisible()
+  await expect(page.getByText(/سرویس اورژانسی نیست/)).toBeVisible()
+})
+
 test('public page navigation also returns the browser viewport to the top', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 780 })
   await page.goto('/en')

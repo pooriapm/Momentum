@@ -84,6 +84,10 @@ export default defineConfig({
         navigateFallback: null,
         runtimeCaching: [
           {
+            urlPattern: ({ url }) => url.pathname.startsWith('/ops/'),
+            handler: 'NetworkOnly',
+          },
+          {
             urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {

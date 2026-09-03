@@ -1,0 +1,193 @@
+{
+  "schemaVersion": "1.0.0",
+  "forbiddenUserContent": [
+    "health_text",
+    "passwords",
+    "plan_json",
+    "prompts",
+    "photos",
+    "tokens"
+  ],
+  "macros": [
+    {
+      "id": "ACCOUNT-RECOVERY",
+      "severity": "P2",
+      "escalation": "support_lead",
+      "userFacingCode": true,
+      "neverAskFor": ["passwords", "tokens", "health_text"],
+      "fa": {
+        "subject": "بازیابی حساب Momentum — ACCOUNT-RECOVERY",
+        "body": "سلام،\n\nبرای بازیابی ورود، از همان ایمیل ثبت‌شده مسیر «رمز را فراموش کرده‌ام» را استفاده کنید. رمز عبور را برای ما نفرستید.\nاگر ایمیل تأیید یا بازیابی نرسید، پوشه هرزنامه را بررسی کنید و کد ACCOUNT-RECOVERY را در پاسخ بنویسید.\n\nMomentum رمز شما را بازنشانی دستی نمی‌کند و وارد حساب شما نمی‌شود."
+      },
+      "en": {
+        "subject": "Momentum account recovery — ACCOUNT-RECOVERY",
+        "body": "Hello,\n\nUse the in-app “forgot password” path from the email on the account. Do not send your password to us.\nIf a confirmation or recovery email is missing, check spam and reply with the code ACCOUNT-RECOVERY.\n\nMomentum does not reset passwords by hand and does not sign in as you."
+      }
+    },
+    {
+      "id": "PLAN-IMPORT-207",
+      "severity": "P2",
+      "escalation": "engineering_oncall",
+      "userFacingCode": true,
+      "neverAskFor": ["plan_json", "health_text", "prompts"],
+      "fa": {
+        "subject": "تطبیق ورود برنامه — PLAN-IMPORT-207",
+        "body": "سلام،\n\nکد PLAN-IMPORT-207 یعنی نتیجه معتبر حفظ شده و برنامه قبلی فعال مانده است. تلاش دوباره فقط همان ورود اتمی را تکرار می‌کند و سهم درخواست را تغییر نمی‌دهد.\n\nدر پاسخ فقط این کد، زبان برنامه، و در صورت وجود شناسه درخواست را بفرستید. فایل JSON برنامه، پرامپت یا جزئیات سلامت را نفرستید. پشتیبانی برنامه ذخیره‌شده را حذف یا بازنویسی نمی‌کند."
+      },
+      "en": {
+        "subject": "Plan import reconciliation — PLAN-IMPORT-207",
+        "body": "Hello,\n\nPLAN-IMPORT-207 means the valid result is preserved and your prior plan stays active. Retrying repeats only the same atomic import and does not change the allowance.\n\nReply with this code, the app language, and a request id if you have one. Do not send plan JSON, prompts, or health details. Support will not delete or overwrite a stored plan."
+      }
+    },
+    {
+      "id": "GENERATION-FAILED",
+      "severity": "P1",
+      "escalation": "engineering_oncall",
+      "userFacingCode": true,
+      "neverAskFor": ["prompts", "plan_json", "health_text"],
+      "fa": {
+        "subject": "تولید برنامه ناموفق — GENERATION-FAILED",
+        "body": "سلام،\n\nاگر تولید ماهانه متوقف شد، برنامه ذخیره‌شده باید همچنان در Today و Plan دیده شود. تولید زنده ممکن است خاموش باشد؛ این به‌معنی حذف حساب نیست.\n\nکد GENERATION-FAILED، زمان تقریبی به UTC، و شناسه درخواست را بفرستید. متن سلامتی، پرامپت یا خروجی مدل را کپی نکنید."
+      },
+      "en": {
+        "subject": "Plan generation failed — GENERATION-FAILED",
+        "body": "Hello,\n\nIf monthly generation stopped, the stored plan should still appear on Today and Plan. Live generation may be switched off; that is not account deletion.\n\nSend GENERATION-FAILED, an approximate UTC time, and a request id. Do not copy health text, prompts, or model output."
+      }
+    },
+    {
+      "id": "AI-DEGRADED",
+      "severity": "P1",
+      "escalation": "engineering_oncall",
+      "userFacingCode": true,
+      "neverAskFor": ["prompts", "health_text"],
+      "fa": {
+        "subject": "وضعیت تولید — AI-DEGRADED",
+        "body": "سلام،\n\nدر حالت محدود، برنامه ذخیره‌شده و ثبت روزانه باید کار کند. تولید جدید ممکن است صف یا متوقف شود. این وضعیت پزشکی نیست و جایگزین اورژانس محلی نمی‌شود.\n\nکد AI-DEGRADED را ذکر کنید. جزئیات علائم یا متن برنامه را ایمیل نکنید."
+      },
+      "en": {
+        "subject": "Generation status — AI-DEGRADED",
+        "body": "Hello,\n\nIn a degraded state, the stored plan and daily logging should keep working. New generation may queue or pause. This is not medical advice and is not an emergency service.\n\nCite AI-DEGRADED. Do not email symptoms or plan text."
+      }
+    },
+    {
+      "id": "SIGNOUT-17",
+      "severity": "P2",
+      "escalation": "support_lead",
+      "userFacingCode": true,
+      "neverAskFor": ["passwords", "tokens"],
+      "fa": {
+        "subject": "خروج از حساب — SIGNOUT-17",
+        "body": "سلام،\n\nاگر خروج ناموفق بود، اتصال را بررسی کنید و همان عمل را تکرار کنید. برای خروج از همه دستگاه‌ها همان گزینه داخل برنامه را انتخاب کنید.\nرمز یا لینک جادویی را برای ما نفرستید. کد SIGNOUT-17 را در پاسخ بنویسید."
+      },
+      "en": {
+        "subject": "Sign-out — SIGNOUT-17",
+        "body": "Hello,\n\nIf sign-out failed, check the connection and retry the same action. To leave all devices, use that option in the app.\nDo not send a password or magic link. Include SIGNOUT-17 in your reply."
+      }
+    },
+    {
+      "id": "ACCOUNT-EXPORT",
+      "severity": "P2",
+      "escalation": "privacy_legal_lead",
+      "userFacingCode": true,
+      "neverAskFor": ["plan_json", "health_text"],
+      "fa": {
+        "subject": "خروجی داده — ACCOUNT-EXPORT",
+        "body": "سلام،\n\nخروجی حساب از مسیر Me در خود برنامه شروع می‌شود. ما فایل خروجی را در تیکت پیوست نمی‌کنیم و محتوای آن را در لاگ نمی‌نویسیم.\nاگر خروجی ناموفق بود، کد ACCOUNT-EXPORT و زبان برنامه را بفرستید."
+      },
+      "en": {
+        "subject": "Account export — ACCOUNT-EXPORT",
+        "body": "Hello,\n\nStart an account export from Me in the app. We do not attach export files to tickets or write their contents into logs.\nIf export failed, send ACCOUNT-EXPORT and the app language."
+      }
+    },
+    {
+      "id": "ACCOUNT-DELETE",
+      "severity": "P1",
+      "escalation": "privacy_legal_lead",
+      "userFacingCode": true,
+      "neverAskFor": ["health_text", "plan_json"],
+      "fa": {
+        "subject": "حذف حساب — ACCOUNT-DELETE",
+        "body": "سلام،\n\nحذف حساب دائمی است و از مسیر Me پس از تأیید متنی انجام می‌شود. پشتیبانی حساب را به‌جای شما حذف نمی‌کند مگر همان جریان داخل برنامه کامل شود.\nپس از حذف، بازیابی از backup به سرویس فعال برنمی‌گردد. کد ACCOUNT-DELETE را ذکر کنید."
+      },
+      "en": {
+        "subject": "Account deletion — ACCOUNT-DELETE",
+        "body": "Hello,\n\nAccount deletion is permanent and starts from Me after typed confirmation. Support does not delete an account for you unless that in-app flow completes.\nAfter deletion, backups are not restored into active service. Cite ACCOUNT-DELETE."
+      }
+    },
+    {
+      "id": "SAFETY-BOUNDARY",
+      "severity": "P0",
+      "escalation": "safety_lead",
+      "userFacingCode": true,
+      "neverAskFor": ["health_text", "photos", "plan_json"],
+      "fa": {
+        "subject": "مرز ایمنی — SAFETY-BOUNDARY",
+        "body": "سلام،\n\nMomentum سرویس اورژانسی یا درمانی نیست. اگر علائم شدید یا ناگهانی دارید با اورژانس محلی یا متخصص واجد صلاحیت تماس بگیرید.\nبرای گزارش مرز ایمنی فقط کد SAFETY-BOUNDARY و این‌که پیام در برنامه مسدودکننده بود یا نه را بفرستید. شرح علائم، عکس بدن یا متن برنامه را ایمیل نکنید."
+      },
+      "en": {
+        "subject": "Safety boundary — SAFETY-BOUNDARY",
+        "body": "Hello,\n\nMomentum is not an emergency or treatment service. If symptoms are severe or sudden, contact local emergency services or a qualified clinician.\nTo report a safety-boundary issue, send only SAFETY-BOUNDARY and whether the app showed a blocking state. Do not email symptoms, body photos, or plan text."
+      }
+    },
+    {
+      "id": "PRIVACY-REQUEST",
+      "severity": "P1",
+      "escalation": "privacy_legal_lead",
+      "userFacingCode": true,
+      "neverAskFor": ["health_text", "tokens"],
+      "fa": {
+        "subject": "درخواست حریم خصوصی — PRIVACY-REQUEST",
+        "body": "سلام،\n\nبرای پرسش حریم خصوصی از نشانی تنظیم‌شده Privacy استفاده کنید. جزئیات سلامت، رمز عبور یا JSON برنامه را نفرستید.\nکد PRIVACY-REQUEST و نوع درخواست (خروجی، اصلاح، حذف) کافی است."
+      },
+      "en": {
+        "subject": "Privacy request — PRIVACY-REQUEST",
+        "body": "Hello,\n\nUse the configured privacy address for privacy questions. Do not send health details, passwords, or plan JSON.\nPRIVACY-REQUEST plus the request type (export, correction, deletion) is enough."
+      }
+    },
+    {
+      "id": "PAYMENT-ROUTE",
+      "severity": "P2",
+      "escalation": "support_lead",
+      "userFacingCode": true,
+      "neverAskFor": ["tokens", "passwords"],
+      "fa": {
+        "subject": "مسیر پرداخت — PAYMENT-ROUTE",
+        "body": "سلام،\n\nپرداخت زنده هنوز فعال نیست. کشور، دسترسی به محصول یا تولید را مسدود نمی‌کند. ایران به مسیر ریال/تومان و سایر کشورها به مسیر دلار می‌روند؛ زبان جداست.\nشماره کارت یا رمز را نفرستید. کد PAYMENT-ROUTE کافی است."
+      },
+      "en": {
+        "subject": "Payment route — PAYMENT-ROUTE",
+        "body": "Hello,\n\nLive payments are still off. Country does not block the product or generation. Iran routes to IRR/toman and every other country to USD; language is independent.\nDo not send card numbers or passwords. PAYMENT-ROUTE is enough."
+      }
+    },
+    {
+      "id": "QUOTA-REACHED",
+      "severity": "P2",
+      "escalation": "support_lead",
+      "userFacingCode": true,
+      "neverAskFor": ["prompts", "plan_json"],
+      "fa": {
+        "subject": "سهم درخواست — QUOTA-REACHED",
+        "body": "سلام،\n\nاگر سهم تولید ماهانه تمام شده، برنامه ذخیره‌شده باید باقی بماند. پشتیبانی سهم را دور نمی‌زند.\nکد QUOTA-REACHED را بفرستید. پرامپت یا JSON برنامه لازم نیست."
+      },
+      "en": {
+        "subject": "Request allowance — QUOTA-REACHED",
+        "body": "Hello,\n\nIf the monthly generation allowance is used, the stored plan should remain. Support does not bypass the allowance.\nSend QUOTA-REACHED. Prompts and plan JSON are not required."
+      }
+    },
+    {
+      "id": "OUTAGE",
+      "severity": "P1",
+      "escalation": "engineering_oncall",
+      "userFacingCode": true,
+      "neverAskFor": ["health_text", "tokens"],
+      "fa": {
+        "subject": "اختلال سرویس — OUTAGE",
+        "body": "سلام،\n\nدر اختلال، برنامه ذخیره‌شده باید خواندنی بماند. ما وضعیت را با کدهای طبقه‌بندی دنبال می‌کنیم، نه با متن سلامت.\nزمان تقریبی UTC، زبان برنامه و کد OUTAGE را بفرستید."
+      },
+      "en": {
+        "subject": "Service disruption — OUTAGE",
+        "body": "Hello,\n\nDuring a disruption the stored plan should stay readable. We track status with categorical codes, not health text.\nSend an approximate UTC time, app language, and OUTAGE."
+      }
+    }
+  ]
+}

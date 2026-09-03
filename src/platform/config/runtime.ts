@@ -17,7 +17,8 @@ export const runtimeConfig = Object.freeze({
   hasSupabase: Boolean(supabaseUrl && supabasePublishableKey),
   supportEmail: envEmail(import.meta.env.VITE_SUPPORT_EMAIL),
   privacyEmail: envEmail(import.meta.env.VITE_PRIVACY_EMAIL),
-  errorIngestUrl: import.meta.env.VITE_ERROR_INGEST_URL?.trim() ?? '',
+  errorIngestUrl: import.meta.env.VITE_ERROR_INGEST_URL?.trim()
+    || (import.meta.env.PROD ? '/ops/client-errors' : ''),
 })
 
 export type RuntimeConfig = typeof runtimeConfig

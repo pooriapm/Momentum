@@ -71,6 +71,8 @@ remain immutable dependencies of both the linked project and clean bootstrap; a
 | `202608090001_governed_food_exercise_catalog.sql` through `202608090106_account_settings_control.sql` | target | Current governed catalogs, execution loop, check-ins, plan versions, safety, and settings |
 | `202608170001_phase1b_contract_alignment.sql` | bridge | Explicitly aligns the historical foundation to the current product contract |
 | `202608180001_account_privacy_lifecycle.sql` | target | Current consent, export, deletion, and payment-method lifecycle |
+| `202609030001_account_purge_owned_rows.sql` | target | Service-only purge of owner and provider rows before Auth identity deletion |
+| `202609030002_body_report_retention.sql` | target | 30-day unconfirmed private body-report retention |
 | `202608180002_monthly_generation_pipeline.sql` through `202608180300_meal_undo_plan_history_stale_jobs.sql` | target | Current monthly generation, catalog v2, entitlement gates, history, undo, and stale-job behavior |
 | `202608240001_r1_edge_service_access.sql` through `202608240012_r2_privacy_safe_metrics.sql` | target | Current service boundary, R2 deterministic core, portability, resilience, optional analytics consent, categorical event allowlist, and aggregate metrics |
 | `geo-context` | target | Current public locale/region hint endpoint; never checkout authorization |
@@ -188,16 +190,19 @@ draft and returns:
 ```
 
 Body-report evidence, when enabled, is uploaded to the owner's private
-`body-composition/{user_id}/...` prefix. Confirmed normalized values are saved
-through an owner-bound service mutation with range, unit and source validation.
-There is no generative extraction step and unconfirmed values never enter a
-monthly snapshot.
+`body-composition/{user_id}/...` prefix. Unconfirmed objects are retained for
+30 days, then `purge_expired_body_reports` returns their paths for Storage
+removal. Confirmed normalized values are saved through an owner-bound service
+mutation with range, unit and source validation and remain until account
+deletion. There is no generative extraction step and unconfirmed values never
+enter a monthly snapshot. Prove the cycle with `npm run test:body-report`.
 
 ## Hosted deployment
 
-Follow [R1 environment and security operations](./R1-OPERATIONS.md). An isolated
-staging environment is not currently provisioned, so do not run the commands
-below against the linked production project as a substitute for staging.
+Follow [R1 environment and security operations](./R1-OPERATIONS.md) and
+[R7 operations](./R7-OPERATIONS.md). An isolated staging environment is not
+currently provisioned, so do not run the commands below against the linked
+production project as a substitute for staging.
 
 Set secrets only in Supabase, never in frontend build variables:
 
