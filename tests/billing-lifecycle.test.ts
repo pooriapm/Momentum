@@ -1,11 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  assertNormalizedPaymentEvent,
+  acceptWebhookOnce,
   assertPaymentMarketAllowed,
+  createPaymentAdapter,
   DisabledPaymentProvider,
   resolvePaymentRoute,
   reduceBillingState,
+  StripeSandboxAdapter,
+  tomanDisplayToIrrMinor,
+  ZarinpalSandboxAdapter,
   type NormalizedPaymentEvent,
+  assertNormalizedPaymentEvent,
 } from '../supabase/functions/_shared/billing.ts'
 
 function env(values: Record<string, string | undefined>) {
@@ -77,5 +82,81 @@ describe('R5 billing lifecycle', () => {
     await expect(new DisabledPaymentProvider().verifyAndNormalize(new Uint8Array(), new Headers()))
       .rejects.toMatchObject({ code: 'PAYMENTS_DISABLED' })
     expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('converts display toman to integer IRR and verifies Stripe sandbox webhooks', async () => {
+    expect(tomanDisplayToIrrMinor(149_000)).toBe(1_490_000)
+    const adapter = new StripeSandboxAdapter('whsec_test')
+    const raw = new TextEncoder().encode(JSON.stringify({
+      id: 'evt_sandbox_1',
+      type: 'invoice.paid',
+      livemode: false,
+      created: 1_725_000_000,
+      data: { object: { id: 'in_1', amount_paid: 1499, currency: 'usd', customer: 'cus_1' } },
+    }))
+    const event = await adapter.verifyAndNormalize(raw, new Headers({ 'stripe-signature': 't=1,whsec_test' }))
+    expect(event).toMatchObject({
+      provider: 'stripe',
+      eventType: 'invoice_paid',
+      amountMinor: 1499,
+      currency: 'USD',
+      livemode: false,
+    })
+    await expect(adapter.verifyAndNormalize(raw, new Headers({ 'stripe-signature': 'bad' })))
+      .rejects.toMatchObject({ code: 'PAYMENT_SIGNATURE_INVALID' })
+  })
+
+  it('verifies Zarinpal sandbox callbacks and rejects fake recurring capability', async () => {
+    const adapter = new ZarinpalSandboxAdapter('merchant-sandbox')
+    const raw = new TextEncoder().encode(JSON.stringify({
+      merchant_id: 'merchant-sandbox',
+      authority: 'A00000000000000000000000000000000000',
+      status: 'OK',
+      amount: 14900,
+      ref_id: 123456,
+    }))
+    const event = await adapter.verifyAndNormalize(raw, new Headers())
+    expect(event.currency).toBe('IRR')
+    expect(event.amountMinor).toBe(149_000)
+    expect(event.eventType).toBe('checkout_completed')
+
+    await expect(adapter.verifyAndNormalize(
+      new TextEncoder().encode(JSON.stringify({
+        merchant_id: 'merchant-sandbox',
+        authority: 'A1',
+        status: 'OK',
+        amount: 100,
+        recurring: true,
+      })),
+      new Headers(),
+    )).rejects.toMatchObject({ code: 'PAYMENT_CAPABILITY_UNSUPPORTED' })
+  })
+
+  it('deduplicates webhook inbox events and keeps master switch fail-closed', async () => {
+    env({})
+    expect(createPaymentAdapter('stripe')).toBeInstanceOf(DisabledPaymentProvider)
+
+    const seen = new Map<string, string>()
+    const store = {
+      has: (id: string) => seen.has(id),
+      remember: (id: string, digest: string) => { seen.set(id, digest) },
+    }
+    const event: NormalizedPaymentEvent = {
+      schemaVersion: '1.0.0',
+      provider: 'stripe',
+      providerAccountId: 'acct_1',
+      providerEventId: 'evt_dup',
+      providerObjectId: 'in_1',
+      eventType: 'invoice_paid',
+      occurredAt: '2026-09-03T00:00:00.000Z',
+      receivedAt: '2026-09-03T00:00:01.000Z',
+      livemode: false,
+      amountMinor: 1499,
+      currency: 'USD',
+      countryCode: 'US',
+      payloadDigest: 'b'.repeat(64),
+    }
+    expect(await acceptWebhookOnce(store, event)).toBe('accepted')
+    expect(await acceptWebhookOnce(store, event)).toBe('duplicate')
   })
 })

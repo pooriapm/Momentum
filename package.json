@@ -35,6 +35,7 @@
     "test:body-report-hosted": "node scripts/ops/verify-body-report.mjs --hosted",
     "test:r3-lifecycle": "node scripts/ops/verify-r3-lifecycle.mjs",
     "test:r4-provider": "vitest run tests/openai-responses.test.ts tests/plan-safety-eval.test.ts",
+    "test:r4-staging-eval": "node scripts/ops/run-r4-staging-eval.mjs",
     "test:r5-billing": "vitest run tests/billing-lifecycle.test.ts",
     "test:r6-r8-gates": "vitest run tests/release-gates.test.ts tests/release-evidence-schema.test.ts && node scripts/ops/verify-r4-r8.mjs",
     "verify:r4-r8-release": "node scripts/ops/verify-r4-r8.mjs --release",
