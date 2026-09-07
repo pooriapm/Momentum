@@ -1,0 +1,125 @@
+/**
+ * Offline-friendly unit-economics model for Momentum Iran launch planning.
+ * Assumptions are editable inputs — not measured production averages.
+ */
+
+export type PlanModelChoice = 'terra' | 'luna'
+
+export interface UnitEconomicsAssumptions {
+  priceToman: number
+  fxTomanPerUsd: number
+  model: PlanModelChoice
+  /** Estimated direct AI USD per successful plan for the selected model workload. */
+  planCostUsd: number
+  /** Multiplier for chargeable failed/repair attempts on top of delivered plans. */
+  failedAttemptMultiplier: number
+  advertisingToman: number
+  giftRecipientsPerMonth: number
+  giftToPaidConversion: number
+  monthlyChurn: number
+  serverPrepaidToman: number
+  /**
+   * Optional advertising CAC already expressed as spend per acquired paying customer.
+   * When set, advertisingToman is derived and conversion is NOT applied a second time
+   * onto that CAC value. Gift generation remains a separate COGS line.
+   */
+  advertisingCacToman?: number
+}
+
+export interface FunnelMonth {
+  month: number
+  giftRecipients: number
+  newPaid: number
+  payingCustomers: number
+  revenueToman: number
+  paidGenerationToman: number
+  giftGenerationToman: number
+  failedAttemptGenerationToman: number
+  totalGenerationToman: number
+  advertisingToman: number
+  serverPrepaidToman: number
+  totalSpendToman: number
+  profitToman: number
+  cumulativeToman: number
+}
+
+export const DEFAULT_PLAN_COST_USD: Record<PlanModelChoice, number> = {
+  // Workload assumption 12k in / 6k out at official short-context Standard rates (2026-09-07).
+  terra: 0.096,
+  luna: 0.0096,
+}
+
+function planCostToman(a: UnitEconomicsAssumptions): number {
+  return a.planCostUsd * a.fxTomanPerUsd
+}
+
+/**
+ * Advertising → gift recipients → first payment in the following cycle → retained paid.
+ * Denominators:
+ * - giftRecipients: accounts that received a gifted first plan this month
+ * - newPaid: gift recipients from the prior month × conversion (not same-month)
+ * - payingCustomers: retained prior paid + newPaid
+ */
+export function giftToPaidFunnel(
+  a: UnitEconomicsAssumptions,
+  monthIndex: number,
+  priorPaying: number,
+): Omit<FunnelMonth, 'cumulativeToman'> {
+  const unit = planCostToman(a)
+  let advertising = a.advertisingToman
+  let gifts = a.giftRecipientsPerMonth
+
+  if (a.advertisingCacToman && a.advertisingCacToman > 0) {
+    // CAC already means spend per acquired paying customer — do not multiply conversion again.
+    const targetNewPaid = a.advertisingToman > 0
+      ? a.advertisingToman / a.advertisingCacToman
+      : gifts * a.giftToPaidConversion
+    advertising = targetNewPaid * a.advertisingCacToman
+    gifts = a.giftToPaidConversion > 0
+      ? targetNewPaid / a.giftToPaidConversion
+      : 0
+  }
+
+  const newPaid = monthIndex === 0 ? 0 : gifts * a.giftToPaidConversion
+  const payingCustomers = priorPaying * (1 - a.monthlyChurn) + newPaid
+  const paidGeneration = payingCustomers * unit
+  const giftGeneration = gifts * unit
+  const failedAttemptGeneration = (paidGeneration + giftGeneration) *
+    Math.max(0, a.failedAttemptMultiplier - 1)
+  const totalGeneration = paidGeneration + giftGeneration + failedAttemptGeneration
+  const serverPrepaid = monthIndex === 0 ? a.serverPrepaidToman : 0
+  const totalSpend = totalGeneration + advertising + serverPrepaid
+  const revenue = payingCustomers * a.priceToman
+
+  return {
+    month: monthIndex,
+    giftRecipients: gifts,
+    newPaid,
+    payingCustomers,
+    revenueToman: revenue,
+    paidGenerationToman: paidGeneration,
+    giftGenerationToman: giftGeneration,
+    failedAttemptGenerationToman: failedAttemptGeneration,
+    totalGenerationToman: totalGeneration,
+    advertisingToman: advertising,
+    serverPrepaidToman: serverPrepaid,
+    totalSpendToman: totalSpend,
+    profitToman: revenue - totalSpend,
+  }
+}
+
+export function monthlyCashflow(
+  a: UnitEconomicsAssumptions,
+  months = 12,
+): FunnelMonth[] {
+  const rows: FunnelMonth[] = []
+  let paid = 0
+  let cumulative = 0
+  for (let month = 0; month < months; month += 1) {
+    const row = giftToPaidFunnel(a, month, paid)
+    paid = row.payingCustomers
+    cumulative += row.profitToman
+    rows.push({ ...row, cumulativeToman: cumulative })
+  }
+  return rows
+}

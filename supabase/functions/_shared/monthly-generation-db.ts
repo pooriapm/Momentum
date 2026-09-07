@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { mapGiftReservationError } from './gift-campaign.ts'
+import { buildGenerationProfileSnapshot } from './generation-profile-snapshot.ts'
 import { HttpError } from './http.ts'
 import { finalizeAiUsage, reserveAiUsage } from './limits.ts'
 import {
@@ -14,6 +15,7 @@ import {
   PLAN_SCHEMA_VERSION,
 } from './monthly-generation.ts'
 import { loadPlanCatalog } from './plan-catalog.ts'
+import type { ProviderAttemptLedger } from './usage-accounting.ts'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -77,12 +79,37 @@ function mapPeriod(row: Record<string, unknown>, planId: string | null = null): 
 export function createSupabaseGenerationStore(admin: SupabaseClient): GenerationStore {
   return {
     async loadProfile(userId) {
-      const [profileResult, prefsResult, goalResult] = await Promise.all([
+      const [
+        profileResult,
+        prefsResult,
+        goalResult,
+        healthResult,
+        trainingResult,
+        measurementResult,
+        periodResult,
+      ] = await Promise.all([
         admin.from('profiles').select(
-          'user_id,locale,timezone,country_code,product_region,onboarding_status,automation_block_reason,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,health_data_consent_at,health_consent_version',
+          'user_id,locale,timezone,country_code,product_region,onboarding_status,automation_block_reason,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,health_data_consent_at,health_consent_version,date_of_birth,sex,height_cm',
         ).eq('user_id', userId).single(),
-        admin.from('dietary_preferences').select('allergies').eq('user_id', userId).maybeSingle(),
-        admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1)
+        admin.from('dietary_preferences').select(
+          'dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,cuisine_region',
+        ).eq('user_id', userId).maybeSingle(),
+        admin.from('goals').select(
+          'id,goal_type,start_weight_kg,target_weight_kg,target_date',
+        ).eq('user_id', userId).eq('status', 'active').limit(1).maybeSingle(),
+        admin.from('health_context').select(
+          'medical_considerations,medications,supplements',
+        ).eq('user_id', userId).maybeSingle(),
+        admin.from('training_schedule_items').select(
+          'weekday,activity_type,local_start_time,duration_minutes,intensity',
+        ).eq('user_id', userId).order('weekday'),
+        admin.from('body_composition_measurements').select(
+          'measured_at,weight_kg,body_fat_percent,waist_cm,source_type,extraction_status',
+        ).eq('user_id', userId)
+          .in('extraction_status', ['confirmed', 'not_requested'])
+          .order('measured_at', { ascending: false }).limit(3),
+        admin.from('monthly_plan_periods').select('cycle_index')
+          .eq('user_id', userId).order('cycle_index', { ascending: false }).limit(1)
           .maybeSingle(),
       ])
       if (profileResult.error || !profileResult.data) {
@@ -98,6 +125,23 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
           typeof item === 'string'
         )
         : []
+      const cycleIndex = Number(periodResult.data?.cycle_index ?? 1)
+      const snapshot = buildGenerationProfileSnapshot({
+        profile: row,
+        goal: goalResult.data,
+        dietary: prefsResult.data,
+        health: healthResult.data,
+        training: trainingResult.data ?? [],
+        measurements: (measurementResult.data ?? []).map((item) => ({
+          measured_at: item.measured_at,
+          weight_kg: item.weight_kg,
+          body_fat_percent: item.body_fat_percent,
+          waist_cm: item.waist_cm,
+          source: item.source_type,
+          extraction_status: item.extraction_status,
+        })),
+        cycleIndex,
+      })
       return {
         userId,
         countryCode: typeof row.country_code === 'string' ? row.country_code : null,
@@ -114,6 +158,7 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         healthConsentVersion: row.health_consent_version,
         allergies,
         goalId: text(goalResult.data?.id),
+        snapshot,
       } satisfies GenerationProfile
     },
 
@@ -319,6 +364,7 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         p_output_tokens: input.usage.outputTokens ?? null,
         p_cached_input_tokens: input.usage.cachedInputTokens ?? null,
         p_reasoning_tokens: input.usage.reasoningTokens ?? null,
+        p_provider_cost_microusd: input.usage.providerCostMicrousd ?? null,
       })
       if (
         error || !isRecord(data) || typeof data.plan_id !== 'string' ||
@@ -334,6 +380,41 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
           ? data.imported_at
           : new Date().toISOString(),
       } satisfies ImportedPlan
+    },
+
+    async recordAttempt(attempt: ProviderAttemptLedger) {
+      const { error } = await admin.from('ai_usage_attempts').insert({
+        id: attempt.attempt_id,
+        generation_job_id: attempt.generation_job_id,
+        cycle_index: attempt.cycle_index,
+        attempt_number: attempt.attempt_number,
+        model: attempt.model,
+        service_tier: attempt.service_tier,
+        prompt_version: attempt.prompt_version,
+        schema_version: attempt.schema_version,
+        catalog_release_id: attempt.catalog_release_id,
+        pricing_table_version: attempt.pricing_table_version,
+        profile_snapshot_version: attempt.profile_snapshot_version,
+        input_tokens: attempt.input_tokens,
+        cached_input_tokens: attempt.cached_input_tokens,
+        cache_write_tokens: attempt.cache_write_tokens,
+        output_tokens: attempt.output_tokens,
+        reasoning_tokens: attempt.reasoning_tokens,
+        provider_response_id: attempt.provider_response_id,
+        latency_ms: attempt.latency_ms,
+        outcome: attempt.outcome,
+        validation_failure_category: attempt.validation_failure_category,
+        cost_microusd: attempt.cost_microusd,
+        cost_certainty: attempt.cost_certainty,
+        cost_notes: attempt.cost_notes,
+        reservation_consumed: attempt.reservation_consumed,
+        delivery_succeeded: attempt.delivery_succeeded,
+        ledger_payload: attempt,
+      })
+      if (error) {
+        // Ledger write must not block delivery; ops can reconcile from job + usage_ledger.
+        console.error('ai_usage_attempts_insert_failed', error.message)
+      }
     },
   }
 }

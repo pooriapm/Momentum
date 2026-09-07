@@ -33,6 +33,7 @@ export async function createStructuredResponse<T>(_options: {
   safetyIdentifier: string
   promptCacheKey: string
   maxOutputTokens: number
+  serviceTier?: 'standard' | 'batch' | 'flex'
 }): Promise<StructuredResponse<T>> {
   assertLiveOpenAiEnabled()
   const apiKey = requiredEnv('OPENAI_API_KEY')
@@ -49,6 +50,10 @@ export async function createStructuredResponse<T>(_options: {
       max: 180_000,
     }),
   )
+
+  const serviceTier = _options.serviceTier && _options.serviceTier !== 'standard'
+    ? _options.serviceTier
+    : undefined
 
   let response: Response
   try {
@@ -67,6 +72,7 @@ export async function createStructuredResponse<T>(_options: {
         safety_identifier: _options.safetyIdentifier,
         prompt_cache_key: _options.promptCacheKey,
         max_output_tokens: _options.maxOutputTokens,
+        ...(serviceTier ? { service_tier: serviceTier } : {}),
         ...(reasoningEffort ? { reasoning: { effort: reasoningEffort } } : {}),
         text: {
           format: {
@@ -137,7 +143,22 @@ export async function createStructuredResponse<T>(_options: {
   }
   const usage = payload.usage && typeof payload.usage === 'object'
     ? payload.usage as Record<string, unknown>
-    : {}
+    : null
+  if (!usage) {
+    return {
+      id: typeof payload.id === 'string' ? payload.id : 'openai:unknown',
+      parsed,
+      usage: {
+        inputTokens: undefined,
+        outputTokens: undefined,
+        cachedInputTokens: undefined,
+        cacheWriteTokens: undefined,
+        reasoningTokens: undefined,
+        providerCostMicrousd: null,
+        costCertainty: 'unknown',
+      },
+    }
+  }
   const inputDetails = usage.input_tokens_details && typeof usage.input_tokens_details === 'object'
     ? usage.input_tokens_details as Record<string, unknown>
     : {}
@@ -145,6 +166,8 @@ export async function createStructuredResponse<T>(_options: {
     usage.output_tokens_details && typeof usage.output_tokens_details === 'object'
       ? usage.output_tokens_details as Record<string, unknown>
       : {}
+  // Only record cache_write when the API provides it — never invent.
+  const cacheWriteRaw = inputDetails.cache_write_tokens ?? inputDetails.cache_creation_tokens
   return {
     id: typeof payload.id === 'string' ? payload.id : 'openai:unknown',
     parsed,
@@ -152,6 +175,7 @@ export async function createStructuredResponse<T>(_options: {
       inputTokens: Number(usage.input_tokens ?? 0),
       outputTokens: Number(usage.output_tokens ?? 0),
       cachedInputTokens: Number(inputDetails.cached_tokens ?? 0),
+      cacheWriteTokens: typeof cacheWriteRaw === 'number' ? cacheWriteRaw : undefined,
       reasoningTokens: Number(outputDetails.reasoning_tokens ?? 0),
     },
   }

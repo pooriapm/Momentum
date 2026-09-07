@@ -82,6 +82,13 @@ graphify-out/
 !/docs/design/tokens.json
 !/docs/design/penpot/
 !/docs/design/penpot/momentum.tokens.json
+# Design specs/notes under docs/design stay local (tokens above remain tracked).
+/docs/design/**/*.md
+/docs/design/*.md
+
+# Ops planning notes and cost-model reports stay local; runtime JSON stays tracked.
+/ops/*.md
+/ops/cost-model/
 
 # Local deployment-provider state
 .wrangler/

@@ -171,6 +171,47 @@ function entitledProfile(userId = 'user-1'): GenerationProfile {
     healthConsentVersion: CONSENT_VERSION,
     allergies: [],
     goalId: 'goal-1',
+    snapshot: {
+      snapshot_version: 'momentum-profile-snapshot/1.0.0',
+      locale: 'en-US',
+      timezone: 'UTC',
+      country_code: 'US',
+      product_region: 'intl',
+      age_years: 30,
+      sex: 'female',
+      height_cm: 165,
+      goal: {
+        goal_type: 'recomposition',
+        start_weight_kg: 70,
+        target_weight_kg: 65,
+        target_date: null,
+      },
+      dietary: {
+        dietary_pattern: 'omnivore',
+        favorite_foods: ['chicken'],
+        disliked_foods: [],
+        allergies: [],
+        requested_meal_pattern: '3 meals',
+        preferred_option_count: 2,
+        cooking_constraints: ['under_30_min'],
+        available_equipment: ['bodyweight'],
+        work_schedule: null,
+        budget_tier: 'medium',
+        restaurant_meals_per_week: 1,
+        cuisine_region: 'iranian',
+      },
+      training_schedule: [
+        { weekday: 1, activity_type: 'full_body', local_start_time: '18:00', duration_minutes: 40, intensity: 'moderate' },
+      ],
+      safety: {
+        medical_considerations: [],
+        medications_present: false,
+        supplements_present: false,
+      },
+      confirmed_measurements: [],
+      prior_outcomes: null,
+      cycle_index: 1,
+    },
   }
 }
 

@@ -122,7 +122,11 @@ export interface ProviderUsage {
   inputTokens?: number
   outputTokens?: number
   cachedInputTokens?: number
+  cacheWriteTokens?: number
   reasoningTokens?: number
+  /** Estimated/measured micro-USD; null/undefined means unknown — never treat as zero spend. */
+  providerCostMicrousd?: number | null
+  costCertainty?: 'measured' | 'estimated' | 'unknown'
 }
 
 export async function finalizeAiUsage(
@@ -139,7 +143,9 @@ export async function finalizeAiUsage(
     p_output_tokens: usage.outputTokens ?? null,
     p_cached_input_tokens: usage.cachedInputTokens ?? null,
     p_reasoning_tokens: usage.reasoningTokens ?? null,
-    p_provider_cost_microusd: null,
+    p_provider_cost_microusd: usage.providerCostMicrousd === undefined
+      ? null
+      : usage.providerCostMicrousd,
   })
 
   if (error) {
