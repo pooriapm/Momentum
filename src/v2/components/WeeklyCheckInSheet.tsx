@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, Check, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, BarChart3, Check, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import {
@@ -10,6 +10,7 @@ import { formatNumber } from '../lib/format'
 import { RequiredMark, Select, Textarea } from '../ui/FormControls'
 import { Button } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
+import { useModalDismiss } from './use-modal-dismiss'
 
 const scoreOptions = [1, 2, 3, 4, 5]
 const redFlagOptions = [
@@ -22,13 +23,14 @@ type RedFlag = typeof redFlagOptions[number]['key']
 
 export function WeeklyCheckInSheet({
   locale,
-  onClose,
+  onClose: onDismiss,
   onSave,
 }: {
   locale: AppLocale
   onClose: () => void
   onSave: (input: WeeklyCheckInInput) => Promise<WeeklyCheckInResult>
 }) {
+  const { modalRef, onClose } = useModalDismiss(onDismiss)
   const fa = locale === 'fa'
   const [overallScore, setOverallScore] = useState(3)
   const [recoveryTrend, setRecoveryTrend] = useState<WeeklyCheckInInput['recoveryTrend']>('stable')
@@ -85,7 +87,7 @@ export function WeeklyCheckInSheet({
     const caution = result.safety.level === 'caution'
     const referral = result.safety.reasons.includes('professional_referral')
     return (
-      <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-result-title" material="content" onClose={onClose}>
+      <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-result-title" material="content" onClose={onDismiss} ref={modalRef}>
         <header>
           <div><p className="orbit-eyebrow"><BarChart3 size={15} />{fa ? 'مقایسه هفتگی' : 'Weekly comparison'}</p><h2 id="weekly-result-title">{fa ? 'چک‌این هفتگی ذخیره شد' : 'Weekly check-in saved'}</h2></div>
           <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
@@ -106,9 +108,9 @@ export function WeeklyCheckInSheet({
   }
 
   return (
-    <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-check-in-title" material="content" onClose={onClose}>
+    <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-check-in-title" material="content" onClose={onDismiss} ref={modalRef}>
       <header>
-        <div><p className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'مرور ۷ روز گذشته' : 'Review the past 7 days'}</p><h2 id="weekly-check-in-title">{fa ? 'چک‌این هفتگی' : 'Weekly check-in'}</h2></div>
+        <div><p className="orbit-eyebrow">{fa ? 'مرور ۷ روز گذشته' : 'Review the past 7 days'}</p><h2 id="weekly-check-in-title">{fa ? 'چک‌این هفتگی' : 'Weekly check-in'}</h2></div>
         <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
       </header>
       <form onSubmit={submit}>

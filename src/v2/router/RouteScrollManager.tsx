@@ -2,14 +2,6 @@ import { useLayoutEffect, useRef } from 'react'
 import { useLocation } from 'wouter'
 import { animateScrollToTop } from './route-scroll'
 
-function prefersReducedMotion() {
-  try {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  } catch {
-    return false
-  }
-}
-
 export function RouteScrollManager({ path: explicitPath }: { path?: string } = {}) {
   const [location] = useLocation()
   const path = explicitPath ?? location
@@ -18,8 +10,8 @@ export function RouteScrollManager({ path: explicitPath }: { path?: string } = {
   useLayoutEffect(() => {
     if (previousPath.current === path) return
     previousPath.current = path
-    const reducedMotion = prefersReducedMotion()
-    const cancelWindow = animateScrollToTop(window, { reducedMotion })
+    // A destination starts at the top without delaying navigation or animating old content.
+    const cancelWindow = animateScrollToTop(window, { reducedMotion: true })
     let activeWorkspace: HTMLElement | null = null
     let cancelWorkspace: () => void = () => undefined
     let watcherFrame = 0
@@ -32,11 +24,8 @@ export function RouteScrollManager({ path: explicitPath }: { path?: string } = {
         cancelWorkspace()
         activeWorkspace = workspace
         cancelWorkspace = workspace
-          ? animateScrollToTop(workspace, { reducedMotion })
+          ? animateScrollToTop(workspace, { reducedMotion: true })
           : () => undefined
-      } else if (reducedMotion && workspace?.scrollTop) {
-        cancelWorkspace()
-        cancelWorkspace = animateScrollToTop(workspace, { reducedMotion: true })
       }
       watcherFrame = window.requestAnimationFrame(followActiveWorkspace)
     }

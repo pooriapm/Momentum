@@ -41,6 +41,7 @@ describe('R4 OpenAI Responses boundary', () => {
     })).resolves.toEqual({
       id: 'resp_test',
       parsed: { ok: true },
+      serviceTier: 'unknown',
       usage: { inputTokens: 120, outputTokens: 30, cachedInputTokens: 80, reasoningTokens: 10 },
     })
 

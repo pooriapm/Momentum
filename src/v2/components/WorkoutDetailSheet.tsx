@@ -4,10 +4,11 @@ import { localize, type WorkoutBlock } from '../data/types'
 import { formatNumber } from '../lib/format'
 import { Button, StatusPill } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
+import { useModalDismiss } from './use-modal-dismiss'
 
 export function WorkoutDetailSheet({
   locale,
-  onClose,
+  onClose: onDismiss,
   onSubstitute,
   readOnly = false,
   workout,
@@ -18,12 +19,13 @@ export function WorkoutDetailSheet({
   readOnly?: boolean
   workout: WorkoutBlock
 }) {
+  const { modalRef, onClose } = useModalDismiss(onDismiss)
   const fa = locale === 'fa'
   const equipment = workout.equipment?.length
     ? workout.equipment.map((item) => localize(item, locale)).join(' · ')
     : (fa ? 'بدون وسیله اجباری' : 'No required equipment')
   return (
-    <ModalShell className="meal-detail-sheet workout-detail-sheet" labelId="workout-detail-title" material="content" onClose={onClose}>
+    <ModalShell className="meal-detail-sheet workout-detail-sheet" labelId="workout-detail-title" material="content" onClose={onDismiss} ref={modalRef}>
       <section>
         <header>
           <div>
@@ -73,7 +75,7 @@ export function WorkoutDetailSheet({
 export function PlanSubstitutionSheet({
   consequence,
   locale,
-  onClose,
+  onClose: onDismiss,
   onConfirm,
   options,
   title,
@@ -85,9 +87,10 @@ export function PlanSubstitutionSheet({
   options: string[]
   title: string
 }) {
+  const { modalRef, onClose } = useModalDismiss(onDismiss)
   const fa = locale === 'fa'
   return (
-    <ModalShell className="meal-detail-sheet" labelId="plan-substitute-title" material="content" onClose={onClose}>
+    <ModalShell className="meal-detail-sheet" labelId="plan-substitute-title" material="content" onClose={onDismiss} ref={modalRef}>
       <section>
         <header>
           <div>

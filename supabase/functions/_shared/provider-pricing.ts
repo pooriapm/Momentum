@@ -5,7 +5,7 @@
  */
 export const PRICING_TABLE_VERSION = 'openai-pricing/2026-09-07'
 
-export type ServiceTier = 'standard' | 'batch' | 'flex'
+export type ServiceTier = 'standard' | 'batch' | 'flex' | 'priority' | 'fast' | 'unknown'
 export type CostCertainty = 'measured' | 'estimated' | 'unknown'
 
 export interface ModelRateCard {
@@ -69,6 +69,7 @@ export interface CostCalculation {
 }
 
 function rateFor(modelId: string, serviceTier: ServiceTier): ModelRateCard | null {
+  if (!['standard', 'batch', 'flex'].includes(serviceTier)) return null
   const base = STANDARD_RATES[modelId]
   if (!base) return null
   if (serviceTier === 'standard') return base
@@ -158,7 +159,7 @@ export function calculateProviderCost(input: {
       usd: null,
       microusd: null,
       certainty: 'unknown',
-      notes: ['No rate card for model; cost left unknown.'],
+      notes: ['No rate card for model or actual service tier; cost left unknown.'],
     }
   }
 

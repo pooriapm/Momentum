@@ -9,7 +9,7 @@ test('public shell and Persian in-memory preview remain usable', async ({ page }
 
   await page.goto('/fa/app/today?preview=1')
   await expect(page.getByRole('heading', { name: 'صبح بخیر، آوا' })).toBeVisible()
-  await expect(page.getByText(/Preview حافظه‌ای/)).toBeVisible()
+  await expect(page.getByText(/پیش‌نمایش · تغییرها ذخیره نمی‌شوند/)).toBeVisible()
   await expect.poll(() => page.evaluate(() => localStorage.getItem('momentum.appState'))).toBeNull()
 })
 
@@ -36,8 +36,8 @@ test('mobile tab navigation returns to the top with the shared motion language',
   await navigation.getByRole('link', { exact: true, name: 'Plan' }).click()
   await expect(page.getByRole('heading', { name: /this week’s plan/i })).toBeVisible()
   await expect.poll(() => workspace.evaluate((node) => node.scrollTop)).toBe(0)
-  await expect(page.locator('.plan-page')).toHaveCSS('animation-name', 'orbit-page-enter')
-  await expect(page.getByRole('tabpanel')).toHaveCSS('animation-name', 'orbit-component-enter')
+  await expect(page.locator('.plan-page')).toHaveCSS('animation-name', 'orbit-glass-fade-in')
+  await expect(page.getByRole('tabpanel')).toHaveCSS('animation-name', 'orbit-glass-fade-in')
 
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await workspace.evaluate((node) => { node.scrollTop = node.scrollHeight })
@@ -75,5 +75,5 @@ test('public page navigation also returns the browser viewport to the top', asyn
   await footer.getByRole('link', { name: 'Pricing' }).click()
   await expect(page.getByRole('heading', { name: /one subscription, one clear path/i })).toBeVisible()
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
-  await expect(page.locator('.pricing-page')).toHaveCSS('animation-name', 'orbit-page-enter')
+  await expect(page.locator('.pricing-page')).toHaveCSS('animation-name', 'orbit-glass-fade-in')
 })

@@ -1,3 +1,4 @@
+import { useModalDismiss } from './use-modal-dismiss'
 import { AlertTriangle, Check, CircleStop, Dumbbell, Pause, Play, Save, SkipForward, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { resources, type AppLocale } from '../../platform/i18n/catalog'
@@ -254,7 +255,7 @@ export function WorkoutLogger({
 function WorkoutReasonSheet({
   intent,
   locale,
-  onClose,
+  onClose: onDismiss,
   onConfirm,
   onReasonChange,
   reason,
@@ -266,6 +267,7 @@ function WorkoutReasonSheet({
   onReasonChange: (value: string) => void
   reason: string
 }) {
+  const { modalRef, onClose } = useModalDismiss(onDismiss)
   const copy = resources[locale].translation
   const titleId = 'workout-reason-title'
   const title = intent.kind === 'skip' ? copy.app.skipReasonTitle : copy.app.stopReasonTitle
@@ -279,7 +281,7 @@ function WorkoutReasonSheet({
   }
 
   return (
-    <ModalShell className="workout-reason-sheet" labelId={titleId} material="content" onClose={onClose}>
+    <ModalShell className="workout-reason-sheet" labelId={titleId} material="content" onClose={onDismiss} ref={modalRef}>
       <header>
         <h2 id={titleId}>{title}</h2>
         <button aria-label={copy.common.close} onClick={onClose} type="button"><X size={20} /></button>

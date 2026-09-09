@@ -2,7 +2,7 @@ import { HttpError } from './http.ts'
 import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 
-const nutritionSchema = {
+export const nutritionSchema = {
   type: 'object',
   properties: {
     calories: { type: 'number', minimum: 0, maximum: 10_000 },
@@ -84,6 +84,7 @@ const optionSchema = {
       type: 'string',
       pattern: '^food:[a-z0-9._-]+@v[1-9][0-9]*$',
     },
+    serving_multiplier: { type: ['number', 'null'], minimum: 0.25, maximum: 4 },
     option_key: {
       type: 'string',
       pattern: '^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$',
@@ -107,6 +108,7 @@ const optionSchema = {
   required: [
     'food_id',
     'option_key',
+    'serving_multiplier',
     'title',
     'ingredients',
     'nutrition',
@@ -560,8 +562,20 @@ function assertCatalogOption(
   if (!isRecord(option.nutrition)) {
     throw new HttpError(502, 'invalid_plan_output', 'Generated nutrition is invalid.')
   }
+  const multiplier = option.serving_multiplier == null ? 1 : Number(option.serving_multiplier)
+  if (!Number.isFinite(multiplier) || multiplier < 0.25 || multiplier > 4) {
+    throw new HttpError(502, 'invalid_ingredient_amount', 'Invalid serving multiplier.')
+  }
+  if (option.serving_multiplier != null) {
+    for (const ingredient of option.ingredients as Record<string, unknown>[]) {
+      const portion = food.ingredientPortions.get(String(ingredient.ingredient_id))
+      if (!portion || Math.abs(Number(ingredient.amount) - portion.amount * multiplier) > 0.001) {
+        throw new HttpError(502, 'catalog_food_modified', 'Catalog ingredient portion was modified.')
+      }
+    }
+  }
   for (const key of ['calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g'] as const) {
-    if (Math.abs(Number(option.nutrition[key]) - food.nutrition[key]) > 0.01) {
+    if (Math.abs(Number(option.nutrition[key]) - food.nutrition[key] * multiplier) > 0.011) {
       throw new HttpError(502, 'catalog_food_modified', 'Catalog food nutrition was modified.')
     }
   }
@@ -767,6 +781,17 @@ export function assertGeneratedPlan(
     }
     assertNutrition(option.nutrition)
     assertCatalogOption(option, safety.catalog, declaredAllergenIds)
+  }
+
+  if (!Array.isArray(value.restaurant_guide) || value.restaurant_guide.length === 0) {
+    throw new HttpError(502, 'invalid_plan_output', 'Restaurant estimates are missing.')
+  }
+  for (const guide of value.restaurant_guide) {
+    if (!isRecord(guide)) throw new HttpError(502, 'invalid_plan_output', 'Invalid restaurant guide.')
+    assertNutrition(guide.estimated_nutrition)
+    if ((guide.estimated_nutrition as Record<string, unknown>).source !== 'model_estimate') {
+      throw new HttpError(502, 'invalid_plan_output', 'Unreferenced restaurant estimates cannot claim catalog provenance.')
+    }
   }
 
   if (!Array.isArray(value.grocery_list)) {

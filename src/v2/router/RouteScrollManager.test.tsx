@@ -34,7 +34,7 @@ describe('route scroll motion', () => {
     expect(target.scrollTop).toBe(0)
   })
 
-  it('resets both the window and mobile workspace after a route change', () => {
+  it('resets the destination immediately even when ordinary motion is enabled', () => {
     const workspace = document.createElement('div')
     workspace.className = 'app-workspace'
     workspace.scrollTop = 480
@@ -46,7 +46,7 @@ describe('route scroll motion', () => {
     document.documentElement.scrollTop = 320
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
-      value: vi.fn(() => ({ matches: true } as MediaQueryList)),
+      value: vi.fn(() => ({ matches: false } as MediaQueryList)),
     })
 
     const view = render(<RouteScrollManager path="/en/app/today" />)
@@ -54,5 +54,29 @@ describe('route scroll motion', () => {
 
     expect(workspace.scrollTop).toBe(0)
     expect(document.documentElement.scrollTop).toBe(0)
+    view.unmount()
+    workspace.remove()
   })
+
+  it('lets the user scroll immediately after the destination reset', () => {
+    const workspace = document.createElement('div')
+    workspace.className = 'app-workspace'
+    document.body.append(workspace)
+    let nextFrame: FrameRequestCallback | undefined
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      nextFrame = callback
+      return 1
+    })
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+    const view = render(<RouteScrollManager path="/en/app/today" />)
+    workspace.scrollTop = 500
+    view.rerender(<RouteScrollManager path="/en/app/plan" />)
+    expect(workspace.scrollTop).toBe(0)
+    workspace.scrollTop = 120
+    nextFrame?.(performance.now())
+    expect(workspace.scrollTop).toBe(120)
+    view.unmount()
+    workspace.remove()
+  })
+
 })

@@ -1,3 +1,4 @@
+import { useModalDismiss } from '../../components/use-modal-dismiss'
 import { ChevronLeft, Download, LockKeyhole, ShieldAlert, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'wouter'
@@ -58,6 +59,8 @@ export function AccountDataPage({
   const [exportStatus, setExportStatus] = useState<ExportStatus>(exportState ?? 'idle')
   const [deleteStatus, setDeleteStatus] = useState<DeleteStatus>(deleteState ?? 'idle')
   const [deleteOpen, setDeleteOpen] = useState(deleteState === 'review')
+  const dismissDelete = () => { setDeleteOpen(false); if (deleteStatus === 'review') setDeleteStatus('idle') }
+  const { modalRef, onClose: closeDelete } = useModalDismiss(dismissDelete)
   const [confirmation, setConfirmation] = useState('')
   const [readyAt, setReadyAt] = useState<number | undefined>(undefined)
   const [downloadUrl, setDownloadUrl] = useState('')
@@ -209,11 +212,11 @@ export function AccountDataPage({
       {deleteStatus === 'pending' ? <div className="inline-notice" role="status">{fa ? 'درخواست حذف ثبت شد و ورود جدید مسدود می‌شود.' : 'Deletion is pending and new sign-in will be blocked.'}</div> : null}
       {deleteStatus === 'failed' ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
       {preview ? <div className="inline-notice inline-notice--warning">{fa ? 'در Preview خروجی و حذف شبیه‌سازی می‌شوند و به سرور نمی‌روند.' : 'Export and deletion are simulated in preview and do not reach the server.'}</div> : null}
-      {deleteOpen ? <ModalShell className="delete-account-dialog" labelId="delete-account-title" material="content" onClose={() => { setDeleteOpen(false); if (deleteStatus === 'review') setDeleteStatus('idle') }}>
-        <header><div><ShieldAlert size={22} /><h2 id="delete-account-title">{fa ? 'حذف حساب برگشت‌پذیر نیست' : 'Account deletion cannot be undone'}</h2></div><button aria-label={fa ? 'بستن' : 'Close'} onClick={() => { setDeleteOpen(false); if (deleteStatus === 'review') setDeleteStatus('idle') }} type="button"><X size={20} /></button></header>
+      {deleteOpen ? <ModalShell className="delete-account-dialog" labelId="delete-account-title" material="content" onClose={dismissDelete} ref={modalRef}>
+        <header><div><ShieldAlert size={22} /><h2 id="delete-account-title">{fa ? 'حذف حساب برگشت‌پذیر نیست' : 'Account deletion cannot be undone'}</h2></div><button aria-label={fa ? 'بستن' : 'Close'} onClick={closeDelete} type="button"><X size={20} /></button></header>
         <p>{fa ? 'عضویت لغو می‌شود. برای تأیید، عبارت انگلیسی DELETE را وارد کن. می‌توانی اول خروجی بگیری.' : 'Membership is cancelled. Type DELETE to confirm. You can export a copy first.'}</p>
         <Input autoComplete="off" label="DELETE" onChange={(event) => setConfirmation(event.target.value)} value={confirmation} />
-        <div className="delete-account-dialog__actions"><Button onClick={() => { setDeleteOpen(false); if (deleteStatus === 'review') setDeleteStatus('idle') }} variant="secondary">{fa ? 'انصراف' : 'Cancel'}</Button><Button disabled={confirmation !== 'DELETE'} loading={deleteStatus === 'pending'} onClick={() => void removeAccount()} variant="danger"><Trash2 size={17} />{fa ? 'حذف دائمی' : 'Delete permanently'}</Button></div>
+        <div className="delete-account-dialog__actions"><Button onClick={closeDelete} variant="secondary">{fa ? 'انصراف' : 'Cancel'}</Button><Button disabled={confirmation !== 'DELETE'} loading={deleteStatus === 'pending'} onClick={() => void removeAccount()} variant="danger"><Trash2 size={17} />{fa ? 'حذف دائمی' : 'Delete permanently'}</Button></div>
       </ModalShell> : null}
     </main>
   )

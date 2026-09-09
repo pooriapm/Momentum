@@ -6,10 +6,6 @@ export const APP_CONFIG = {
   monthlyPlanDays: 30,
   locale: 'fa-IR',
   storageNamespace: 'momentum',
-  brandMotion: {
-    bootMinimumDurationMs: 1400,
-    bootExitDurationMs: 360,
-  },
   planFile: {
     extension: '.json',
     mimeType: 'application/json',

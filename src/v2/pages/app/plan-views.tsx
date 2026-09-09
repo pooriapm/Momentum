@@ -42,7 +42,7 @@ export function PlanLoadingSkeleton({ locale }: { locale: AppLocale }) {
         <div className="plan-skeleton-card plan-skeleton-card--wide" />
         <div className="plan-skeleton-card" />
       </div>
-      <p className="plan-skeleton-note">{fa ? 'هندسه دقیق نمای هفته حفظ شده است' : 'The final Week-view geometry is preserved'}</p>
+      <p className="plan-skeleton-note">{fa ? 'در حال بارگذاری برنامه هفته…' : 'Loading your week…'}</p>
     </main>
   )
 }
@@ -413,7 +413,7 @@ export function PlanVersionView({ locale, version, onOpenHistory }: { locale: Ap
       <ContentCard className="plan-overview-card">
         <div className="inline-notice" role="status">
           <CheckCircle2 size={16} />
-          {fa ? 'این نسخه فعال و فقط‌خواندنی است. تغییرهای دوره بعد جداگانه ثبت می‌شوند و این نسخه را بازنویسی نمی‌کنند.' : 'This version is active and read-only. Next-period changes are stored separately and do not overwrite this version.'}
+          {fa ? 'این برنامه فعلی توست. ترجیحات جدید برای دوره بعد ذخیره می‌شوند.' : 'This is your current plan. New preferences are saved for your next cycle.'}
         </div>
         <ul className="plan-pattern-list">
           {version.changes.map((change) => (

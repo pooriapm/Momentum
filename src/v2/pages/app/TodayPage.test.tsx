@@ -49,7 +49,8 @@ describe('TodayPage inventory states', () => {
     renderToday()
     expect(screen.getByText('Next action')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /start workout/i }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: /daily check-in · optional/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /daily check-in · optional/i })).toHaveLength(1)
+    expect(screen.queryByText(/one next action above the fold/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /30-second check-in/i })).not.toBeInTheDocument()
   })
 

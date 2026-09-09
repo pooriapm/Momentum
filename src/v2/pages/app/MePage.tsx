@@ -1,3 +1,4 @@
+import { useModalDismiss } from '../../components/use-modal-dismiss'
 import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Info, Languages, LifeBuoy, LockKeyhole, LogOut, Mail, MoonStar, ShieldAlert, ShieldCheck, Sun, WalletCards } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -237,13 +238,14 @@ function HelpPanel({ locale, onBack }: { locale: AppLocale; onBack: () => void }
 
 function SignOutDialog({
   locale,
-  onClose,
+  onClose: onDismiss,
   onSignOut,
 }: {
   locale: AppLocale
   onClose: () => void
   onSignOut: (scope: SignOutScope) => Promise<void>
 }) {
+  const { modalRef, onClose } = useModalDismiss(onDismiss)
   const fa = locale === 'fa'
   const [scope, setScope] = useState<SignOutScope>('local')
   const [saving, setSaving] = useState(false)
@@ -262,7 +264,7 @@ function SignOutDialog({
   }
 
   return (
-    <ModalShell className="me-signout-dialog" labelId="sign-out-title" material="content" onClose={onClose}>
+    <ModalShell className="me-signout-dialog" labelId="sign-out-title" material="content" onClose={onDismiss} ref={modalRef}>
       <header>
         <div>
           <p className="orbit-eyebrow"><LogOut size={15} />{fa ? 'خروج امن' : 'Secure sign out'}</p>

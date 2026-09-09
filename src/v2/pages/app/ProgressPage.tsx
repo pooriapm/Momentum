@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarCheck2, CalendarDays, Check, LineChart, Scale, Sparkles, TrendingUp } from 'lucide-react'
+import { AlertTriangle, CalendarCheck2, CalendarDays, Check, LineChart, Scale, TrendingUp } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
@@ -121,7 +121,7 @@ export function ProgressPage({
       <main className="app-page progress-page screen-enter">
         <section className="page-heading">
           <div>
-            <p className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'شروع مسیر' : 'Getting started'}</p>
+            <p className="orbit-eyebrow">{fa ? 'شروع مسیر' : 'Getting started'}</p>
             <h1>{fa ? 'هنوز داده‌ای ثبت نشده' : 'No progress data yet'}</h1>
             <p>{fa ? 'روندها بعد از چند روز ثبت تمرین یا وعده دیده می‌شوند. این یک نمره نیست.' : 'Trends appear after a few logged workouts or meals. This is not a grade.'}</p>
           </div>
@@ -159,7 +159,7 @@ export function ProgressPage({
       ) : null}
       <section className="page-heading">
         <div>
-          <p className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'دوره جاری' : 'Current period'}</p>
+          <p className="orbit-eyebrow">{fa ? 'دوره جاری' : 'Current period'}</p>
           <h1>{t('app.progressTitle')}</h1>
           <p>{fa ? 'پیشرفت روند است نه نمره. جدول و خلاصه متنی همان اطلاعات نمودار را دارند.' : 'Progress is a trend, not a grade. The table and text summary carry the same information as the chart.'}</p>
         </div>

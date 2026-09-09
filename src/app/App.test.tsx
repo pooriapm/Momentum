@@ -55,7 +55,7 @@ describe('Momentum public product', () => {
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: 'صبح بخیر، آوا' }, { timeout: 5_000 })).toBeInTheDocument()
-    expect(await screen.findByText(/Preview حافظه‌ای/)).toBeInTheDocument()
+    expect(await screen.findByText(/پیش‌نمایش · تغییرها ذخیره نمی‌شوند/)).toBeInTheDocument()
     expect(localStorage.getItem('momentum.appState')).toBeNull()
   })
 

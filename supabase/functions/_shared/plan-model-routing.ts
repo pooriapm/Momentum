@@ -1,3 +1,4 @@
+import { HttpError } from './http.ts'
 import { enumEnv, optionalEnv } from './config.ts'
 
 export type PlanModelRoute = 'terra' | 'luna' | 'sol'
@@ -77,10 +78,14 @@ export function resolveAsyncServiceTier(isRenewal: boolean): ServiceTierRoute {
   if (!isRenewal) return 'standard'
   const enabled = optionalEnv('AI_PLAN_ASYNC_RENEWAL_ENABLED')?.toLowerCase() === 'true'
   if (!enabled) return 'standard'
-  const tier = enumEnv('AI_PLAN_ASYNC_SERVICE_TIER', ['batch', 'flex'] as const)
-  return tier ?? 'flex'
+  const tier = enumEnv('AI_PLAN_ASYNC_SERVICE_TIER', ['batch', 'flex'] as const) ?? 'flex'
+  if (tier === 'batch') {
+    throw new HttpError(503, 'BATCH_NOT_IMPLEMENTED', 'Batch renewal processing requires a durable worker and is not available yet.')
+  }
+  // Flex is a synchronous Responses tier, not a durable asynchronous job.
+  return 'flex'
 }
 
 export function isCompactSchemaEnabled(): boolean {
-  return optionalEnv('AI_PLAN_COMPACT_SCHEMA')?.toLowerCase() !== 'false'
+  return optionalEnv('AI_PLAN_COMPACT_SCHEMA')?.toLowerCase() === 'true'
 }

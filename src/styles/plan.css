@@ -10,8 +10,9 @@
 }
 
 .plan-heading-aside {
-  align-items: flex-end;
-  display: grid;
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
   gap: .65rem;
   justify-items: end;
 }
@@ -99,7 +100,7 @@
 
 .plan-week__day small {
   color: var(--color-text-muted);
-  font-size: .68rem;
+  font-size: var(--text-caption);
 }
 
 .plan-week__day.is-active small {
@@ -128,7 +129,7 @@
 
 .plan-pattern-list small {
   color: var(--color-text-secondary);
-  font-size: .72rem;
+  font-size: var(--text-caption);
   margin-top: .15rem;
 }
 
@@ -160,7 +161,7 @@
 
 .plan-calendar strong {
   color: var(--color-text-muted);
-  font-size: .68rem;
+  font-size: var(--text-caption);
   text-align: center;
 }
 
@@ -294,4 +295,29 @@
   .plan-heading-aside {
     justify-items: start;
   }
+}
+
+/* One tab row preserves the relationship between the view and its content. */
+.plan-page > .page-heading { margin-bottom: 0; }
+
+.plan-page .plan-view-switch {
+  margin-bottom: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: .25rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: .35rem;
+  scroll-padding-inline: .35rem;
+  scrollbar-width: thin;
+}
+.plan-page .plan-view-switch > button {
+  flex: 1 0 auto;
+  font-size: var(--text-label);
+  font-weight: 600;
+  min-height: 2.75rem;
+  padding-inline: .9rem;
+  white-space: nowrap;
 }

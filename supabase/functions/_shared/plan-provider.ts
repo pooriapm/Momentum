@@ -9,6 +9,7 @@ import {
 } from './compact-plan-contract.ts'
 import type { GenerationProfileSnapshot } from './generation-profile-snapshot.ts'
 import { HttpError } from './http.ts'
+import { passesLunaQualityGate } from './luna-eval-set.ts'
 import type { ProviderUsage } from './limits.ts'
 import {
   assertLiveOpenAiEnabled,
@@ -96,7 +97,7 @@ function buildInstructions(locale: 'fa-IR' | 'en-US', compact: boolean): string 
   ].join(' ')
 }
 
-export async function generateMonthlyPlanFromProvider(input: {
+export interface MonthlyProviderInput {
   catalog: PlanCatalogSnapshot
   locale: 'fa-IR' | 'en-US'
   days?: number
@@ -107,7 +108,18 @@ export async function generateMonthlyPlanFromProvider(input: {
   cycleIndex?: number
   isRenewal?: boolean
   evalCohort?: string | null
-}): Promise<GeneratedPlanResult> {
+}
+
+export function generateMonthlyPlanFromProvider(input: MonthlyProviderInput): Promise<GeneratedPlanResult> {
+  return generatePlan(input)
+}
+
+/** Offline tooling only: produces evaluation candidates, never imports/delivers plans. */
+export function generateMonthlyPlanForEvaluation(input: MonthlyProviderInput, model: 'gpt-5.6-terra' | 'gpt-5.6-luna'): Promise<GeneratedPlanResult> {
+  return generatePlan(input, model)
+}
+
+async function generatePlan(input: MonthlyProviderInput, evaluationModel?: 'gpt-5.6-terra' | 'gpt-5.6-luna'): Promise<GeneratedPlanResult> {
   const provider = optionalEnv('AI_PLAN_PROVIDER')?.toLowerCase() ?? 'stub'
   if (provider !== 'stub' && provider !== 'openai') {
     throw new HttpError(503, 'AI_PROVIDER_INVALID', 'The plan provider is unavailable.')
@@ -117,12 +129,23 @@ export async function generateMonthlyPlanFromProvider(input: {
     if (!input.userId) {
       throw new HttpError(503, 'AI_CONTEXT_INVALID', 'The plan provider context is unavailable.')
     }
-    const routing = resolvePlanModelRoute({
+    const routing = evaluationModel ? { modelId: evaluationModel, route: evaluationModel.endsWith('luna') ? 'luna' : 'terra', serviceTier: 'standard' as const, routingVersion: 'evaluation' } : resolvePlanModelRoute({
       cycleIndex: input.cycleIndex ?? 1,
       isRenewal: input.isRenewal === true,
       evalCohort: input.evalCohort,
     })
     const compact = isCompactSchemaEnabled()
+    if (routing.route === 'luna' && !evaluationModel) {
+      let evidence: unknown
+      try { evidence = JSON.parse(optionalEnv('AI_PLAN_LUNA_QUALITY_EVIDENCE') ?? 'null') } catch { evidence = null }
+      if (!passesLunaQualityGate(evidence, {
+        promptVersion: OPENAI_PROMPT_VERSION,
+        schemaVersion: compact ? COMPACT_SCHEMA_VERSION : PLAN_SCHEMA_VERSION,
+        catalogReleaseId: input.catalog.releaseId,
+      })) {
+        throw new HttpError(503, 'LUNA_QUALITY_GATE_NOT_MET', 'Luna requires approved live quality evidence matching this generation version.')
+      }
+    }
     const declaredAllergenIds = input.snapshot
       ? resolveDeclaredAllergenIds(input.catalog, input.snapshot.dietary.allergies)
       : new Set<string>()
@@ -172,7 +195,7 @@ export async function generateMonthlyPlanFromProvider(input: {
       schemaVersion: compact ? COMPACT_SCHEMA_VERSION : PLAN_SCHEMA_VERSION,
       providerResponseId: response.id,
       usage: response.usage,
-      serviceTier: routing.serviceTier,
+      serviceTier: response.serviceTier,
     }
   }
 

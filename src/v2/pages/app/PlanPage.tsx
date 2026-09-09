@@ -5,7 +5,6 @@ import {
   Dumbbell,
   Salad,
   ShoppingBasket,
-  Sparkles,
   WifiOff,
 } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
@@ -138,15 +137,17 @@ export function PlanPage({
     const currentIndex = PLAN_SEGMENTS.indexOf(current)
     const nextIndex = event.key === 'Home' ? 0
       : event.key === 'End' ? PLAN_SEGMENTS.length - 1
-        : event.key === 'ArrowRight' ? (currentIndex + 1) % PLAN_SEGMENTS.length
-          : event.key === 'ArrowLeft' ? (currentIndex - 1 + PLAN_SEGMENTS.length) % PLAN_SEGMENTS.length
+        : event.key === (fa ? 'ArrowLeft' : 'ArrowRight') ? (currentIndex + 1) % PLAN_SEGMENTS.length
+          : event.key === (fa ? 'ArrowRight' : 'ArrowLeft') ? (currentIndex - 1 + PLAN_SEGMENTS.length) % PLAN_SEGMENTS.length
             : null
     if (nextIndex === null) return
     event.preventDefault()
     const next = PLAN_SEGMENTS[nextIndex]
     setSegment(next)
     setShowHistory(false)
-    window.requestAnimationFrame(() => document.getElementById(`plan-tab-${next}`)?.focus())
+    const tab = document.getElementById(`plan-tab-${next}`)
+    tab?.focus({ preventScroll: true })
+    tab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
   }
 
   async function selectMeal(slotId: string, optionId: string) {
@@ -219,7 +220,7 @@ export function PlanPage({
     <main className="app-page plan-page screen-enter" data-inventory={inventoryId}>
       <section className="page-heading">
         <div>
-          <p className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'برنامه شخصی' : 'Personal plan'} · {localize(selectedDay.dateLabel, locale)}</p>
+          <p className="orbit-eyebrow">{fa ? 'برنامه شخصی' : 'Personal plan'} · {localize(selectedDay.dateLabel, locale)}</p>
           <h1>{t('app.planTitle')}</h1>
           <p>{localize(activePlan.monthlyPlanBrief, locale)}</p>
         </div>
@@ -249,7 +250,7 @@ export function PlanPage({
         </div>
       ) : null}
 
-      <div aria-label={fa ? 'بخش برنامه' : 'Plan section'} className="segmented-control glass-chrome" role="tablist">
+      <div aria-label={fa ? 'بخش برنامه' : 'Plan section'} className="segmented-control plan-view-switch glass-chrome" role="tablist">
         {segmentMeta.map(({ key, icon: Icon, fa: faLabel, en }) => (
           <button
             aria-controls={`plan-panel-${key}`}

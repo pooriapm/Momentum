@@ -1,21 +1,26 @@
 .today-next-action {
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
 }
 
 .today-next-action-card {
   display: grid;
   gap: .85rem;
-  padding: 1.15rem;
+  padding: 1.2rem 1.2rem 1.2rem 1.05rem;
+  border-inline-start: 3px solid var(--color-energy);
+  background: color-mix(in srgb, var(--color-energy-soft) 55%, var(--color-surface));
+  box-shadow: none;
 }
 
 .today-next-action-card h2 {
   font-size: 1.2rem;
+  font-weight: 650;
   margin: .15rem 0 0;
+  line-height: 1.35;
 }
 
 .today-next-action-card p {
   color: var(--color-text-secondary);
-  font-size: .82rem;
+  font-size: .84rem;
   line-height: 1.7;
   margin: 0;
 }
@@ -54,7 +59,8 @@
 }
 
 .today-meal-row.is-next {
-  border-color: var(--color-brand);
+  border-color: color-mix(in srgb, var(--color-energy) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-energy-soft) 35%, var(--color-surface));
 }
 
 .today-meal-row__time {

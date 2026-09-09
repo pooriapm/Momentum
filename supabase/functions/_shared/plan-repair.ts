@@ -117,11 +117,10 @@ export function applyDeterministicRepair(input: {
           if (!isRecord(option) || typeof option.food_id !== 'string') continue
           const food = input.catalog.foods.get(option.food_id)
           if (!food) continue
-          option.nutrition = {
-            ...food.nutrition,
-            confidence: 'high',
-            source: 'catalog_reference',
-          }
+          option.nutrition = assembleNutritionFromFoods(input.catalog, [{
+            foodId: food.id,
+            multiplier: Number(option.serving_multiplier ?? 1),
+          }])
           option.title = input.locale === 'fa-IR' ? food.name_fa : food.name_en
         }
       }

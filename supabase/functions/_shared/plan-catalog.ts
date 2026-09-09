@@ -38,6 +38,7 @@ export interface CatalogFood {
   portable: boolean
   nutrition: CatalogNutrition
   ingredientIds: ReadonlySet<string>
+  ingredientPortions: ReadonlyMap<string, { amount: number; unit: string }>
 }
 
 export interface CatalogExercise {
@@ -202,6 +203,7 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
     }
   }
 
+  const portionsByFood = new Map<string, Map<string, { amount: number; unit: string }>>()
   const ingredientIdsByFood = new Map<string, Set<string>>()
   for (const row of rows.foodIngredients) {
     const foodId = requiredString(row, 'food_id')
@@ -211,7 +213,10 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
     }
     const ingredient = ingredients.get(ingredientId)
     const unit = requiredString(row, 'unit')
-    requiredPositiveNumber(row, 'amount')
+    const amount = requiredPositiveNumber(row, 'amount')
+    const portions = portionsByFood.get(foodId) ?? new Map()
+    portions.set(ingredientId, { amount, unit })
+    portionsByFood.set(foodId, portions)
     if (!ingredient || unit !== ingredient.default_unit) configurationError()
     const values = ingredientIdsByFood.get(foodId) ?? new Set<string>()
     if (values.has(ingredientId)) configurationError()
@@ -254,6 +259,7 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
         fiber_g: requiredNumber(row, 'fiber_g'),
       },
       ingredientIds,
+      ingredientPortions: portionsByFood.get(id)!,
     })
   }
   for (const foodId of ingredientIdsByFood.keys()) {
@@ -364,6 +370,7 @@ export function planCatalogPromptContext(catalog: PlanCatalogSnapshot): Record<s
       portable: food.portable,
       nutrition: food.nutrition,
       ingredient_ids: [...food.ingredientIds],
+      ingredient_portions: [...food.ingredientPortions].map(([ingredient_id, portion]) => ({ ingredient_id, ...portion })),
     })),
     ingredients: [...catalog.ingredients.values()].map((ingredient) => ({
       id: ingredient.id,

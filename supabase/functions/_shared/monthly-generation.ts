@@ -14,6 +14,9 @@ import {
 } from './generation-profile-snapshot.ts'
 import { HttpError } from './http.ts'
 import type { AiReservation, ProviderUsage } from './limits.ts'
+import { ProviderResponseError } from './openai.ts'
+import { isCompactSchemaEnabled, resolvePlanModelRoute } from './plan-model-routing.ts'
+import { COMPACT_SCHEMA_VERSION } from './compact-plan-contract.ts'
 import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 import { resolveDeclaredAllergenIds } from './plan-catalog.ts'
 import { assertGeneratedPlan } from './plan-contract.ts'
@@ -27,6 +30,8 @@ import {
   PLAN_SCHEMA_VERSION,
   STUB_PLAN_MODEL,
   STUB_PROMPT_VERSION,
+  OPENAI_PROMPT_VERSION,
+  isLiveOpenAiRequested,
 } from './plan-provider.ts'
 import {
   buildAttemptLedger,
@@ -68,6 +73,14 @@ export interface EntitlementRecord {
   periodEnd: string
 }
 
+export interface SavedGeneration {
+  version: 1
+  content: Record<string, unknown>
+  contentSha256: string
+  contextSha256: string
+  attempt: ReturnType<typeof buildAttemptLedger>
+}
+
 export interface GenerationJobRecord {
   id: string
   userId: string
@@ -84,6 +97,7 @@ export interface GenerationJobRecord {
   attemptCount: number
   errorCode: string | null
   openaiResponseId: string | null
+  savedGeneration?: SavedGeneration | null
 }
 
 export interface PeriodRecord {
@@ -154,8 +168,9 @@ export interface GenerationStore {
     reservation: AiReservation
     usage: ProviderUsage
   }): Promise<ImportedPlan>
-  /** Optional durable attempt ledger; no-op in memory tests when absent. */
-  recordAttempt?(attempt: ReturnType<typeof buildAttemptLedger>): Promise<void>
+  /** Save the validated response before importing; required for persistence-only recovery. */
+  saveGeneration(jobId: string, saved: SavedGeneration | null): Promise<void>
+  recordAttempt(attempt: ReturnType<typeof buildAttemptLedger>): Promise<void>
 }
 
 export interface GenerationSuccess {
@@ -360,105 +375,131 @@ export async function runMonthlyGeneration(input: {
     }
   }
 
+  const startedAt = Date.now()
+  const snapshot: GenerationProfileSnapshot = {
+    ...profile.snapshot,
+    cycle_index: period.cycleIndex,
+    dietary: {
+      ...profile.snapshot.dietary,
+      allergies: profile.allergies.length ? profile.allergies : profile.snapshot.dietary.allergies,
+    },
+  }
+  const contextSha256 = await sha256(canonicalJson({
+    context: profileSnapshotPromptContext(snapshot),
+    catalogReleaseId: catalog.releaseId,
+    locale,
+  }))
+  let attempt = job.savedGeneration?.attempt ?? null
+  let importing = false
+  let delivered: ImportedPlan | null = null
   try {
-    await input.store.setJobStatus(job.id, 'validating')
-    const startedAt = Date.now()
-    const snapshot: GenerationProfileSnapshot = {
-      ...profile.snapshot,
-      cycle_index: period.cycleIndex,
-      dietary: {
-        ...profile.snapshot.dietary,
-        allergies: profile.allergies.length
-          ? profile.allergies
-          : profile.snapshot.dietary.allergies,
-      },
-    }
-    const generated = await generateMonthlyPlanFromProvider({
-      catalog,
-      locale,
-      days: MONTHLY_PLAN_DAYS,
-      invalidStub: input.invalidStub,
-      userId: input.userId,
-      context: profileSnapshotPromptContext(snapshot),
-      snapshot,
-      cycleIndex: period.cycleIndex,
-      isRenewal: period.cycleIndex >= 2,
-    })
-    let content = generated.content
-    if (isCompactPlan(content)) {
-      content = stripExpansionMetadata(expandCompactPlan(content, catalog, locale))
-    } else if ('_expansion' in content) {
-      content = stripExpansionMetadata(content)
+    let content: Record<string, unknown>
+    let contentSha256: string
+    if (job.savedGeneration) {
+      // A changed profile must never receive a stale plan. Clear it so a later
+      // explicit retry can request a fresh plan; this request makes no provider call.
+      if (job.savedGeneration.contextSha256 !== contextSha256) {
+        await input.store.saveGeneration(job.id, null)
+        throw new HttpError(409, 'PLAN_CONTEXT_CHANGED', 'Your profile changed. Request a fresh plan.')
+      }
+      content = job.savedGeneration.content
+      contentSha256 = await sha256(canonicalJson(content))
+      if (contentSha256 !== job.savedGeneration.contentSha256) {
+        throw new HttpError(422, 'PLAN_CHECKPOINT_INVALID', 'The saved plan could not be verified.')
+      }
+    } else {
+      const live = isLiveOpenAiRequested()
+      const route = resolvePlanModelRoute({ cycleIndex: period.cycleIndex, isRenewal: period.cycleIndex >= 2 })
+      attempt = buildAttemptLedger({
+        generationJobId: job.id,
+        cycleIndex: period.cycleIndex,
+        attemptId: crypto.randomUUID(),
+        // claimJob has already incremented the provider-attempt counter.
+        attemptNumber: job.attemptCount,
+        model: live ? route.modelId : STUB_PLAN_MODEL,
+        serviceTier: live ? route.serviceTier : 'standard',
+        promptVersion: live ? OPENAI_PROMPT_VERSION : STUB_PROMPT_VERSION,
+        schemaVersion: live && isCompactSchemaEnabled() ? COMPACT_SCHEMA_VERSION : PLAN_SCHEMA_VERSION,
+        catalogReleaseId: catalog.releaseId,
+        usage: { usageKnown: false },
+        providerResponseId: null,
+        latencyMs: null,
+        outcome: 'started',
+        reservationConsumed: false,
+        deliverySucceeded: false,
+      })
+      // Durable identity before any billable request. If this fails, do not call the provider.
+      await input.store.recordAttempt(attempt)
+      const generated = await generateMonthlyPlanFromProvider({
+        catalog,
+        locale,
+        days: MONTHLY_PLAN_DAYS,
+        invalidStub: input.invalidStub,
+        userId: input.userId,
+        context: profileSnapshotPromptContext(snapshot),
+        snapshot,
+        cycleIndex: period.cycleIndex,
+        isRenewal: period.cycleIndex >= 2,
+      })
+      attempt = buildAttemptLedger({
+        generationJobId: job.id,
+        cycleIndex: period.cycleIndex,
+        attemptId: attempt.attempt_id,
+        attemptNumber: attempt.attempt_number,
+        model: generated.model,
+        serviceTier: generated.serviceTier,
+        promptVersion: generated.promptVersion,
+        schemaVersion: generated.schemaVersion,
+        catalogReleaseId: catalog.releaseId,
+        usage: generated.usage,
+        providerResponseId: generated.providerResponseId,
+        latencyMs: Date.now() - startedAt,
+        outcome: 'started',
+        reservationConsumed: true,
+        deliverySucceeded: false,
+      })
+      // Record usage before expansion or validation can throw.
+      await input.store.recordAttempt(attempt)
+      content = generated.content
+      if (isCompactPlan(content)) {
+        content = stripExpansionMetadata(expandCompactPlan(content, catalog, locale))
+      } else if ('_expansion' in content) {
+        content = stripExpansionMetadata(content)
+      }
+      contentSha256 = ''
     }
 
-    const safety = deterministicSafetyDecision(safetyCorpus(content))
-    if (safety) {
-      throw new HttpError(
-        422,
-        'PLAN_VALIDATION_FAILED',
-        'The generated plan could not be validated.',
-      )
+    if (deterministicSafetyDecision(safetyCorpus(content))) {
+      throw new HttpError(422, 'PLAN_VALIDATION_FAILED', 'The generated plan could not be validated.')
     }
     const declaredAllergenIds = resolveDeclaredAllergenIds(catalog, snapshot.dietary.allergies)
+    const validation = { catalog, declaredAllergenIds, minimumCalories: 1_200 }
     try {
-      assertGeneratedPlan(content, MONTHLY_PLAN_DAYS, locale, {
-        catalog,
-        declaredAllergenIds,
-        minimumCalories: 1_200,
-      })
+      assertGeneratedPlan(content, MONTHLY_PLAN_DAYS, locale, validation)
     } catch (validationError) {
-      const code = validationError instanceof HttpError
-        ? validationError.code
-        : 'PLAN_VALIDATION_FAILED'
       const decision = classifyRepair({
-        errorCode: code,
-        hasSavedValidResponse: false,
+        errorCode: validationError instanceof HttpError ? validationError.code : 'PLAN_VALIDATION_FAILED',
+        hasSavedValidResponse: Boolean(job.savedGeneration),
         attemptCount: job.attemptCount,
         maxAttempts: MAX_ATTEMPTS,
       })
-      // Only auto-apply unambiguous arithmetic fixes in-path. Component replacement
-      // remains available via plan-repair for explicit recovery, and must not turn a
-      // broadly invalid provider response into a silent success.
-      if (decision.kind === 'recalculate_nutrition') {
-        content = applyDeterministicRepair({
-          plan: content,
-          catalog,
-          locale,
-          declaredAllergenIds,
-          decision,
-          minimumCalories: 1_200,
-        })
-      } else {
-        throw validationError
-      }
+      if (decision.kind !== 'recalculate_nutrition') throw validationError
+      content = applyDeterministicRepair({ plan: content, catalog, locale, declaredAllergenIds, decision, minimumCalories: 1_200 })
+      // Every repaired result receives the full validation pass.
+      assertGeneratedPlan(content, MONTHLY_PLAN_DAYS, locale, validation)
     }
-
-    const attempt = buildAttemptLedger({
-      generationJobId: job.id,
-      cycleIndex: period.cycleIndex,
-      attemptId: crypto.randomUUID(),
-      attemptNumber: job.attemptCount + 1,
-      model: generated.model,
-      serviceTier: generated.serviceTier,
-      promptVersion: generated.promptVersion,
-      schemaVersion: generated.schemaVersion ?? PLAN_SCHEMA_VERSION,
-      catalogReleaseId: catalog.releaseId,
-      usage: generated.usage,
-      providerResponseId: generated.providerResponseId,
-      latencyMs: Date.now() - startedAt,
-      outcome: 'accepted',
-      reservationConsumed: true,
-      deliverySucceeded: false,
-    })
-    await input.store.recordAttempt?.(attempt)
-
+    if (!attempt) throw new HttpError(422, 'PLAN_CHECKPOINT_INVALID', 'The saved attempt is unavailable.')
+    contentSha256 = await sha256(canonicalJson(content))
+    attempt = { ...attempt, outcome: 'accepted', delivery_succeeded: false }
+    importing = true
+    await input.store.saveGeneration(job.id, { version: 1, content, contentSha256, contextSha256, attempt })
+    await input.store.recordAttempt(attempt)
     await input.store.setJobStatus(job.id, 'importing', {
-      openaiResponseId: generated.providerResponseId,
-      model: generated.model,
-      promptVersion: generated.promptVersion,
+      openaiResponseId: attempt.provider_response_id,
+      model: attempt.model,
+      promptVersion: attempt.prompt_version,
     })
-    const contentSha256 = await sha256(canonicalJson(content))
-    const imported = await input.store.importPlan({
+    delivered = await input.store.importPlan({
       userId: profile.userId,
       jobId: job.id,
       periodId: period.id,
@@ -468,62 +509,76 @@ export async function runMonthlyGeneration(input: {
       timezone: profile.timezone,
       content,
       contentSha256,
-      promptVersion: generated.promptVersion,
-      model: generated.model,
-      providerResponseId: generated.providerResponseId,
+      promptVersion: attempt.prompt_version,
+      model: attempt.model,
+      providerResponseId: attempt.provider_response_id ?? 'openai:unknown',
       reservation,
       usage: {
-        ...generated.usage,
+        inputTokens: attempt.input_tokens ?? undefined,
+        outputTokens: attempt.output_tokens ?? undefined,
+        cachedInputTokens: attempt.cached_input_tokens ?? undefined,
+        cacheWriteTokens: attempt.cache_write_tokens ?? undefined,
+        reasoningTokens: attempt.reasoning_tokens ?? undefined,
         providerCostMicrousd: attempt.cost_microusd,
         costCertainty: attempt.cost_certainty,
       },
     })
-    await input.store.recordAttempt?.({
-      ...attempt,
-      outcome: 'accepted',
-      delivery_succeeded: true,
-    })
+    await input.store.recordAttempt({ ...attempt, outcome: 'accepted', delivery_succeeded: true })
     await input.store.setJobStatus(job.id, 'ready', {
-      openaiResponseId: generated.providerResponseId,
-      model: generated.model,
-      promptVersion: generated.promptVersion,
+      openaiResponseId: attempt.provider_response_id,
+      model: attempt.model,
+      promptVersion: attempt.prompt_version,
       errorCode: null,
     })
-    return {
-      httpStatus: 201,
-      body: {
-        job: { id: job.id, status: 'ready', period_id: period.id },
-        plan: {
-          plan_id: imported.planId,
-          plan_version_id: imported.planVersionId,
-          imported_at: imported.importedAt,
-        },
-      },
-    }
   } catch (error) {
-    const code = error instanceof HttpError ? mapValidationCode(error.code) : 'PROVIDER_FAILED'
-    await input.store.setJobStatus(job.id, 'failed', { errorCode: code })
-    await input.store.recordAttempt?.(buildAttemptLedger({
-      generationJobId: job.id,
-      cycleIndex: period.cycleIndex,
-      attemptId: crypto.randomUUID(),
-      attemptNumber: job.attemptCount + 1,
-      model: job.model,
-      promptVersion: job.promptVersion,
-      schemaVersion: PLAN_SCHEMA_VERSION,
-      catalogReleaseId: catalog.releaseId,
-      usage: { usageKnown: false },
-      providerResponseId: job.openaiResponseId,
-      latencyMs: null,
-      outcome: code === 'PLAN_VALIDATION_FAILED' ? 'validation_failed' : 'provider_failed',
-      validationFailureCategory: classifyValidationFailure(code),
-      reservationConsumed: true,
-      deliverySucceeded: false,
-    }))
-    throw error instanceof HttpError
-      ? new HttpError(error.status === 502 ? 422 : error.status, code, safeFailureMessage(code))
-      : new HttpError(502, 'PROVIDER_FAILED', 'The plan provider could not complete this request.')
+    // The production import RPC atomically marks both job and attempt delivered.
+    // A subsequent bookkeeping failure must not turn a delivered plan into a retry.
+    if (delivered) {
+      console.error('generation_post_delivery_update_failed', job.id)
+    } else {
+      const code = error instanceof HttpError ? mapValidationCode(error.code) : 'PROVIDER_FAILED'
+      if (error instanceof ProviderResponseError && attempt) {
+        const meta = error.metadata
+        attempt = buildAttemptLedger({
+          generationJobId: job.id,
+          cycleIndex: period.cycleIndex,
+          attemptId: attempt.attempt_id,
+          attemptNumber: attempt.attempt_number,
+          model: meta.model,
+          serviceTier: meta.serviceTier,
+          promptVersion: attempt.prompt_version,
+          schemaVersion: attempt.schema_version,
+          catalogReleaseId: catalog.releaseId,
+          usage: meta.usage,
+          providerResponseId: meta.providerResponseId,
+          latencyMs: Date.now() - startedAt,
+          outcome: 'provider_failed',
+          reservationConsumed: true,
+          deliverySucceeded: false,
+        })
+      }
+      if (attempt) {
+        await input.store.recordAttempt({
+          ...attempt,
+          outcome: importing ? 'persistence_failed' : code === 'PLAN_VALIDATION_FAILED' ? 'validation_failed' : 'provider_failed',
+          validation_failure_category: classifyValidationFailure(code),
+          delivery_succeeded: false,
+        }).catch(() => console.error('generation_attempt_update_failed', job.id))
+      }
+      await input.store.setJobStatus(job.id, 'failed', { errorCode: code })
+      throw error instanceof HttpError
+        ? new HttpError(error.status === 502 ? 422 : error.status, code, safeFailureMessage(code))
+        : new HttpError(502, 'PROVIDER_FAILED', 'The plan provider could not complete this request.')
+    }
   }
+  return {
+    httpStatus: 201,
+    body: {
+      job: { id: job.id, status: 'ready', period_id: period.id },
+      plan: { plan_id: delivered!.planId, plan_version_id: delivered!.planVersionId, imported_at: delivered!.importedAt },
+    },
+  }
+
 }
 
 function mapValidationCode(code: string): string {
@@ -547,6 +602,7 @@ function mapValidationCode(code: string): string {
 
 function safeFailureMessage(code: string): string {
   if (code === 'PLAN_VALIDATION_FAILED') return 'The generated plan could not be validated.'
+  if (code === 'PLAN_CONTEXT_CHANGED') return 'Your profile changed. Request a fresh plan.'
   if (code === 'PLAN_IMPORT_FAILED') return 'The validated plan could not be imported.'
   return 'The plan provider could not complete this request.'
 }

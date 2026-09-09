@@ -169,10 +169,10 @@
   position: absolute;
   z-index: 30;
   transition:
-    transform var(--motion-glass-morph) var(--motion-glass-spring),
-    padding var(--motion-glass-release) var(--motion-glass-spring),
-    inset-inline var(--motion-glass-morph) var(--motion-glass-spring),
-    border-radius var(--motion-glass-morph) var(--motion-glass-spring);
+    transform var(--motion-glass-morph) var(--motion-ease-out),
+    padding var(--motion-glass-release) var(--motion-ease-out),
+    inset-inline var(--motion-glass-morph) var(--motion-ease-out),
+    border-radius var(--motion-glass-morph) var(--motion-ease-out);
 }
 
 .mo-app-story--phone .app-bottom-nav a {
@@ -188,7 +188,7 @@
   justify-content: center;
   min-height: 3.25rem;
   position: relative;
-  transition: color var(--motion-normal) ease, transform var(--motion-glass-press) var(--motion-glass-spring), gap var(--motion-glass-release) var(--motion-glass-spring), min-height var(--motion-glass-morph) var(--motion-glass-spring);
+  transition: color var(--motion-normal) ease, transform var(--motion-glass-press) var(--motion-ease-out), gap var(--motion-glass-release) var(--motion-ease-out), min-height var(--motion-glass-morph) var(--motion-ease-out);
 }
 
 .mo-app-story--phone .app-bottom-nav a span {
@@ -197,7 +197,7 @@
   opacity: 1;
   overflow: hidden;
   transition:
-    max-height var(--motion-glass-morph) var(--motion-glass-spring),
+    max-height var(--motion-glass-morph) var(--motion-ease-out),
     opacity var(--motion-glass-press) ease;
 }
 

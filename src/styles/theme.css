@@ -98,16 +98,35 @@
   --color-print-text-muted: #555555;
   --color-print-border: #d3d3d3;
 
-  --radius-control: 0.875rem;
-  --radius-card: 1.375rem;
-  --radius-panel: 1.625rem;
-  --radius-dialog: 1.875rem;
+  --radius-control: 0.75rem;
+  --radius-card: 1.125rem;
+  --radius-panel: 1.375rem;
+  --radius-dialog: 1.5rem;
   --control-height-sm: 2.5rem;
   --control-height-md: 2.75rem;
   --control-height-lg: 3rem;
   --size-field: 3rem;
-  --motion-fast: 180ms;
-  --motion-normal: 300ms;
+  --motion-fast: 160ms;
+  --motion-normal: 260ms;
+
+  /* Type roles — Vazirmatn for FA, system latin for EN/numbers */
+  --font-display: var(--font-app);
+  --font-body: var(--font-app);
+  --font-data: var(--font-latin, "SF Pro Text", "Segoe UI", system-ui, sans-serif);
+  --text-display: clamp(2.4rem, 6vw, 4.75rem);
+  --text-title: clamp(1.65rem, 3.2vw, 2.35rem);
+  --text-heading: 1.15rem;
+  --text-body: 0.95rem;
+  --text-label: 0.8125rem;
+  --text-caption: 0.75rem;
+  --leading-display: 1.12;
+  --leading-body: 1.75;
+  --tracking-display: -0.03em;
+  --tracking-label: 0.02em;
+
+  /* Next-step signature rail */
+  --signature-rail: var(--color-energy);
+  --signature-rail-soft: var(--color-energy-soft);
 
   color-scheme: dark;
 }
@@ -193,4 +212,28 @@
   --shadow-chrome: 0 14px 45px rgba(36, 26, 33, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.92);
 
   color-scheme: light;
+}
+
+/* Language-specific families and reading rhythm also apply to isolated story roots. */
+:root:lang(en), [lang="en"] {
+  --font-app: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-numeric: var(--font-app);
+  --leading-body: 1.6;
+}
+
+:root:lang(fa), [lang="fa"] {
+  --font-app: "Vazirmatn", Tahoma, sans-serif;
+  --font-numeric: var(--font-app);
+  --leading-body: 1.8;
+  --tracking-display: 0;
+  --tracking-label: 0;
+}
+
+:where(h1, h2, h3, button, input, select, textarea) {
+  font-optical-sizing: auto;
+}
+
+[lang="fa"] :is(h1, h2, h3, .orbit-eyebrow),
+[dir="rtl"] :is(h1, h2, h3, .orbit-eyebrow) {
+  letter-spacing: 0;
 }

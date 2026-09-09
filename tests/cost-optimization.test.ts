@@ -1,6 +1,8 @@
+import { assembleMealOption, aggregateGroceryList } from '../supabase/functions/_shared/plan-assembly.ts'
 import { describe, expect, it, vi } from 'vitest'
 import {
   COMPACT_SCHEMA_VERSION,
+  compactPlanJsonSchema,
   expandCompactPlan,
   stripExpansionMetadata,
 } from '../supabase/functions/_shared/compact-plan-contract.ts'
@@ -156,7 +158,7 @@ function compactFixture(locale: 'fa-IR' | 'en-US' = 'en-US') {
     workout_def_id: day_index % 2 === 0 ? 'full-a' : null,
     target_mode: day_index % 2 === 0 ? 'training_day' : 'rest_day',
     target_rationale: 'Progress gradually across the month.',
-    serving_overrides: day_index > 20 ? { 'lunch-a': 1.1 } : {},
+    serving_overrides: day_index > 20 ? [{ meal_def_id: 'lunch-a', multiplier: 1.1 }] : [],
     progression_note: day_index === 14 ? 'Mid-cycle progression checkpoint.' : null,
     notes: [],
   }))
@@ -178,6 +180,7 @@ function compactFixture(locale: 'fa-IR' | 'en-US' = 'en-US') {
     days,
     emergency_food_ids: ['food:banana-almonds@v2'],
     restaurant_guide: [{
+      estimated_nutrition: { calories: 650, protein_g: 45, carbs_g: 75, fat_g: 19, fiber_g: 7, confidence: 'low', source: 'model_estimate' },
       title: 'Simple grill',
       order_instructions: ['Choose grilled protein and vegetables.'],
     }],
@@ -190,6 +193,41 @@ function compactFixture(locale: 'fa-IR' | 'en-US' = 'en-US') {
 }
 
 describe('cost optimization foundations', () => {
+  it('preserves authoritative ingredient amounts and scales nutrition and groceries together', () => {
+    const rows = catalogRows()
+    const chicken = rows.foodIngredients.find(row => row.ingredient_id === 'ingredient:chicken-breast@v2')!
+    chicken.amount = 150
+    const catalog = createPlanCatalogSnapshot(rows)
+    const option = assembleMealOption({ catalog, foodId: 'food:chicken-rice-bowl@v2', optionKey: 'test', locale: 'en-US', servingMultiplier: 2, note: null })
+    expect(option.nutrition).toMatchObject({ calories: 1300, protein_g: 90 })
+    expect(option.ingredients).toEqual(expect.arrayContaining([expect.objectContaining({ ingredient_id: chicken.ingredient_id, amount: 300, unit: 'g' })]))
+    const groups = aggregateGroceryList(catalog, [{ foodId: 'food:chicken-rice-bowl@v2', multiplier: 2 }], 'en-US')
+    expect(groups[0]?.items).toEqual(expect.arrayContaining([expect.objectContaining({ ingredient_id: chicken.ingredient_id, amount: 300 })]))
+  })
+
+  it('uses closed objects throughout the strict provider schema', () => {
+    const visit = (value: unknown) => {
+      if (!value || typeof value !== 'object') return
+      const node = value as Record<string, unknown>
+      if (node.type === 'object' || (Array.isArray(node.type) && node.type.includes('object'))) {
+        expect(node.additionalProperties).toBe(false)
+        expect(node.required).toEqual(expect.arrayContaining(Object.keys(node.properties as object)))
+      }
+      Object.values(node).forEach(visit)
+    }
+    visit(compactPlanJsonSchema)
+  })
+
+  it('rejects duplicate overrides and missing restaurant estimates', () => {
+    const catalog = createPlanCatalogSnapshot(catalogRows())
+    const compact = compactFixture()
+    compact.days[0]!.serving_overrides = [{ meal_def_id: 'lunch-a', multiplier: 2 }, { meal_def_id: 'lunch-a', multiplier: 1 }]
+    expect(() => expandCompactPlan(compact, catalog, 'en-US')).toThrow()
+    const expanded = stripExpansionMetadata(expandCompactPlan(compactFixture(), catalog, 'en-US'))
+    ;(expanded.restaurant_guide as Record<string, unknown>[])[0]!.estimated_nutrition = undefined
+    expect(() => assertGeneratedPlan(expanded, MONTHLY_PLAN_DAYS, 'en-US', { catalog })).toThrow()
+  })
+
   it('builds a semantic profile snapshot without goal DB ids or email', () => {
     const snapshot = buildGenerationProfileSnapshot({
       profile: {

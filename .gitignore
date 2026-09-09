@@ -52,6 +52,7 @@ temp/
 /traces/
 *.har
 *.trace
+scripts/evals/
 /*.zip
 /*.tar.gz
 /*.tgz

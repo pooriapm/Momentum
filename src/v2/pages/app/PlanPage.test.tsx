@@ -82,7 +82,7 @@ describe('PlanPage inventory states', () => {
   it('PLAN-06 exposes version, source cycle, interval and readable changes', () => {
     renderPlan()
     expect(screen.getAllByText(/v2 · cycle 2/i).length).toBeGreaterThan(0)
-    expect(screen.getByText('This version is active and read-only. Next-period changes are stored separately and do not overwrite this version.')).toBeInTheDocument()
+    expect(screen.getByText('This is your current plan. New preferences are saved for your next cycle.')).toBeInTheDocument()
     expect(screen.getByText('Training increased from 2 to 3 days')).toBeInTheDocument()
   })
 
@@ -95,7 +95,7 @@ describe('PlanPage inventory states', () => {
   it('PLAN-08 shows a week-geometry loading skeleton', () => {
     renderPlan({ surface: 'loading' })
     expect(screen.getByLabelText('Loading plan')).toHaveAttribute('aria-busy', 'true')
-    expect(screen.getByText('The final Week-view geometry is preserved')).toBeInTheDocument()
+    expect(screen.getByText('Loading your week…')).toBeInTheDocument()
     expect(document.querySelectorAll('.plan-skeleton-day').length).toBe(7)
   })
 

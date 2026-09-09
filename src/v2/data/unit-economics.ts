@@ -53,6 +53,41 @@ function planCostToman(a: UnitEconomicsAssumptions): number {
   return a.planCostUsd * a.fxTomanPerUsd
 }
 
+/** CAC is already per eventual payer; conversion determines all gifted plans required. */
+export function acquisitionCosts(a: UnitEconomicsAssumptions) {
+  let advertising = a.advertisingToman
+  let gifts = a.giftRecipientsPerMonth
+  if (a.advertisingCacToman && a.advertisingCacToman > 0) {
+    if (a.giftToPaidConversion <= 0 && advertising > 0) {
+      throw new RangeError('Positive paid-CAC spend requires positive conversion; use gift-recipient mode for zero conversion.')
+    }
+    const targetNewPaid = advertising > 0
+      ? advertising / a.advertisingCacToman
+      : gifts * a.giftToPaidConversion
+    advertising = targetNewPaid * a.advertisingCacToman
+    gifts = a.giftToPaidConversion > 0 ? targetNewPaid / a.giftToPaidConversion : gifts
+  }
+  return { advertising, gifts }
+}
+
+/** Monthly break-even at a fixed acquisition budget, including all free plans and retries. */
+export function recurringEconomics(a: UnitEconomicsAssumptions, payingCustomers: number) {
+  const { advertising, gifts } = acquisitionCosts(a)
+  const effectiveUnit = planCostToman(a) * Math.max(1, a.failedAttemptMultiplier)
+  const giftGenerationToman = gifts * effectiveUnit
+  const paidGenerationToman = payingCustomers * effectiveUnit
+  const fixedSpend = advertising + giftGenerationToman
+  const margin = a.priceToman - effectiveUnit
+  return {
+    giftRecipients: gifts,
+    giftGenerationToman,
+    paidGenerationToman,
+    advertisingToman: advertising,
+    profitToman: payingCustomers * a.priceToman - paidGenerationToman - fixedSpend,
+    breakEvenPayingCustomers: margin > 0 ? Math.ceil(fixedSpend / margin) : null,
+  }
+}
+
 /**
  * Advertising → gift recipients → first payment in the following cycle → retained paid.
  * Denominators:
@@ -66,19 +101,7 @@ export function giftToPaidFunnel(
   priorPaying: number,
 ): Omit<FunnelMonth, 'cumulativeToman'> {
   const unit = planCostToman(a)
-  let advertising = a.advertisingToman
-  let gifts = a.giftRecipientsPerMonth
-
-  if (a.advertisingCacToman && a.advertisingCacToman > 0) {
-    // CAC already means spend per acquired paying customer — do not multiply conversion again.
-    const targetNewPaid = a.advertisingToman > 0
-      ? a.advertisingToman / a.advertisingCacToman
-      : gifts * a.giftToPaidConversion
-    advertising = targetNewPaid * a.advertisingCacToman
-    gifts = a.giftToPaidConversion > 0
-      ? targetNewPaid / a.giftToPaidConversion
-      : 0
-  }
+  const { advertising, gifts } = acquisitionCosts(a)
 
   const newPaid = monthIndex === 0 ? 0 : gifts * a.giftToPaidConversion
   const payingCustomers = priorPaying * (1 - a.monthlyChurn) + newPaid

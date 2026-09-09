@@ -25,8 +25,8 @@ export function assembleMealOption(input: {
     return {
       ingredient_id: ingredient.id,
       name: input.locale === 'fa-IR' ? ingredient.name_fa : ingredient.name_en,
-      amount: Math.round(1 * input.servingMultiplier * 100) / 100,
-      unit: ingredient.default_unit,
+      amount: food.ingredientPortions.get(ingredientId)!.amount * input.servingMultiplier,
+      unit: food.ingredientPortions.get(ingredientId)!.unit,
       note: input.note,
     }
   })
@@ -43,13 +43,8 @@ export function assembleMealOption(input: {
     option_key: input.optionKey,
     title: input.locale === 'fa-IR' ? food.name_fa : food.name_en,
     ingredients,
-    // Public plan contract requires option nutrition to match catalog food exactly.
-    // Portion changes are expressed via ingredient amounts and day targets/overrides.
-    nutrition: {
-      ...food.nutrition,
-      confidence: 'high' as const,
-      source: 'catalog_reference' as const,
-    },
+    serving_multiplier: input.servingMultiplier,
+    nutrition: assembleNutritionFromFoods(input.catalog, [{ foodId: food.id, multiplier: input.servingMultiplier }]),
     recipe: null,
     warnings: input.servingMultiplier !== 1
       ? [`serving_multiplier:${input.servingMultiplier}`]
@@ -82,7 +77,7 @@ export function assembleExercise(input: {
     )
   }
   if (!substitutionId) {
-    substitutionId = [...item.substitutionIds][0] ?? null
+    substitutionId = null
   }
   const substitution = substitutionId ? input.catalog.exercises.get(substitutionId) : undefined
   return {
@@ -117,11 +112,11 @@ export function assembleNutritionFromFoods(
     totals.fiber_g += food.nutrition.fiber_g * ref.multiplier
   }
   return {
-    calories: Math.round(totals.calories),
-    protein_g: Math.round(totals.protein_g * 10) / 10,
-    carbs_g: Math.round(totals.carbs_g * 10) / 10,
-    fat_g: Math.round(totals.fat_g * 10) / 10,
-    fiber_g: Math.round(totals.fiber_g * 10) / 10,
+    calories: Math.round(totals.calories * 100) / 100,
+    protein_g: Math.round(totals.protein_g * 100) / 100,
+    carbs_g: Math.round(totals.carbs_g * 100) / 100,
+    fat_g: Math.round(totals.fat_g * 100) / 100,
+    fiber_g: Math.round(totals.fiber_g * 100) / 100,
     confidence: 'high' as const,
     source: 'catalog_reference' as const,
   }
@@ -140,7 +135,7 @@ export function aggregateGroceryList(
       const ingredient = catalog.ingredients.get(ingredientId)
       if (!ingredient) continue
       const existing = amounts.get(ingredientId)
-      const add = ref.multiplier
+      const add = food.ingredientPortions.get(ingredientId)!.amount * ref.multiplier
       if (existing) {
         existing.amount += add
       } else {
@@ -166,8 +161,8 @@ export function aggregateGroceryList(
       'Grocery aggregation found no governed ingredients; catalog review required.',
     )
   }
-  return [{
-    category: locale === 'fa-IR' ? 'مواد اولیه' : 'Ingredients',
-    items: items.slice(0, 40),
-  }]
+  return Array.from({ length: Math.ceil(items.length / 40) }, (_, index) => ({
+    category: locale === 'fa-IR' ? `مواد اولیه ${index + 1}` : `Ingredients ${index + 1}`,
+    items: items.slice(index * 40, (index + 1) * 40),
+  }))
 }

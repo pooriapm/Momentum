@@ -103,7 +103,7 @@ describe('AppFrame live plan query surfaces', () => {
     loadDashboard.mockImplementation(() => new Promise(() => {}))
     renderLiveApp('plan')
     expect(await screen.findByLabelText('Loading plan')).toHaveAttribute('aria-busy', 'true')
-    expect(screen.getByText('The final Week-view geometry is preserved')).toBeInTheDocument()
+    expect(screen.getByText('Loading your week…')).toBeInTheDocument()
     expect(document.querySelectorAll('.plan-skeleton-day').length).toBe(7)
     expect(screen.queryByLabelText('Loading')).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()

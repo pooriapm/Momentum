@@ -4,6 +4,7 @@ import type { MealChoice } from '../data/types'
 import { formatNumber } from '../lib/format'
 import { Button, StatusPill } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
+import { useModalDismiss } from './use-modal-dismiss'
 
 function nutritionConfidencePill(choice: MealChoice, locale: AppLocale) {
   const labels = {
@@ -29,7 +30,7 @@ export function MealDetailSheet({
   choice,
   mealLabel,
   locale,
-  onClose,
+  onClose: onDismiss,
   alternatives = [],
   onSelectAlternative,
   readOnly = false,
@@ -42,10 +43,11 @@ export function MealDetailSheet({
   onSelectAlternative?: (choice: MealChoice) => void
   readOnly?: boolean
 }) {
+  const { modalRef, onClose } = useModalDismiss(onDismiss)
   const fa = locale === 'fa'
   const others = alternatives.filter((item) => item.id !== choice.id)
   return (
-    <ModalShell className="meal-detail-sheet" labelId="meal-detail-title" material="content" onClose={onClose}>
+    <ModalShell className="meal-detail-sheet" labelId="meal-detail-title" material="content" onClose={onDismiss} ref={modalRef}>
       <section>
         <header>
           <div><p className="orbit-eyebrow">{mealLabel}</p><h2 id="meal-detail-title">{choice.name[locale]}</h2></div>

@@ -1,3 +1,4 @@
+import { nutritionSchema } from './plan-contract.ts'
 import { HttpError } from './http.ts'
 import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import type { PlanCatalogSnapshot } from './plan-catalog.ts'
@@ -8,8 +9,8 @@ import {
   aggregateGroceryList,
 } from './plan-assembly.ts'
 
-export const COMPACT_SCHEMA_VERSION = '1.0.0-compact'
-export const COMPACT_EXPANSION_VERSION = 'momentum-compact-expand/1.0.0'
+export const COMPACT_SCHEMA_VERSION = '1.1.0-compact'
+export const COMPACT_EXPANSION_VERSION = 'momentum-compact-expand/1.1.0'
 
 /**
  * Compact provider schema: define meals/workouts once, reference from 30 days.
@@ -190,8 +191,14 @@ export const compactPlanJsonSchema: Record<string, unknown> = {
           },
           target_rationale: { type: 'string', minLength: 1, maxLength: 300 },
           serving_overrides: {
-            type: 'object',
-            additionalProperties: { type: 'number', minimum: 0.25, maximum: 4 },
+            type: 'array',
+            maxItems: 6,
+            items: {
+              type: 'object',
+              properties: { meal_def_id: { type: 'string' }, multiplier: { type: 'number', minimum: 0.25, maximum: 4 } },
+              required: ['meal_def_id', 'multiplier'],
+              additionalProperties: false,
+            },
           },
           progression_note: { type: ['string', 'null'], maxLength: 240 },
           notes: {
@@ -231,6 +238,7 @@ export const compactPlanJsonSchema: Record<string, unknown> = {
         type: 'object',
         properties: {
           title: { type: 'string', minLength: 1, maxLength: 160 },
+          estimated_nutrition: nutritionSchema,
           order_instructions: {
             type: 'array',
             minItems: 1,
@@ -238,7 +246,7 @@ export const compactPlanJsonSchema: Record<string, unknown> = {
             items: { type: 'string', minLength: 1, maxLength: 300 },
           },
         },
-        required: ['title', 'order_instructions'],
+        required: ['title', 'order_instructions', 'estimated_nutrition'],
         additionalProperties: false,
       },
     },
@@ -356,7 +364,16 @@ export function expandCompactPlan(
     seenDays.add(dayIndex)
 
     const mealDefIds = Array.isArray(day.meal_def_ids) ? day.meal_def_ids : []
-    const overrides = isRecord(day.serving_overrides) ? day.serving_overrides : {}
+    if (!Array.isArray(day.serving_overrides)) throw new HttpError(422, 'COMPACT_INVALID_PORTION', 'Overrides must be an array.')
+    const overrides = new Map<string, number>()
+    for (const override of day.serving_overrides) {
+      if (!isRecord(override) || typeof override.meal_def_id !== 'string' ||
+          !mealDefIds.includes(override.meal_def_id) || overrides.has(override.meal_def_id) ||
+          typeof override.multiplier !== 'number') {
+        throw new HttpError(422, 'COMPACT_INVALID_PORTION', 'Invalid or duplicated serving override.')
+      }
+      overrides.set(override.meal_def_id, override.multiplier)
+    }
     const meals: Record<string, unknown>[] = []
 
     for (const [slotIndex, mealDefIdRaw] of mealDefIds.entries()) {
@@ -370,7 +387,7 @@ export function expandCompactPlan(
         throw new HttpError(422, 'unknown_catalog_id', `Unknown food: ${foodId}`)
       }
       const baseMultiplier = Number(def.serving_multiplier ?? 1)
-      const override = overrides[mealDefId]
+      const override = overrides.get(mealDefId)
       const multiplier = typeof override === 'number' ? override : baseMultiplier
       if (!Number.isFinite(multiplier) || multiplier < 0.25 || multiplier > 4) {
         throw new HttpError(422, 'COMPACT_INVALID_PORTION', 'Invalid serving multiplier.')
@@ -530,15 +547,7 @@ export function expandCompactPlan(
     return {
       title: item.title,
       order_instructions: item.order_instructions,
-      estimated_nutrition: {
-        calories: 650,
-        protein_g: 30,
-        carbs_g: 70,
-        fat_g: 20,
-        fiber_g: 8,
-        confidence: 'low',
-        source: 'model_estimate',
-      },
+      estimated_nutrition: item.estimated_nutrition,
     }
   })
 

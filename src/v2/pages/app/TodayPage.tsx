@@ -10,7 +10,6 @@ import {
   Flame,
   MoonStar,
   Salad,
-  Sparkles,
   Target,
   WifiOff,
 } from 'lucide-react'
@@ -286,6 +285,7 @@ export function TodayPage({
     nextMeal,
     nextChoice,
     workoutName: plan.workout ? localize(plan.workout.name, locale) : '',
+    workoutSummary: plan.workout ? `${formatNumber(plan.workout.durationMinutes, locale)} ${fa ? 'دقیقه' : 'min'} · ${formatNumber(plan.workout.exercises, locale)} ${fa ? 'حرکت' : 'exercises'}` : '',
     allMealsCompleted,
   })
 
@@ -293,13 +293,10 @@ export function TodayPage({
     <main className="app-page today-page screen-enter">
       <section className="page-heading">
         <div>
-          <p className="orbit-eyebrow"><Sparkles size={15} />{localize(plan.dateLabel, locale)}</p>
+          <p className="orbit-eyebrow">{localize(plan.dateLabel, locale)}</p>
           <h1>{t('app.greeting', { name: localize(plan.userName, locale) })}</h1>
           <p>{localize(plan.adjustmentReason, locale)}</p>
         </div>
-        <Button className="today-checkin-quiet" disabled={mutationsLocked} onClick={() => setCheckInOpen(true)} variant="ghost">
-          {checkInSaved ? (fa ? 'چک‌این ثبت شد' : 'Check-in saved') : (fa ? 'چک‌این روزانه · اختیاری' : 'Daily check-in · optional')}
-        </Button>
       </section>
 
       {view === 'offline' ? (
@@ -346,11 +343,11 @@ export function TodayPage({
           <h2>{nextAction.title}</h2>
           <p>{nextAction.body}</p>
           <div className="today-next-action-card__actions">
-            <Button disabled={view === 'safety' || view === 'stale'} onClick={() => document.getElementById(nextAction.targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+            <Button disabled={view === 'safety' || view === 'stale'} onClick={() => document.getElementById(nextAction.targetId)?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })}>
               {nextAction.action}
             </Button>
             <Button className="today-checkin-quiet" disabled={mutationsLocked} onClick={() => setCheckInOpen(true)} variant="ghost">
-              {fa ? 'بررسی روزانه · اختیاری' : 'Daily check-in · optional'}
+              {checkInSaved ? (fa ? 'چک‌این ثبت شد' : 'Check-in saved') : (fa ? 'بررسی روزانه · اختیاری' : 'Daily check-in · optional')}
             </Button>
           </div>
         </ContentCard>
@@ -544,6 +541,7 @@ function nextActionCopy({
   nextMeal,
   nextChoice,
   workoutName,
+  workoutSummary,
   allMealsCompleted,
 }: {
   view: TodaySurface
@@ -552,6 +550,7 @@ function nextActionCopy({
   nextMeal: MealSlot | null
   nextChoice: MealChoice | null
   workoutName: string
+  workoutSummary: string
   allMealsCompleted: boolean
 }) {
   const fa = locale === 'fa'
@@ -597,7 +596,7 @@ function nextActionCopy({
   }
   return {
     title: workoutName || (fa ? 'امروز یک تمرین داری' : 'A session is next'),
-    body: fa ? 'یک اقدام بالای صفحه؛ چک‌این روزانه اختیاری و کم‌رنگ است.' : 'One next action above the fold. Daily check-in stays optional and quiet.',
+    body: workoutSummary || (fa ? 'وقتی آماده‌ای، جزئیات تمرین را ببین.' : 'Review your session when you’re ready.'),
     action: fa ? 'شروع تمرین' : 'Start workout',
     targetId: 'today-workout',
   }

@@ -1,10 +1,8 @@
 import {
-  Activity,
   ArrowRight,
   BarChart3,
   CalendarRange,
   Check,
-  ChevronRight,
   CircleUserRound,
   Dumbbell,
   HeartPulse,
@@ -13,7 +11,6 @@ import {
   Salad,
   ScanLine,
   ShieldCheck,
-  Sparkles,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
@@ -45,7 +42,7 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
           <div className="landing-aura landing-aura--one" />
           <div className="landing-aura landing-aura--two" />
           <div className="landing-hero__copy">
-            <Eyebrow><Sparkles size={15} />{t('landing.eyebrow')}</Eyebrow>
+            <Eyebrow>{t('landing.eyebrow')}</Eyebrow>
             <h1>{locale === 'fa' ? <>هر روز، <bdi dir="ltr">Momentum</bdi> می‌داند</> : t('landing.titleLead')} <em>{t('landing.titleAccent')}</em></h1>
             <p>{t('landing.subtitle')}</p>
             <div className="landing-hero__actions">
@@ -64,17 +61,16 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
 
         <Reveal as="section" className="landing-section landing-system">
           <div className="landing-section__heading">
-            <Eyebrow><Activity size={15} />Momentum Loop</Eyebrow>
+            <Eyebrow>{locale === 'fa' ? 'حلقه ماهانه' : 'Monthly loop'}</Eyebrow>
             <h2>{t('landing.systemTitle')}</h2>
             <p>{t('landing.systemCopy')}</p>
           </div>
           <div className="feature-grid">
             {features.map(([Icon, title, copy], index) => (
-              <ContentCard className="feature-card" key={title}>
-                <span className={`feature-card__icon feature-card__icon--${index + 1}`}><Icon size={22} /></span>
+              <ContentCard className={`feature-card content-card--flush`} key={title}>
+                <span className={`feature-card__icon feature-card__icon--${index + 1}`}><Icon size={20} /></span>
                 <h3>{title}</h3>
                 <p>{copy}</p>
-                <ChevronRight aria-hidden="true" className="feature-card__arrow directional-icon" size={18} />
               </ContentCard>
             ))}
           </div>
@@ -82,7 +78,7 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
 
         <Reveal as="section" className="landing-section process-section">
           <div className="landing-section__heading">
-            <Eyebrow><Sparkles size={15} />Personal by design</Eyebrow>
+            <Eyebrow>{locale === 'fa' ? 'از زمینه تا اقدام' : 'From context to action'}</Eyebrow>
             <h2>{t('landing.stepsTitle')}</h2>
           </div>
           <ol className="process-grid">
@@ -96,17 +92,17 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
         </Reveal>
 
         <Reveal as="section" className="landing-section safety-banner">
-          <div className="safety-banner__mark"><HeartPulse size={29} /></div>
+          <div className="safety-banner__mark"><HeartPulse size={26} /></div>
           <div>
-            <Eyebrow>Safety architecture</Eyebrow>
+            <Eyebrow>{locale === 'fa' ? 'اول ایمنی' : 'Safety first'}</Eyebrow>
             <h2>{t('landing.safetyTitle')}</h2>
             <p>{t('landing.safetyCopy')}</p>
           </div>
-          <Link href={localizedPath(locale, '/safety')}>{t('common.learnMore')} <ChevronRight className="directional-icon" size={17} /></Link>
+          <Link href={localizedPath(locale, '/safety')}>{t('common.learnMore')} <ArrowRight className="directional-icon" size={17} /></Link>
         </Reveal>
 
         <Reveal as="section" className="landing-final">
-          <OrbitMark animated size={78} />
+          <OrbitMark animated size={72} />
           <h2>{t('landing.finalTitle')}</h2>
           <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-up')}>
             <span>{t('landing.primaryCta')}</span>
@@ -134,7 +130,7 @@ function ProductPreview({ locale }: { locale: AppLocale }) {
         <span className="product-preview__avatar">{locale === 'fa' ? 'آ' : 'A'}</span>
       </GlassChrome>
       <div className="product-preview__body">
-        <StatusPill tone="brand"><Sparkles size={13} />{t('landing.nextAction')}</StatusPill>
+        <StatusPill tone="energy">{t('landing.nextAction')}</StatusPill>
         <h2>{t('landing.todayTitle')}</h2>
         <p>{t('landing.todayCopy')}</p>
         <ContentCard className="preview-meal-card">

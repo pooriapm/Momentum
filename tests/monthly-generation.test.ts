@@ -225,6 +225,8 @@ class MemoryGenerationStore implements GenerationStore {
   reservations = new Map<string, AiReservation>()
   importedPlans: ImportedPlan[] = []
   claimCount = new Map<string, number>()
+  savedGenerations = new Map<string, GenerationJobRecord['savedGeneration']>()
+  savedGenerations = new Map<string, GenerationJobRecord['savedGeneration']>()
 
   constructor(options: {
     profile?: GenerationProfile
@@ -329,6 +331,12 @@ class MemoryGenerationStore implements GenerationStore {
     if (patch.model !== undefined) job.model = patch.model
     if (patch.promptVersion !== undefined) job.promptVersion = patch.promptVersion
   }
+  saveGeneration = async (jobId: string, saved: GenerationJobRecord['savedGeneration']) => {
+    const job = this.jobs.get(jobId)
+    if (job) job.savedGeneration = saved
+    this.savedGenerations.set(jobId, saved)
+  }
+  recordAttempt = async () => undefined
   importPlan = async (input) => {
     const imported: ImportedPlan = {
       planId: `plan-${this.importedPlans.length + 1}`,

@@ -12,6 +12,7 @@ import {
   type GenerationStore,
   type ImportedPlan,
   type PeriodRecord,
+  type SavedGeneration,
   PLAN_SCHEMA_VERSION,
 } from './monthly-generation.ts'
 import { loadPlanCatalog } from './plan-catalog.ts'
@@ -58,6 +59,7 @@ function mapJob(row: Record<string, unknown>): GenerationJobRecord {
     attemptCount: Number(row.attempt_count ?? 0),
     errorCode: text(row.error_code),
     openaiResponseId: text(row.openai_response_id),
+    savedGeneration: isRecord(row.saved_generation) ? row.saved_generation as unknown as SavedGeneration : null,
   }
 }
 
@@ -118,6 +120,9 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
           'CONSENT_REQUIRED',
           'Complete onboarding before generating a plan.',
         )
+      }
+      if ([prefsResult, goalResult, healthResult, trainingResult, measurementResult, periodResult].some((result) => result.error)) {
+        throw new HttpError(503, 'profile_context_unavailable', 'Your plan preferences could not be loaded.')
       }
       const row = profileResult.data
       const allergies = Array.isArray(prefsResult.data?.allergies)
@@ -382,8 +387,13 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
       } satisfies ImportedPlan
     },
 
+    async saveGeneration(jobId, saved) {
+      const { error } = await admin.from('ai_generation_jobs').update({ saved_generation: saved }).eq('id', jobId)
+      if (error) throw new HttpError(503, 'PLAN_IMPORT_FAILED', 'The generated plan could not be saved for recovery.')
+    },
+
     async recordAttempt(attempt: ProviderAttemptLedger) {
-      const { error } = await admin.from('ai_usage_attempts').insert({
+      const { error } = await admin.from('ai_usage_attempts').upsert({
         id: attempt.attempt_id,
         generation_job_id: attempt.generation_job_id,
         cycle_index: attempt.cycle_index,
@@ -410,10 +420,9 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         reservation_consumed: attempt.reservation_consumed,
         delivery_succeeded: attempt.delivery_succeeded,
         ledger_payload: attempt,
-      })
+      }, { onConflict: 'id' })
       if (error) {
-        // Ledger write must not block delivery; ops can reconcile from job + usage_ledger.
-        console.error('ai_usage_attempts_insert_failed', error.message)
+        throw new HttpError(503, 'usage_attempt_unavailable', 'Provider usage could not be recorded.')
       }
     },
   }

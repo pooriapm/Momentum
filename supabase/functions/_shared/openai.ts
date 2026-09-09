@@ -2,11 +2,54 @@ import { enumEnv, integerEnv, optionalEnv, requiredEnv } from './config.ts'
 import { sha256 } from './crypto.ts'
 import { HttpError } from './http.ts'
 import type { ProviderUsage } from './limits.ts'
+import type { ServiceTier } from './provider-pricing.ts'
 
 export interface StructuredResponse<T> {
   id: string
   parsed: T
+  serviceTier: ServiceTier
   usage: ProviderUsage
+}
+
+export interface ProviderResponseMetadata {
+  providerResponseId: string
+  model: string
+  usage: ProviderUsage
+  serviceTier: ServiceTier
+}
+
+/** Preserve billable response metadata even when its content cannot be delivered. */
+export class ProviderResponseError extends HttpError {
+  constructor(code: string, message: string, readonly metadata: ProviderResponseMetadata) {
+    super(422, code, message)
+  }
+}
+
+function reportedTier(value: unknown): ServiceTier {
+  if (value === 'default') return 'standard'
+  if (value === 'flex' || value === 'priority' || value === 'fast') return value
+  return 'unknown'
+}
+
+function tokenCount(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? Math.floor(value) : undefined
+}
+
+function reportedUsage(payload: Record<string, unknown>): ProviderUsage {
+  const usage = payload.usage && typeof payload.usage === 'object'
+    ? payload.usage as Record<string, unknown> : {}
+  const input = usage.input_tokens_details && typeof usage.input_tokens_details === 'object'
+    ? usage.input_tokens_details as Record<string, unknown> : {}
+  const output = usage.output_tokens_details && typeof usage.output_tokens_details === 'object'
+    ? usage.output_tokens_details as Record<string, unknown> : {}
+  return {
+    inputTokens: tokenCount(usage.input_tokens),
+    outputTokens: tokenCount(usage.output_tokens),
+    cachedInputTokens: tokenCount(input.cached_tokens),
+    cacheWriteTokens: tokenCount(input.cache_write_tokens ?? input.cache_creation_tokens),
+    reasoningTokens: tokenCount(output.reasoning_tokens),
+  }
 }
 
 export function hashedSafetyIdentifier(userId: string): Promise<string> {
@@ -35,6 +78,9 @@ export async function createStructuredResponse<T>(_options: {
   maxOutputTokens: number
   serviceTier?: 'standard' | 'batch' | 'flex'
 }): Promise<StructuredResponse<T>> {
+  if (_options.serviceTier === 'batch') {
+    throw new HttpError(503, 'BATCH_NOT_IMPLEMENTED', 'Batch requires a durable Batch API worker; synchronous generation cannot use it.')
+  }
   assertLiveOpenAiEnabled()
   const apiKey = requiredEnv('OPENAI_API_KEY')
   const baseUrl = optionalEnv('OPENAI_API_BASE_URL') ?? 'https://api.openai.com/v1'
@@ -51,9 +97,7 @@ export async function createStructuredResponse<T>(_options: {
     }),
   )
 
-  const serviceTier = _options.serviceTier && _options.serviceTier !== 'standard'
-    ? _options.serviceTier
-    : undefined
+  const serviceTier = _options.serviceTier === 'flex' ? 'flex' : 'default'
 
   let response: Response
   try {
@@ -72,7 +116,7 @@ export async function createStructuredResponse<T>(_options: {
         safety_identifier: _options.safetyIdentifier,
         prompt_cache_key: _options.promptCacheKey,
         max_output_tokens: _options.maxOutputTokens,
-        ...(serviceTier ? { service_tier: serviceTier } : {}),
+        service_tier: serviceTier,
         ...(reasoningEffort ? { reasoning: { effort: reasoningEffort } } : {}),
         text: {
           format: {
@@ -115,6 +159,15 @@ export async function createStructuredResponse<T>(_options: {
       'The plan provider returned an invalid response.',
     )
   }
+  const metadata: ProviderResponseMetadata = {
+    providerResponseId: typeof payload.id === 'string' ? payload.id : 'openai:unknown',
+    model: typeof payload.model === 'string' ? payload.model : _options.model,
+    usage: reportedUsage(payload),
+    serviceTier: reportedTier(payload.service_tier),
+  }
+  if (payload.status && payload.status !== 'completed') {
+    throw new ProviderResponseError('OPENAI_INCOMPLETE_OUTPUT', 'The plan provider did not complete its output.', metadata)
+  }
   const output = Array.isArray(payload.output) ? payload.output : []
   const text = typeof payload.output_text === 'string'
     ? payload.output_text
@@ -128,55 +181,14 @@ export async function createStructuredResponse<T>(_options: {
         .map((part) => String(part.text))
     }).join('')
   if (!text) {
-    throw new HttpError(422, 'OPENAI_EMPTY_OUTPUT', 'The plan provider returned no usable output.')
+    throw new ProviderResponseError('OPENAI_EMPTY_OUTPUT', 'The plan provider returned no usable output.', metadata)
   }
 
   let parsed: T
   try {
     parsed = JSON.parse(text) as T
   } catch {
-    throw new HttpError(
-      422,
-      'OPENAI_MALFORMED_OUTPUT',
-      'The plan provider returned malformed output.',
-    )
+    throw new ProviderResponseError('OPENAI_MALFORMED_OUTPUT', 'The plan provider returned malformed output.', metadata)
   }
-  const usage = payload.usage && typeof payload.usage === 'object'
-    ? payload.usage as Record<string, unknown>
-    : null
-  if (!usage) {
-    return {
-      id: typeof payload.id === 'string' ? payload.id : 'openai:unknown',
-      parsed,
-      usage: {
-        inputTokens: undefined,
-        outputTokens: undefined,
-        cachedInputTokens: undefined,
-        cacheWriteTokens: undefined,
-        reasoningTokens: undefined,
-        providerCostMicrousd: null,
-        costCertainty: 'unknown',
-      },
-    }
-  }
-  const inputDetails = usage.input_tokens_details && typeof usage.input_tokens_details === 'object'
-    ? usage.input_tokens_details as Record<string, unknown>
-    : {}
-  const outputDetails =
-    usage.output_tokens_details && typeof usage.output_tokens_details === 'object'
-      ? usage.output_tokens_details as Record<string, unknown>
-      : {}
-  // Only record cache_write when the API provides it — never invent.
-  const cacheWriteRaw = inputDetails.cache_write_tokens ?? inputDetails.cache_creation_tokens
-  return {
-    id: typeof payload.id === 'string' ? payload.id : 'openai:unknown',
-    parsed,
-    usage: {
-      inputTokens: Number(usage.input_tokens ?? 0),
-      outputTokens: Number(usage.output_tokens ?? 0),
-      cachedInputTokens: Number(inputDetails.cached_tokens ?? 0),
-      cacheWriteTokens: typeof cacheWriteRaw === 'number' ? cacheWriteRaw : undefined,
-      reasoningTokens: Number(outputDetails.reasoning_tokens ?? 0),
-    },
-  }
+  return { id: metadata.providerResponseId, parsed, usage: metadata.usage, serviceTier: metadata.serviceTier }
 }

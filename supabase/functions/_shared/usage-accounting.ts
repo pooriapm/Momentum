@@ -9,6 +9,7 @@ import {
 import { PROFILE_SNAPSHOT_VERSION } from './generation-profile-snapshot.ts'
 
 export type AttemptOutcome =
+  | 'started'
   | 'accepted'
   | 'validation_failed'
   | 'persistence_failed'

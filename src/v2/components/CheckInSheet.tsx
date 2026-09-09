@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, ShieldAlert, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, Check, ShieldAlert, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { sanitizeLocalizedNumberInput } from '../../lib/numbers/localized-number'
 import type { AppLocale } from '../../platform/i18n/catalog'
@@ -10,6 +10,7 @@ import {
 import { Input, RequiredMark, Select, Textarea } from '../ui/FormControls'
 import { Button } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
+import { useModalDismiss } from './use-modal-dismiss'
 
 const scoreOptions = [1, 2, 3, 4, 5]
 const redFlagOptions = [
@@ -22,13 +23,14 @@ type RedFlag = typeof redFlagOptions[number]['key']
 
 export function CheckInSheet({
   locale,
-  onClose,
+  onClose: onDismiss,
   onSave,
 }: {
   locale: AppLocale
   onClose: () => void
   onSave: (input: DailyCheckInInput) => Promise<{ safety: CheckInSafety }>
 }) {
+  const { modalRef, onClose } = useModalDismiss(onDismiss)
   const fa = locale === 'fa'
   const [energy, setEnergy] = useState(3)
   const [hunger, setHunger] = useState(3)
@@ -91,7 +93,7 @@ export function CheckInSheet({
   if (safety) {
     const urgent = safety.level === 'urgent'
     return (
-      <ModalShell className="check-in-sheet" labelId="check-in-safety-title" material="content" onClose={onClose}>
+      <ModalShell className="check-in-sheet" labelId="check-in-safety-title" material="content" onClose={onDismiss} ref={modalRef}>
         <header>
           <div><p className="orbit-eyebrow"><ShieldAlert size={15} />{fa ? 'چک‌این ذخیره شد' : 'Check-in saved'}</p><h2 id="check-in-safety-title">{urgent ? (fa ? 'فعلاً فعالیت را متوقف کن' : 'Stop activity for now') : (fa ? 'امروز با احتیاط پیش برو' : 'Take extra care today')}</h2></div>
           <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
@@ -111,9 +113,9 @@ export function CheckInSheet({
   }
 
   return (
-    <ModalShell className="check-in-sheet" labelId="check-in-title" material="content" onClose={onClose}>
+    <ModalShell className="check-in-sheet" labelId="check-in-title" material="content" onClose={onDismiss} ref={modalRef}>
       <header>
-        <div><p className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'وضعیت امروز' : 'How today feels'}</p><h2 id="check-in-title">{fa ? 'چک‌این روزانه' : 'Daily check-in'}</h2></div>
+        <div><p className="orbit-eyebrow">{fa ? 'وضعیت امروز' : 'How today feels'}</p><h2 id="check-in-title">{fa ? 'چک‌این روزانه' : 'Daily check-in'}</h2></div>
         <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
       </header>
       <form onSubmit={submit}>
