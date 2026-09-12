@@ -124,6 +124,19 @@ describe('AuthPage screen states', { timeout: 15_000 }, () => {
     await waitFor(() => expect(signIn).toHaveBeenCalledWith('ava@example.com', 'password1'))
   })
 
+  it('focuses the first invalid field and reveals passwords without submitting', async () => {
+    const { auth } = renderAuth('sign-in')
+    fillCredentials('invalid', 'short')
+    submitNamed('Sign in to Momentum')
+    await waitFor(() => expect(screen.getByLabelText('Email')).toHaveFocus())
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text')
+    expect(screen.getByLabelText('Password')).toHaveValue('short')
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password')
+    expect(auth.signIn).not.toHaveBeenCalled()
+  })
+
   it('AUTH-04 shows a non-enumerating credential error', async () => {
     const signIn = vi.fn().mockRejectedValue({ code: 'invalid_credentials', message: 'Invalid login credentials' })
     renderAuth('sign-in', createAuth({ signIn }))

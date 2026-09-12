@@ -84,7 +84,7 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
           <ol className="process-grid">
             {[t('landing.stepOne'), t('landing.stepTwo'), t('landing.stepThree')].map((step, index) => (
               <li key={step}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
+                <span>{formatNumber(index + 1, locale, { minimumIntegerDigits: 2 })}</span>
                 <p>{step}</p>
               </li>
             ))}
@@ -123,10 +123,10 @@ function ProductPreview({ locale }: { locale: AppLocale }) {
   if (!lunch || !workout) return null
 
   return (
-    <div aria-label={locale === 'fa' ? 'پیش‌نمایش محصول Momentum' : 'Momentum product preview'} className="product-preview">
+    <div role="region" aria-label={locale === 'fa' ? 'پیش‌نمایش محصول Momentum' : 'Momentum product preview'} className="product-preview">
       <GlassChrome className="product-preview__chrome">
         <span><OrbitMark size={30} /></span>
-        <span className="product-preview__date">{locale === 'fa' ? 'امروز · ۰۸:۴۲' : 'Today · 08:42'}</span>
+        <span className="product-preview__date">{locale === 'fa' ? 'پیش‌نمایش · امروز' : 'Sample day · Today'}</span>
         <span className="product-preview__avatar">{locale === 'fa' ? 'آ' : 'A'}</span>
       </GlassChrome>
       <div className="product-preview__body">

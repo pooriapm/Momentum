@@ -1,5 +1,5 @@
-import { ArrowRight, Check, Cloud, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
-import { type FormEvent, useEffect, useState } from 'react'
+import { ArrowRight, Check, Cloud, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'wouter'
 import { FALLBACK_LEGAL_DOCUMENT_VERSIONS, loadLegalDocumentVersions } from '../../../config/legal'
@@ -41,6 +41,8 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -79,6 +81,8 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (loading || !isConfigured) return
+    const normalizedEmail = email.trim()
     setError('')
     setMessage('')
     setNeedsResend(false)
@@ -87,7 +91,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
       setError(t('auth.offline'))
       return
     }
-    if (!isUpdatePassword && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isUpdatePassword && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       nextFieldErrors.email = t('auth.emailInvalid')
     }
     if (!isRecover && !isVerify && password.length < 8) {
@@ -101,34 +105,35 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
     setFieldErrors(nextFieldErrors)
     if (Object.keys(nextFieldErrors).length > 0) {
       setError(t('auth.fixFields'))
+      window.requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus())
       return
     }
 
     setLoading(true)
     try {
       if (isRecover) {
-        await requestPasswordReset(email, locale)
+        await requestPasswordReset(normalizedEmail, locale)
         setMessage(t('auth.recoverSent'))
       } else if (isUpdatePassword) {
         await updatePassword(password)
         setMessage(t('auth.passwordUpdated'))
       } else if (isSignUp) {
-        writePendingEmail(email)
-        const outcome = await signUp(email, password, locale)
+        writePendingEmail(normalizedEmail)
+        const outcome = await signUp(normalizedEmail, password, locale)
         if (outcome === 'confirmation-required') {
           navigate(localizedPath(locale, '/auth/verify'))
         } else {
           navigate(localizedPath(locale, '/onboarding'))
         }
       } else {
-        await signIn(email, password)
+        await signIn(normalizedEmail, password)
         navigate(localizedPath(locale, '/app/today'))
       }
     } catch (cause) {
       const kind = classifyAuthError(cause)
       setError(failureMessage(kind))
       if (kind === 'unverified') {
-        writePendingEmail(email)
+        writePendingEmail(normalizedEmail)
         setNeedsResend(true)
       }
     } finally {
@@ -164,7 +169,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
           <p>{t('auth.subtitle')}</p>
           <div className="auth-trust-list">
             <span><Cloud size={18} />{locale === 'fa' ? 'حساب ابری رمزگذاری‌شده' : 'Encrypted cloud account'}</span>
-            <span><LockKeyhole size={18} />{locale === 'fa' ? 'جداسازی داده در سطح ردیف' : 'Row-level data isolation'}</span>
+            <span><LockKeyhole size={18} />{locale === 'fa' ? 'اطلاعات شما فقط در حساب شما' : 'Your data stays in your account'}</span>
             <span><ShieldCheck size={18} />{locale === 'fa' ? 'بدون تبلیغ با داده سلامت' : 'No health-data advertising'}</span>
           </div>
         </Reveal>
@@ -178,7 +183,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
           {isVerify ? (
             <div className="auth-verification-state">
               <p>{verified ? t('auth.verifyComplete') : t('auth.verifyWaiting')}</p>
-              {pendingEmail ? <p>{pendingEmail}</p> : null}
+              {pendingEmail ? <p><bdi>{pendingEmail}</bdi></p> : null}
               {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
               {message ? <div className="inline-notice inline-notice--success" role="status">{message}</div> : null}
               <Link className="orbit-button orbit-button--primary orbit-button--block" href={localizedPath(locale, verified ? '/onboarding' : '/auth/sign-in')}>
@@ -203,10 +208,13 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
               <Link className="orbit-button orbit-button--primary orbit-button--block" href={localizedPath(locale, '/auth/recover')}>{t('auth.requestNewLink')}</Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit}>
+            <form noValidate onSubmit={handleSubmit} ref={formRef}>
               {!isUpdatePassword ? (
                 <Input
                   autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  dir="ltr"
                   disabled={!isConfigured}
                   error={fieldErrors.email}
                   label={t('auth.email')}
@@ -217,6 +225,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                 />
               ) : null}
               {!isRecover ? (
+                <div className="auth-password-field">
                 <Input
                   autoComplete={isSignUp || isUpdatePassword ? 'new-password' : 'current-password'}
                   disabled={!isConfigured}
@@ -226,9 +235,13 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                   minLength={8}
                   onChange={(event) => setPassword(event.target.value)}
                   required
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                 />
+                <button className="auth-password-toggle" type="button" aria-label={fa ? 'نمایش رمز عبور' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>
+                  {showPassword ? <EyeOff aria-hidden="true" size={19} /> : <Eye aria-hidden="true" size={19} />}
+                </button>
+                </div>
               ) : null}
               {isUpdatePassword ? (
                 <Input
@@ -239,31 +252,31 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                   minLength={8}
                   onChange={(event) => setPasswordConfirm(event.target.value)}
                   required
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={passwordConfirm}
                 />
               ) : null}
               {isSignUp ? (
                 <div className="auth-consent">
                   <label className={`onboarding-checkbox ${fieldErrors.terms ? 'has-error' : ''}`}>
-                    <input aria-required="true" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} required type="checkbox" />
+                    <input aria-invalid={Boolean(fieldErrors.terms)} aria-describedby={fieldErrors.terms ? "auth-terms-error" : undefined} aria-required="true" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} required type="checkbox" />
                     <span><Check size={16} /></span>
                     <div className="onboarding-checkbox__heading">
                       <strong>{t('onboarding.termsConsent')}</strong>
                       <RequiredMark />
                     </div>
-                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {legalVersions.terms}</Link>
-                    {fieldErrors.terms ? <small>{fieldErrors.terms}</small> : null}
+                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · <bdi dir="ltr">{legalVersions.terms}</bdi></Link>
+                    {fieldErrors.terms ? <small id="auth-terms-error">{fieldErrors.terms}</small> : null}
                   </label>
                   <label className={`onboarding-checkbox ${fieldErrors.privacy ? 'has-error' : ''}`}>
-                    <input aria-required="true" checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} required type="checkbox" />
+                    <input aria-invalid={Boolean(fieldErrors.privacy)} aria-describedby={fieldErrors.privacy ? "auth-privacy-error" : undefined} aria-required="true" checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} required type="checkbox" />
                     <span><Check size={16} /></span>
                     <div className="onboarding-checkbox__heading">
                       <strong>{t('onboarding.privacyConsent')}</strong>
                       <RequiredMark />
                     </div>
-                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · {legalVersions.privacy}</Link>
-                    {fieldErrors.privacy ? <small>{fieldErrors.privacy}</small> : null}
+                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · <bdi dir="ltr">{legalVersions.privacy}</bdi></Link>
+                    {fieldErrors.privacy ? <small id="auth-privacy-error">{fieldErrors.privacy}</small> : null}
                   </label>
                 </div>
               ) : null}

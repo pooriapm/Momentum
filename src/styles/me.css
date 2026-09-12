@@ -219,3 +219,15 @@
   color: var(--color-text-muted);
   font-size: .75rem;
 }
+
+/* Keep long account identifiers and translated labels inside narrow cards. */
+.me-identity > div:last-child { min-width: 0; }
+.me-identity h1, .me-row small { overflow-wrap: anywhere; }
+.me-row__meta { white-space: normal; max-width: 45%; text-align: end; }
+.me-support-codes a { align-items: center; display: inline-flex; min-height: 2.75rem; }
+.progress-metrics-grid em { flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-chart-content { animation: none; }
+  .progress-week-bars__fill { transition: none; }
+}

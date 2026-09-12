@@ -168,4 +168,12 @@ describe('Plan grocery completion', () => {
     renderPlan({ initialSegment: 'grocery', surface: 'offline' })
     expect(screen.getByRole('button', { name: /share list/i })).toBeEnabled()
   })
+  it('does not offer calendar dates without plan content', () => {
+    renderPlan({ initialSegment: 'calendar' })
+    const days = [...document.querySelectorAll<HTMLButtonElement>('.plan-calendar__cell')]
+    expect(days.some((day) => day.disabled)).toBe(true)
+    expect(days.find((day) => day.getAttribute('aria-pressed') === 'true')).not.toBeDisabled()
+    expect(days.every((day) => Boolean(day.getAttribute('aria-label')))).toBe(true)
+  })
+
 })

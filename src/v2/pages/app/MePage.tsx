@@ -162,7 +162,7 @@ function MembershipPanel({
         {status === 'pending' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت در انتظار است. ساخت برنامه جدید شروع نمی‌شود.' : 'Payment is pending. A new plan will not start.'}</div> : null}
         {status === 'cancelled' || status === 'expired' ? <div className="inline-notice" role="status">{fa ? 'برنامه‌های قبلی خواندنی می‌مانند. چرخه بعد ساخته نمی‌شود.' : 'Previous plans stay readable. The next cycle is blocked.'}</div> : null}
         <div className="me-panel-card__actions">
-          {checkout ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{status === 'pending' ? (fa ? 'بازیابی پرداخت' : 'Recover payment') : (fa ? 'شروع عضویت' : 'Start membership')}</Link> : <Button disabled variant="secondary">{fa ? 'تمدید فعال است' : 'Renewal is active'}</Button>}
+          {checkout ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{status === 'pending' ? (fa ? 'بازیابی پرداخت' : 'Recover payment') : (fa ? 'شروع عضویت' : 'Start membership')}</Link> : <StatusPill tone="success">{fa ? 'عضویت فعال' : 'Membership active'}</StatusPill>}
           <Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, '/app/account')}${query}`}>{fa ? 'خروجی یا حذف' : 'Export or delete'}</Link>
         </div>
       </ContentCard>
@@ -207,7 +207,7 @@ function HelpPanel({ locale, onBack }: { locale: AppLocale; onBack: () => void }
             <span className="me-row__icon"><Mail size={18} /></span>
             <span className="me-row__copy">
               <span className="me-row__label">{fa ? 'ایمیل پشتیبانی' : 'Email support'}</span>
-              <small>{supportEmail}</small>
+              <small><bdi>{supportEmail}</bdi></small>
             </span>
           </a>
         ) : null}
@@ -273,11 +273,11 @@ function SignOutDialog({
       </header>
       <p>{fa ? 'ثبت‌های همگام‌شده در حساب می‌مانند. Momentum داده سلامتی آفلاین را صف نمی‌کند.' : 'Synced entries stay in your account. Momentum does not queue health data while offline.'}</p>
       <div className="me-signout-choices">
-        <button className={`me-signout-choice${scope === 'local' ? ' is-selected' : ''}`} onClick={() => setScope('local')} type="button">
+        <button aria-pressed={scope === 'local'} className={`me-signout-choice${scope === 'local' ? ' is-selected' : ''}`} onClick={() => setScope('local')} type="button">
           <strong>{fa ? 'فقط این دستگاه' : 'This device only'}</strong>
           <small>{fa ? 'نشست‌های دیگر فعال می‌مانند' : 'Other sessions remain active'}</small>
         </button>
-        <button className={`me-signout-choice${scope === 'global' ? ' is-selected' : ''}`} onClick={() => setScope('global')} type="button">
+        <button aria-pressed={scope === 'global'} className={`me-signout-choice${scope === 'global' ? ' is-selected' : ''}`} onClick={() => setScope('global')} type="button">
           <strong>{fa ? 'همه دستگاه‌ها' : 'All devices'}</strong>
           <small>{fa ? 'تمام نشست‌های فعال باطل می‌شوند' : 'Every active session is revoked'}</small>
         </button>

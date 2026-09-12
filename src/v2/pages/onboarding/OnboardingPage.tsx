@@ -94,6 +94,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   const [reportName, setReportName] = useState('')
   const flowIdRef = useRef(crypto.randomUUID())
   const uploadCancelled = useRef(false)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   const draftQuery = useQuery({
     queryKey: ['onboarding-draft', user?.id],
@@ -202,10 +203,12 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   }
 
   async function next() {
+    if (saving || !online) return
     if (section.key === 'health' && isHealthCollectingStopped(values)) return
     const nextErrors = validateSection(section, values, locale)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
+      window.requestAnimationFrame(() => cardRef.current?.querySelector<HTMLElement>('[aria-invalid="true"], .has-error input')?.focus())
       return
     }
     const nextStep = nextOnboardingStep(section.key)
@@ -363,10 +366,11 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           <p>{t('onboarding.subtitle')}</p>
           <OnboardingProgress locale={locale} percent={onboardingProgressPercent(step)} title={t(section.titleKey)} />
         </aside>
-        <div className="content-card onboarding-card">
+        <div className="content-card onboarding-card" ref={cardRef}>
           <div className="onboarding-card__heading">
             <h2>{t(section.titleKey)}</h2>
           </div>
+          {!online && section.key !== 'review' ? <div className="inline-notice inline-notice--warning" role="status"><WifiOff size={18} />{locale === 'fa' ? 'آفلاین هستید. پاسخ‌هایتان در این صفحه باقی می‌ماند؛ برای ذخیره و ادامه دوباره وصل شوید.' : 'You’re offline. Your answers remain on this page; reconnect to save and continue.'}</div> : null}
           {section.key === 'basics' ? <div className="inline-notice"><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</div> : null}
           {section.key === 'consent' ? <div className="inline-notice"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</div> : null}
           {section.key === 'plan-source' ? (
@@ -425,7 +429,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                 ? (locale === 'fa' ? 'پس از تأیید، پرامپت محلی و مسیر واردکردن برنامه باز می‌شود. اشتراک لازم نیست.' : 'After confirmation, your local prompt and secure import path will open. No subscription is required.')
                 : t('onboarding.reviewCopy')}</p>
               {values.planSource === 'external' ? (
-                <article className="onboarding-gift glass-chrome glass-chrome--prominent">
+                <article className="onboarding-gift content-card">
                   <span className="onboarding-gift__icon" aria-hidden="true"><Import size={26} /></span>
                   <p className="orbit-eyebrow">{locale === 'fa' ? 'مسیر رایگان' : 'Free path'}</p>
                   <h4>{locale === 'fa' ? 'ساخت بیرونی، پیگیری در Momentum' : 'Create externally, track in Momentum'}</h4>
@@ -434,7 +438,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               ) : giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? (
                 <div className="inline-notice inline-notice--warning" role="status">{t('entitlement.giftExhausted')}</div>
               ) : (
-                <article aria-labelledby="onboarding-gift-title" className="onboarding-gift glass-chrome glass-chrome--prominent">
+                <article aria-labelledby="onboarding-gift-title" className="onboarding-gift content-card">
                   <span className="onboarding-gift__icon" aria-hidden="true"><Gift size={26} /></span>
                   <p className="orbit-eyebrow">{t('onboarding.giftHeroEyebrow')}</p>
                   <h4 id="onboarding-gift-title">{t('onboarding.giftHeroTitle')}</h4>
@@ -709,7 +713,7 @@ function DynamicField({
     const policyPath = field.key === 'termsAccepted' ? '/terms' : '/privacy'
     return (
       <label className={`onboarding-checkbox ${error ? 'has-error' : ''}`}>
-        <input aria-required={required || undefined} checked={value === 'yes'} onChange={(event) => onChange(event.target.checked ? 'yes' : '')} required={required} type="checkbox" />
+        <input aria-invalid={Boolean(error)} aria-required={required || undefined} checked={value === 'yes'} onChange={(event) => onChange(event.target.checked ? 'yes' : '')} required={required} type="checkbox" />
         <span><Check size={16} /></span>
         <div className="onboarding-checkbox__heading">
           <strong>{t(field.labelKey)}</strong>

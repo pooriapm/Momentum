@@ -148,4 +148,15 @@ describe('TodayPage inventory states', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(document.getElementById('meal-detail-title')).toBeTruthy()
   })
+  it('focuses invalid daily check-in values and identifies the weight unit', async () => {
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: /daily check-in · optional/i }))
+    const sleep = await screen.findByLabelText(/sleep last night/i)
+    expect(screen.getByLabelText(/weight today in kg/i)).toBeInTheDocument()
+    fireEvent.change(sleep, { target: { value: '25' } })
+    fireEvent.click(screen.getByRole('button', { name: /save check-in/i }))
+    expect(await screen.findByText('Enter sleep hours between 0 and 24.')).toBeInTheDocument()
+    expect(sleep).toHaveAttribute('aria-invalid', 'true')
+  })
+
 })

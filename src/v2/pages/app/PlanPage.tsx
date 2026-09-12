@@ -157,13 +157,13 @@ export function PlanPage({
     const previous = selectedMeals[slotId] ?? meal.selectedOptionId ?? meal.options[0]?.id
     setSelectedMeals((current) => ({ ...current, [slotId]: optionId }))
     setMealError('')
-    setSubstituteNotice(optionId === previous
-      ? ''
-      : (fa ? 'جایگزینی ذخیره شد. فقط همین وعده تغییر کرد؛ برنامه ماه جاری عوض نمی‌شود.' : 'Substitution saved. Only this meal changed; this month’s plan is unchanged.'))
-    if (preview) return
+    setSubstituteNotice('')
+    const successNotice = optionId === previous ? '' : (fa ? 'جایگزینی ذخیره شد. فقط همین وعده تغییر کرد؛ برنامه ماه جاری عوض نمی‌شود.' : 'Substitution saved. Only this meal changed; this month’s plan is unchanged.')
+    if (preview) { setSubstituteNotice(successNotice); return }
     setSavingSlot(slotId)
     try {
       await logMealSelection(selectedDay.localDate, slotId, optionId)
+      setSubstituteNotice(successNotice)
       await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
     } catch {
       setSelectedMeals((current) => {

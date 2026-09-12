@@ -7,7 +7,7 @@ import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useAuth } from '../../../platform/auth/auth-context'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { localizedPath } from '../../router/route-utils'
-import { ContentCard, Eyebrow, StatusPill } from '../../ui/primitives'
+import { Button, ContentCard, Eyebrow, StatusPill } from '../../ui/primitives'
 import { Reveal } from '../../ui/Reveal'
 import {
   formatPrice,
@@ -85,7 +85,7 @@ export function PricingPage({
           <p>{t('pricing.subtitle')}</p>
           <p>{t('pricing.oneOffer')}</p>
           {useLiveCatalog ? (
-            <div className="pricing-region-control glass-chrome" aria-label={locale === 'fa' ? 'انتخاب منطقه قیمت' : 'Pricing region'}>
+            <div role="group" className="pricing-region-control glass-chrome" aria-label={locale === 'fa' ? 'انتخاب منطقه قیمت' : 'Pricing region'}>
               <button aria-pressed={manualCountry === ''} className={manualCountry === '' ? 'is-active' : ''} onClick={() => setManualCountry('')} type="button">{locale === 'fa' ? 'پیشنهاد خودکار' : 'Automatic'}</button>
               <button aria-pressed={manualCountry === 'US'} className={manualCountry === 'US' ? 'is-active' : ''} onClick={() => setManualCountry('US')} type="button">Global · USD</button>
               <button aria-pressed={manualCountry === 'IR'} className={manualCountry === 'IR' ? 'is-active' : ''} onClick={() => setManualCountry('IR')} type="button">ایران · تومان</button>
@@ -93,9 +93,9 @@ export function PricingPage({
           ) : null}
           {loading ? <p aria-live="polite">{locale === 'fa' ? 'در حال دریافت کاتالوگ قیمت…' : 'Loading the pricing catalog…'}</p> : null}
           {unavailable ? <p className="pricing-catalog-error" role="status">{t('pricing.catalogUnavailable')}</p> : null}
+          {unavailable && useLiveCatalog ? <Button variant="secondary" disabled={pricingQuery.isFetching} onClick={() => void pricingQuery.refetch()}>{pricingQuery.isFetching ? (fa ? 'در حال تلاش…' : 'Retrying…') : (fa ? 'تلاش دوباره' : 'Try again')}</Button> : null}
         </Reveal>
-        {!unavailable ? (
-          <div className="pricing-grid pricing-grid--canonical">
+          <div className={`pricing-grid pricing-grid--canonical${unavailable || loading ? ' pricing-grid--free-only' : ''}`}>
             <ContentCard className="pricing-card pricing-card--free">
               <StatusPill tone="energy">{fa ? 'رایگان برای همیشه' : 'Free forever'}</StatusPill>
               <FileJson2 className="pricing-card__icon" size={24} />
@@ -109,7 +109,7 @@ export function PricingPage({
               </ul>
               <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, authenticated ? '/onboarding/plan-source' : '/auth/sign-up')}>{fa ? 'انتخاب مسیر رایگان' : 'Choose the free path'}</Link>
             </ContentCard>
-            <ContentCard className="pricing-card pricing-card--featured">
+            {!unavailable && !loading ? <><ContentCard className="pricing-card pricing-card--featured">
               <StatusPill tone="brand">{t('pricing.membership')}</StatusPill>
               <ShieldCheck className="pricing-card__icon" size={24} />
               <h2>{t('pricing.membership')}</h2>
@@ -128,9 +128,8 @@ export function PricingPage({
               {giftUnavailable
                 ? <Link className="orbit-button orbit-button--secondary" href={primaryHref}>{primaryLabel}</Link>
                 : <Link className="orbit-button orbit-button--secondary" href={giftHref}>{t('pricing.giftCta')}</Link>}
-            </ContentCard>
+            </ContentCard></> : null}
           </div>
-        ) : null}
         <p className="pricing-local-note"><ShieldCheck size={18} />{pricingContext?.source === 'edge_hint' ? (locale === 'fa' ? 'IP فقط زبان اولیه و مسیر پرداخت را پیشنهاد می‌کند؛ زبان همیشه قابل تغییر است. ' : 'IP only suggests the initial language and payment route; language is always editable. ') : ''}{t('pricing.regionNote')}</p>
         {!PAYMENTS_LIVE ? <p className="pricing-local-note">{t('pricing.paymentsNotLive')}</p> : null}
       </main>

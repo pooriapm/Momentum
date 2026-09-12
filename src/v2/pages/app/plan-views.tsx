@@ -12,6 +12,7 @@ import {
   Utensils,
   WifiOff,
 } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { localize, type MealChoice, type MealSlot, type MomentumPlanDayView, type MomentumPlanView, type PlanVersionMeta, type WorkoutBlock } from '../../data/types'
 import { formatNumber } from '../../lib/format'
@@ -99,9 +100,15 @@ export function PlanWeekView({
   const weekDates = weekIsoDates(selectedDay.localDate, locale)
   const byDate = new Map(days.map((day) => [day.localDate, day]))
   const todayWorkout = selectedDay.workout
+  const weekRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const row = weekRef.current
+    const selected = row?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (row && selected) row.scrollLeft = selected.offsetLeft - row.offsetLeft - (row.clientWidth - selected.clientWidth) / 2
+  }, [selectedDay.localDate])
   return (
     <div className="plan-stack" data-inventory="PLAN-01">
-      <div className="plan-week">
+      <div className="plan-week" ref={weekRef}>
         {weekDates.map((iso, index) => {
           const day = byDate.get(iso)
           const active = iso === selectedDay.localDate
@@ -109,6 +116,7 @@ export function PlanWeekView({
             <button
               aria-current={active ? 'date' : undefined}
               aria-pressed={active}
+              disabled={!day}
               className={`plan-week__day${active ? ' is-active' : ''}${day?.workout ? ' is-workout' : ''}`}
               key={iso}
               onClick={() => onSelectDate(iso)}
@@ -392,7 +400,9 @@ export function PlanCalendarView({
             <button
               aria-current={selected ? 'date' : undefined}
               className={`plan-calendar__cell${cell.isCurrentMonth ? '' : ' is-outside'}${scheduled?.workout ? ' is-workout' : ''}${inPeriod ? ' is-period' : ''}${selected ? ' is-selected' : ''}`}
-              disabled={!cell.isCurrentMonth}
+              aria-label={formatLocalizedDate(cell.isoDate, locale)}
+              aria-pressed={selected}
+              disabled={!cell.isCurrentMonth || !scheduled}
               key={cell.isoDate}
               onClick={() => onSelectDate(cell.isoDate)}
               type="button"

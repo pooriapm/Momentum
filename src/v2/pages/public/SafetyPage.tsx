@@ -18,7 +18,7 @@ export function SafetyPage({ locale }: { locale: AppLocale }) {
       <PublicHeader locale={locale} />
       <main className="simple-public-page safety-page screen-enter">
         <Reveal className="simple-public-page__heading">
-          <Eyebrow>General wellness</Eyebrow>
+          <Eyebrow>{locale === 'fa' ? 'سلامت عمومی' : 'General wellness'}</Eyebrow>
           <h1>{t('safety.title')}</h1>
           <p>{t('safety.intro')}</p>
         </Reveal>

@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarCheck2, CalendarDays, Check, LineChart, Scale, TrendingUp } from 'lucide-react'
+import { AlertTriangle, CalendarCheck2, CalendarDays, Check, LineChart, Scale, TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
@@ -85,6 +85,7 @@ export function ProgressPage({
   }, [online, preview, showNextCycle])
 
   async function persistNextCycleNote() {
+    if (writesLocked || noteSaving) return
     setNoteError(false)
     if (preview) {
       setNoteSaved(true)
@@ -173,7 +174,7 @@ export function ProgressPage({
       <ContentCard className="progress-weekly-cta">
         <StatusPill>{fa ? 'گزارش هفته' : 'Weekly report'}</StatusPill>
         <h2>{weeklySaved ? (fa ? 'گزارش این هفته ذخیره شد. برنامه ماه عوض نشد.' : 'This week’s report is saved. This month’s plan is unchanged.') : (fa ? 'گزارش این هفته آماده است' : 'This week’s report is ready')}</h2>
-        <p>{fa ? 'اختیاری است، اما این کارت مسیر اصلی پیشرفت است. هوش مصنوعی صدا زده نمی‌شود.' : 'Optional, but this card is the main Progress action. No AI is called.'}</p>
+        <p>{fa ? 'انرژی، ریکاوری و تجربه این هفته را مرور کن. ثبت گزارش اختیاری است.' : 'Reflect on your week, energy, and recovery. Your report is optional.'}</p>
         <Button disabled={writesLocked} onClick={() => setWeeklyOpen(true)}><CalendarCheck2 size={17} />{weeklySaved ? (fa ? 'مشاهده نتیجه' : 'View result') : (fa ? 'ثبت گزارش هفتگی' : 'Save weekly report')}</Button>
       </ContentCard>
       {weeklyOutcome ? <WeeklyOutcomeCard locale={locale} outcome={weeklyOutcome} /> : null}
@@ -199,7 +200,7 @@ export function ProgressPage({
       ) : null}
       {plan ? (
         <div className="progress-metrics-grid">
-          <ContentCard><span><Scale size={19} /></span><small>{fa ? 'وزن فعلی' : 'Current weight'}</small><strong>{formatNumber(currentWeight, locale)} {weightUnit}</strong><em><TrendingUp size={15} />{formatNumber(weightChange, locale)} {weightUnit}</em></ContentCard>
+          <ContentCard><span><Scale size={19} /></span><small>{fa ? 'وزن فعلی' : 'Current weight'}</small><strong>{formatNumber(currentWeight, locale)} {weightUnit}</strong><em>{change < 0 ? <TrendingDown size={15} /> : change > 0 ? <TrendingUp size={15} /> : <Minus size={15} />}<span>{change === 0 ? (fa ? 'بدون تغییر' : 'No change') : `${formatNumber(weightChange, locale)} ${weightUnit} ${change < 0 ? (fa ? 'کاهش' : 'down') : (fa ? 'افزایش' : 'up')}`}</span></em></ContentCard>
           <ContentCard><span><Check size={19} /></span><small>{t('app.consistency')}</small><strong>{formatNumber(plan.progress.weeklyAdherence, locale)}%</strong><em>{fa ? 'میانگین ۷ روز اخیر' : 'Last 7-day average'}</em></ContentCard>
           <ContentCard><span><CalendarDays size={19} /></span><small>{t('app.recovery')}</small><strong>{formatNumber(plan.progress.recovery, locale)}%</strong><em>{fa ? 'آخرین چک‌این' : 'Latest check-in'}</em></ContentCard>
           <ContentCard><span><LineChart size={19} /></span><small>{fa ? 'انرژی' : 'Energy'}</small><strong>{formatNumber(plan.progress.energyScore, locale)}</strong><em>{fa ? 'بدون فشار روند متوالی' : 'No streak pressure'}</em></ContentCard>
@@ -218,9 +219,9 @@ export function ProgressPage({
           {chartView === 'table' ? <ProgressTable locale={locale} series={series} /> : null}
         </div>
         <div className="progress-chart-actions">
-          <Button onClick={() => setChartView('chart')} variant={chartView === 'chart' ? 'primary' : 'secondary'}>{fa ? 'نمودار' : 'Chart'}</Button>
-          <Button onClick={() => setChartView('text')} variant={chartView === 'text' ? 'primary' : 'secondary'}>{fa ? 'خلاصه متنی نمودار' : 'Text chart summary'}</Button>
-          <Button onClick={() => setChartView('table')} variant={chartView === 'table' ? 'primary' : 'secondary'}>{fa ? 'نمایش جدول' : 'View data table'}</Button>
+          <Button aria-pressed={chartView === 'chart'} onClick={() => setChartView('chart')} variant={chartView === 'chart' ? 'primary' : 'secondary'}>{fa ? 'نمودار' : 'Chart'}</Button>
+          <Button aria-pressed={chartView === 'text'} onClick={() => setChartView('text')} variant={chartView === 'text' ? 'primary' : 'secondary'}>{fa ? 'خلاصه متنی نمودار' : 'Text chart summary'}</Button>
+          <Button aria-pressed={chartView === 'table'} onClick={() => setChartView('table')} variant={chartView === 'table' ? 'primary' : 'secondary'}>{fa ? 'نمایش جدول' : 'View data table'}</Button>
         </div>
       </ContentCard>
       {plan ? (

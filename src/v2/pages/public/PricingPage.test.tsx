@@ -83,6 +83,7 @@ describe('PricingPage inventory states', () => {
     expect(screen.getByText(/no currency or amount has been guessed/i)).toBeInTheDocument()
     expect(screen.queryByText(/\$14\.99|490,000/)).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Momentum membership', level: 2 })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Choose the free path' })).toHaveAttribute('href', '/en/auth/sign-up')
   })
 
   it('sends authenticated members to Me instead of a payment SDK', () => {

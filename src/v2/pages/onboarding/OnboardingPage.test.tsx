@@ -168,6 +168,20 @@ describe('OnboardingPage inventory states', () => {
     expect(saveDraft).not.toHaveBeenCalled()
   })
 
+  it('moves focus to the first invalid answer', async () => {
+    renderStep('basics', { ...completeDraft, firstName: '' })
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }))
+    await waitFor(() => expect(screen.getByLabelText('Name')).toHaveFocus())
+    expect(saveDraft).not.toHaveBeenCalled()
+  })
+
+  it('explains disabled navigation while offline', async () => {
+    online.mockReturnValue(false)
+    renderStep('basics')
+    expect(await screen.findByText(/reconnect to save and continue/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  })
+
   it('ONB-10 shows a non-medical eligible result after Health screening', async () => {
     renderStep('health')
     expect(await screen.findByText('Your answers do not block automatic planning')).toBeInTheDocument()

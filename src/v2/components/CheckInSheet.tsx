@@ -1,5 +1,5 @@
 import { AlertTriangle, Check, ShieldAlert, X } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { sanitizeLocalizedNumberInput } from '../../lib/numbers/localized-number'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import {
@@ -47,6 +47,8 @@ export function CheckInSheet({
   const [safety, setSafety] = useState<CheckInSafety | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const formRef = useRef<HTMLFormElement>(null)
 
   function toggleRedFlag(flag: RedFlag) {
     setRedFlags((current) => current.includes(flag)
@@ -56,12 +58,14 @@ export function CheckInSheet({
 
   async function submit(event: FormEvent) {
     event.preventDefault()
+    if (saving) return
+    setFieldErrors({})
     const parsed = dailyCheckInInputSchema.safeParse({
       adherencePercent: adherence ? Number(adherence) : undefined,
       energyScore: energy,
       hungerScore: hunger,
       moodScore: mood,
-      sleepMinutes: Math.round(Number(sleepHours) * 60),
+      sleepMinutes: sleepHours.trim() ? Math.round(Number(sleepHours) * 60) : NaN,
       weightKg: weight ? Number(weight) : undefined,
       painScore: Number(painScore),
       painLocation: painLocation || undefined,
@@ -71,6 +75,14 @@ export function CheckInSheet({
       redFlags,
     })
     if (!parsed.success) {
+      const messages: Record<string, string> = {
+        sleepMinutes: fa ? 'ساعت خواب را بین ۰ تا ۲۴ وارد کن.' : 'Enter sleep hours between 0 and 24.',
+        weightKg: fa ? 'وزن را به کیلوگرم، بین ۲۰ تا ۵۰۰ وارد کن.' : 'Enter weight in kg, between 20 and 500.',
+        adherencePercent: fa ? 'درصد را بین ۰ تا ۱۰۰ وارد کن.' : 'Enter a percentage between 0 and 100.',
+        painLocation: fa ? 'محل درد یا ناراحتی را کوتاه توضیح بده.' : 'Briefly describe where you feel pain or discomfort.',
+      }
+      setFieldErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), messages[String(issue.path[0])] ?? (fa ? 'این مقدار را بررسی کن.' : 'Check this value.')])) )
+      requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus())
       const painLocationMissing = parsed.error.issues.some((issue) => issue.message === 'pain_location_required')
       setError(painLocationMissing
         ? (fa ? 'محل درد یا ناراحتی را کوتاه توضیح بده.' : 'Briefly describe where you feel pain or discomfort.')
@@ -118,15 +130,15 @@ export function CheckInSheet({
         <div><p className="orbit-eyebrow">{fa ? 'وضعیت امروز' : 'How today feels'}</p><h2 id="check-in-title">{fa ? 'چک‌این روزانه' : 'Daily check-in'}</h2></div>
         <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
       </header>
-      <form onSubmit={submit}>
+      <form noValidate onSubmit={submit} ref={formRef}>
         <ScoreField label={fa ? 'انرژی' : 'Energy'} locale={locale} onChange={setEnergy} value={energy} />
         <ScoreField label={fa ? 'گرسنگی' : 'Hunger'} locale={locale} onChange={setHunger} value={hunger} />
         <ScoreField label={fa ? 'حال روحی' : 'Mood'} locale={locale} onChange={setMood} value={mood} />
         <ScoreField label={fa ? 'ریکاوری و آمادگی بدن' : 'Recovery and readiness'} locale={locale} onChange={setRecovery} value={recovery} />
         <div className="check-in-sheet__numbers check-in-sheet__numbers--daily">
-          <Input inputMode="decimal" label={fa ? 'خواب دیشب (ساعت)' : 'Sleep last night (hours)'} max={24} min={0} onChange={(event) => setSleepHours(sanitizeLocalizedNumberInput(event.target.value, true))} required type="text" value={sleepHours} />
-          <Input inputMode="decimal" label={fa ? 'وزن امروز (اختیاری)' : 'Weight today (optional)'} max={500} min={20} onChange={(event) => setWeight(sanitizeLocalizedNumberInput(event.target.value, true))} type="text" value={weight} />
-          <Input inputMode="numeric" label={fa ? 'پایبندی دیروز % (اختیاری)' : 'Yesterday adherence % (optional)'} max={100} min={0} onChange={(event) => setAdherence(sanitizeLocalizedNumberInput(event.target.value, false))} type="text" value={adherence} />
+          <Input error={fieldErrors.sleepMinutes} inputMode="decimal" label={fa ? 'خواب دیشب (ساعت)' : 'Sleep last night (hours)'} max={24} min={0} onChange={(event) => setSleepHours(sanitizeLocalizedNumberInput(event.target.value, true))} required type="text" value={sleepHours} />
+          <Input error={fieldErrors.weightKg} inputMode="decimal" label={fa ? 'وزن امروز به کیلوگرم (اختیاری)' : 'Weight today in kg (optional)'} max={500} min={20} onChange={(event) => setWeight(sanitizeLocalizedNumberInput(event.target.value, true))} type="text" value={weight} />
+          <Input error={fieldErrors.adherencePercent} inputMode="numeric" label={fa ? 'پایبندی دیروز % (اختیاری)' : 'Yesterday adherence % (optional)'} max={100} min={0} onChange={(event) => setAdherence(sanitizeLocalizedNumberInput(event.target.value, false))} type="text" value={adherence} />
           <Select label={fa ? 'درد یا ناراحتی (۰ تا ۱۰)' : 'Pain or discomfort (0–10)'} onChange={(event) => setPainScore(event.target.value)} required value={painScore}>
             {Array.from({ length: 11 }, (_, value) => <option key={value} value={value}>{value} {value === 0 ? (fa ? '— بدون درد' : '— no pain') : value === 10 ? (fa ? '— شدیدترین' : '— worst') : ''}</option>)}
           </Select>
@@ -135,7 +147,7 @@ export function CheckInSheet({
             {scoreOptions.map((score) => <option key={score} value={score}>{score} {score === 1 ? (fa ? '— خیلی سبک' : '— very easy') : score === 5 ? (fa ? '— بیش‌ازحد سخت' : '— too hard') : ''}</option>)}
           </Select>
         </div>
-        {Number(painScore) > 0 ? <Input label={fa ? 'محل و نوع درد یا ناراحتی' : 'Where and what kind of pain'} maxLength={240} onChange={(event) => setPainLocation(event.target.value)} required value={painLocation} /> : null}
+        {Number(painScore) > 0 ? <Input error={fieldErrors.painLocation} label={fa ? 'محل و نوع درد یا ناراحتی' : 'Where and what kind of pain'} maxLength={240} onChange={(event) => setPainLocation(event.target.value)} required value={painLocation} /> : null}
         <fieldset className="check-in-red-flags">
           <legend>{fa ? 'آیا همین حالا یکی از این علائم را داری؟' : 'Are you experiencing any of these symptoms now?'}</legend>
           <p>{fa ? 'اگر بله، تمرین را شروع نکن یا ادامه نده.' : 'If yes, do not start or continue training.'}</p>

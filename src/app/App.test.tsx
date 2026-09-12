@@ -38,7 +38,7 @@ describe('Momentum public product', () => {
     expect(document.documentElement).toHaveAttribute('dir', 'rtl')
     expect(document.querySelector('bdi[dir="ltr"]')).toHaveTextContent('Momentum')
     expect(screen.getAllByRole('link', { name: 'برنامه‌ام را بساز' })[0]).toHaveAttribute('href', '/fa/auth/sign-up')
-    expect(screen.getAllByText(/General wellness/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/سلامت عمومی/).length).toBeGreaterThan(0)
   })
 
   it('renders the English route in LTR', async () => {

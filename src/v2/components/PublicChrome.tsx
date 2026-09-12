@@ -21,6 +21,7 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
   const [menuPath, setMenuPath] = useState<string | null>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const linksRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLElement>(null)
   const otherLocale: AppLocale = locale === 'fa' ? 'en' : 'fa'
   const open = menuPath === path
 
@@ -30,12 +31,33 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
     linksRef.current?.querySelector<HTMLElement>('a')?.focus()
     document.body.style.overflow = 'hidden'
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
-      closeMenu(setMenuPath, menuButtonRef)
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeMenu(setMenuPath, menuButtonRef)
+      }
+      if (event.key === 'Tab') {
+        const controls = headerRef.current?.querySelectorAll<HTMLElement>('a, button')
+        if (!controls?.length) return
+        const first = controls[0]
+        const last = controls[controls.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
     }
+    const desktop = window.matchMedia('(min-width: 58.001rem)')
+    const onResize = () => {
+      if (desktop.matches) setMenuPath(null)
+    }
+    desktop.addEventListener('change', onResize)
     document.addEventListener('keydown', onKeyDown)
     return () => {
       document.body.style.overflow = previousOverflow
+      desktop.removeEventListener('change', onResize)
       document.removeEventListener('keydown', onKeyDown)
     }
   }, [open])
@@ -46,11 +68,12 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
         <button
           aria-label={locale === 'fa' ? 'بستن منو' : 'Close menu'}
           className="public-menu-backdrop"
+          tabIndex={-1}
           onClick={() => closeMenu(setMenuPath, menuButtonRef)}
           type="button"
         />
       ), document.body) : null}
-      <header className={`public-header-wrap${open ? ' public-header-wrap--menu-open' : ''}`}>
+      <header ref={headerRef} className={`public-header-wrap${open ? ' public-header-wrap--menu-open' : ''}`}>
         <nav aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Main navigation'} className="public-header glass-chrome">
           <Link className="public-header__brand" href={localizedPath(locale)} onClick={() => setMenuPath(null)}>
             <BrandLockup compact />
@@ -97,7 +120,7 @@ export function PublicFooter({ locale }: { locale: AppLocale }) {
         <Link href={localizedPath(locale, '/privacy')}>{locale === 'fa' ? 'حریم خصوصی' : 'Privacy'}</Link>
         <Link href={localizedPath(locale, '/terms')}>{locale === 'fa' ? 'شرایط استفاده' : 'Terms'}</Link>
       </div>
-      <small>© {new Date().getFullYear()} Momentum · General wellness only</small>
+      <small>© {new Date().getFullYear()} <bdi>Momentum</bdi> · {locale === 'fa' ? 'فقط برای سلامت عمومی' : 'General wellness only'}</small>
     </footer>
   )
 }

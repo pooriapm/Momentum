@@ -231,6 +231,14 @@ export function Select({
   const nativeValue = selected ? selectedValue : ''
 
   useEffect(() => {
+    if (!open) return
+    const root = rootRef.current
+    const selectedOption = root?.querySelector<HTMLButtonElement>('[role="option"][aria-selected="true"]:not(:disabled)')
+    const target = selectedOption ?? root?.querySelector<HTMLButtonElement>('[role="option"]:not(:disabled)')
+    target?.focus()
+  }, [open])
+
+  useEffect(() => {
     const close = (event: MouseEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
     }
@@ -241,11 +249,31 @@ export function Select({
   function choose(nextValue: string) {
     onChange?.({ target: { value: nextValue } } as ChangeEvent<HTMLSelectElement>)
     setOpen(false)
+    rootRef.current?.querySelector<HTMLButtonElement>('.orbit-select-trigger')?.focus()
   }
 
   return (
     <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label} required={required}>
-      <div className="orbit-select-shell" ref={rootRef}>
+      <div className="orbit-select-shell" ref={rootRef}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
+        }}
+        onKeyDown={(event) => {
+          if (!open) return
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            setOpen(false)
+            rootRef.current?.querySelector<HTMLButtonElement>('.orbit-select-trigger')?.focus()
+            return
+          }
+          if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+          event.preventDefault()
+          const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]:not(:disabled)'))
+          if (!items.length) return
+          const current = items.indexOf(document.activeElement as HTMLButtonElement)
+          const index = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (current + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
+          items[index]?.focus()
+        }}>
         <select
           aria-hidden="true"
           className="orbit-select-native"
@@ -287,7 +315,7 @@ export function Select({
         </button>
         {open ? (
           <div className="glass-menu">
-            <div className="glass-menu__scroller" id={listboxId} role="listbox">
+            <div aria-label={label} className="glass-menu__scroller" id={listboxId} role="listbox">
               {options.map((option) => {
                 const isSelected = option.value === selectedValue
                 return (

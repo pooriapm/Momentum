@@ -191,7 +191,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
     <div className="app-layout" ref={layoutRef}>
       <aside className="app-sidebar glass-chrome">
         <Link className="app-sidebar__brand" href={localizedPath(locale)}><BrandLockup compact /></Link>
-        <nav aria-label="App navigation">
+        <nav aria-label={locale === 'fa' ? 'ناوبری برنامه' : 'App navigation'}>
           {navItems.map(({ key, icon: Icon }) => (
             <Link aria-current={key === tab ? 'page' : undefined} className={key === tab ? 'is-active' : ''} href={`${localizedPath(locale, `/app/${key}`)}${navQuery}`} key={key}>
               <Icon size={20} /><span>{t(`nav.${key}`)}</span>
@@ -226,7 +226,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
         ) : null}
         {preview ? <GlassChrome className="preview-notice"><Sparkles size={16} /><span>{t('app.previewNotice')}</span></GlassChrome> : null}
         {planQuery.isError && planQuery.data ? <div className="app-error-banner">{locale === 'fa' ? 'به‌روزرسانی برنامه انجام نشد؛ آخرین اطلاعات موجود نمایش داده می‌شود.' : 'The plan could not refresh. Showing the latest available data.'}</div> : null}
-        {plan?.contentLocale && plan.contentLocale !== locale ? <div className="app-content-language-note">{locale === 'fa' ? 'متن برنامه با زبان پروفایل هنگام ساخت تولید شده و با تغییر زبان رابط ترجمه نمی‌شود.' : 'Plan content is generated in the profile language and is not machine-translated when the interface language changes.'}</div> : null}
+        {!preview && plan?.contentLocale && plan.contentLocale !== locale ? <div className="app-content-language-note">{locale === 'fa' ? 'متن برنامه با زبان پروفایل هنگام ساخت تولید شده و با تغییر زبان رابط ترجمه نمی‌شود.' : 'Plan content is generated in the profile language and is not machine-translated when the interface language changes.'}</div> : null}
         <div className="app-content">{pageOwnsPlanQuery
           ? children(pageContext)
           : !preview && planQuery.isError && !planQuery.data

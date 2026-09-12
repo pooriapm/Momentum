@@ -98,4 +98,13 @@ describe('ProgressPage inventory states', () => {
     expect(screen.getByText(/160\.5 lb/i)).toBeInTheDocument()
     expect(demoPlan.progress.currentWeight).toBe(72.8)
   })
+  it('distinguishes weight loss and announces the selected chart view', () => {
+    renderProgress()
+    expect(screen.getByText('3.4 kg down')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Chart' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: /view data table/i }))
+    expect(screen.getByRole('button', { name: 'Chart' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: /view data table/i })).toHaveAttribute('aria-pressed', 'true')
+  })
+
 })

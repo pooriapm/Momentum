@@ -39,7 +39,7 @@ export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy'
         <Reveal className="simple-public-page__heading">
           <Eyebrow>{privacy ? <LockKeyhole size={15} /> : <FileText size={15} />}{fa ? 'نسخه آلفا' : 'Alpha notice'}</Eyebrow>
           <h1>{privacy ? (fa ? 'اطلاعیه حریم خصوصی' : 'Privacy notice') : (fa ? 'شرایط استفاده' : 'Terms of use')}</h1>
-          <p>{fa ? `نسخه ${version} · پیش‌نویس محصول؛ پیش از عرضه عمومی نیازمند بررسی حقوقی است.` : `Version ${version} · Product draft; legal review is required before public launch.`}</p>
+          <p>{fa ? 'نسخه ' : 'Version '}<bdi dir="ltr">{version}</bdi>{fa ? ' · پیش‌نویس محصول؛ پیش از عرضه عمومی نیازمند بررسی حقوقی است.' : ' · Product draft; legal review is required before public launch.'}</p>
         </Reveal>
         <div className="legal-sections">
           {sections.map(([title, copy]) => <ContentCard key={title}><ShieldCheck size={21} /><div><h2>{title}</h2><p>{copy}</p></div></ContentCard>)}
@@ -51,7 +51,7 @@ export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy'
                 {privacyContactEmail ? (
                   <p>
                     {fa ? 'برای پرسش حریم خصوصی به این نشانی بنویسید: ' : 'For privacy questions, email '}
-                    <a href={`mailto:${privacyContactEmail}?subject=${encodeURIComponent('Momentum privacy')}`}>{privacyContactEmail}</a>
+                    <a href={`mailto:${privacyContactEmail}?subject=${encodeURIComponent('Momentum privacy')}`}><bdi>{privacyContactEmail}</bdi></a>
                     {fa ? '. جزئیات سلامت، رمز عبور یا JSON برنامه را نفرستید.' : '. Do not send health details, passwords, or plan JSON.'}
                   </p>
                 ) : (
