@@ -11,7 +11,7 @@
     "rpoHoursPaidTransactions": 1,
     "rtoHours": 8,
     "hostedRestoreTarget": "staging",
-    "hostedRestoreStatus": "blocked_no_staging"
+    "hostedRestoreStatus": "not_rehearsed"
   },
   "restoreDrill": {
     "script": "scripts/ops/restore-drill.sh",

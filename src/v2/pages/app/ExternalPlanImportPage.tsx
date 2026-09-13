@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Clipboard, FileJson2, Import, LockKeyhole, ShieldCheck } from 'lucide-react'
-import { type ChangeEvent, useMemo, useState } from 'react'
+import { type ChangeEvent, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { localizedPath } from '../../router/route-utils'
@@ -22,12 +22,14 @@ function parsePlan(raw: string): Record<string, unknown> {
 
 export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
   const fa = locale === 'fa'
+  const queryClient = useQueryClient()
   const [, navigate] = useLocation()
   const contextQuery = useQuery({ queryKey: ['external-plan-context'], queryFn: loadExternalPlanContext })
   const prompt = useMemo(() => contextQuery.data ? buildExternalPlanPrompt(contextQuery.data) : '', [contextQuery.data])
   const [disclosureAccepted, setDisclosureAccepted] = useState(false)
   const [copied, setCopied] = useState(false)
   const [rawPlan, setRawPlan] = useState('')
+  const fileReadVersion = useRef(0)
   const [sourceKind, setSourceKind] = useState<'external_ai' | 'existing_plan'>('external_ai')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -55,8 +57,12 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
 
   async function readFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
-    setError('')
+    event.target.value = ''
     if (!file) return
+    const version = ++fileReadVersion.current
+    setRawPlan('')
+    setComplete(false)
+    setError('')
     if (file.type !== 'application/json' && !file.name.toLowerCase().endsWith('.json')) {
       setError(fa ? 'فقط فایل JSON پذیرفته می‌شود.' : 'Only a JSON file is accepted.')
       return
@@ -65,7 +71,12 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
       setError(fa ? 'فایل باید کوچک‌تر از ۱.۵ مگابایت باشد.' : 'The file must be smaller than 1.5 MB.')
       return
     }
-    setRawPlan(await file.text())
+    try {
+      const contents = await file.text()
+      if (version === fileReadVersion.current) setRawPlan(contents)
+    } catch {
+      if (version === fileReadVersion.current) setError(fa ? 'فایل خوانده نشد. دوباره انتخاب کن.' : 'The file could not be read. Choose it again.')
+    }
   }
 
   async function savePlan() {
@@ -77,6 +88,7 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
     setSaving(true)
     try {
       await importExternalPlan(preview.plan, sourceKind)
+      await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
       trackProductEvent({ ...eventContext(locale, undefined, 'external'), event_name: 'plan_activated', surface: 'onboarding', action_kind: 'plan', outcome: 'activated' })
       setComplete(true)
     } catch {
@@ -130,7 +142,7 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
               <label className="external-plan-file">
                 <Import size={22} />
                 <span>{fa ? 'انتخاب فایل JSON' : 'Choose JSON file'}</span>
-                <input accept="application/json,.json" onChange={(event) => void readFile(event)} type="file" />
+                <input accept="application/json,.json" disabled={saving} onChange={(event) => void readFile(event)} type="file" />
               </label>
               {rawPlan && !preview ? <div className="inline-notice inline-notice--error">{fa ? 'این فایل یک JSON object معتبر نیست.' : 'This file is not a valid JSON object.'}</div> : null}
               {preview ? (

@@ -112,7 +112,7 @@ const completeDraft: Record<string, string> = {
 function renderStep(step: OnboardingStepKey, values: Record<string, string> = completeDraft) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   loadDraft.mockResolvedValue({ currentStep: step, values })
-  return render(
+  return { client, ...render(
     <I18nProvider>
       <AuthContext.Provider value={auth}>
         <QueryClientProvider client={client}>
@@ -120,7 +120,7 @@ function renderStep(step: OnboardingStepKey, values: Record<string, string> = co
         </QueryClientProvider>
       </AuthContext.Provider>
     </I18nProvider>,
-  )
+  ) }
 }
 
 describe('OnboardingPage inventory states', () => {
@@ -374,4 +374,13 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.getByRole('link', { name: 'Continue setup' })).toHaveAttribute('href', '/en/onboarding/body')
     expect(screen.getByRole('button', { name: 'Start over' })).toBeInTheDocument()
   })
+  it('updates the shared draft before the next keyed step mounts', async () => {
+    const { client } = renderStep('plan-source', { ...completeDraft, planSource: '' })
+    fireEvent.click(await screen.findByRole('radio', { name: /use my own plan/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await waitFor(() => expect(client.getQueryData(['onboarding-draft', user.id])).toMatchObject({
+      currentStep: 'goal', values: { planSource: 'external' },
+    }))
+  })
+
 })

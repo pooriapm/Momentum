@@ -1,6 +1,7 @@
 # Dependencies and generated output
 node_modules/
 dist/
+dist-staging/
 dist-ssr/
 dev-dist/
 coverage/

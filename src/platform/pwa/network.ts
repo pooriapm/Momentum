@@ -27,20 +27,29 @@ export function probeConnectivity() {
       return
     }
 
-    const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 5000)
-    try {
-      const response = await window.fetch(`/connectivity-check.txt?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' },
-        signal: controller.signal,
-      })
-      setOnline(response.ok)
-    } catch {
-      setOnline(false)
-    } finally {
-      window.clearTimeout(timeout)
+    // A single slow edge request must not take the whole app offline.
+    // Retry this read-only probe once; never replay user mutations here.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const controller = new AbortController()
+      const timeout = window.setTimeout(() => controller.abort(), 5000)
+      try {
+        const response = await window.fetch(`/connectivity-check.txt?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+          signal: controller.signal,
+        })
+        if (response.ok && navigator.onLine) {
+          setOnline(true)
+          return
+        }
+      } catch {
+        // Confirm a transient failure before changing the shared network state.
+      } finally {
+        window.clearTimeout(timeout)
+      }
+      if (!navigator.onLine) break
     }
+    setOnline(false)
   })().finally(() => {
     probeInFlight = null
   })

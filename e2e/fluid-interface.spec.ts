@@ -43,7 +43,8 @@ test('sheet drag returns, can be grabbed while settling, and flicks away', async
   const grabbed = await sheet.evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).m42)
   await page.mouse.move(x, y + 50, { steps: 3 })
   const moved = await sheet.evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).m42)
-  expect(moved - grabbed).toBeCloseTo(50, 0)
+  // WebKit rounds pointer coordinates while the spring retains subpixel position.
+  expect(Math.abs((moved - grabbed) - 50)).toBeLessThan(1)
   await page.waitForTimeout(160)
   await page.mouse.up()
   await expect.poll(() => sheet.evaluate((node) => Math.abs(new DOMMatrix(getComputedStyle(node).transform).m42))).toBeLessThan(1)

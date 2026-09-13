@@ -15,7 +15,7 @@ const environments = JSON.parse(fs.readFileSync(path.join(root, 'supabase/enviro
 
 const target = process.argv.includes('--production') ? 'production' : 'staging'
 const sha = (process.env.VITE_APP_COMMIT_SHA || process.env.GITHUB_SHA || '').trim().toLowerCase()
-const artifactDir = process.env.MOMENTUM_DIST_DIR || path.join(root, 'dist')
+const artifactDir = process.env.MOMENTUM_DIST_DIR || path.join(root, target === 'staging' ? 'dist-staging' : 'dist')
 
 assert(/^[a-f0-9]{40}$/.test(sha), 'Promotion requires the exact 40-char commit SHA in VITE_APP_COMMIT_SHA or GITHUB_SHA.')
 assert(fs.existsSync(artifactDir), `Artifact directory missing: ${artifactDir}`)
@@ -39,6 +39,7 @@ if (fs.existsSync(releasePath)) {
 }
 
 if (target === 'staging') {
+  assert.equal(path.resolve(artifactDir), path.join(root, 'dist-staging'), 'Staging deploys only its own dist-staging bundle.')
   const result = spawnSync(
     'npx',
     ['wrangler', 'deploy', '--env', 'staging', '--config', 'wrangler.jsonc'],

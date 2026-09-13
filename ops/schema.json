@@ -41,7 +41,7 @@
         "rpoHoursPaidTransactions": { "type": "number", "minimum": 1 },
         "rtoHours": { "type": "number", "minimum": 1 },
         "hostedRestoreTarget": { "enum": ["staging"] },
-        "hostedRestoreStatus": { "enum": ["blocked_no_staging", "rehearsed", "verified"] }
+        "hostedRestoreStatus": { "enum": ["blocked_no_staging", "not_rehearsed", "rehearsed", "verified"] }
       }
     },
     "restoreDrill": {

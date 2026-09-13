@@ -106,8 +106,8 @@ describe('TodayPage inventory states', () => {
   it('TODAY-09 keeps the stored plan safe on a recoverable load error', () => {
     const onRetry = vi.fn()
     renderToday({ surface: 'load-error', lastSyncedAt: '2026-08-17T08:42:00.000Z', onRetry })
-    expect(screen.getByRole('heading', { name: /today’s plan could not be loaded/i })).toBeInTheDocument()
-    expect(screen.getByText(/saved plan is safe/i)).toBeInTheDocument()
+    expect(screen.getByText(/your plan and entered values are kept/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^complete$/i })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /try again/i }))
     expect(onRetry).toHaveBeenCalled()
   })

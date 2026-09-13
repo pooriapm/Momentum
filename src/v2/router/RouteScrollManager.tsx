@@ -19,7 +19,10 @@ export function RouteScrollManager({ path: explicitPath }: { path?: string } = {
 
     const followActiveWorkspace = () => {
       if (stopped) return
-      const workspace = document.querySelector<HTMLElement>('.app-workspace')
+      const candidate = document.querySelector<HTMLElement>('.app-workspace')
+      // Suspense may keep the previous workspace mounted but hidden. Reset only
+      // once the destination is visible, even when React reuses the same node.
+      const workspace = candidate && (candidate.checkVisibility?.() ?? true) ? candidate : null
       if (workspace !== activeWorkspace) {
         cancelWorkspace()
         activeWorkspace = workspace

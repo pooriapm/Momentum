@@ -10,15 +10,15 @@ health text, prompts, personal mailboxes, or phone numbers.
 | Control | State |
 | --- | --- |
 | Production project | `osyvvzglvyonevkhdzpu` |
-| Staging | Not provisioned; hosted restore is `blocked_no_staging` |
+| Staging | Free-tier project `phqnttkdjvhtqmqloyyj`; hosted restore is `not_rehearsed` |
 | Local restore drill | `scripts/ops/restore-drill.sh` |
 | Backup/PITR live check | `scripts/ops/backup-pitr-status.mjs` (needs `SUPABASE_ACCESS_TOKEN`) |
 | Monitoring | Worker routes `/ops/health` and `/ops/client-errors`; Cloudflare logs on |
 | Support locales | `fa` and `en` in `ops/support-macros.json` |
 | On-call contact | Owner-set `MOMENTUM_ONCALL_CONTACT`; never committed |
 
-R1 still records that destructive hosted drills stay blocked until an isolated
-environment exists. This file does not override that blocker.
+Staging setup and backup restoration are separate checks. The staging environment
+exists; a hosted restore has not been rehearsed.
 
 ## Hosted Auth proof
 

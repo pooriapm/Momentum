@@ -107,7 +107,7 @@ export function WorkoutLogger({
   )
 
   async function begin() {
-    if (!enabled) return
+    if (!enabled || busy) return
     setBusy('start'); setError(''); setPainCaution(false)
     try {
       const value = preview
@@ -120,7 +120,7 @@ export function WorkoutLogger({
   }
 
   async function mutate(key: string, mutation: WorkoutMutation) {
-    if (!session) return
+    if (!session || !enabled || busy) return
     const allowed = mutation.action === 'resume'
       ? session.status === 'paused'
       : mutation.action === 'stop'
@@ -169,7 +169,7 @@ export function WorkoutLogger({
   const finished = session.status === 'completed' || session.status === 'stopped'
   const closed = finished || paused
   return (
-    <div className="workout-logger">
+    <fieldset className="workout-logger" disabled={!enabled || Boolean(busy)} aria-label={locale === 'fa' ? 'ثبت تمرین' : 'Workout logging'}>
       <div className="workout-logger__status">
         <StatusPill tone={session.status === 'completed' ? 'success' : session.status === 'stopped' || paused ? 'neutral' : 'energy'}>
           {session.status === 'completed' ? (locale === 'fa' ? 'تمرین تمام شد' : 'Workout completed') : session.status === 'stopped' ? (locale === 'fa' ? 'تمرین متوقف شد' : 'Workout stopped') : paused ? (locale === 'fa' ? 'متوقف موقت' : 'Paused') : (locale === 'fa' ? 'در حال تمرین' : 'In progress')}
@@ -230,6 +230,7 @@ export function WorkoutLogger({
       {error ? <p className="inline-notice inline-notice--error" role="alert">{error}</p> : null}
       {reasonIntent ? (
         <WorkoutReasonSheet
+          disabled={!enabled || Boolean(busy)}
           intent={reasonIntent}
           locale={locale}
           onClose={() => setReasonIntent(null)}
@@ -248,11 +249,12 @@ export function WorkoutLogger({
           reason={reasonText}
         />
       ) : null}
-    </div>
+    </fieldset>
   )
 }
 
 function WorkoutReasonSheet({
+  disabled,
   intent,
   locale,
   onClose: onDismiss,
@@ -260,6 +262,7 @@ function WorkoutReasonSheet({
   onReasonChange,
   reason,
 }: {
+  disabled: boolean
   intent: ReasonIntent
   locale: AppLocale
   onClose: () => void
@@ -276,7 +279,7 @@ function WorkoutReasonSheet({
 
   function submit(event: FormEvent) {
     event.preventDefault()
-    if (!reason.trim()) return
+    if (disabled || !reason.trim()) return
     onConfirm()
   }
 
@@ -287,10 +290,10 @@ function WorkoutReasonSheet({
         <button aria-label={copy.common.close} onClick={onClose} type="button"><X size={20} /></button>
       </header>
       <form onSubmit={submit}>
-        <Input autoFocus label={label} maxLength={240} onChange={(event) => onReasonChange(event.target.value)} required value={reason} />
+        <Input autoFocus disabled={disabled} label={label} maxLength={240} onChange={(event) => onReasonChange(event.target.value)} required value={reason} />
         <div className="workout-reason-sheet__actions">
           <Button onClick={onClose} type="button" variant="secondary">{copy.common.cancel}</Button>
-          <Button type="submit" variant={intent.kind === 'stop' ? 'danger' : 'primary'}>{confirm}</Button>
+          <Button disabled={disabled} type="submit" variant={intent.kind === 'stop' ? 'danger' : 'primary'}>{confirm}</Button>
         </div>
       </form>
     </ModalShell>

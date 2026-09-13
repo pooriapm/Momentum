@@ -25,6 +25,22 @@ describe('WorkoutLogger preview loop', () => {
     expect(screen.getByRole('button', { name: /complete exercise/i })).toBeEnabled()
   })
 
+  it('locks an active session when connectivity is lost and preserves its draft', () => {
+    const props = { locale: 'en' as const, localDate: '2026-08-09', preview: true, workout }
+    const { rerender } = render(<WorkoutLogger {...props} enabled />)
+    fireEvent.click(screen.getByRole('button', { name: /start workout/i }))
+    fireEvent.change(screen.getAllByLabelText('reps')[0], { target: { value: '8' } })
+    rerender(<WorkoutLogger {...props} enabled={false} />)
+    expect(screen.getAllByLabelText('reps')[0]).toBeDisabled()
+    expect(screen.getAllByRole('button', { name: /log set/i })[0]).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^pause$/i })).toBeDisabled()
+    fireEvent.click(screen.getAllByRole('button', { name: /log set/i })[0])
+    expect(screen.queryByRole('button', { name: /^undo$/i })).not.toBeInTheDocument()
+    rerender(<WorkoutLogger {...props} enabled />)
+    expect(screen.getAllByLabelText('reps')[0]).toHaveValue(8)
+    expect(screen.getAllByRole('button', { name: /log set/i })[0]).toBeEnabled()
+  })
+
   it('automatically stops on severe pain', async () => {
     render(<WorkoutLogger enabled locale="en" localDate="2026-08-09" preview workout={workout} />)
     fireEvent.click(screen.getByRole('button', { name: /start workout/i }))

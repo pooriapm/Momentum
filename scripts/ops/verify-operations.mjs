@@ -24,7 +24,7 @@ if (environments.staging.status === 'not_provisioned') {
   assert(contract.backup.hostedRestoreStatus === 'blocked_no_staging', 'Do not claim a hosted restore while staging is unprovisioned.')
 } else if (environments.staging.status === 'active') {
   assert(
-    ['blocked_no_staging', 'rehearsed', 'verified'].includes(contract.backup.hostedRestoreStatus),
+    ['not_rehearsed', 'rehearsed', 'verified'].includes(contract.backup.hostedRestoreStatus),
     'Hosted restore status must stay within the contract enum after staging is provisioned.',
   )
 } else {

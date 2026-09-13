@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertOctagon,
   ArrowLeft,
@@ -83,6 +83,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   const { t } = useTranslation()
   const online = useOnlineStatus()
   const [, navigate] = useLocation()
+  const queryClient = useQueryClient()
   const { user, status } = useAuth()
   const currentIndex = Math.max(0, onboardingSections.findIndex((section) => section.key === step))
   const section = onboardingSections[currentIndex]
@@ -133,10 +134,10 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   const resumeStep = earliestIncompleteStep(values, locale)
 
   useEffect(() => {
-    if (!draftQuery.isLoading && !draftQuery.isError && !canVisitStep(step, values, locale)) {
+    if (user && draftQuery.isSuccess && !canVisitStep(step, values, locale)) {
       navigate(localizedPath(locale, `/onboarding/${resumeStep}`), { replace: true })
     }
-  }, [draftQuery.isError, draftQuery.isLoading, locale, navigate, resumeStep, step, values])
+  }, [draftQuery.isSuccess, locale, navigate, resumeStep, step, user, values])
 
   const visibleFields = section.fields.filter((field) => {
     if (section.key === 'health' && isHealthCollectingStopped(values) && ['medications', 'medicalNotes', 'supplements'].includes(field.key) && !values[field.key]) {
@@ -186,13 +187,15 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
     setSaving(true)
     setPageError('')
     try {
-      await saveOnboardingDraft(user!.id, nextStep, {
+      const savedValues = {
         ...values,
         ...extra,
         onboardingFlowId,
         locale: locale === 'fa' ? 'fa-IR' : 'en-US',
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-      })
+      }
+      await saveOnboardingDraft(user!.id, nextStep, savedValues)
+      queryClient.setQueryData(['onboarding-draft', user!.id], { currentStep: nextStep, values: savedValues })
       return true
     } catch {
       setPageError(locale === 'fa' ? 'ذخیره انجام نشد. اتصال را بررسی و دوباره تلاش کن.' : 'We could not save this section. Check your connection and try again.')

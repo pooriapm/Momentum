@@ -20,6 +20,12 @@
     "staging": {
       "name": "momentum-staging",
       "workers_dev": true,
+      "assets": {
+        "directory": "./dist-staging",
+        "binding": "ASSETS",
+        "not_found_handling": "single-page-application",
+        "html_handling": "auto-trailing-slash"
+      },
       "vars": {
         "MOMENTUM_ENVIRONMENT": "staging"
       }

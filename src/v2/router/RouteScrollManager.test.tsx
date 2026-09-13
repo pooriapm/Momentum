@@ -79,4 +79,24 @@ describe('route scroll motion', () => {
     workspace.remove()
   })
 
+  it('waits for a suspended workspace to become visible before resetting it', () => {
+    const workspace = document.createElement('div')
+    workspace.className = 'app-workspace'
+    workspace.scrollTop = 480
+    let visible = false
+    workspace.checkVisibility = () => visible
+    document.body.append(workspace)
+    let frame: FrameRequestCallback | undefined
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => { frame = callback; return 1 })
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+    const view = render(<RouteScrollManager path="/en/app/today" />)
+    view.rerender(<RouteScrollManager path="/en/app/plan" />)
+    expect(workspace.scrollTop).toBe(480)
+    visible = true
+    frame?.(performance.now())
+    expect(workspace.scrollTop).toBe(0)
+    view.unmount()
+    workspace.remove()
+  })
+
 })

@@ -74,6 +74,16 @@ test('the production PWA stays read-only offline and caches no API or health pay
       || url.hostname.endsWith('.supabase.co')
   })).toBe(false)
 
+  await page.getByRole('button', { name: /^start workout$/i }).last().click()
+  const reps = page.getByRole('spinbutton', { name: 'reps', exact: true }).first()
+  await reps.fill('8')
+  await context.setOffline(true)
+  await expect(page.getByRole('button', { name: /^log set$/i }).first()).toBeDisabled()
+  await expect(reps).toHaveValue('8')
+  await context.setOffline(false)
+  await expect(page.getByRole('button', { name: /^log set$/i }).first()).toBeEnabled()
+  await expect(reps).toHaveValue('8')
+
   await context.setOffline(true)
   await page.reload()
   await expect(page.getByRole('heading', { name: /good morning, ava/i })).toBeVisible()

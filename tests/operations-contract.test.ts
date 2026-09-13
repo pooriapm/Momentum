@@ -12,8 +12,8 @@ const macros = JSON.parse(readFileSync(path.join(process.cwd(), 'ops/support-mac
 }
 
 describe('operations contracts', () => {
-  it('does not claim a hosted restore while staging is missing', () => {
-    expect(contract.backup.hostedRestoreStatus).toBe('blocked_no_staging')
+  it('does not claim a hosted restore just because staging exists', () => {
+    expect(contract.backup.hostedRestoreStatus).toBe('not_rehearsed')
     expect(contract.backup.projectRef).toBe('osyvvzglvyonevkhdzpu')
     expect(contract.support.locales).toEqual(['fa', 'en'])
   })

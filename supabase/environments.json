@@ -6,13 +6,13 @@
     "api_origin": "http://127.0.0.1:54321"
   },
   "staging": {
-    "status": "not_provisioned",
-    "project_ref": null,
-    "api_origin": null,
-    "web_origin": null,
+    "status": "active",
+    "project_ref": "phqnttkdjvhtqmqloyyj",
+    "api_origin": "https://phqnttkdjvhtqmqloyyj.supabase.co",
+    "web_origin": "https://momentum-staging.pooria-pm.workers.dev",
     "worker_name": "momentum-staging",
-    "auth_redirect_origins": [],
-    "notes": "Provision an isolated Supabase project + Cloudflare worker before flipping status to active. Requires owner approval for paid project spend."
+    "auth_redirect_origins": ["https://momentum-staging.pooria-pm.workers.dev", "http://localhost:5173"],
+    "notes": "Simple free-tier staging with an isolated database, test accounts only, and live AI/payments disabled. Update the frontend with npm run deploy:staging."
   },
   "production": {
     "status": "active",
@@ -35,6 +35,6 @@
     "same_sha_required": true,
     "quality_workflow": "Quality",
     "frontend_artifact_prefix": "momentum-dist-",
-    "blocked_reason": "staging_not_provisioned"
+    "blocked_reason": null
   }
 }

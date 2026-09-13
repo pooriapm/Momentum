@@ -50,7 +50,7 @@ const payload = {
     stdoutTail: (releaseVerify.stderr || releaseVerify.stdout || '').trim().split('\n').slice(-3),
   },
   remainingOwnerActions: [
-    'Provision staging (ops/STAGING-READINESS.md) with paid-project approval',
+    ...(environments.staging.status === 'active' ? [] : ['Provision isolated staging (ops/STAGING-READINESS.md)']),
     'Run hosted restore + alert destination proof with approved channels only',
     'Complete live AI staging eval + professional content/safety signoff',
     'Complete payment sandbox end-to-end with provider credentials (no live charge without approval)',

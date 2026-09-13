@@ -170,7 +170,7 @@ export function TodayPage({
     )
   }
   if (view === 'preparing') return <GenerationWait locale={locale} onRetry={onRetry} online={online} />
-  if (view === 'load-error') {
+  if (view === 'load-error' && !plan) {
     return (
       <main className="app-page today-page screen-enter">
         <ContentCard className="today-status-card">
@@ -299,6 +299,13 @@ export function TodayPage({
         </div>
       </section>
 
+      {view === 'load-error' ? (
+        <div className="today-banner inline-notice inline-notice--warning" role="status">
+          <AlertTriangle size={16} />
+          <span>{fa ? 'تازه‌سازی انجام نشد. برنامه و مقدارهای واردشده حفظ شده‌اند؛ ثبت تا تازه‌سازی دوباره غیرفعال است.' : 'Refresh failed. Your plan and entered values are kept; saving is disabled until the plan refreshes.'}</span>
+          <Button onClick={onRetry} variant="secondary">{fa ? 'تلاش دوباره' : 'Try again'}</Button>
+        </div>
+      ) : null}
       {view === 'offline' ? (
         <div className="today-banner inline-notice" role="status">
           <WifiOff size={16} />
@@ -346,7 +353,7 @@ export function TodayPage({
             <Button disabled={view === 'safety' || view === 'stale'} onClick={() => document.getElementById(nextAction.targetId)?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })}>
               {nextAction.action}
             </Button>
-            <Button className="today-checkin-quiet" disabled={mutationsLocked} onClick={() => setCheckInOpen(true)} variant="ghost">
+            <Button className="today-checkin-quiet" disabled={mutationsLocked} onClick={(event) => { event.currentTarget.focus({ preventScroll: true }); setCheckInOpen(true) }} variant="ghost">
               {checkInSaved ? (fa ? 'چک‌این ثبت شد' : 'Check-in saved') : (fa ? 'بررسی روزانه · اختیاری' : 'Daily check-in · optional')}
             </Button>
           </div>

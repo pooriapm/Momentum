@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const localChromePath = process.env.PLAYWRIGHT_CHROME_PATH
+const chromiumLaunchOptions = localChromePath ? { executablePath: localChromePath } : undefined
 
 export default defineConfig({
   testDir: './e2e',
@@ -11,11 +12,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
-    launchOptions: localChromePath ? { executablePath: localChromePath } : undefined,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: chromiumLaunchOptions } },
+    { name: 'mobile-chromium', use: { ...devices['Pixel 7'], launchOptions: chromiumLaunchOptions } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
     { name: 'mobile-webkit', use: { ...devices['iPhone 13'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

@@ -1,7 +1,7 @@
 {
   "name": "momentum",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.4.1",
   "engines": {
     "node": ">=24.18.0",
     "npm": ">=10.9.2"
@@ -11,6 +11,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "deploy": "npm run build && wrangler deploy",
+    "deploy:staging": "node scripts/ops/deploy-staging.mjs",
     "promote:frontend": "node scripts/ops/promote-frontend.mjs",
     "lint": "eslint .",
     "storybook": "STORYBOOK=true storybook dev -p 6006",
