@@ -8,6 +8,7 @@ import {
   type DailyCheckInInput,
 } from '../checkins/contracts'
 import { Input, RequiredMark, Select, Textarea } from '../ui/FormControls'
+import { FieldReveal } from '../ui/FieldReveal'
 import { Button } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
 import { useModalDismiss } from './use-modal-dismiss'
@@ -147,7 +148,9 @@ export function CheckInSheet({
             {scoreOptions.map((score) => <option key={score} value={score}>{score} {score === 1 ? (fa ? '— خیلی سبک' : '— very easy') : score === 5 ? (fa ? '— بیش‌ازحد سخت' : '— too hard') : ''}</option>)}
           </Select>
         </div>
-        {Number(painScore) > 0 ? <Input error={fieldErrors.painLocation} label={fa ? 'محل و نوع درد یا ناراحتی' : 'Where and what kind of pain'} maxLength={240} onChange={(event) => setPainLocation(event.target.value)} required value={painLocation} /> : null}
+        <FieldReveal open={Number(painScore) > 0}>
+          <Input error={fieldErrors.painLocation} label={fa ? 'محل و نوع درد یا ناراحتی' : 'Where and what kind of pain'} maxLength={240} onChange={(event) => setPainLocation(event.target.value)} required value={painLocation} />
+        </FieldReveal>
         <fieldset className="check-in-red-flags">
           <legend>{fa ? 'آیا همین حالا یکی از این علائم را داری؟' : 'Are you experiencing any of these symptoms now?'}</legend>
           <p>{fa ? 'اگر بله، تمرین را شروع نکن یا ادامه نده.' : 'If yes, do not start or continue training.'}</p>

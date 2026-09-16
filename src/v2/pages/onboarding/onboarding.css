@@ -65,9 +65,27 @@
 
 .review-grid__edit {
   color: var(--color-brand);
+  display: block;
   font-size: .65rem;
   font-weight: 750;
 }
+
+.review-grid dd {
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.onboarding-review .review-grid dt,
+.onboarding-review .onboarding-gift .orbit-eyebrow {
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 30rem) {
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .plan-source-choice {
   border: 0;
   display: grid;
@@ -235,4 +253,68 @@
   .plan-source-choice__option {
     min-height: 0;
   }
+}
+
+/* Keep the trigger anchored; disclosures own their spacing so closed rows leave no gaps. */
+.onboarding-fields:has(> .onboarding-reveal) {
+  row-gap: 0;
+}
+
+.onboarding-fields:has(> .onboarding-reveal) > :not(.onboarding-reveal) {
+  margin-block-end: var(--space-4);
+}
+
+.onboarding-reveal {
+  grid-column: 1 / -1;
+  padding: 3px 3px var(--space-4);
+}
+
+.onboarding-training-frequency {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-6);
+  grid-column: 1 / -1;
+}
+
+.onboarding-training-frequency p {
+  color: var(--color-text-secondary);
+  flex: 1 1 13rem;
+  font-size: .8rem;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 24rem;
+}
+
+.onboarding-training-details {
+  background: color-mix(in srgb, var(--color-brand) 3%, var(--color-surface-raised));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.onboarding-training-details h3 {
+  color: var(--color-brand);
+  font-size: .9rem;
+  margin: 0 0 var(--space-5);
+}
+
+.onboarding-health-details {
+  background: color-mix(in srgb, var(--color-brand) 3%, var(--color-surface-raised));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.onboarding-health-details > h3 {
+  color: var(--color-brand);
+  font-size: .9rem;
+  margin: 0 0 var(--space-2);
+}
+
+.onboarding-health-details > p {
+  color: var(--color-text-secondary);
+  font-size: .8rem;
+  line-height: 1.6;
+  margin: 0 0 var(--space-5);
 }

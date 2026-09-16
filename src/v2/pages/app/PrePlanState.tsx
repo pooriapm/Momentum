@@ -24,8 +24,8 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
     membership: account.entitlementStatus ?? 'none',
     onboardingStatus: account.onboardingStatus,
   })
-  const giftReady = account.planSourcePreference === 'momentum' && account.entitlementStatus === 'none'
-  const ready = account.onboardingStatus === 'complete' && account.aiPlanAccess.state === 'ready' && (entitled || giftReady)
+  const giftCandidate = account.planSourcePreference === 'momentum' && account.entitlementStatus === 'none'
+  const ready = account.onboardingStatus === 'complete' && account.aiPlanAccess.state === 'ready' && (entitled || giftCandidate)
   const external = account.onboardingStatus === 'complete' && account.planSourcePreference === 'external' && !blocked
 
   if (wait.session) {
@@ -53,14 +53,20 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
         {ready ? (
           <>
             <div className="inline-notice" role="status">
-              {giftReady ? (fa ? 'برنامه اول هدیه است و برای شروع به اطلاعات پرداخت نیاز ندارد.' : 'Your first plan is a gift. No payment details are required to start.') : `${copy.paymentRequiredBody} ${copy.paymentRequiredNote}`}
+              {account.entitlementStatus === 'gift'
+                ? (fa ? 'هدیه برنامه برای حسابت رزرو شده است و برای این دوره اطلاعات پرداخت لازم نیست.' : 'A plan gift is reserved for your account. No payment details are required for this cycle.')
+                : giftCandidate
+                ? (fa ? 'واجد شرایط بودن و موجودی هدیه هنگام شروع بررسی می‌شود؛ هدیه فقط پس از رزرو موفق قطعی است.' : 'Gift eligibility and availability are checked when you start. The gift is confirmed only after a successful reservation.')
+                : `${copy.paymentRequiredBody} ${copy.paymentRequiredNote}`}
             </div>
-            <Button onClick={() => wait.start()}><Sparkles size={18} />{fa ? 'ساخت برنامه' : 'Generate plan'}</Button>
-            <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/me')}>{copy.openMembership}</Link>
+            {!online ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'برای ساخت برنامه دوباره آنلاین شو.' : 'Reconnect to generate your plan.'}</div> : null}
+            <Button disabled={!online} onClick={() => wait.start()}><Sparkles size={18} />{fa ? 'ساخت برنامه' : 'Generate plan'}</Button>
+            <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/onboarding/review')}>{fa ? 'بازبینی پاسخ‌ها' : 'Review answers'}</Link>
+            {account.entitlementStatus !== 'gift' ? <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/me')}>{copy.openMembership}</Link> : null}
           </>
         ) : null}
         {external ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/app/import-plan')}>{fa ? 'ساخت یا واردکردن برنامه' : 'Create or import a plan'}</Link> : null}
-        {!started && !blocked && !entitled && !external ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/app/me')}>{fa ? 'شروع عضویت' : 'Start membership'}</Link> : null}
+        {!started && !blocked && !entitled && !external && !ready ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/app/me')}>{fa ? 'شروع عضویت' : 'Start membership'}</Link> : null}
         {!ready ? <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today?preview=1')}>{fa ? 'دیدن Preview' : 'View preview'}</Link> : null}
       </ContentCard>
     </main>

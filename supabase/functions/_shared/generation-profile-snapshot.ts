@@ -3,7 +3,7 @@
  * Excludes display name, email, and raw identifying free text.
  * Body-composition PDFs are out of scope; only confirmed structured measurements.
  */
-export const PROFILE_SNAPSHOT_VERSION = 'momentum-profile-snapshot/1.0.0'
+export const PROFILE_SNAPSHOT_VERSION = 'momentum-profile-snapshot/1.1.0'
 
 export type SnapshotLocale = 'fa-IR' | 'en-US'
 export type ProductRegion = 'ir' | 'intl'
@@ -37,7 +37,14 @@ export interface DietarySnapshot {
   work_schedule: string | null
   budget_tier: BudgetTier
   restaurant_meals_per_week: number | null
+  restaurant_preferences: string[]
+  grocery_preferences: string[]
   cuisine_region: string | null
+}
+
+export interface TrainingProfileSnapshot {
+  location: 'home' | 'gym' | 'outdoor' | null
+  experience: 'beginner' | 'intermediate' | 'advanced' | null
 }
 
 export interface TrainingItemSnapshot {
@@ -46,6 +53,7 @@ export interface TrainingItemSnapshot {
   local_start_time: string | null
   duration_minutes: number | null
   intensity: string | null
+  availability_note: string | null
 }
 
 export interface SafetySnapshot {
@@ -77,6 +85,7 @@ export interface GenerationProfileSnapshot {
   height_cm: number | null
   goal: GoalSnapshot | null
   dietary: DietarySnapshot
+  training_profile: TrainingProfileSnapshot
   training_schedule: TrainingItemSnapshot[]
   safety: SafetySnapshot
   confirmed_measurements: ConfirmedMeasurement[]
@@ -112,7 +121,11 @@ export interface ProfileSnapshotRows {
     work_schedule?: string | null
     budget_tier?: string | null
     restaurant_meals_per_week?: number | null
+    restaurant_preferences?: unknown
+    grocery_preferences?: unknown
     cuisine_region?: string | null
+    training_location?: string | null
+    training_experience?: string | null
   } | null
   health?: {
     medical_considerations?: unknown
@@ -125,6 +138,7 @@ export interface ProfileSnapshotRows {
     local_start_time?: string | null
     duration_minutes?: number | null
     intensity?: string | null
+    notes?: string | null
   }> | null
   measurements?: Array<{
     measured_on?: string | null
@@ -261,9 +275,19 @@ export function buildGenerationProfileSnapshot(
       restaurant_meals_per_week: typeof dietary.restaurant_meals_per_week === 'number'
         ? dietary.restaurant_meals_per_week
         : null,
+      restaurant_preferences: stringList(dietary.restaurant_preferences),
+      grocery_preferences: stringList(dietary.grocery_preferences),
       cuisine_region: typeof dietary.cuisine_region === 'string'
         ? dietary.cuisine_region
         : null,
+    },
+    training_profile: {
+      location: (['home', 'gym', 'outdoor'].includes(String(dietary.training_location))
+        ? dietary.training_location
+        : null) as TrainingProfileSnapshot['location'],
+      experience: (['beginner', 'intermediate', 'advanced'].includes(String(dietary.training_experience))
+        ? dietary.training_experience
+        : null) as TrainingProfileSnapshot['experience'],
     },
     training_schedule: (rows.training ?? [])
       .filter((item) => typeof item.weekday === 'number' && typeof item.activity_type === 'string')
@@ -274,6 +298,7 @@ export function buildGenerationProfileSnapshot(
         local_start_time: typeof item.local_start_time === 'string' ? item.local_start_time : null,
         duration_minutes: typeof item.duration_minutes === 'number' ? item.duration_minutes : null,
         intensity: typeof item.intensity === 'string' ? item.intensity : null,
+        availability_note: truncateNote(item.notes, 500),
       })),
     safety: {
       medical_considerations: stringList(health.medical_considerations, 30),
@@ -306,6 +331,7 @@ export function profileSnapshotPromptContext(
     height_cm: snapshot.height_cm,
     goal: snapshot.goal,
     dietary: snapshot.dietary,
+    training_profile: snapshot.training_profile,
     training_schedule: snapshot.training_schedule,
     safety: snapshot.safety,
     confirmed_measurements: snapshot.confirmed_measurements,
@@ -327,6 +353,8 @@ export function emptyDietarySnapshot(): DietarySnapshot {
     work_schedule: null,
     budget_tier: 'medium',
     restaurant_meals_per_week: null,
+    restaurant_preferences: [],
+    grocery_preferences: [],
     cuisine_region: null,
   }
 }

@@ -24,6 +24,7 @@ import { ContentCard, Eyebrow, GlassChrome, StatusPill } from '../../ui/primitiv
 import { LazyImage } from '../../ui/LazyImage'
 import { OrbitMark } from '../../ui/OrbitMark'
 import { Reveal } from '../../ui/Reveal'
+import './landing-faq.css'
 
 export function LandingPage({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
@@ -99,6 +100,31 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
             <p>{t('landing.safetyCopy')}</p>
           </div>
           <Link href={localizedPath(locale, '/safety')}>{t('common.learnMore')} <ArrowRight className="directional-icon" size={17} /></Link>
+        </Reveal>
+
+        <Reveal as="section" className="landing-section landing-faq">
+          <div className="landing-section__heading">
+            <Eyebrow>{locale === 'fa' ? 'پرسش‌های رایج' : 'FAQ'}</Eyebrow>
+            <h2>{locale === 'fa' ? 'پیش از شروع بدان' : 'Know before you start'}</h2>
+          </div>
+          <div className="landing-faq__list">
+            {(locale === 'fa' ? [
+              ['مسیر رایگان و عضویت چه فرقی دارند؟', 'واردکردن، نگهداری و پیگیری برنامه‌ای که خودت تهیه کرده‌ای رایگان است. عضویت، ساخت و مدیریت برنامه توسط Momentum را پوشش می‌دهد.'],
+              ['برنامه هر چند وقت یک‌بار ساخته می‌شود؟', 'هر دوره پس از آماده‌شدن و واردکردن موفق برنامه شروع می‌شود، دقیقاً ۳۰ روز ادامه دارد و حداکثر یک ساخت کامل برنامه تمرین و تغذیه دارد.'],
+              ['آیا برنامه اول حتماً هدیه است؟', 'هدیه فقط در صورت موجودبودن بودجه و رزرو موفق ارائه می‌شود. پرداخت در نسخه آلفای فعلی فعال نیست.'],
+              ['با اطلاعات سلامت و گزارش بدن چه می‌شود؟', 'فقط وقتی ساخت مدیریت‌شده را شروع می‌کنی، اطلاعات حداقلی لازم برای برنامه‌ریزی به ارائه‌دهنده فرستاده می‌شود. گزارش بدن اختیاری است و فایل آن خودکار تحلیل نمی‌شود. در مسیر رایگان، پرامپت فقط پس از تأیید تو به ابزار بیرونی منتقل می‌شود.'],
+            ] : [
+              ['How do the free path and membership differ?', 'Importing, storing, and tracking a plan you obtain yourself is free. Membership covers plan creation and cycle management by Momentum.'],
+              ['How often is a plan created?', 'Each period begins after a plan is ready and successfully imported, lasts exactly 30 days, and allows at most one complete workout and nutrition plan creation.'],
+              ['Is the first plan always gifted?', 'A gift is offered only when campaign budget is available and reservation succeeds. Payments are not live in the current alpha.'],
+              ['How are health data and body reports handled?', 'Minimized planning context is sent to a provider only when you start managed generation. A body report is optional, and its file is not analyzed automatically. On the free path, the prompt is transferred to an external tool only after you confirm.'],
+            ]).map(([question, answer]) => (
+              <details key={question}>
+                <summary>{question}</summary>
+                <p>{answer}</p>
+              </details>
+            ))}
+          </div>
         </Reveal>
 
         <Reveal as="section" className="landing-final">

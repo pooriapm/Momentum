@@ -16,7 +16,7 @@ import {
   WandSparkles,
   WifiOff,
 } from 'lucide-react'
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { type ChangeEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'wouter'
 import {
@@ -34,16 +34,17 @@ import { giftCampaignFromUnknown, postOnboardingPath, reviewInventoryIds } from 
 import { Input, NumberStepper, RequiredMark, Select, Textarea } from '../../ui/FormControls'
 import { CountryCombobox } from '../../ui/CountryCombobox'
 import { LocalizedDatePicker } from '../../ui/LocalizedDatePicker'
+import { formatLocalizedDate } from '../../ui/localized-date'
 import { LocalizedTimePicker } from '../../ui/LocalizedTimePicker'
 import { BrandLockup } from '../../ui/OrbitMark'
+import { FieldReveal } from '../../ui/FieldReveal'
 import { Button, PageSkeleton, StatusPill } from '../../ui/primitives'
 import {
   loadOnboardingDraft,
   completeOnboarding,
-  createStarterPlan,
-  deleteOnboardingDraft,
   discardBodyReport,
   saveOnboardingDraft,
+  saveOnboardingBodyMeasurements,
   uploadBodyReport,
 } from '../../onboarding/repository'
 import {
@@ -87,14 +88,19 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   const { user, status } = useAuth()
   const currentIndex = Math.max(0, onboardingSections.findIndex((section) => section.key === step))
   const section = onboardingSections[currentIndex]
-  const [valueEdits, setValueEdits] = useState<Record<string, string>>({})
+  const unsavedQueryKey = useMemo(() => ['onboarding-unsaved', user?.id, step] as const, [step, user?.id])
+  const [valueEdits, setValueEdits] = useState<Record<string, string>>(
+    () => queryClient.getQueryData<Record<string, string>>(unsavedQueryKey) ?? {},
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [pageError, setPageError] = useState('')
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'error' | 'success'>('idle')
   const [reportName, setReportName] = useState('')
   const flowIdRef = useRef(crypto.randomUUID())
+  const unsavedIdentityRef = useRef(user ? `${user.id}:${step}` : '')
   const uploadCancelled = useRef(false)
+  const activeUpload = useRef(0)
   const cardRef = useRef<HTMLDivElement>(null)
 
   const draftQuery = useQuery({
@@ -123,7 +129,9 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
       ...onboardingDefaultValues,
       ...(draftQuery.data?.values ?? {}),
       ...valueEdits,
-      country: valueEdits.country || draftQuery.data?.values?.country || geoQuery.data?.country || '',
+      country: Object.prototype.hasOwnProperty.call(valueEdits, 'country')
+        ? valueEdits.country
+        : draftQuery.data?.values?.country || geoQuery.data?.country || '',
     }),
     [draftQuery.data?.values, geoQuery.data?.country, valueEdits],
   )
@@ -134,13 +142,24 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   const resumeStep = earliestIncompleteStep(values, locale)
 
   useEffect(() => {
+    if (!user) return
+    const identity = `${user.id}:${step}`
+    if (unsavedIdentityRef.current !== identity) {
+      unsavedIdentityRef.current = identity
+      setValueEdits(queryClient.getQueryData<Record<string, string>>(unsavedQueryKey) ?? {})
+      return
+    }
+    queryClient.setQueryData(unsavedQueryKey, valueEdits)
+  }, [queryClient, step, unsavedQueryKey, user, valueEdits])
+
+  useEffect(() => {
     if (user && draftQuery.isSuccess && !canVisitStep(step, values, locale)) {
       navigate(localizedPath(locale, `/onboarding/${resumeStep}`), { replace: true })
     }
   }, [draftQuery.isSuccess, locale, navigate, resumeStep, step, user, values])
 
   const visibleFields = section.fields.filter((field) => {
-    if (section.key === 'health' && isHealthCollectingStopped(values) && ['medications', 'medicalNotes', 'supplements'].includes(field.key) && !values[field.key]) {
+    if (section.key === 'health' && isHealthCollectingStopped(values) && ['medications', 'medicalNotes', 'supplements'].includes(field.key)) {
       return false
     }
     return isFieldVisible(field, values)
@@ -170,12 +189,10 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
 
   function updateValue(field: OnboardingField, value: string) {
     const nextValue = field.kind === 'number' ? sanitizeLocalizedNumberInput(value, field.step !== 1, field.maxDigits) : value
-    setValueEdits((current) => {
-      const next = { ...current, [field.key]: nextValue }
-      if (field.key === 'trainingDurationPreset' && value !== 'custom') next.trainingDuration = value
-      if (field.key === 'bodyFatPercent' || field.key === 'waistCm' || field.key === 'bodySource') next.bodySkipped = ''
-      return next
-    })
+    const changes: Record<string, string> = { [field.key]: nextValue }
+    if (field.key === 'trainingDurationPreset' && value !== 'custom') changes.trainingDuration = value
+    if (field.key === 'bodyFatPercent' || field.key === 'waistCm' || field.key === 'bodySource') changes.bodySkipped = ''
+    setValueEdits((current) => ({ ...current, ...changes }))
     setErrors((current) => {
       const next = { ...current }
       delete next[field.key]
@@ -196,6 +213,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
       }
       await saveOnboardingDraft(user!.id, nextStep, savedValues)
       queryClient.setQueryData(['onboarding-draft', user!.id], { currentStep: nextStep, values: savedValues })
+      queryClient.removeQueries({ queryKey: unsavedQueryKey, exact: true })
       return true
     } catch {
       setPageError(locale === 'fa' ? 'ذخیره انجام نشد. اتصال را بررسی و دوباره تلاش کن.' : 'We could not save this section. Check your connection and try again.')
@@ -219,11 +237,13 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   }
 
   async function previous() {
+    if (saving || !online) return
     const previousStep = previousOnboardingStep(section.key)
     if (await persist(previousStep)) navigate(localizedPath(locale, `/onboarding/${previousStep}`))
   }
 
   async function skipBody() {
+    if (saving || !online) return
     if (await persist('review', { bodySkipped: 'yes' })) {
       setValueEdits((current) => ({ ...current, bodySkipped: 'yes' }))
       navigate(localizedPath(locale, '/onboarding/review'))
@@ -231,6 +251,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   }
 
   async function handleReportChange(event: ChangeEvent<HTMLInputElement>) {
+    if (saving || !online) return
     const file = event.target.files?.[0]
     setPageError('')
     setUploadState('idle')
@@ -240,18 +261,23 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
       setPageError(locale === 'fa' ? 'فایل باید PDF، JPG، PNG یا WebP و کوچک‌تر از ۱۰ مگابایت باشد.' : 'Use a PDF, JPG, PNG, or WebP file under 10 MB.')
       return
     }
+    const uploadToken = activeUpload.current + 1
+    activeUpload.current = uploadToken
     uploadCancelled.current = false
     setReportName(file.name)
     setUploadState('uploading')
     setSaving(true)
     try {
       const uploaded = await uploadBodyReport(user!.id, file, values.bodyReportDate)
-      if (uploadCancelled.current) {
+      if (uploadCancelled.current || activeUpload.current !== uploadToken) {
         await discardBodyReport(user!.id, uploaded.id, uploaded.path)
         setUploadState('idle')
         setReportName('')
         return
       }
+      const previousReport = values.bodyReportId && values.bodyReportPath
+        ? { id: values.bodyReportId, path: values.bodyReportPath }
+        : null
       const uploadedValues = {
         bodyReportId: uploaded.id,
         bodyReportPath: uploaded.path,
@@ -259,54 +285,93 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
         bodySkipped: '',
       }
       try {
-        await saveOnboardingDraft(user!.id, 'body', {
+        const savedValues = {
           ...values,
           ...uploadedValues,
           onboardingFlowId,
           locale: locale === 'fa' ? 'fa-IR' : 'en-US',
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-        })
+        }
+        await saveOnboardingDraft(user!.id, 'body', savedValues)
+        queryClient.setQueryData(['onboarding-draft', user!.id], { currentStep: 'body', values: savedValues })
       } catch (error) {
         await discardBodyReport(user!.id, uploaded.id, uploaded.path)
         throw error
       }
       setValueEdits((current) => ({ ...current, ...uploadedValues }))
       setUploadState('success')
+      if (previousReport && previousReport.id !== uploaded.id) {
+        try {
+          await discardBodyReport(user!.id, previousReport.id, previousReport.path)
+        } catch {
+          setPageError(locale === 'fa'
+            ? 'گزارش جدید ذخیره شد، اما پاک‌سازی فایل قبلی تأیید نشد. بعداً دوباره تلاش کن.'
+            : 'The new report was saved, but cleanup of the previous file could not be confirmed. Try again later.')
+        }
+      }
     } catch {
       setUploadState('error')
       setPageError(t('onboarding.uploadError'))
     } finally {
-      setSaving(false)
+      if (activeUpload.current === uploadToken) setSaving(false)
     }
   }
 
   async function cancelUpload() {
     uploadCancelled.current = true
-    setUploadState('idle')
-    setReportName('')
-    setSaving(false)
   }
 
   async function removeReport() {
+    if (saving || !online) return
+    setSaving(true)
+    setPageError('')
+    const clearedValues = {
+      ...values,
+      bodyReportId: '',
+      bodyReportPath: '',
+      bodySource: values.bodySource === 'report' ? 'manual' : values.bodySource,
+    }
     if (values.bodyReportId && values.bodyReportPath) {
       try {
+        await saveOnboardingDraft(user!.id, 'body', clearedValues)
         await discardBodyReport(user!.id, values.bodyReportId, values.bodyReportPath)
       } catch {
+        await saveOnboardingDraft(user!.id, 'body', values).catch(() => undefined)
         setPageError(locale === 'fa'
-          ? 'فایل حذف نشد. اطلاعات روی صفحه حفظ شده است؛ اتصال را بررسی و دوباره تلاش کن.'
-          : 'The file was not removed. Its details remain on this page; check your connection and try again.')
+          ? 'حذف فایل تأیید نشد. مرجع آن برای تلاش دوباره حفظ شده است؛ ممکن است فایل از فضای ذخیره‌سازی پاک شده باشد. اتصال را بررسی و دوباره تلاش کن.'
+          : 'File removal could not be confirmed. Its reference was kept for retry; the stored file may already be gone. Check your connection and try again.')
+        setSaving(false)
         return
       }
     }
-    setValueEdits((current) => ({ ...current, bodyReportId: '', bodyReportPath: '', bodySource: current.bodySource === 'report' ? 'manual' : current.bodySource }))
+    queryClient.setQueryData(['onboarding-draft', user!.id], { currentStep: 'body', values: clearedValues })
+    setValueEdits((current) => ({ ...current, bodyReportId: '', bodyReportPath: '', bodySource: clearedValues.bodySource }))
     setUploadState('idle')
     setReportName('')
     setPageError('')
+    setSaving(false)
+  }
+
+  async function saveAndExitHealth() {
+    if (saving || !online) return
+    if (await persist('health')) navigate(localizedPath(locale, '/app/today'))
   }
 
   async function finishSetup() {
-    if (!online) {
+    if (saving || !online) {
       setPageError(t('onboarding.offlineReview'))
+      return
+    }
+    const completionErrors = onboardingSections.reduce<Record<string, string>>((all, item) => {
+      if (item.key === 'body' && values.bodySkipped === 'yes') return all
+      return { ...all, ...validateSection(item, values, locale) }
+    }, {})
+    if (Object.keys(completionErrors).length > 0) {
+      setPageError(locale === 'fa' ? 'بعضی پاسخ‌های ضروری کامل نیستند. با پیوندهای ویرایش آن‌ها را بررسی کن.' : 'Some required answers are incomplete. Review them with the edit links below.')
+      return
+    }
+    if (blockedReason) {
+      setPageError(blockedReason)
       return
     }
     setSaving(true)
@@ -319,20 +384,31 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       })
       await saveOnboardingDraft(user!.id, 'review', payload)
-      const completion = await completeOnboarding(`${onboardingFlowId}:complete`)
+      queryClient.setQueryData(['onboarding-draft', user!.id], { currentStep: 'review', values: payload })
+      queryClient.removeQueries({ queryKey: unsavedQueryKey, exact: true })
+      try {
+        await saveOnboardingBodyMeasurements(user!.id, onboardingFlowId, values)
+      } catch {
+        setPageError(locale === 'fa'
+          ? 'اندازه‌های بدن ذخیره نشدند. اتصال را بررسی کن و دوباره تأیید کن؛ تکمیل حساب انجام نشده است.'
+          : 'Your body measurements could not be saved. Check your connection and confirm again; setup was not completed.')
+        return
+      }
+      const completion = await completeOnboarding(`${onboardingFlowId}:complete:${completionFingerprint(payload)}`)
       if (completion.status === 'automation_blocked') {
         setPageError(blockedReason || (locale === 'fa'
           ? 'اطلاعات حساب ذخیره شد، اما برنامه‌ریزی خودکار برای شرایط انتخاب‌شده مناسب نیست.'
           : 'Your account was saved, but automated planning is not appropriate for the selected health context.'))
         return
       }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['active-plan'] }),
+        queryClient.invalidateQueries({ queryKey: ['external-plan-context'] }),
+      ])
       trackProductEvent({ ...eventContext(locale, productRegion, values.planSource === 'external' ? 'external' : 'momentum'), event_name: 'onboarding_completed', surface: 'onboarding', action_kind: null, outcome: 'completed' })
       if (values.planSource === 'external') {
         navigate(localizedPath(locale, '/app/import-plan'))
       } else {
-        await createStarterPlan(`${onboardingFlowId}:starter-plan`)
-        trackProductEvent({ ...eventContext(locale, productRegion, 'momentum'), event_name: 'plan_activated', surface: 'onboarding', action_kind: 'plan', outcome: 'activated' })
-        await deleteOnboardingDraft(user!.id)
         navigate(postOnboardingPath(locale))
       }
     } catch {
@@ -380,6 +456,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
             <PlanSourceChoice
               error={errors.planSource}
               giftCampaign={giftCampaign}
+              locale={locale}
               onChange={(value) => updateValue(section.fields[0], value)}
               value={values.planSource ?? ''}
             />
@@ -387,28 +464,43 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           {section.key === 'food' ? <div className="inline-notice inline-notice--success"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</div> : null}
           {visibleFields.length > 0 && section.key !== 'plan-source' ? (
             <div className="onboarding-fields">
-              {visibleFields.map((field) => (
-                <DynamicField
-                  error={errors[field.key]}
-                  field={field}
-                  key={field.key}
-                  legalVersions={legalVersions}
-                  locale={locale}
-                  onChange={(value) => updateValue(field, value)}
-                  placeholder={fieldPlaceholder(field.key, values.trainingLocation, t)}
-                  required={isFieldRequired(field, values)}
-                  suggested={field.key === 'country' && countrySuggested}
-                  value={values[field.key] ?? ''}
-                />
-              ))}
+              <OnboardingFields
+                fields={section.fields}
+                healthStopped={healthStopped}
+                visibleFields={visibleFields}
+                training={section.key === 'training'}
+                locale={locale}
+                renderField={(field) => (
+                  <DynamicField
+                    error={errors[field.key]}
+                    field={field}
+                    key={field.key}
+                    legalVersions={legalVersions}
+                    locale={locale}
+                    onChange={(value) => updateValue(field, value)}
+                    placeholder={fieldPlaceholder(field.key, values.trainingLocation, t)}
+                    required={isFieldRequired(field, values)}
+                    suggested={field.key === 'country' && countrySuggested}
+                    value={values[field.key] ?? ''}
+                  />
+                )}
+              />
             </div>
           ) : null}
-          {section.key === 'health' ? <HealthOutcome outcome={healthOutcome} /> : null}
-          {section.key === 'food' && values.allergies?.includes(UNMAPPED_ALLERGEN) ? (
-            <div className="inline-notice inline-notice--warning" role="status">{t('onboarding.allergenOtherBlock')}</div>
+          {section.key === 'health' ? (
+            <FieldReveal className="onboarding-reveal" key={healthOutcome} open={healthOutcome !== 'incomplete'}>
+              <HealthOutcome outcome={healthOutcome} />
+            </FieldReveal>
           ) : null}
-          {section.key === 'training' && values.trainingLocation === 'outdoor' ? (
-            <div className="inline-notice">{t('onboarding.outdoorEquipmentHidden')}</div>
+          {section.key === 'food' ? (
+            <FieldReveal className="onboarding-reveal" open={values.allergies?.includes(UNMAPPED_ALLERGEN)}>
+              <div className="inline-notice inline-notice--warning" role="status">{t('onboarding.allergenOtherBlock')}</div>
+            </FieldReveal>
+          ) : null}
+          {section.key === 'training' ? (
+            <FieldReveal className="onboarding-reveal" open={values.trainingLocation === 'outdoor'}>
+              <div className="inline-notice">{t('onboarding.outdoorEquipmentHidden')}</div>
+            </FieldReveal>
           ) : null}
           {section.key === 'body' ? (
             <BodyStep
@@ -430,7 +522,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               <h3>{t('onboarding.review')}</h3>
               <p>{values.planSource === 'external'
                 ? (locale === 'fa' ? 'پس از تأیید، پرامپت محلی و مسیر واردکردن برنامه باز می‌شود. اشتراک لازم نیست.' : 'After confirmation, your local prompt and secure import path will open. No subscription is required.')
-                : t('onboarding.reviewCopy')}</p>
+                : (locale === 'fa' ? 'پاسخ‌هایت را بررسی کن. تأیید، اطلاعات را ذخیره می‌کند؛ ساخت برنامه را در مرحلهٔ بعد خودت آغاز می‌کنی.' : 'Review your answers. Confirmation saves them; you will start plan creation explicitly in the next step.')}</p>
               {values.planSource === 'external' ? (
                 <article className="onboarding-gift content-card">
                   <span className="onboarding-gift__icon" aria-hidden="true"><Import size={26} /></span>
@@ -440,7 +532,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                 </article>
               ) : giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? (
                 <div className="inline-notice inline-notice--warning" role="status">{t('entitlement.giftExhausted')}</div>
-              ) : (
+              ) : giftCampaign === 'available' ? (
                 <article aria-labelledby="onboarding-gift-title" className="onboarding-gift content-card">
                   <span className="onboarding-gift__icon" aria-hidden="true"><Gift size={26} /></span>
                   <p className="orbit-eyebrow">{t('onboarding.giftHeroEyebrow')}</p>
@@ -452,28 +544,41 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                     <li>{t('onboarding.giftChipPlan')}</li>
                   </ul>
                 </article>
+              ) : (
+                <div className="inline-notice" role="status">{locale === 'fa' ? 'واجد شرایط بودن برای هدیه در مرحلهٔ بعد بررسی می‌شود.' : 'Gift eligibility will be checked in the next step.'}</div>
               )}
-              <ReviewGrid legalVersions={legalVersions} locale={locale} values={values} />
+              <ReviewGrid locale={locale} values={prepareCompletionValues(values)} />
               {blockedReason ? <div className="inline-notice inline-notice--warning"><HeartPulse size={18} />{blockedReason}</div> : null}
               {!online ? <div className="inline-notice"><WifiOff size={18} />{t('onboarding.offlineReview')}</div> : null}
-              <Button block disabled={!online} loading={saving} onClick={finishSetup}>{t('onboarding.reviewFinish')}</Button>
+              <Button block disabled={!online || Boolean(blockedReason) || saving} loading={saving} onClick={finishSetup}>{t('onboarding.reviewFinish')}</Button>
               <Link className="orbit-button orbit-button--ghost orbit-button--block" href={localizedPath(locale, '/app/today?preview=1')}>{t('common.preview')}</Link>
             </div>
           ) : null}
           {pageError ? <div className="inline-notice inline-notice--error" role="alert">{pageError}</div> : null}
           {healthStopped ? (
-            <div className="onboarding-actions">
-              <Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
-              <div className="onboarding-actions__stop">
-                <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today')}>{t('onboarding.saveAndExit')}</Link>
-                <Link className="orbit-button orbit-button--danger" href={localizedPath(locale, '/safety')}>{t('onboarding.safetyGuidance')}</Link>
+            <FieldReveal className="onboarding-reveal" key={`health-actions-${healthOutcome}`} open>
+              <div className="onboarding-actions">
+                <Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
+                <div className="onboarding-actions__stop">
+                  <Button disabled={!online || saving} onClick={() => void saveAndExitHealth()} variant="secondary">{t('onboarding.saveAndExit')}</Button>
+                  <Link className="orbit-button orbit-button--danger" href={localizedPath(locale, '/safety')}>{t('onboarding.safetyGuidance')}</Link>
+                </div>
               </div>
-            </div>
+            </FieldReveal>
           ) : showContinue ? (
-            <div className="onboarding-actions">
-              <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
-              <Button disabled={!online || planSourceMissing} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
-            </div>
+            section.key === 'health' ? (
+              <FieldReveal className="onboarding-reveal" key="health-actions-continue" open>
+                <div className="onboarding-actions">
+                  <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
+                  <Button disabled={!online || planSourceMissing} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
+                </div>
+              </FieldReveal>
+            ) : (
+              <div className="onboarding-actions">
+                <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
+                <Button disabled={!online || planSourceMissing} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
+              </div>
+            )
           ) : (
             <div className="onboarding-actions"><Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button></div>
           )}
@@ -483,14 +588,28 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   )
 }
 
+function completionFingerprint(values: Record<string, string>) {
+  const serialized = JSON.stringify(Object.entries(values).sort(([left], [right]) => left.localeCompare(right)))
+  let first = 0x811c9dc5
+  let second = 0x9e3779b9
+  for (let index = 0; index < serialized.length; index += 1) {
+    const code = serialized.charCodeAt(index)
+    first = Math.imul(first ^ code, 0x01000193)
+    second = Math.imul(second ^ code, 0x85ebca6b)
+  }
+  return `${(first >>> 0).toString(36)}${(second >>> 0).toString(36)}`
+}
+
 function PlanSourceChoice({
   error,
   giftCampaign,
+  locale,
   value,
   onChange,
 }: {
   error?: string
   giftCampaign: ReturnType<typeof giftCampaignFromUnknown>
+  locale: AppLocale
   value: string
   onChange: (value: string) => void
 }) {
@@ -500,9 +619,11 @@ function PlanSourceChoice({
     : value === 'momentum'
       ? t('onboarding.planSourceMomentum')
       : ''
-  const momentumFoot = giftCampaign === 'exhausted' || giftCampaign === 'disabled'
-    ? t('onboarding.planSourceMomentumMembershipFoot')
-    : t('onboarding.planSourceMomentumGiftFoot')
+  const momentumFoot = giftCampaign === 'available'
+    ? t('onboarding.planSourceMomentumGiftFoot')
+    : giftCampaign === 'exhausted' || giftCampaign === 'disabled'
+      ? t('onboarding.planSourceMomentumMembershipFoot')
+      : locale === 'fa' ? 'واجد شرایط بودن در مرحلهٔ بعد بررسی می‌شود.' : 'Eligibility is checked in the next step.'
 
   return (
     <fieldset className={`plan-source-choice${error ? ' has-error' : ''}`} data-inventory="ONB-29">
@@ -643,11 +764,12 @@ function BodyStep({
       <StatusPill tone="neutral">{t('onboarding.bodyOptional')}</StatusPill>
       <h3>{t('onboarding.upload')}</h3>
       <p>{t('onboarding.bodyManualCopy')}</p>
+      <p>{locale === 'fa' ? 'گزارش آپلودشده خودکار خوانده نمی‌شود. برای استفاده در برنامه، درصد چربی یا دور کمر را خودت وارد کن.' : 'Uploaded reports are not read automatically. Enter body-fat or waist values yourself for plan creation.'}</p>
       {skipped ? <div className="inline-notice">{t('onboarding.bodySkipConfirm')}</div> : null}
       {uploadState === 'uploading' ? (
         <div className="inline-notice" role="status">
           {t('onboarding.uploadProgress')}
-          <Button onClick={onCancelUpload} variant="ghost">{t('onboarding.uploadCancel')}</Button>
+          <Button disabled={!online} onClick={onCancelUpload} variant="ghost">{t('onboarding.uploadCancel')}</Button>
         </div>
       ) : null}
       {uploadState === 'error' ? (
@@ -663,10 +785,61 @@ function BodyStep({
       </label>
       <small>{t('onboarding.noMedicalClaim')}</small>
       <div className="onboarding-body-actions">
-        {uploadState === 'success' ? <Button onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button> : null}
-        <Button onClick={onSkip} variant="secondary">{t('onboarding.skipConfirm')}</Button>
+        {uploadState === 'success' ? <Button disabled={saving || !online} onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button> : null}
+        <Button disabled={saving || !online} onClick={onSkip} variant="secondary">{t('onboarding.skipConfirm')}</Button>
       </div>
     </div>
+  )
+}
+
+function OnboardingFields({ fields, healthStopped, visibleFields, training, locale, renderField }: {
+  fields: readonly OnboardingField[]
+  healthStopped: boolean
+  visibleFields: OnboardingField[]
+  training: boolean
+  locale: AppLocale
+  renderField: (field: OnboardingField) => ReactNode
+}) {
+  const trainingDetails = fields.filter((field) => !['trainingDays', 'equipment', 'workSchedule'].includes(field.key))
+  const render = (field: OnboardingField) => field.visibleWhen
+    ? <FieldReveal className="onboarding-reveal" key={field.key} open={visibleFields.includes(field)}>{renderField(field)}</FieldReveal>
+    : visibleFields.includes(field) ? renderField(field) : null
+  if (!training) {
+    if (fields.some((field) => field.key === 'pregnancyOrBreastfeeding')) {
+      const screeningFields = fields.filter((field) => !['medications', 'medicalNotes', 'supplements'].includes(field.key))
+      const detailFields = fields.filter((field) => ['medications', 'medicalNotes', 'supplements'].includes(field.key))
+      const showDetails = !healthStopped
+      return (
+        <>
+          {screeningFields.map(render)}
+          <FieldReveal className="onboarding-reveal" key="health-details" open={showDetails}>
+            <section className="onboarding-health-details">
+              <h3>{locale === 'fa' ? 'جزئیات اختیاری سلامت' : 'Optional health details'}</h3>
+              <p>{locale === 'fa' ? 'در صورت تمایل، زمینهٔ بیشتری برای شخصی‌سازی برنامه اضافه کن.' : 'Add more context for plan personalization if you want.'}</p>
+              <div className="onboarding-fields">{detailFields.map(render)}</div>
+            </section>
+          </FieldReveal>
+        </>
+      )
+    }
+    return fields.map(render)
+  }
+  return (
+    <>
+      <div className="onboarding-training-frequency">
+        {renderField(fields.find((field) => field.key === 'trainingDays')!)}
+        <p>{locale === 'fa' ? 'ابتدا تعداد روزها را انتخاب کن، سپس جزئیات تمرین را تنظیم کن. صفر یعنی فعلاً تمرین برنامه‌ریزی‌شده نداری.' : 'Choose your weekly frequency, then tailor your sessions. Zero means no scheduled training for now.'}</p>
+      </div>
+      <FieldReveal className="onboarding-reveal" open={trainingDetails.some((field) => visibleFields.includes(field))}>
+        <section className="onboarding-training-details">
+          <h3>{locale === 'fa' ? 'جزئیات برنامهٔ تمرین' : 'Your training routine'}</h3>
+          <div className="onboarding-fields">
+            {trainingDetails.map((field) => field.key === 'trainingDuration' ? render(field) : renderField(field))}
+          </div>
+        </section>
+      </FieldReveal>
+      {fields.filter((field) => ['equipment', 'workSchedule'].includes(field.key)).map(render)}
+    </>
   )
 }
 
@@ -763,7 +936,7 @@ function DynamicField({
     )
   }
   if (field.kind === 'textarea') {
-    return <Textarea error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} rows={3} value={value} />
+    return <Textarea error={error} label={t(field.labelKey)} maxLength={field.maxLength} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} rows={3} value={value} />
   }
   if (field.kind === 'time') {
     return <LocalizedTimePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} required={required} value={value} />
@@ -792,6 +965,7 @@ function DynamicField({
       inputMode={field.kind === 'number' ? 'decimal' : undefined}
       label={t(field.labelKey)}
       max={field.max}
+      maxLength={field.maxLength}
       min={field.min}
       onChange={(event) => onChange(event.target.value)}
       required={required}
@@ -805,11 +979,9 @@ function DynamicField({
 function ReviewGrid({
   locale,
   values,
-  legalVersions,
 }: {
   locale: AppLocale
   values: Record<string, string>
-  legalVersions: LegalDocumentVersions
 }) {
   const { t } = useTranslation()
   const weight = Number(values.weightKg)
@@ -820,24 +992,39 @@ function ReviewGrid({
     return labelKey ? t(labelKey) : value
   }
 
+  function optionList(fieldKey: string, value: string) {
+    return value ? value.split(',').filter(Boolean).map((item) => optionLabel(fieldKey, item)).join(locale === 'fa' ? '، ' : ', ') : '—'
+  }
+
+  const yesNo = (value: string) => optionLabel('urgentSymptoms', value)
+  const joinDetails = (...parts: Array<string | undefined>) => parts.filter((part) => part && part !== '—').join(locale === 'fa' ? ' · ' : ' · ') || '—'
+  const mealCount = formatNumber(Number(values.requestedMealCount || 3), locale)
+  const mealCountLabel = `${mealCount} ${locale === 'fa' ? 'وعده' : 'meals'}`
+  const mealPattern = values.requestedMealPattern === mealCountLabel
+    ? undefined
+    : values.requestedMealPattern?.startsWith(`${mealCountLabel}. `)
+      ? values.requestedMealPattern.slice(mealCountLabel.length + 2)
+      : values.requestedMealPattern
+
   const items = [
     { step: 'plan-source' as const, label: t('onboarding.planSource'), value: optionLabel('planSource', values.planSource) },
-    { step: 'goal' as const, label: locale === 'fa' ? 'هدف' : 'Goal', value: optionLabel('goalType', values.goalType) },
-    { step: 'health' as const, label: locale === 'fa' ? 'سلامت' : 'Health', value: healthScreeningOutcome(values) === 'eligible' ? (locale === 'fa' ? 'مانع ایمنی ثبت نشده' : 'No safety block') : (locale === 'fa' ? 'نیاز به مسیر انسانی' : 'Human path required') },
-    { step: 'food' as const, label: locale === 'fa' ? 'سبک غذایی' : 'Diet', value: optionLabel('dietStyle', values.dietStyle) },
-    { step: 'training' as const, label: locale === 'fa' ? 'روز تمرین' : 'Training days', value: values.trainingDays ? formatNumber(Number(values.trainingDays), locale) : '0' },
-    { step: 'body' as const, label: locale === 'fa' ? 'اطلاعات بدن' : 'Body', value: values.bodySkipped === 'yes' ? t('onboarding.skip') : values.bodyReportPath || values.bodyFatPercent || values.waistCm ? '✓' : '—' },
-    { step: 'basics' as const, label: locale === 'fa' ? 'کشور' : 'Country', value: values.country ? countryName(values.country, locale) : '—' },
-    { step: 'consent' as const, label: locale === 'fa' ? 'رضایت‌ها' : 'Consents', value: values.termsAccepted === 'yes' && values.privacyAccepted === 'yes' && values.healthDataConsent === 'yes' ? legalVersions.health : '—' },
-    { step: 'basics' as const, label: locale === 'fa' ? 'وزن فعلی' : 'Current weight', value: Number.isFinite(weight) && values.weightKg ? `${formatNumber(weight, locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'کیلوگرم' : 'kg'}` : '—' },
+    { step: 'basics' as const, label: locale === 'fa' ? 'مشخصات و اندازه‌ها' : 'Identity and measurements', value: joinDetails(values.firstName, optionLabel('sex', values.sex), values.birthDate ? formatLocalizedDate(values.birthDate, locale) : '—', values.country ? countryName(values.country, locale) : '—', Number.isFinite(weight) && values.weightKg ? `${formatNumber(weight, locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'کیلوگرم' : 'kg'}` : '—', values.heightCm ? `${formatNumber(Number(values.heightCm), locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'سانتی‌متر' : 'cm'}` : '—') },
+    { step: 'goal' as const, label: locale === 'fa' ? 'هدف' : 'Goal', value: joinDetails(optionLabel('goalType', values.goalType), values.targetWeightKg ? `${values.targetWeightKg} kg` : undefined) },
+    { step: 'health' as const, label: locale === 'fa' ? 'غربالگری سلامت' : 'Health screening', value: joinDetails(healthScreeningOutcome(values) === 'eligible' ? (locale === 'fa' ? 'مانع ایمنی ثبت نشده' : 'No safety block') : (locale === 'fa' ? 'نیاز به مسیر انسانی' : 'Human path required'), `${locale === 'fa' ? 'علائم فوری' : 'Urgent symptoms'}: ${yesNo(values.urgentSymptoms)}`, values.medications, values.medicalNotes) },
+    { step: 'food' as const, label: locale === 'fa' ? 'غذا و حساسیت‌ها' : 'Food and allergies', value: joinDetails(optionLabel('dietStyle', values.dietStyle), `${locale === 'fa' ? 'حساسیت' : 'Allergies'}: ${optionList('allergies', values.allergies)}`, values.dislikedFoods ? `${locale === 'fa' ? 'پرهیز' : 'Avoid'}: ${values.dislikedFoods}` : undefined, values.favoriteFoods, mealPattern, `${mealCountLabel} / ${formatNumber(Number(values.preferredOptionCount || 3), locale)} ${locale === 'fa' ? 'گزینه' : 'options'}`, values.cookingConstraints) },
+    { step: 'training' as const, label: locale === 'fa' ? 'برنامه تمرین' : 'Training routine', value: joinDetails(`${values.trainingDays ? formatNumber(Number(values.trainingDays), locale) : formatNumber(0, locale)} ${locale === 'fa' ? 'روز' : 'days'}`, optionLabel('primaryActivity', values.primaryActivity), optionLabel('trainingExperience', values.trainingExperience), optionLabel('trainingLocation', values.trainingLocation), values.trainingDuration ? `${formatNumber(Number(values.trainingDuration), locale)} ${locale === 'fa' ? 'دقیقه' : 'min'}` : undefined, optionList('trainingWeekdays', values.trainingWeekdays), values.trainingStartTime, values.trainingAvailability, values.equipment, values.workSchedule) },
+    { step: 'body' as const, label: locale === 'fa' ? 'اطلاعات بدن' : 'Body details', value: values.bodySkipped === 'yes' ? t('onboarding.skip') : joinDetails(values.bodyReportPath ? (locale === 'fa' ? 'گزارش پیوست شده' : 'Report attached') : undefined, values.bodyFatPercent ? `${values.bodyFatPercent}%` : undefined, values.waistCm ? `${values.waistCm} cm` : undefined) },
+    { step: 'consent' as const, label: locale === 'fa' ? 'رضایت‌ها' : 'Consents', value: values.termsAccepted === 'yes' && values.privacyAccepted === 'yes' && values.healthDataConsent === 'yes' ? (locale === 'fa' ? 'شرایط، حریم خصوصی و رضایت داده‌های سلامت پذیرفته شد' : 'Terms, privacy, and health-data consent accepted') : '—' },
   ]
   return (
     <dl className="review-grid">
       {items.map((item) => (
         <div key={`${item.step}-${item.label}`}>
           <dt>{item.label}</dt>
-          <dd>{item.value}</dd>
-          <Link className="review-grid__edit" href={localizedPath(locale, `/onboarding/${item.step}`)}>{t('onboarding.editSection')}</Link>
+          <dd>
+            <span>{item.value}</span>
+            <Link className="review-grid__edit" href={localizedPath(locale, `/onboarding/${item.step}`)}>{`${t('onboarding.editSection')} ${item.label}`}</Link>
+          </dd>
         </div>
       ))}
     </dl>

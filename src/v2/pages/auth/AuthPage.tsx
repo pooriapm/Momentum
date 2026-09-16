@@ -59,6 +59,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
   const fa = locale === 'fa'
   const verified = Boolean(user?.email_confirmed_at)
   const pendingEmail = user?.email ?? readPendingEmail()
+  const resendEmail = isVerify ? pendingEmail : email.trim() || pendingEmail
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -142,13 +143,12 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
   }
 
   async function handleResend() {
-    const targetEmail = pendingEmail || email
-    if (!targetEmail || cooldown > 0) return
+    if (!resendEmail || cooldown > 0 || loading || !online || !isConfigured) return
     setError('')
     setMessage('')
     setLoading(true)
     try {
-      await resendConfirmation(targetEmail, locale)
+      await resendConfirmation(resendEmail, locale)
       setCooldown(RESEND_COOLDOWN_SECONDS)
       setMessage(t('auth.resendSent'))
     } catch (cause) {
@@ -238,7 +238,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                 />
-                <button className="auth-password-toggle" type="button" aria-label={fa ? 'نمایش رمز عبور' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>
+                <button className="auth-password-toggle" type="button" aria-label={showPassword ? (fa ? 'پنهان کردن رمز عبور' : 'Hide password') : (fa ? 'نمایش رمز عبور' : 'Show password')} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>
                   {showPassword ? <EyeOff aria-hidden="true" size={19} /> : <Eye aria-hidden="true" size={19} />}
                 </button>
                 </div>
@@ -285,7 +285,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
               {needsResend ? (
                 <Button
                   block
-                  disabled={!isConfigured || !online || !(pendingEmail || email) || cooldown > 0}
+                  disabled={!isConfigured || !online || !resendEmail || cooldown > 0 || loading}
                   loading={loading}
                   onClick={() => void handleResend()}
                   type="button"

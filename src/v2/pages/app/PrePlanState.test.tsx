@@ -6,6 +6,7 @@ import { requestPlanGeneration } from '../../onboarding/repository'
 import { PrePlanState } from './PrePlanState'
 import { GENERATION_WAIT_STORAGE_KEY } from './generation-wait'
 import { TODAY_GENERATION_WAIT_MS } from './today-state'
+import { useOnlineStatus } from '../../../platform/pwa/network'
 
 vi.mock('../../onboarding/repository', () => ({
   requestPlanGeneration: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock('../../../platform/pwa/network', () => ({
 }))
 
 const generate = vi.mocked(requestPlanGeneration)
+const online = vi.mocked(useOnlineStatus)
 
 const readyAccount: AccountDashboardView = {
   aiPlanAccess: { reason: 'eligible', state: 'ready' },
@@ -30,6 +32,7 @@ const readyAccount: AccountDashboardView = {
 describe('PrePlanState generation wait', () => {
   beforeEach(() => {
     generate.mockReset()
+    online.mockReturnValue(true)
     sessionStorage.clear()
   })
 
@@ -47,6 +50,7 @@ describe('PrePlanState generation wait', () => {
     render(<PrePlanState account={readyAccount} locale="en" />)
     expect(screen.getByRole('button', { name: /generate plan/i })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /start membership/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /review answers/i })).toHaveAttribute('href', '/en/onboarding/review')
   })
 
   it('TODAY-04 shows the wait screen, 3-minute timeout, and same-job retry', async () => {
@@ -94,12 +98,28 @@ describe('PrePlanState generation wait', () => {
     expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/app/me')
   })
 
-  it('shows D8 payment-method copy on the ready surface and after a 402', async () => {
+  it('lets a managed no-entitlement user explicitly request gift reservation without auto-starting', () => {
+    render(<PrePlanState account={{ ...readyAccount, entitlementStatus: 'none', planSourcePreference: 'momentum' }} locale="en" />)
+    expect(screen.getByText(/gift eligibility and availability are checked/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /generate plan/i })).toBeEnabled()
+    expect(screen.queryByRole('link', { name: /start membership/i })).not.toBeInTheDocument()
+    expect(generate).not.toHaveBeenCalled()
+  })
+
+  it('keeps generation disabled while offline', () => {
+    online.mockReturnValue(false)
+    render(<PrePlanState account={readyAccount} locale="en" />)
+    expect(screen.getByRole('button', { name: /generate plan/i })).toBeDisabled()
+    expect(screen.getByText(/reconnect to generate/i)).toBeInTheDocument()
+    expect(generate).not.toHaveBeenCalled()
+  })
+
+  it('does not request payment details for a reserved gift and shows D8 after a 402', async () => {
     const copy = resources.en.translation.app
     render(<PrePlanState account={readyAccount} locale="en" />)
-    expect(screen.getByText((content) => content.includes(copy.paymentRequiredBody))).toBeInTheDocument()
-    expect(screen.getByText((content) => content.includes(copy.paymentRequiredNote))).toBeInTheDocument()
-    expect(screen.getByText(copy.openMembership).closest('a')).toHaveAttribute('href', '/en/app/me')
+    expect(screen.getByText(/gift is reserved for your account/i)).toBeInTheDocument()
+    expect(screen.queryByText((content) => content.includes(copy.paymentRequiredBody))).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.openMembership)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/card/i)).not.toBeInTheDocument()
 
     generate.mockRejectedValueOnce({ code: 'PAYMENT_METHOD_REQUIRED', status: 402 })

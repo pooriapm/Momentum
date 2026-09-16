@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, Save, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Link, Redirect } from 'wouter'
@@ -15,8 +15,10 @@ import './onboarding.css'
 export function OnboardingResumePage({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
   const { user, status } = useAuth()
+  const queryClient = useQueryClient()
   const [restarting, setRestarting] = useState(false)
   const [restarted, setRestarted] = useState(false)
+  const [restartError, setRestartError] = useState('')
   const draft = useQuery({
     queryKey: ['onboarding-draft', user?.id],
     queryFn: () => loadOnboardingDraft(user!.id),
@@ -28,11 +30,18 @@ export function OnboardingResumePage({ locale }: { locale: AppLocale }) {
   const hasProgress = hasMeaningfulDraft(values)
 
   async function restart() {
-    if (!user) return
+    if (!user || restarting) return
     setRestarting(true)
+    setRestartError('')
     try {
       await deleteOnboardingDraft(user.id)
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] === 'onboarding-unsaved' && query.queryKey[1] === user.id,
+      })
+      queryClient.setQueryData(['onboarding-draft', user.id], { currentStep: 'basics', values: {} })
       setRestarted(true)
+    } catch {
+      setRestartError(fa ? 'شروع دوباره انجام نشد. اتصال را بررسی و دوباره تلاش کن.' : 'We could not restart setup. Check your connection and try again.')
     } finally {
       setRestarting(false)
     }
@@ -69,6 +78,7 @@ export function OnboardingResumePage({ locale }: { locale: AppLocale }) {
           <li><Save size={16} />{fa ? 'هر مرحله ذخیره می‌شود' : 'Each step is saved'}</li>
           <li><ShieldCheck size={16} />{t('onboarding.noMedicalClaim')}</li>
         </ul>
+        {restartError ? <div className="inline-notice inline-notice--error" role="alert">{restartError}</div> : null}
         <div className="onboarding-actions">
           <Button loading={restarting} onClick={() => void restart()} variant="ghost">{t('onboarding.restart')}</Button>
           <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, `/onboarding/${resumeStep}`)}>{t('onboarding.continueSetup')}</Link>

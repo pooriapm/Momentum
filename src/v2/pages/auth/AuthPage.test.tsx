@@ -131,8 +131,9 @@ describe('AuthPage screen states', { timeout: 15_000 }, () => {
     await waitFor(() => expect(screen.getByLabelText('Email')).toHaveFocus())
     fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
     expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text')
+    expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toHaveValue('short')
-    fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Hide password' }))
     expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password')
     expect(auth.signIn).not.toHaveBeenCalled()
   })
@@ -155,6 +156,31 @@ describe('AuthPage screen states', { timeout: 15_000 }, () => {
     expect(await screen.findByText(/This email is not verified yet/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Resend confirmation link' }))
     await waitFor(() => expect(auth.resendConfirmation).toHaveBeenCalledWith('ava@example.com', 'en'))
+  })
+
+  it('resends to the current failed sign-in email instead of stale stored state', async () => {
+    sessionStorage.setItem('momentum.pendingVerificationEmail', 'stale@example.com')
+    const signIn = vi.fn().mockRejectedValue({ code: 'email_not_confirmed', message: 'Email not confirmed' })
+    const auth = createAuth({ signIn })
+    renderAuth('sign-in', auth)
+    fillCredentials('current@example.com')
+    submitNamed('Sign in to Momentum')
+    fireEvent.click(await screen.findByRole('button', { name: 'Resend confirmation link' }))
+    await waitFor(() => expect(auth.resendConfirmation).toHaveBeenCalledWith('current@example.com', 'en'))
+  })
+
+  it('does not resend while offline', async () => {
+    const signIn = vi.fn().mockRejectedValue({ code: 'email_not_confirmed', message: 'Email not confirmed' })
+    const auth = createAuth({ signIn })
+    const view = renderAuth('sign-in', auth)
+    fillCredentials()
+    submitNamed('Sign in to Momentum')
+    expect(await screen.findByRole('button', { name: 'Resend confirmation link' })).toBeInTheDocument()
+    online.mockReturnValue(false)
+    view.rerender(
+      <I18nProvider><AuthContext.Provider value={auth}><AuthPage locale="en" mode="sign-in" /></AuthContext.Provider></I18nProvider>,
+    )
+    expect(screen.getByRole('button', { name: 'Resend confirmation link' })).toBeDisabled()
   })
 
   it('AUTH-06 shows an offline wait instead of a submit action', () => {

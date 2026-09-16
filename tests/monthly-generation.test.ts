@@ -172,7 +172,7 @@ function entitledProfile(userId = 'user-1'): GenerationProfile {
     allergies: [],
     goalId: 'goal-1',
     snapshot: {
-      snapshot_version: 'momentum-profile-snapshot/1.0.0',
+      snapshot_version: 'momentum-profile-snapshot/1.1.0',
       locale: 'en-US',
       timezone: 'UTC',
       country_code: 'US',
@@ -198,10 +198,13 @@ function entitledProfile(userId = 'user-1'): GenerationProfile {
         work_schedule: null,
         budget_tier: 'medium',
         restaurant_meals_per_week: 1,
+        restaurant_preferences: [],
+        grocery_preferences: [],
         cuisine_region: 'iranian',
       },
+      training_profile: { location: null, experience: null },
       training_schedule: [
-        { weekday: 1, activity_type: 'full_body', local_start_time: '18:00', duration_minutes: 40, intensity: 'moderate' },
+        { weekday: 1, activity_type: 'full_body', local_start_time: '18:00', duration_minutes: 40, intensity: 'moderate', availability_note: null },
       ],
       safety: {
         medical_considerations: [],

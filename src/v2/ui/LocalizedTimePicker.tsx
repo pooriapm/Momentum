@@ -1,5 +1,6 @@
 import { Clock } from 'lucide-react'
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { toPersianDigits } from '../../lib/dates/jalali'
 import { RequiredMark } from './FormControls'
@@ -53,7 +54,11 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
     }
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape' && rootRef.current?.contains(document.activeElement)) {
+        event.preventDefault()
+        setOpen(false)
+        rootRef.current.querySelector<HTMLButtonElement>('[role="combobox"]')?.focus()
+      }
     }
     document.addEventListener('mousedown', closeOnOutsideClick)
     document.addEventListener('keydown', closeOnEscape)
@@ -88,6 +93,23 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
     setOpen(true)
   }
 
+  function navigateWheel(event: ReactKeyboardEvent<HTMLButtonElement>, values: number[], currentValue: number, otherValue: number, wheel: 'hour' | 'minute') {
+    const keys = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End']
+    if (!keys.includes(event.key)) return
+    event.preventDefault()
+    const currentIndex = values.indexOf(currentValue)
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? values.length - 1
+        : (currentIndex + (event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1) + values.length) % values.length
+    const nextValue = values[nextIndex]
+    if (wheel === 'hour') commit(nextValue, otherValue)
+    else commit(otherValue, nextValue)
+    const buttons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="option"]')
+    requestAnimationFrame(() => buttons?.[nextIndex]?.focus())
+  }
+
   return (
     <div className={`orbit-field localized-time-field ${error ? 'orbit-field--error' : ''}`} ref={rootRef}>
       <div className="orbit-field__label" id={`${id}-label`}>
@@ -97,7 +119,10 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
       <button
         aria-expanded={open}
         aria-haspopup="dialog"
+        aria-controls={`${id}-dialog`}
+        aria-invalid={Boolean(error)}
         aria-labelledby={`${id}-label ${id}-value`}
+        aria-describedby={error ? `${id}-error` : undefined}
         aria-required={required || undefined}
         className={`localized-date-trigger ${value ? 'has-value' : ''}`}
         id={`${id}-value`}
@@ -110,7 +135,7 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
         <small>{fa ? '۲۴ ساعته' : '24-hour'}</small>
       </button>
       {open ? (
-        <div aria-label={fa ? 'انتخاب‌گر ساعت' : 'Time picker'} className="glass-menu localized-time-popover" role="dialog">
+        <div aria-label={fa ? 'انتخاب‌گر ساعت' : 'Time picker'} className="glass-menu localized-time-popover" id={`${id}-dialog`} role="dialog">
           <div className="localized-time-head">
             <span>{fa ? 'ساعت' : 'Hour'}</span>
             <span />
@@ -124,8 +149,10 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
                   className={item === hour ? 'is-selected' : ''}
                   key={item}
                   onClick={() => commit(item, minute)}
+                  onKeyDown={(event) => navigateWheel(event, HOURS, hour, minute, 'hour')}
                   ref={item === hour ? hourRef : undefined}
                   role="option"
+                  tabIndex={item === hour ? 0 : -1}
                   type="button"
                 >
                   {displayDigits(item, locale)}
@@ -140,8 +167,10 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
                   className={item === minute ? 'is-selected' : ''}
                   key={item}
                   onClick={() => commit(hour, item)}
+                  onKeyDown={(event) => navigateWheel(event, MINUTES, minute, hour, 'minute')}
                   ref={item === minute ? minuteRef : undefined}
                   role="option"
+                  tabIndex={item === minute ? 0 : -1}
                   type="button"
                 >
                   {displayDigits(item, locale)}
@@ -151,6 +180,7 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
           </div>
         </div>
       ) : null}
+      {error ? <span className="orbit-field__error" id={`${id}-error`} role="alert">{error}</span> : null}
     </div>
   )
 }

@@ -18,7 +18,7 @@ export function sanitizeLocalizedNumberInput(
     .replace(/[^0-9.]/g, '')
 
   const sanitized = allowDecimal ? keepOneDecimal(normalized) : (normalized.split('.', 1)[0] ?? '')
-  return maxDigits == null ? sanitized : limitDigitCount(sanitized, maxDigits)
+  return maxDigits == null ? sanitized : limitCappedNumber(sanitized, maxDigits, allowDecimal)
 }
 
 function keepOneDecimal(value: string) {
@@ -26,22 +26,11 @@ function keepOneDecimal(value: string) {
   return decimalParts.length > 0 ? `${whole}.${decimalParts.join('')}` : whole
 }
 
-function limitDigitCount(value: string, maxDigits: number) {
-  let digits = 0
-  let result = ''
-  let hasDot = false
-  for (const char of value) {
-    if (char === '.') {
-      if (hasDot) continue
-      result += '.'
-      hasDot = true
-      continue
-    }
-    if (digits >= maxDigits) continue
-    result += char
-    digits += 1
-  }
-  return result
+function limitCappedNumber(value: string, maxDigits: number, allowDecimal: boolean) {
+  const [whole = '', decimal = ''] = value.split('.')
+  const limitedWhole = whole.slice(0, maxDigits)
+  if (!allowDecimal || !value.includes('.')) return limitedWhole
+  return `${limitedWhole}.${decimal.slice(0, 1)}`
 }
 
 export function parseLocalizedNumber(value: string): number {

@@ -43,7 +43,7 @@ export function suggestedLocaleFromContext(
     : fallback
 }
 
-export async function loadPricingContext(manualCountry?: string): Promise<PricingContext | null> {
+export async function loadPricingContext(manualCountry?: string, signal?: AbortSignal): Promise<PricingContext | null> {
   if (!runtimeConfig.hasSupabase) return null
   const url = new URL(`${runtimeConfig.supabaseUrl}/functions/v1/geo-context`)
   if (manualCountry) url.searchParams.set('country', manualCountry)
@@ -54,6 +54,7 @@ export async function loadPricingContext(manualCountry?: string): Promise<Pricin
       Authorization: `Bearer ${runtimeConfig.supabasePublishableKey}`,
       Accept: 'application/json',
     },
+    signal,
   })
   if (!response.ok) throw new Error('Pricing context unavailable.')
   return pricingContextSchema.parse(await response.json())

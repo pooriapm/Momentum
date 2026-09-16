@@ -13,8 +13,6 @@ import {
 export type HealthScreeningOutcome = 'incomplete' | 'eligible' | 'blocked' | 'urgent'
 
 export function healthScreeningOutcome(values: Record<string, string>): HealthScreeningOutcome {
-  const health = onboardingSections.find((section) => section.key === 'health')!
-  if (Object.keys(validateSection(health, values)).length > 0) return 'incomplete'
   if (values.urgentSymptoms === 'yes') return 'urgent'
   if (
     values.pregnancyOrBreastfeeding === 'yes' ||
@@ -23,6 +21,8 @@ export function healthScreeningOutcome(values: Record<string, string>): HealthSc
   ) {
     return 'blocked'
   }
+  const health = onboardingSections.find((section) => section.key === 'health')!
+  if (Object.keys(validateSection(health, values)).length > 0) return 'incomplete'
   return 'eligible'
 }
 
@@ -133,11 +133,22 @@ function clampPreferredOptionCount(raw: string | undefined) {
 
 export function prepareCompletionValues(values: Record<string, string>) {
   const next = { ...values }
+  if (next.goalType === 'maintenance') delete next.targetWeightKg
   if (next.goalType && next.goalType !== 'maintenance' && !next.targetWeightKg?.trim()) {
     next.targetWeightKg = next.weightKg
   }
   if (next.trainingDays && Number(next.trainingDays) > 0) {
     next.trainingDuration = resolvedTrainingDuration(next)
+  } else if (Number(next.trainingDays) === 0) {
+    ;[
+      'trainingDurationPreset', 'trainingDuration', 'trainingLocation', 'primaryActivity',
+      'trainingExperience', 'trainingWeekdays', 'trainingStartTime', 'trainingAvailability', 'equipment',
+    ].forEach((key) => delete next[key])
+  }
+  if (Number(next.restaurantMealsPerWeek) === 0) delete next.restaurantPreferences
+  if (next.bodySkipped === 'yes') {
+    ;['bodySource', 'bodyFatPercent', 'waistCm', 'bodyReportDate', 'bodyReportPath', 'bodyReportId']
+      .forEach((key) => delete next[key])
   }
   next.requestedMealPattern = composeRequestedMealPattern(next, completionLocale(next))
   next.preferredOptionCount = clampPreferredOptionCount(next.preferredOptionCount)

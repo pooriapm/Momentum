@@ -18,8 +18,8 @@ export const demoPlan: MomentumPlanView = {
   userName: { fa: 'آوا', en: 'Ava' },
   dateLabel: { fa: 'روز قدرت · هفته سوم', en: 'Strength day · Week 3' },
   monthlyPlanBrief: {
-    fa: 'خوابت کمی کمتر از میانگین بود؛ برنامه را نگه داشتم اما بخش پایانی تمرین را کوتاه‌تر کردم.',
-    en: 'Sleep was slightly below your average. I kept the plan but shortened the workout finisher.',
+    fa: 'نمونه یک برنامه ماهانه ترکیبی تمرین و تغذیه با هدف‌های روزانه.',
+    en: 'A sample monthly workout and nutrition plan with daily targets.',
   },
   adjustmentReason: {
     fa: 'هدف امروز بر اساس روز تمرین: ۲۵۰ کالری و ۳۵ گرم کربوهیدرات بیشتر از روز استراحت.',

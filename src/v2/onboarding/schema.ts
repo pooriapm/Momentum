@@ -1,4 +1,5 @@
 import type { AppLocale } from '../../platform/i18n/catalog'
+import { countryCodes } from './countries'
 
 export type OnboardingStepKey = 'basics' | 'health' | 'consent' | 'plan-source' | 'goal' | 'food' | 'training' | 'body' | 'review'
 export type FieldKind = 'text' | 'number' | 'date' | 'time' | 'select' | 'multiselect' | 'textarea' | 'checkbox'
@@ -33,6 +34,7 @@ export interface OnboardingField {
   requiredWhen?: FieldCondition
   selectionCountField?: string
   maxDigits?: number
+  maxLength?: number
   stepper?: boolean
 }
 
@@ -79,7 +81,7 @@ export const onboardingSections: readonly OnboardingSection[] = [
     key: 'basics',
     titleKey: 'onboarding.basics',
     fields: [
-      { key: 'firstName', labelKey: 'onboarding.firstName', kind: 'text', required: true },
+      { key: 'firstName', labelKey: 'onboarding.firstName', kind: 'text', required: true, maxLength: 120 },
       { key: 'birthDate', labelKey: 'onboarding.birthDate', kind: 'date', required: true },
       { key: 'adultConfirmed', labelKey: 'onboarding.adultConfirm', kind: 'select', required: true, options: yesNoOptions },
       { key: 'sex', labelKey: 'onboarding.sex', kind: 'select', required: true, options: [
@@ -134,7 +136,7 @@ export const onboardingSections: readonly OnboardingSection[] = [
         { value: 'muscle_gain', labelKey: 'onboarding.gain' },
         { value: 'maintenance', labelKey: 'onboarding.maintain' },
       ] },
-      { key: 'targetWeightKg', labelKey: 'onboarding.targetWeight', kind: 'number', min: 35, max: 350, step: 0.1, visibleWhen: { field: 'goalType', notEquals: 'maintenance' } },
+      { key: 'targetWeightKg', labelKey: 'onboarding.targetWeight', kind: 'number', min: 35, max: 350, step: 0.1, visibleWhen: { field: 'goalType', oneOf: ['fat_loss', 'muscle_gain'] } },
     ],
   },
   {
@@ -146,7 +148,7 @@ export const onboardingSections: readonly OnboardingSection[] = [
         { value: 'vegetarian', labelKey: 'onboarding.vegetarian' },
       ] },
       { key: 'allergies', labelKey: 'onboarding.allergies', kind: 'multiselect', optionSource: 'allergens', options: ALLERGEN_CATALOG },
-      { key: 'favoriteFoods', labelKey: 'onboarding.favoriteFoods', kind: 'textarea' },
+      { key: 'favoriteFoods', labelKey: 'onboarding.favoriteFoods', kind: 'textarea', maxLength: 4000 },
       { key: 'dislikedFoods', labelKey: 'onboarding.dislikedFoods', kind: 'textarea' },
       { key: 'requestedMealCount', labelKey: 'onboarding.mealCount', kind: 'select', required: true, defaultValue: '3', options: [
         { value: '2', labelKey: 'onboarding.mealCount2' },
@@ -155,15 +157,15 @@ export const onboardingSections: readonly OnboardingSection[] = [
         { value: '5', labelKey: 'onboarding.mealCount5' },
         { value: '6', labelKey: 'onboarding.mealCount6' },
       ] },
-      { key: 'requestedMealPattern', labelKey: 'onboarding.mealPattern', kind: 'textarea' },
+      { key: 'requestedMealPattern', labelKey: 'onboarding.mealPattern', kind: 'textarea', maxLength: 500 },
       { key: 'preferredOptionCount', labelKey: 'onboarding.optionCount', kind: 'number', min: 1, max: 4, step: 1, defaultValue: '3', stepper: true },
-      { key: 'cookingConstraints', labelKey: 'onboarding.cookingConstraints', kind: 'textarea' },
+      { key: 'cookingConstraints', labelKey: 'onboarding.cookingConstraints', kind: 'textarea', maxLength: 4000 },
       { key: 'foodBudget', labelKey: 'onboarding.budget', kind: 'select', options: [
         { value: 'budget', labelKey: 'onboarding.budgetLow' }, { value: 'standard', labelKey: 'onboarding.budgetStandard' }, { value: 'flexible', labelKey: 'onboarding.budgetFlexible' },
       ] },
       { key: 'restaurantMealsPerWeek', labelKey: 'onboarding.restaurantMeals', kind: 'number', min: 0, max: 21, step: 1, defaultValue: '0' },
-      { key: 'restaurantPreferences', labelKey: 'onboarding.restaurantPreferences', kind: 'textarea', visibleWhen: { field: 'restaurantMealsPerWeek', greaterThan: 0 } },
-      { key: 'groceryPreferences', labelKey: 'onboarding.groceryPreferences', kind: 'textarea' },
+      { key: 'restaurantPreferences', labelKey: 'onboarding.restaurantPreferences', kind: 'textarea', maxLength: 4000, visibleWhen: { field: 'restaurantMealsPerWeek', greaterThan: 0 }, requiredWhen: { field: 'restaurantMealsPerWeek', greaterThan: 0 } },
+      { key: 'groceryPreferences', labelKey: 'onboarding.groceryPreferences', kind: 'textarea', maxLength: 4000 },
     ],
   },
   {
@@ -187,7 +189,7 @@ export const onboardingSections: readonly OnboardingSection[] = [
         { value: 'outdoor', labelKey: 'onboarding.locationOutdoor' },
       ], visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
       { key: 'primaryActivity', labelKey: 'onboarding.activity', kind: 'select', options: [
-        { value: 'strength', labelKey: 'onboarding.strength' }, { value: 'crossfit', labelKey: 'onboarding.crossfit' }, { value: 'cardio', labelKey: 'onboarding.cardio' }, { value: 'mixed', labelKey: 'onboarding.mixed' }, { value: 'none', labelKey: 'onboarding.notTraining' },
+        { value: 'strength', labelKey: 'onboarding.strength' }, { value: 'crossfit', labelKey: 'onboarding.crossfit' }, { value: 'cardio', labelKey: 'onboarding.cardio' }, { value: 'mixed', labelKey: 'onboarding.mixed' },
       ], visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
       { key: 'trainingExperience', labelKey: 'onboarding.trainingExperience', kind: 'select', options: [
         { value: 'beginner', labelKey: 'onboarding.beginner' },
@@ -196,9 +198,9 @@ export const onboardingSections: readonly OnboardingSection[] = [
       ], visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
       { key: 'trainingWeekdays', labelKey: 'onboarding.trainingWeekdays', kind: 'multiselect', options: weekdayOptions, visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 }, selectionCountField: 'trainingDays' },
       { key: 'trainingStartTime', labelKey: 'onboarding.trainingStartTime', kind: 'time', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
-      { key: 'trainingAvailability', labelKey: 'onboarding.trainingAvailability', kind: 'textarea', visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
-      { key: 'equipment', labelKey: 'onboarding.equipment', kind: 'textarea', visibleWhen: { field: 'trainingLocation', oneOf: ['home', 'gym'] } },
-      { key: 'workSchedule', labelKey: 'onboarding.schedule', kind: 'textarea', required: true },
+      { key: 'trainingAvailability', labelKey: 'onboarding.trainingAvailability', kind: 'textarea', maxLength: 1000, visibleWhen: { field: 'trainingDays', greaterThan: 0 }, requiredWhen: { field: 'trainingDays', greaterThan: 0 } },
+      { key: 'equipment', labelKey: 'onboarding.equipment', kind: 'textarea', visibleWhen: { field: 'trainingLocation', oneOf: ['home', 'gym'], and: { field: 'trainingDays', greaterThan: 0 } } },
+      { key: 'workSchedule', labelKey: 'onboarding.schedule', kind: 'textarea', required: true, maxLength: 1000 },
     ],
   },
   {
@@ -255,6 +257,8 @@ export const onboardingDefaultValues = Object.fromEntries(
 export function ageFromBirthDate(iso: string, now = new Date()) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null
   const [year, month, day] = iso.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null
   let age = now.getFullYear() - year
   if (now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)) age -= 1
   return age
@@ -280,6 +284,21 @@ function requiredMessage(locale: AppLocale) {
   return locale === 'fa' ? 'تکمیل این فیلد ضروری است.' : 'This field is required.'
 }
 
+function invalidMessage(locale: AppLocale) {
+  return locale === 'fa' ? 'یک مقدار معتبر انتخاب یا وارد کن.' : 'Choose or enter a valid value.'
+}
+
+function localIsoDate(now = new Date()) {
+  return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-')
+}
+
+function isValidIsoDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+}
+
 export function validateSection(section: OnboardingSection, values: Record<string, string>, locale: AppLocale = 'en') {
   const errors: Record<string, string> = {}
   section.fields.forEach((field) => {
@@ -289,9 +308,46 @@ export function validateSection(section: OnboardingSection, values: Record<strin
       errors[field.key] = requiredMessage(locale)
       return
     }
+    if (!value) return
+    if (field.maxLength !== undefined && value.length > field.maxLength) {
+      errors[field.key] = locale === 'fa'
+        ? `حداکثر ${field.maxLength} نویسه وارد کن.`
+        : `Use at most ${field.maxLength} characters.`
+      return
+    }
+    if (field.kind === 'checkbox' && value !== 'yes') {
+      errors[field.key] = requiredMessage(locale)
+      return
+    }
+    if (field.kind === 'select') {
+      const validOption = field.optionSource === 'countries'
+        ? countryCodes.includes(value.toUpperCase()) && value === value.toUpperCase()
+        : !field.options || field.options.some((option) => option.value === value)
+      if (!validOption) {
+        errors[field.key] = invalidMessage(locale)
+        return
+      }
+    }
+    if (field.kind === 'multiselect' && field.options) {
+      const allowed = new Set(field.options.map((option) => option.value))
+      if (selectedValues(value).some((item) => !allowed.has(item))) {
+        errors[field.key] = invalidMessage(locale)
+        return
+      }
+    }
+    if (field.kind === 'time' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+      errors[field.key] = invalidMessage(locale)
+      return
+    }
+    if (field.kind === 'date' && field.key !== 'birthDate' && (!isValidIsoDate(value) || value > localIsoDate())) {
+      errors[field.key] = invalidMessage(locale)
+      return
+    }
     if (field.key === 'birthDate' && value) {
       const age = ageFromBirthDate(value)
-      if (age == null || age < 18) {
+      const oldestAllowed = new Date()
+      oldestAllowed.setFullYear(oldestAllowed.getFullYear() - 100)
+      if (age == null || age < 18 || value < localIsoDate(oldestAllowed)) {
         errors[field.key] = locale === 'fa'
           ? 'تاریخ معتبر وارد کن؛ باید حداقل ۱۸ سال داشته باشی.'
           : 'Enter a valid date; you must be at least 18.'
@@ -306,10 +362,16 @@ export function validateSection(section: OnboardingSection, values: Record<strin
     }
     if (field.kind === 'number' && value) {
       const number = Number(value)
+      const stepBase = field.min ?? 0
+      const offStep = field.step !== undefined && Math.abs((number - stepBase) / field.step - Math.round((number - stepBase) / field.step)) > 1e-9
       if (!Number.isFinite(number) || (field.min !== undefined && number < field.min) || (field.max !== undefined && number > field.max)) {
         errors[field.key] = locale === 'fa'
           ? `عدد باید بین ${field.min ?? '—'} و ${field.max ?? '—'} باشد.`
           : `Use a number between ${field.min ?? '—'} and ${field.max ?? '—'}.`
+      } else if (offStep) {
+        errors[field.key] = locale === 'fa'
+          ? `عدد باید با گام ${field.step} وارد شود.`
+          : `Use increments of ${field.step}.`
       }
     }
     if (field.selectionCountField && value) {
@@ -328,6 +390,19 @@ export function validateSection(section: OnboardingSection, values: Record<strin
       errors.trainingDuration = locale === 'fa'
         ? 'مدت باید بین ۱۵ تا ۱۲۰ دقیقه باشد.'
         : 'Duration must be between 15 and 120 minutes.'
+    }
+  }
+  if (section.key === 'food') {
+    const pattern = values.requestedMealPattern?.trim() ?? ''
+    const count = values.requestedMealCount?.trim() || '3'
+    const label = locale === 'fa' ? `${'۰۱۲۳۴۵۶۷۸۹'[Number(count)]} وعده` : `${count} meals`
+    const composed = !pattern || pattern === label || pattern.startsWith(`${label}.`) || pattern.startsWith(`${label} `)
+      ? (pattern || label)
+      : `${label}. ${pattern}`
+    if (composed.length > 500) {
+      errors.requestedMealPattern = locale === 'fa'
+        ? 'الگوی وعده پس از افزودن تعداد وعده باید حداکثر ۵۰۰ نویسه باشد.'
+        : 'Meal pattern must be at most 500 characters after adding the meal count.'
     }
   }
   return errors

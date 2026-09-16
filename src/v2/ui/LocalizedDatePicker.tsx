@@ -29,6 +29,7 @@ type PickerPanel = 'days' | 'months' | 'years'
 export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 'report', required, value }: LocalizedDatePickerProps) {
   const id = useId()
   const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const selectedYearRef = useRef<HTMLButtonElement>(null)
   const today = todayIso()
   const minIso = purpose === 'birth' ? shiftIsoYears(today, -100) : shiftIsoYears(today, -10)
@@ -61,9 +62,10 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
       }
     }
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && open) {
         setOpen(false)
         setPanel('days')
+        triggerRef.current?.focus()
       }
     }
     document.addEventListener('mousedown', closeOnOutsideClick)
@@ -72,7 +74,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
       document.removeEventListener('mousedown', closeOnOutsideClick)
       document.removeEventListener('keydown', closeOnEscape)
     }
-  }, [])
+  }, [open])
 
   useLayoutEffect(() => {
     if (panel !== 'years') return
@@ -102,6 +104,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
     onChange(isoDate)
     setOpen(false)
     setPanel('days')
+    triggerRef.current?.focus()
   }
 
   return (
@@ -113,11 +116,15 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
       <button
         aria-expanded={open}
         aria-haspopup="dialog"
+        aria-controls={`${id}-dialog`}
+        aria-invalid={Boolean(error)}
         aria-labelledby={`${id}-label ${id}-value`}
+        aria-describedby={error ? `${id}-error` : undefined}
         aria-required={required || undefined}
         className={`localized-date-trigger ${value ? 'has-value' : ''}`}
         id={`${id}-value`}
         onClick={showPicker}
+        ref={triggerRef}
         role="combobox"
         type="button"
       >
@@ -126,13 +133,14 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
         <small>{fa ? 'تقویم هجری شمسی' : 'Gregorian calendar'}</small>
       </button>
       {open ? (
-        <div aria-label={fa ? 'انتخاب‌گر تاریخ' : 'Date picker'} className="glass-menu localized-date-popover" role="dialog">
+        <div aria-label={fa ? 'انتخاب‌گر تاریخ' : 'Date picker'} className="glass-menu localized-date-popover" id={`${id}-dialog`} role="dialog">
           <div className="localized-date-popover__topbar">
             <button aria-label={fa ? 'ماه قبل' : 'Previous month'} onClick={() => moveMonth(-1)} type="button"><ChevronLeft className="directional-icon" size={19} /></button>
             <div>
               <button
                 aria-expanded={panel === 'months'}
                 aria-haspopup="listbox"
+                aria-controls={`${id}-months`}
                 aria-label={fa ? 'ماه' : 'Month'}
                 className={`localized-date-chip${panel === 'months' ? ' is-open' : ''}`}
                 onClick={() => setPanel((current) => current === 'months' ? 'days' : 'months')}
@@ -144,6 +152,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
               <button
                 aria-expanded={panel === 'years'}
                 aria-haspopup="listbox"
+                aria-controls={`${id}-years`}
                 aria-label={fa ? 'سال' : 'Year'}
                 className={`localized-date-chip${panel === 'years' ? ' is-open' : ''}`}
                 onClick={() => setPanel((current) => current === 'years' ? 'days' : 'years')}
@@ -156,7 +165,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
             <button aria-label={fa ? 'ماه بعد' : 'Next month'} onClick={() => moveMonth(1)} type="button"><ChevronRight className="directional-icon" size={19} /></button>
           </div>
           {panel === 'months' ? (
-            <div className="localized-date-choices localized-date-choices--months" role="listbox">
+            <div aria-label={fa ? 'ماه‌ها' : 'Months'} className="localized-date-choices localized-date-choices--months" id={`${id}-months`} role="listbox">
               {months.map((month, index) => (
                 <button
                   aria-selected={viewMonth === index + 1}
@@ -172,7 +181,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
             </div>
           ) : null}
           {panel === 'years' ? (
-            <div className="localized-date-choices localized-date-choices--years" role="listbox">
+            <div aria-label={fa ? 'سال‌ها' : 'Years'} className="localized-date-choices localized-date-choices--years" id={`${id}-years`} role="listbox">
               {years.map((year) => (
                 <button
                   aria-selected={year === viewYear}
@@ -216,7 +225,7 @@ export function LocalizedDatePicker({ error, label, locale, onChange, purpose = 
           ) : null}
         </div>
       ) : null}
-      {error ? <span className="orbit-field__error" role="alert">{error}</span> : null}
+      {error ? <span className="orbit-field__error" id={`${id}-error`} role="alert">{error}</span> : null}
     </div>
   )
 }

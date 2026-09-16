@@ -70,6 +70,14 @@ describe('PricingPage inventory states', () => {
     expect(screen.getByText(/\$14\.99/)).toBeInTheDocument()
   })
 
+  it('does not promise a gift when campaign status is unknown', () => {
+    renderPricing(intlMembershipCatalog, { giftCampaign: 'unknown' })
+    expect(screen.getByText('Subject to gift availability')).toBeInTheDocument()
+    expect(screen.getByText(/availability is checked when you select Generate, before plan creation/i)).toBeInTheDocument()
+    expect(screen.getByText(/confirmed only after a successful reservation/i)).toBeInTheDocument()
+    expect(screen.queryByText('Start the first plan at no charge')).not.toBeInTheDocument()
+  })
+
   it('PUB-10 shows the Iranian gateway and toman without a geo-block', () => {
     const { container } = renderPricing(irMembershipCatalog, { giftCampaign: 'available' })
     expect(container.firstChild).toHaveAttribute('data-inventory', expect.stringContaining('PUB-10'))

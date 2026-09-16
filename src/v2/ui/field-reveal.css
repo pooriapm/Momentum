@@ -1,0 +1,32 @@
+.field-reveal {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  animation: field-reveal-open 320ms ease both;
+}
+
+.field-reveal__clip {
+  min-height: 0;
+  overflow: visible;
+  animation: field-reveal-clip 320ms step-end both;
+}
+
+.field-reveal__content {
+  min-width: 0;
+}
+
+@keyframes field-reveal-open {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@keyframes field-reveal-clip {
+  from { overflow: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-reveal,
+  .field-reveal__clip { animation: none; }
+}

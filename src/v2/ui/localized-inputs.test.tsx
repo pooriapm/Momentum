@@ -14,9 +14,22 @@ describe('localized onboarding inputs', () => {
 
     expect(screen.getByText('۱ فروردین ۱۳۶۹')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('combobox', { name: /تاریخ تولد/ }))
-    expect(screen.getByRole('dialog', { name: 'انتخاب‌گر تاریخ' })).toBeInTheDocument()
+    const trigger = screen.getByRole('combobox', { name: /تاریخ تولد/ })
+    expect(screen.getByRole('dialog', { name: 'انتخاب‌گر تاریخ' })).toHaveAttribute('id', trigger.getAttribute('aria-controls'))
     fireEvent.click(screen.getByRole('button', { name: '۲ فروردین ۱۳۶۹' }))
     expect(onChange).toHaveBeenCalledWith('1990-03-22')
+    expect(screen.getByRole('combobox', { name: /تاریخ تولد/ })).toHaveFocus()
+  })
+
+  it('associates date errors and restores trigger focus after Escape', () => {
+    render(<LocalizedDatePicker error="Choose a valid date" label="Birth date" locale="en" onChange={vi.fn()} purpose="birth" value="1990-03-21" />)
+    const trigger = screen.getByRole('combobox', { name: /Birth date/ })
+    expect(trigger).toHaveAttribute('aria-invalid', 'true')
+    expect(trigger).toHaveAccessibleDescription('Choose a valid date')
+    fireEvent.click(trigger)
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
   })
 
   it('opens an out-of-range birth date at the nearest allowed year', () => {
@@ -51,19 +64,79 @@ describe('localized onboarding inputs', () => {
     expect(onChange).toHaveBeenCalledWith('US')
   })
 
+  it('supports active-descendant country keyboard selection and resets search on Escape', () => {
+    const onChange = vi.fn()
+    render(<CountryCombobox error="Choose a country" label="Country" locale="en" onChange={onChange} value="" />)
+    const input = screen.getByRole('combobox', { name: 'Country' })
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(input).toHaveAccessibleDescription('Choose a country')
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'United' } })
+    const firstActive = input.getAttribute('aria-activedescendant')
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    expect(input.getAttribute('aria-activedescendant')).not.toBe(firstActive)
+    expect(document.getElementById(input.getAttribute('aria-activedescendant')!)).toHaveClass('is-active')
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onChange).toHaveBeenCalledWith('GB')
+
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'Can' } })
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(input).toHaveValue('')
+    expect(input).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('starts country arrow navigation at the first result and closes after focus leaves', () => {
+    render(<><CountryCombobox label="Country" locale="en" onChange={vi.fn()} value="" /><button type="button">Next field</button></>)
+    const input = screen.getByRole('combobox', { name: 'Country' })
+    fireEvent.focus(input)
+    const firstResult = input.getAttribute('aria-activedescendant')
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    expect(input.getAttribute('aria-activedescendant')).toBe(firstResult)
+
+    fireEvent.blur(input, { relatedTarget: screen.getByRole('button', { name: 'Next field' }) })
+    expect(input).toHaveAttribute('aria-expanded', 'false')
+  })
+
   it('opens a 24-hour glass time picker with hours and minutes only', () => {
     const onChange = vi.fn()
     render(<LocalizedTimePicker label="ساعت معمول شروع تمرین" locale="fa" onChange={onChange} value="18:30" />)
 
     expect(screen.getByText('۱۸:۳۰')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('combobox', { name: /ساعت معمول شروع تمرین/ }))
-    expect(screen.getByRole('dialog', { name: 'انتخاب‌گر ساعت' })).toBeInTheDocument()
+    const trigger = screen.getByRole('combobox', { name: /ساعت معمول شروع تمرین/ })
+    expect(screen.getByRole('dialog', { name: 'انتخاب‌گر ساعت' })).toHaveAttribute('id', trigger.getAttribute('aria-controls'))
     expect(screen.queryByText('AM')).not.toBeInTheDocument()
     expect(screen.queryByText('PM')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('option', { name: toPersianDigits('17') }))
     expect(onChange).toHaveBeenCalledWith('17:30')
     fireEvent.click(screen.getByRole('option', { name: toPersianDigits('45') }))
     expect(onChange).toHaveBeenCalledWith('17:45')
+  })
+
+  it('associates time picker errors with its trigger', () => {
+    render(<LocalizedTimePicker error="Choose a time" label="Training time" locale="en" onChange={vi.fn()} value="" />)
+    const trigger = screen.getByRole('combobox', { name: /Training time/ })
+    expect(trigger).toHaveAttribute('aria-invalid', 'true')
+    expect(trigger).toHaveAccessibleDescription('Choose a time')
+  })
+
+  it('uses roving focus for time options and restores the trigger on Escape', () => {
+    const onChange = vi.fn()
+    render(<LocalizedTimePicker label="Training time" locale="en" onChange={onChange} value="18:30" />)
+    const trigger = screen.getByRole('combobox', { name: /Training time/ })
+    fireEvent.click(trigger)
+    const hours = screen.getByRole('listbox', { name: 'Hour' })
+    const selectedHour = screen.getByRole('option', { name: '18' })
+    expect(hours.querySelectorAll('[tabindex="0"]')).toHaveLength(1)
+    expect(screen.getByRole('listbox', { name: 'Minute' }).querySelectorAll('[tabindex="0"]')).toHaveLength(1)
+
+    selectedHour.focus()
+    fireEvent.keyDown(selectedHour, { key: 'ArrowDown' })
+    expect(onChange).toHaveBeenCalledWith('19:30')
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
   })
 
   it('opens a glass menu and returns the selected value', () => {

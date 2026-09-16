@@ -9,10 +9,12 @@ import { useOnlineStatus } from '../../../platform/pwa/network'
 import { loadPricingContext } from '../../data/pricing'
 import {
   completeOnboarding,
+  createStarterPlan,
   deleteOnboardingDraft,
   discardBodyReport,
   loadOnboardingDraft,
   requestPlanGeneration,
+  saveOnboardingBodyMeasurements,
   saveOnboardingDraft,
 } from '../../onboarding/repository'
 import type { OnboardingStepKey } from '../../onboarding/schema'
@@ -32,9 +34,11 @@ vi.mock('../../onboarding/repository', () => ({
   loadOnboardingDraft: vi.fn(),
   saveOnboardingDraft: vi.fn(),
   completeOnboarding: vi.fn(),
+  createStarterPlan: vi.fn(),
   deleteOnboardingDraft: vi.fn(),
   discardBodyReport: vi.fn(),
   requestPlanGeneration: vi.fn(),
+  saveOnboardingBodyMeasurements: vi.fn(),
   uploadBodyReport: vi.fn(),
 }))
 
@@ -42,8 +46,10 @@ const online = vi.mocked(useOnlineStatus)
 const loadDraft = vi.mocked(loadOnboardingDraft)
 const saveDraft = vi.mocked(saveOnboardingDraft)
 const complete = vi.mocked(completeOnboarding)
+const createStarter = vi.mocked(createStarterPlan)
 const generate = vi.mocked(requestPlanGeneration)
 const discardReport = vi.mocked(discardBodyReport)
+const saveBodyMeasurements = vi.mocked(saveOnboardingBodyMeasurements)
 const pricing = vi.mocked(loadPricingContext)
 
 const user = {
@@ -130,6 +136,7 @@ describe('OnboardingPage inventory states', () => {
     saveDraft.mockResolvedValue(undefined)
     discardReport.mockReset()
     discardReport.mockResolvedValue(undefined)
+    saveBodyMeasurements.mockResolvedValue(undefined)
     complete.mockResolvedValue({
       automation_block_reason: null,
       country_code: 'IR',
@@ -185,14 +192,42 @@ describe('OnboardingPage inventory states', () => {
   it('ONB-10 shows a non-medical eligible result after Health screening', async () => {
     renderStep('health')
     expect(await screen.findByText('Your answers do not block automatic planning')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Optional health details' })).toBeInTheDocument()
     expect(screen.getByText(/not medical clearance or diagnosis/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+  })
+
+  it('reveals the matching health path while preserving optional answers across a safety toggle', async () => {
+    renderStep('health', {
+      ...completeDraft,
+      medications: 'Prescription A',
+      medicalNotes: 'Knee sensitivity',
+      supplements: 'Vitamin D',
+    })
+
+    expect(await screen.findByDisplayValue('Prescription A')).toBeInTheDocument()
+    const highRisk = screen.getByLabelText(/diabetes, kidney, liver/i)
+    fireEvent.click(highRisk)
+    fireEvent.click(screen.getByRole('option', { name: 'Yes' }))
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument())
+    expect(screen.getByRole('heading', { name: /automatic planning is unavailable/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'View safety guidance' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByLabelText(/diabetes, kidney, liver/i))
+    fireEvent.click(screen.getByRole('option', { name: 'No' }))
+
+    expect(await screen.findByDisplayValue('Prescription A')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Knee sensitivity')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Vitamin D')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'View safety guidance' })).not.toBeInTheDocument()
   })
 
   it('ONB-11 stops after an automated-plan block and does not continue collection', async () => {
     renderStep('health', { ...completeDraft, highRiskCondition: 'yes' })
     expect(await screen.findByRole('heading', { name: /automatic planning is unavailable/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Save and exit' })).toHaveAttribute('href', '/en/app/today')
+    expect(screen.getByRole('button', { name: 'Save and exit' })).toBeEnabled()
     expect(screen.getByRole('link', { name: 'View safety guidance' })).toHaveAttribute('href', '/en/safety')
     expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument()
     expect(screen.getByText(/not medical care, diagnosis, or treatment/i)).toBeInTheDocument()
@@ -287,7 +322,14 @@ describe('OnboardingPage inventory states', () => {
     renderStep('review', { ...completeDraft, bodySkipped: 'yes', bodyReportPath: '' })
     expect(await screen.findByText('How your plan is created')).toBeInTheDocument()
     expect(screen.getByText('Create my plan')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Edit' })[0]).toHaveAttribute('href', '/en/onboarding/plan-source')
+    expect(screen.getByRole('link', { name: 'Edit How your plan is created' })).toHaveAttribute('href', '/en/onboarding/plan-source')
+    expect(screen.getByText(/Sara · Female · May 18, 1992 · Iran/i)).toBeInTheDocument()
+    expect(screen.getByText(/Allergies: Peanut/i)).toBeInTheDocument()
+    expect(screen.getByText(/3 days · Strength training · Intermediate · Home/i)).toBeInTheDocument()
+    expect(screen.getByText(/3 meals \/ 3 options/i)).toBeInTheDocument()
+    expect(screen.queryByText(/3 meals · 3 meals \/ 3 options/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Terms, privacy, and health-data consent accepted')).toBeInTheDocument()
+    expect(screen.queryByText('2026-08-01-alpha')).not.toBeInTheDocument()
   })
 
   it('changes options per meal only with plus and minus between 1 and 4', async () => {
@@ -333,7 +375,7 @@ describe('OnboardingPage inventory states', () => {
       bodySkipped: '',
     })
     fireEvent.click(await screen.findByRole('button', { name: /remove file/i }))
-    expect(await screen.findByText(/file was not removed/i)).toBeInTheDocument()
+    expect(await screen.findByText(/file removal could not be confirmed/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /remove file/i })).toBeInTheDocument()
     expect(discardReport).toHaveBeenCalledWith(
       user.id,
@@ -342,7 +384,44 @@ describe('OnboardingPage inventory states', () => {
     )
   })
 
+  it('persists safety answers before leaving a stopped health flow', async () => {
+    renderStep('health', { ...completeDraft, highRiskCondition: 'yes' })
+    fireEvent.click(await screen.findByRole('button', { name: 'Save and exit' }))
+    await waitFor(() => expect(saveDraft).toHaveBeenCalledWith(
+      user.id,
+      'health',
+      expect.objectContaining({ highRiskCondition: 'yes' }),
+    ))
+  })
+
+  it('disables body skip and removal while offline', async () => {
+    online.mockReturnValue(false)
+    renderStep('body', {
+      ...completeDraft,
+      bodyReportId: '31313131-3131-4131-8131-313131313131',
+      bodyReportPath: `${user.id}/body-report.pdf`,
+      bodySource: 'report',
+    })
+    expect(await screen.findByRole('button', { name: /remove file/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Skip this step' })).toBeDisabled()
+  })
+
+  it('shows a recoverable error when restart deletion fails', async () => {
+    vi.mocked(deleteOnboardingDraft).mockRejectedValueOnce(new Error('offline'))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    loadDraft.mockResolvedValue({ currentStep: 'food', values: completeDraft })
+    render(
+      <I18nProvider><AuthContext.Provider value={auth}><QueryClientProvider client={client}>
+        <OnboardingResumePage locale="en" />
+      </QueryClientProvider></AuthContext.Provider></I18nProvider>,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'Start over' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not restart setup/i)
+    expect(screen.getByRole('heading', { name: 'Continue where you left off' })).toBeInTheDocument()
+  })
+
   it('ONB-27 and ONB-28 finish into the lifecycle gate without generating a plan', async () => {
+    vi.mocked(deleteOnboardingDraft).mockClear()
     renderStep('review')
     expect(await screen.findByRole('button', { name: 'Confirm and continue' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'One month free' })).toBeInTheDocument()
@@ -356,6 +435,8 @@ describe('OnboardingPage inventory states', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirm and continue' }))
     await waitFor(() => expect(complete).toHaveBeenCalled())
     expect(generate).not.toHaveBeenCalled()
+    expect(createStarter).not.toHaveBeenCalled()
+    expect(deleteOnboardingDraft).not.toHaveBeenCalled()
   })
 
   it('ONB-02 resumes the earliest incomplete step and keeps restart secondary', async () => {
@@ -381,6 +462,35 @@ describe('OnboardingPage inventory states', () => {
     await waitFor(() => expect(client.getQueryData(['onboarding-draft', user.id])).toMatchObject({
       currentStep: 'goal', values: { planSource: 'external' },
     }))
+  })
+
+  it('restores the signed-in user\'s in-memory edits after auth finishes loading', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    client.setQueryData(['onboarding-unsaved', user.id, 'basics'], { firstName: 'Unsaved Sara' })
+    loadDraft.mockResolvedValue({ currentStep: 'basics', values: { ...completeDraft, firstName: 'Saved Sara' } })
+    const loadingAuth = { ...auth, status: 'loading' as const, user: null }
+    const view = render(
+      <I18nProvider>
+        <AuthContext.Provider value={loadingAuth}>
+          <QueryClientProvider client={client}>
+            <OnboardingPage locale="en" step="basics" />
+          </QueryClientProvider>
+        </AuthContext.Provider>
+      </I18nProvider>,
+    )
+
+    view.rerender(
+      <I18nProvider>
+        <AuthContext.Provider value={auth}>
+          <QueryClientProvider client={client}>
+            <OnboardingPage locale="en" step="basics" />
+          </QueryClientProvider>
+        </AuthContext.Provider>
+      </I18nProvider>,
+    )
+
+    expect(await screen.findByDisplayValue('Unsaved Sara')).toBeInTheDocument()
+    expect(client.getQueryData(['onboarding-unsaved', user.id, 'basics'])).toEqual({ firstName: 'Unsaved Sara' })
   })
 
 })

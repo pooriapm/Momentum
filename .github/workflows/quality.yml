@@ -54,6 +54,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Pre-LLM onboarding audit
+        run: npx playwright test --config=playwright.audit.config.ts --timeout=60000
       - name: Public, preview, accessibility, and offline browser matrix
         env:
           R2_AUTHENTICATED_E2E: "0"

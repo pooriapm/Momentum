@@ -1,0 +1,9 @@
+.country-combobox__option.is-active::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.country-combobox__option.is-active {
+  outline: 2px solid color-mix(in srgb, var(--color-brand) 55%, transparent);
+  outline-offset: -2px;
+}

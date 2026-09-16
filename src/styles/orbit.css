@@ -2127,7 +2127,8 @@ legend {
 .schedule-editor > div.is-selected { border-color: color-mix(in srgb, var(--color-brand) 45%, var(--color-border)); }
 .schedule-editor > div > label { align-items: center; cursor: pointer; display: flex; font-size: var(--text-caption, .75rem); gap: .45rem; }
 .schedule-editor > div > label input { accent-color: var(--color-brand); }
-.schedule-editor > div > div { display: grid; gap: .6rem; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .8fr); margin-top: .7rem; }
+.schedule-editor__reveal { min-width: 0; width: 100%; }
+.schedule-editor__fields { display: grid; gap: .6rem; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .8fr); margin-top: .7rem; min-width: 0; }
 .account-settings-consent > div:first-child { align-items: flex-start; display: flex; gap: .7rem; }
 .account-settings-consent > div:first-child > svg { color: var(--color-danger); flex: none; }
 .account-settings-consent h2 { margin: 0; }
@@ -2429,7 +2430,7 @@ legend {
   .page-heading h1 { overflow-wrap: anywhere; }
   .page-heading > .orbit-button { width: 100%; }
   .progress-heading-actions { align-items: stretch; width: 100%; }
-  .account-settings-grid, .schedule-editor > div > div { grid-template-columns: 1fr; }
+  .account-settings-grid, .schedule-editor__fields { grid-template-columns: 1fr; }
   .account-settings-grid .orbit-field:has(textarea) { grid-column: auto; }
   .today-side-stack { grid-template-columns: 1fr; }
   .macro-row { grid-template-columns: repeat(2, 1fr); row-gap: 1rem; }

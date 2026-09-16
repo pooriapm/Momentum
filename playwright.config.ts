@@ -5,6 +5,7 @@ const chromiumLaunchOptions = localChromePath ? { executablePath: localChromePat
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: 'pre-llm-onboarding.spec.ts',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

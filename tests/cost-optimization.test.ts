@@ -251,12 +251,17 @@ describe('cost optimization foundations', () => {
         budget_tier: 'low',
         cooking_constraints: ['under_30_min'],
         favorite_foods: ['عدس'],
+        restaurant_preferences: ['grilled'],
+        grocery_preferences: ['weekly market'],
+        training_location: 'home',
+        training_experience: 'intermediate',
       },
       training: [{
         weekday: 2,
         activity_type: 'strength',
         duration_minutes: 20,
         intensity: 'moderate',
+        notes: 'weekday evenings',
       }],
       health: { medical_considerations: ['knee_sensitivity'], medications: ['x'], supplements: [] },
       cycleIndex: 2,
@@ -268,6 +273,10 @@ describe('cost optimization foundations', () => {
     expect(JSON.stringify(prompt)).not.toMatch(/@|email|display_name/i)
     expect(snapshot.age_years).toBe(31)
     expect(snapshot.safety.medications_present).toBe(true)
+    expect(snapshot.dietary.restaurant_preferences).toEqual(['grilled'])
+    expect(snapshot.dietary.grocery_preferences).toEqual(['weekly market'])
+    expect(snapshot.training_profile).toEqual({ location: 'home', experience: 'intermediate' })
+    expect(snapshot.training_schedule[0]?.availability_note).toBe('weekday evenings')
     expect(snapshot.dietary.allergies).toContain('شیر')
   })
 

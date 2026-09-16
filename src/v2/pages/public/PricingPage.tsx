@@ -71,9 +71,12 @@ export function PricingPage({
     ? (fa
       ? ['هدیه برای کاربران جدید فعلاً بسته است', 'رزروهای قبلی و برنامه‌های ذخیره‌شده باقی می‌مانند']
       : ['New-user gifts are paused for now', 'Earlier reservations and saved plans remain'])
-    : (fa
+    : campaign === 'available' ? (fa
       ? ['برنامه اول را بدون هزینه شروع می‌کنی', 'برای دوره هدیه اطلاعات پرداخت لازم نیست']
       : ['Start the first plan at no charge', 'No payment details are required for the gifted cycle'])
+    : (fa
+      ? ['موجودی با انتخاب «ساخت برنامه»، پیش از ایجاد برنامه بررسی می‌شود', 'هدیه فقط پس از رزرو موفق قطعی است']
+      : ['Availability is checked when you select Generate, before plan creation', 'The gift is confirmed only after a successful reservation'])
 
   return (
     <div className="public-page" data-inventory={ids.join(' ')}>
@@ -122,7 +125,7 @@ export function PricingPage({
               <StatusPill tone={giftUnavailable ? 'neutral' : 'energy'}>{t('pricing.gift')}</StatusPill>
               <Gift className="pricing-card__icon" size={24} />
               <h2>{t('pricing.gift')}</h2>
-              <strong>{giftUnavailable ? (fa ? 'فعلاً برای کاربران جدید بسته است' : 'Paused for new users') : t('pricing.giftPrice')}</strong>
+              <strong>{giftUnavailable ? (fa ? 'فعلاً برای کاربران جدید بسته است' : 'Paused for new users') : campaign === 'available' ? t('pricing.giftPrice') : (fa ? 'وابسته به موجودی هدیه' : 'Subject to gift availability')}</strong>
               <p>{giftUnavailable ? t('pricing.giftUnavailable') : campaign === 'available' ? t('pricing.giftAvailable') : t('pricing.giftReservationNote')}</p>
               <ul>{giftFeatures.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
               {giftUnavailable

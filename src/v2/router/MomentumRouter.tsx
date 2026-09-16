@@ -33,8 +33,9 @@ function withLocale(localeParam: string | undefined, render: (locale: AppLocale)
 }
 
 const appTabs: readonly AppTab[] = ['today', 'plan', 'progress', 'me']
+export const ROOT_LOCALE_LOOKUP_TIMEOUT_MS = 4_000
 
-function RootLocaleRedirect() {
+export function RootLocaleRedirect() {
   const storedLocale = loadUiState().locale
   const [locale, setLocale] = useState<AppLocale | null>(
     hasStoredLocalePreference() ? storedLocale : null,
@@ -43,15 +44,28 @@ function RootLocaleRedirect() {
   useEffect(() => {
     if (locale) return
     let active = true
-    void loadPricingContext()
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => {
+      controller.abort()
+      if (active) setLocale(storedLocale)
+    }, ROOT_LOCALE_LOOKUP_TIMEOUT_MS)
+    void loadPricingContext(undefined, controller.signal)
       .then((context) => {
-        if (active) setLocale(suggestedLocaleFromContext(context, storedLocale))
+        if (active) {
+          window.clearTimeout(timeout)
+          setLocale(suggestedLocaleFromContext(context, storedLocale))
+        }
       })
       .catch(() => {
-        if (active) setLocale(storedLocale)
+        if (active) {
+          window.clearTimeout(timeout)
+          setLocale(storedLocale)
+        }
       })
     return () => {
       active = false
+      window.clearTimeout(timeout)
+      controller.abort()
     }
   }, [locale, storedLocale])
 

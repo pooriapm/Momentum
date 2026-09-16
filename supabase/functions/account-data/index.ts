@@ -1137,7 +1137,7 @@ async function loadExternalPlanContext(
       .eq('user_id', userId).eq('status', 'active').limit(1).maybeSingle(),
     admin.from('dietary_preferences')
       .select(
-        'dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,restaurant_preferences,grocery_preferences,cuisine_region',
+        'dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,restaurant_preferences,grocery_preferences,cuisine_region,training_location,training_experience',
       )
       .eq('user_id', userId).single(),
     admin.from('health_context')

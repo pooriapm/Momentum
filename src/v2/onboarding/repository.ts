@@ -143,6 +143,72 @@ export async function discardBodyReport(userId: string, measurementId: string, p
   if (!Array.isArray(data) || data.length !== 1) throw new Error('body_report_delete_not_confirmed')
 }
 
+export async function saveOnboardingBodyMeasurements(
+  userId: string,
+  flowId: string,
+  values: Record<string, string>,
+) {
+  assertOnline()
+  const client = requireSupabase()
+  const marker = `onboarding-flow:${flowId}`
+  const { data: existing, error: lookupError } = await client
+    .from('body_composition_measurements')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('source_type', 'manual')
+    .eq('extraction_status', 'not_requested')
+    .contains('notes', [marker])
+    .maybeSingle()
+  if (lookupError) throw lookupError
+
+  const bodyFatPercent = values.bodyFatPercent?.trim() ? Number(values.bodyFatPercent) : null
+  const waistCm = values.waistCm?.trim() ? Number(values.waistCm) : null
+  const hasManualValues = values.bodySkipped !== 'yes' && (
+    Number.isFinite(bodyFatPercent) || Number.isFinite(waistCm)
+  )
+
+  if (!hasManualValues) {
+    if (!existing?.id) return
+    const { data, error } = await client
+      .from('body_composition_measurements')
+      .delete()
+      .eq('id', existing.id)
+      .eq('user_id', userId)
+      .select('id')
+    if (error) throw error
+    if (!Array.isArray(data) || data.length !== 1) throw new Error('onboarding_body_delete_not_confirmed')
+    return
+  }
+
+  const measuredAt = values.bodyReportDate
+    ? `${values.bodyReportDate}T12:00:00.000Z`
+    : new Date().toISOString()
+  const measurement = {
+    measured_at: measuredAt,
+    body_fat_percent: Number.isFinite(bodyFatPercent) ? bodyFatPercent : null,
+    waist_cm: Number.isFinite(waistCm) ? waistCm : null,
+    notes: [marker],
+  }
+  if (existing?.id) {
+    const { data, error } = await client
+      .from('body_composition_measurements')
+      .update(measurement)
+      .eq('id', existing.id)
+      .eq('user_id', userId)
+      .select('id')
+    if (error) throw error
+    if (!Array.isArray(data) || data.length !== 1) throw new Error('onboarding_body_update_not_confirmed')
+    return
+  }
+  const { error } = await client.from('body_composition_measurements').insert({
+    user_id: userId,
+    source_type: 'manual',
+    extraction_status: 'not_requested',
+    ...measurement,
+  })
+  if (error) throw error
+}
+
 export async function completeOnboarding(idempotencyKey: string = crypto.randomUUID()) {
   assertOnline()
   const client = requireSupabase()

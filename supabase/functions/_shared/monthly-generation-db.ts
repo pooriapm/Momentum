@@ -94,7 +94,7 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
           'user_id,locale,timezone,country_code,product_region,onboarding_status,automation_block_reason,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,health_data_consent_at,health_consent_version,date_of_birth,sex,height_cm',
         ).eq('user_id', userId).single(),
         admin.from('dietary_preferences').select(
-          'dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,cuisine_region',
+          'dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,restaurant_preferences,grocery_preferences,cuisine_region,training_location,training_experience',
         ).eq('user_id', userId).maybeSingle(),
         admin.from('goals').select(
           'id,goal_type,start_weight_kg,target_weight_kg,target_date',
@@ -103,7 +103,7 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
           'medical_considerations,medications,supplements',
         ).eq('user_id', userId).maybeSingle(),
         admin.from('training_schedule_items').select(
-          'weekday,activity_type,local_start_time,duration_minutes,intensity',
+          'weekday,activity_type,local_start_time,duration_minutes,intensity,notes',
         ).eq('user_id', userId).order('weekday'),
         admin.from('body_composition_measurements').select(
           'measured_at,weight_kg,body_fat_percent,waist_cm,source_type,extraction_status',

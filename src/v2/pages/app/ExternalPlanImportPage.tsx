@@ -13,6 +13,7 @@ import {
   loadExternalPlanContext,
 } from '../../external-plan/external-plan'
 import './external-plan-import.css'
+import { useOnlineStatus } from '../../../platform/pwa/network'
 
 function parsePlan(raw: string): Record<string, unknown> {
   const value: unknown = JSON.parse(raw)
@@ -22,12 +23,14 @@ function parsePlan(raw: string): Record<string, unknown> {
 
 export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
   const fa = locale === 'fa'
+  const online = useOnlineStatus()
   const queryClient = useQueryClient()
   const [, navigate] = useLocation()
   const contextQuery = useQuery({ queryKey: ['external-plan-context'], queryFn: loadExternalPlanContext })
   const prompt = useMemo(() => contextQuery.data ? buildExternalPlanPrompt(contextQuery.data) : '', [contextQuery.data])
   const [disclosureAccepted, setDisclosureAccepted] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [copiedPrompt, setCopiedPrompt] = useState('')
+  const [copyErrorPrompt, setCopyErrorPrompt] = useState('')
   const [rawPlan, setRawPlan] = useState('')
   const fileReadVersion = useRef(0)
   const [sourceKind, setSourceKind] = useState<'external_ai' | 'existing_plan'>('external_ai')
@@ -49,10 +52,19 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
     }
   }, [rawPlan])
 
+  const copied = disclosureAccepted && copiedPrompt === prompt
+  const copyError = disclosureAccepted && copyErrorPrompt === prompt
+
   async function copyPrompt() {
     if (!disclosureAccepted || !prompt) return
-    await navigator.clipboard.writeText(prompt)
-    setCopied(true)
+    setCopyErrorPrompt('')
+    try {
+      await navigator.clipboard.writeText(prompt)
+      setCopiedPrompt(prompt)
+    } catch {
+      setCopiedPrompt('')
+      setCopyErrorPrompt(prompt)
+    }
   }
 
   async function readFile(event: ChangeEvent<HTMLInputElement>) {
@@ -80,7 +92,12 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
   }
 
   async function savePlan() {
+    if (saving) return
     setError('')
+    if (!online) {
+      setError(fa ? 'برای واردکردن برنامه دوباره آنلاین شو.' : 'Reconnect to import the plan.')
+      return
+    }
     if (!preview) {
       setError(fa ? 'فایل JSON معتبر انتخاب کن.' : 'Choose a valid JSON object first.')
       return
@@ -125,19 +142,20 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
               <h2>{fa ? 'پرامپت آماده را کپی کن' : 'Copy the ready prompt'}</h2>
               <p>{fa ? 'آن را در هر ابزار هوش مصنوعی سازگار که خودت انتخاب می‌کنی اجرا کن. Momentum هیچ درخواستی برای آن ابزار ارسال نمی‌کند.' : 'Run it in any compatible AI tool you choose. Momentum never sends a request to that tool.'}</p>
               <label className="external-plan-disclosure">
-                <input checked={disclosureAccepted} onChange={(event) => setDisclosureAccepted(event.target.checked)} type="checkbox" />
+                <input checked={disclosureAccepted} onChange={(event) => { setDisclosureAccepted(event.target.checked); setCopiedPrompt(''); setCopyErrorPrompt('') }} type="checkbox" />
                 <span>{fa ? 'می‌دانم با کپی‌کردن، اطلاعات پروفایل و سلامت داخل پرامپت از Momentum خارج می‌شود و تابع سیاست حریم خصوصی ابزار انتخابی من است.' : 'I understand that copying moves profile and health information outside Momentum, where my chosen provider’s privacy policy applies.'}</span>
               </label>
-              <Button disabled={!disclosureAccepted} onClick={() => void copyPrompt()}>{copied ? <CheckCircle2 size={18} /> : <Clipboard size={18} />}{copied ? (fa ? 'کپی شد' : 'Copied') : (fa ? 'کپی پرامپت' : 'Copy prompt')}</Button>
+              {copyError ? <div className="inline-notice inline-notice--error" role="alert">{fa ? 'کپی خودکار انجام نشد. دسترسی کلیپ‌بورد را فعال کن و دوباره تلاش کن.' : 'The prompt could not be copied. Allow clipboard access and try again.'}</div> : null}
+              <Button disabled={!disclosureAccepted || saving} onClick={() => void copyPrompt()}>{copied ? <CheckCircle2 size={18} /> : <Clipboard size={18} />}{copied ? (fa ? 'کپی شد' : 'Copied') : (fa ? 'کپی پرامپت' : 'Copy prompt')}</Button>
             </ContentCard>
 
             <ContentCard className="external-plan-step">
               <span className="external-plan-step__number">2</span>
               <FileJson2 size={26} />
               <h2>{fa ? 'فایل JSON را بررسی کن' : 'Preview the JSON file'}</h2>
-              <div className="external-plan-source" role="radiogroup" aria-label={fa ? 'منبع برنامه' : 'Plan source'}>
-                <button aria-pressed={sourceKind === 'external_ai'} onClick={() => setSourceKind('external_ai')} type="button">{fa ? 'ساخته‌شده با ابزار بیرونی' : 'Created with an external tool'}</button>
-                <button aria-pressed={sourceKind === 'existing_plan'} onClick={() => setSourceKind('existing_plan')} type="button">{fa ? 'برنامه موجود' : 'Existing plan'}</button>
+              <div className="external-plan-source" role="group" aria-label={fa ? 'منبع برنامه' : 'Plan source'}>
+                <button aria-pressed={sourceKind === 'external_ai'} disabled={saving} onClick={() => setSourceKind('external_ai')} type="button">{fa ? 'ساخته‌شده با ابزار بیرونی' : 'Created with an external tool'}</button>
+                <button aria-pressed={sourceKind === 'existing_plan'} disabled={saving} onClick={() => setSourceKind('existing_plan')} type="button">{fa ? 'برنامه موجود' : 'Existing plan'}</button>
               </div>
               <label className="external-plan-file">
                 <Import size={22} />
@@ -153,7 +171,7 @@ export function ExternalPlanImportPage({ locale }: { locale: AppLocale }) {
                 </div>
               ) : null}
               {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
-              {!complete ? <Button disabled={!preview || saving} onClick={() => void savePlan()}>{saving ? (fa ? 'در حال بررسی…' : 'Validating…') : (fa ? 'بررسی و واردکردن' : 'Validate and import')}</Button> : null}
+              {!complete ? <Button disabled={!preview || saving || !online} onClick={() => void savePlan()}>{saving ? (fa ? 'در حال بررسی…' : 'Validating…') : (fa ? 'بررسی و واردکردن' : 'Validate and import')}</Button> : null}
               {complete ? (
                 <div className="external-plan-success" role="status">
                   <CheckCircle2 size={28} /><strong>{fa ? 'برنامه با موفقیت وارد شد' : 'Plan imported successfully'}</strong>

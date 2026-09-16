@@ -1,11 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { intlMembershipCatalog, irMembershipCatalog } from '../entitlement'
 import {
   formatPrice,
   giftCampaignFromContext,
   membershipPriceFromContext,
   suggestedLocaleFromContext,
+  loadPricingContext,
 } from './pricing'
+
+afterEach(() => vi.unstubAllGlobals())
 
 describe('pricing catalog helpers', () => {
   it('reads the single membership SKU and does not invent a price', () => {
@@ -26,5 +29,15 @@ describe('pricing catalog helpers', () => {
       suggested_locale: 'fa-IR',
     }, 'en')).toBe('fa')
     expect(suggestedLocaleFromContext(null, 'en')).toBe('en')
+  })
+
+  it('passes cancellation through to the geo request', async () => {
+    const controller = new AbortController()
+    const fetchMock = vi.fn().mockRejectedValue(new DOMException('Aborted', 'AbortError'))
+    vi.stubGlobal('fetch', fetchMock)
+    const request = loadPricingContext(undefined, controller.signal)
+    controller.abort()
+    await expect(request).rejects.toMatchObject({ name: 'AbortError' })
+    expect(fetchMock).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ signal: controller.signal }))
   })
 })

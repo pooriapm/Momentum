@@ -26,6 +26,8 @@ describe('localized number input', () => {
     expect(sanitizeLocalizedNumberInput('۱۷۰', true, 3)).toBe('170')
     expect(sanitizeLocalizedNumberInput('1680', true, 3)).toBe('168')
     expect(sanitizeLocalizedNumberInput('۷۲٫۴۵', true, 3)).toBe('72.4')
+    expect(sanitizeLocalizedNumberInput('175.5', true, 3)).toBe('175.5')
+    expect(sanitizeLocalizedNumberInput('۱۲۰٫۵', true, 3)).toBe('120.5')
     expect(sanitizeLocalizedNumberInput('3501', true, 3)).toBe('350')
   })
 })

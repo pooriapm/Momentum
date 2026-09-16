@@ -36,6 +36,7 @@ import {
 import { countryName } from "../../onboarding/countries";
 import { localizedPath } from "../../router/route-utils";
 import { Input, Select, Textarea } from "../../ui/FormControls";
+import { FieldReveal } from "../../ui/FieldReveal";
 import { LocalizedTimePicker } from "../../ui/LocalizedTimePicker";
 import { Button, ContentCard, StatusPill } from "../../ui/primitives";
 import {
@@ -719,61 +720,65 @@ export function AccountSettingsPage({
                     />
                     <strong>{fa ? day.fa : day.en}</strong>
                   </label>
-                  {item ? (
-                    <div>
-                      <Select
-                        label={fa ? "نوع" : "Type"}
-                        onChange={(e) =>
-                          updateDay(day.value, {
-                            activityType: e.target
-                              .value as typeof item.activityType,
-                          })
-                        }
-                        required
-                        value={item.activityType}
-                      >
-                        <option value="strength">
-                          {fa ? "قدرتی" : "Strength"}
-                        </option>
-                        <option value="crossfit">CrossFit</option>
-                        <option value="full_body">
-                          {fa ? "ترکیبی" : "Full body"}
-                        </option>
-                        <option value="cardio">
-                          {fa ? "هوازی" : "Cardio"}
-                        </option>
-                        <option value="walk">
-                          {fa ? "پیاده‌روی" : "Walk"}
-                        </option>
-                        <option value="mobility">
-                          {fa ? "موبیلیتی" : "Mobility"}
-                        </option>
-                        <option value="other">{fa ? "سایر" : "Other"}</option>
-                      </Select>
-                      <LocalizedTimePicker
-                        label={fa ? "شروع" : "Start"}
-                        locale={locale}
-                        onChange={(value) =>
-                          updateDay(day.value, { localStartTime: value })
-                        }
-                        required
-                        value={item.localStartTime}
-                      />
-                      <Input
-                        label={fa ? "دقیقه" : "Minutes"}
-                        max={300}
-                        min={10}
-                        onChange={(e) =>
-                          updateDay(day.value, {
-                            durationMinutes: Number(e.target.value),
-                          })
-                        }
-                        required
-                        type="number"
-                        value={item.durationMinutes}
-                      />
-                    </div>
-                  ) : null}
+                  <FieldReveal className="schedule-editor__reveal" open={Boolean(item)}>
+                    {item ? (
+                      <div className="schedule-editor__fields">
+                        <Select
+                          label={fa ? "نوع" : "Type"}
+                          onChange={(e) =>
+                            updateDay(day.value, {
+                              activityType: e.target
+                                .value as typeof item.activityType,
+                            })
+                          }
+                          required
+                          value={item.activityType}
+                        >
+                          <option value="strength">
+                            {fa ? "قدرتی" : "Strength"}
+                          </option>
+                          <option value="crossfit">CrossFit</option>
+                          <option value="full_body">
+                            {fa ? "ترکیبی" : "Full body"}
+                          </option>
+                          <option value="cardio">
+                            {fa ? "هوازی" : "Cardio"}
+                          </option>
+                          <option value="walk">
+                            {fa ? "پیاده‌روی" : "Walk"}
+                          </option>
+                          <option value="mobility">
+                            {fa ? "موبیلیتی" : "Mobility"}
+                          </option>
+                          <option value="other">
+                            {fa ? "سایر" : "Other"}
+                          </option>
+                        </Select>
+                        <LocalizedTimePicker
+                          label={fa ? "شروع" : "Start"}
+                          locale={locale}
+                          onChange={(value) =>
+                            updateDay(day.value, { localStartTime: value })
+                          }
+                          required
+                          value={item.localStartTime}
+                        />
+                        <Input
+                          label={fa ? "دقیقه" : "Minutes"}
+                          max={300}
+                          min={10}
+                          onChange={(e) =>
+                            updateDay(day.value, {
+                              durationMinutes: Number(e.target.value),
+                            })
+                          }
+                          required
+                          type="number"
+                          value={item.durationMinutes}
+                        />
+                      </div>
+                    ) : null}
+                  </FieldReveal>
                 </div>
               );
             })}

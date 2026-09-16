@@ -8,6 +8,7 @@ import {
 } from '../checkins/contracts'
 import { formatNumber } from '../lib/format'
 import { RequiredMark, Select, Textarea } from '../ui/FormControls'
+import { FieldReveal } from '../ui/FieldReveal'
 import { Button } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
 import { useModalDismiss } from './use-modal-dismiss'
@@ -122,7 +123,9 @@ export function WeeklyCheckInSheet({
           <Select label={fa ? 'تغییر وضعیت سلامتی' : 'Health condition change'} onChange={(event) => setConditionChange(event.target.value as WeeklyCheckInInput['conditionChange'])} required value={conditionChange}><option value="none">{fa ? 'بدون تغییر' : 'No change'}</option><option value="new_condition">{fa ? 'شرایط یا تشخیص جدید' : 'New condition or diagnosis'}</option><option value="medication_change">{fa ? 'تغییر دارو' : 'Medication change'}</option><option value="injury_or_worsening_pain">{fa ? 'آسیب یا درد رو به بدترشدن' : 'Injury or worsening pain'}</option><option value="other">{fa ? 'تغییر دیگر' : 'Other change'}</option></Select>
         </div>
         <label className="weekly-change-toggle"><input checked={circumstancesChanged} onChange={(event) => setCircumstancesChanged(event.target.checked)} type="checkbox" /><span><strong>{fa ? 'شرایط زندگی یا برنامه‌ام تغییر کرده' : 'My circumstances or schedule changed'}</strong><small>{fa ? 'مثل سفر، شیفت کاری، استرس یا دسترسی به غذا و باشگاه' : 'For example travel, work shifts, stress, or access to food and training'}</small></span></label>
-        {circumstancesChanged || conditionChange !== 'none' ? <Textarea label={fa ? 'چه چیزی تغییر کرده؟' : 'What changed?'} maxLength={2000} onChange={(event) => setChangeNotes(event.target.value)} required rows={3} value={changeNotes} /> : null}
+        <FieldReveal open={circumstancesChanged || conditionChange !== 'none'}>
+          <Textarea label={fa ? 'چه چیزی تغییر کرده؟' : 'What changed?'} maxLength={2000} onChange={(event) => setChangeNotes(event.target.value)} required rows={3} value={changeNotes} />
+        </FieldReveal>
         <fieldset className="check-in-red-flags">
           <legend>{fa ? 'آیا همین حالا یکی از این علائم را داری؟' : 'Are you experiencing any of these symptoms now?'}</legend>
           <p>{fa ? 'اگر بله، تمرین را شروع نکن یا ادامه نده.' : 'If yes, do not start or continue training.'}</p>
