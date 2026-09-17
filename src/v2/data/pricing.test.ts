@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { intlMembershipCatalog, irMembershipCatalog } from '../entitlement'
+
+vi.mock('../../platform/config/runtime', () => ({
+  runtimeConfig: {
+    hasSupabase: true,
+    supabaseUrl: 'https://mock.test',
+    supabasePublishableKey: 'test-public-key',
+  },
+}))
+
 import {
   formatPrice,
   giftCampaignFromContext,
