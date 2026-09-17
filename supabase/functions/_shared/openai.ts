@@ -33,16 +33,20 @@ function reportedTier(value: unknown): ServiceTier {
 
 function tokenCount(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
-    ? Math.floor(value) : undefined
+    ? Math.floor(value)
+    : undefined
 }
 
 function reportedUsage(payload: Record<string, unknown>): ProviderUsage {
   const usage = payload.usage && typeof payload.usage === 'object'
-    ? payload.usage as Record<string, unknown> : {}
+    ? payload.usage as Record<string, unknown>
+    : {}
   const input = usage.input_tokens_details && typeof usage.input_tokens_details === 'object'
-    ? usage.input_tokens_details as Record<string, unknown> : {}
+    ? usage.input_tokens_details as Record<string, unknown>
+    : {}
   const output = usage.output_tokens_details && typeof usage.output_tokens_details === 'object'
-    ? usage.output_tokens_details as Record<string, unknown> : {}
+    ? usage.output_tokens_details as Record<string, unknown>
+    : {}
   return {
     inputTokens: tokenCount(usage.input_tokens),
     outputTokens: tokenCount(usage.output_tokens),
@@ -79,7 +83,11 @@ export async function createStructuredResponse<T>(_options: {
   serviceTier?: 'standard' | 'batch' | 'flex'
 }): Promise<StructuredResponse<T>> {
   if (_options.serviceTier === 'batch') {
-    throw new HttpError(503, 'BATCH_NOT_IMPLEMENTED', 'Batch requires a durable Batch API worker; synchronous generation cannot use it.')
+    throw new HttpError(
+      503,
+      'BATCH_NOT_IMPLEMENTED',
+      'Batch requires a durable Batch API worker; synchronous generation cannot use it.',
+    )
   }
   assertLiveOpenAiEnabled()
   const apiKey = requiredEnv('OPENAI_API_KEY')
@@ -166,7 +174,11 @@ export async function createStructuredResponse<T>(_options: {
     serviceTier: reportedTier(payload.service_tier),
   }
   if (payload.status && payload.status !== 'completed') {
-    throw new ProviderResponseError('OPENAI_INCOMPLETE_OUTPUT', 'The plan provider did not complete its output.', metadata)
+    throw new ProviderResponseError(
+      'OPENAI_INCOMPLETE_OUTPUT',
+      'The plan provider did not complete its output.',
+      metadata,
+    )
   }
   const output = Array.isArray(payload.output) ? payload.output : []
   const text = typeof payload.output_text === 'string'
@@ -181,14 +193,27 @@ export async function createStructuredResponse<T>(_options: {
         .map((part) => String(part.text))
     }).join('')
   if (!text) {
-    throw new ProviderResponseError('OPENAI_EMPTY_OUTPUT', 'The plan provider returned no usable output.', metadata)
+    throw new ProviderResponseError(
+      'OPENAI_EMPTY_OUTPUT',
+      'The plan provider returned no usable output.',
+      metadata,
+    )
   }
 
   let parsed: T
   try {
     parsed = JSON.parse(text) as T
   } catch {
-    throw new ProviderResponseError('OPENAI_MALFORMED_OUTPUT', 'The plan provider returned malformed output.', metadata)
+    throw new ProviderResponseError(
+      'OPENAI_MALFORMED_OUTPUT',
+      'The plan provider returned malformed output.',
+      metadata,
+    )
   }
-  return { id: metadata.providerResponseId, parsed, usage: metadata.usage, serviceTier: metadata.serviceTier }
+  return {
+    id: metadata.providerResponseId,
+    parsed,
+    usage: metadata.usage,
+    serviceTier: metadata.serviceTier,
+  }
 }

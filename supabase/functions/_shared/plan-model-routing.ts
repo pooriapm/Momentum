@@ -50,9 +50,7 @@ export function resolvePlanModelRoute(input: {
   }
 
   // Configured OPENAI_PLAN_MODEL always wins for ops control; do not auto-switch.
-  const modelId = configured && configured.trim()
-    ? configured.trim()
-    : DEFAULT_MODEL_IDS[route]
+  const modelId = configured && configured.trim() ? configured.trim() : DEFAULT_MODEL_IDS[route]
 
   if (configured) {
     reason = `Explicit OPENAI_PLAN_MODEL=${configured}.`
@@ -80,7 +78,11 @@ export function resolveAsyncServiceTier(isRenewal: boolean): ServiceTierRoute {
   if (!enabled) return 'standard'
   const tier = enumEnv('AI_PLAN_ASYNC_SERVICE_TIER', ['batch', 'flex'] as const) ?? 'flex'
   if (tier === 'batch') {
-    throw new HttpError(503, 'BATCH_NOT_IMPLEMENTED', 'Batch renewal processing requires a durable worker and is not available yet.')
+    throw new HttpError(
+      503,
+      'BATCH_NOT_IMPLEMENTED',
+      'Batch renewal processing requires a durable worker and is not available yet.',
+    )
   }
   // Flex is a synchronous Responses tier, not a durable asynchronous job.
   return 'flex'

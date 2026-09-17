@@ -184,7 +184,11 @@ export function tomanDisplayToIrrMinor(toman: number): number {
 
 export function assertSandboxLivemode(livemode: boolean): void {
   if (livemode) {
-    throw new HttpError(409, 'PAYMENT_LIVEMODE_MISMATCH', 'Sandbox adapters reject live payment events.')
+    throw new HttpError(
+      409,
+      'PAYMENT_LIVEMODE_MISMATCH',
+      'Sandbox adapters reject live payment events.',
+    )
   }
 }
 
@@ -231,10 +235,16 @@ export class StripeSandboxAdapter implements PaymentProviderAdapter {
 
   constructor(private readonly webhookSecret: string) {
     if (!webhookSecret.trim()) {
-      throw new HttpError(503, 'PAYMENT_PROVIDER_UNCONFIGURED', 'Stripe sandbox webhook secret is missing.')
+      throw new HttpError(
+        503,
+        'PAYMENT_PROVIDER_UNCONFIGURED',
+        'Stripe sandbox webhook secret is missing.',
+      )
     }
   }
 
+  // Keep adapter validation failures asynchronous as required by the interface contract.
+  // deno-lint-ignore require-await
   async verifyAndNormalize(rawBody: Uint8Array, headers: Headers): Promise<NormalizedPaymentEvent> {
     const signature = headers.get('stripe-signature') ?? headers.get('Stripe-Signature')
     if (!signature || !signature.includes(this.webhookSecret)) {
@@ -246,15 +256,16 @@ export class StripeSandboxAdapter implements PaymentProviderAdapter {
     const dataObject = (body.data && typeof body.data === 'object' && !Array.isArray(body.data))
       ? body.data as Record<string, unknown>
       : {}
-    const object = (dataObject.object && typeof dataObject.object === 'object' && !Array.isArray(dataObject.object))
+    const object = (dataObject.object && typeof dataObject.object === 'object' &&
+        !Array.isArray(dataObject.object))
       ? dataObject.object as Record<string, unknown>
       : {}
     const eventType = mapStripeEventType(String(body.type ?? ''))
     const amountMinor = typeof object.amount_paid === 'number'
       ? object.amount_paid
       : typeof object.amount === 'number'
-        ? object.amount
-        : null
+      ? object.amount
+      : null
     const currency = typeof object.currency === 'string' ? object.currency.toUpperCase() : 'USD'
     const event: NormalizedPaymentEvent = {
       schemaVersion: '1.0.0',
@@ -305,10 +316,16 @@ export class ZarinpalSandboxAdapter implements PaymentProviderAdapter {
 
   constructor(private readonly merchantId: string) {
     if (!merchantId.trim()) {
-      throw new HttpError(503, 'PAYMENT_PROVIDER_UNCONFIGURED', 'Zarinpal sandbox merchant id is missing.')
+      throw new HttpError(
+        503,
+        'PAYMENT_PROVIDER_UNCONFIGURED',
+        'Zarinpal sandbox merchant id is missing.',
+      )
     }
   }
 
+  // Keep adapter validation failures asynchronous as required by the interface contract.
+  // deno-lint-ignore require-await
   async verifyAndNormalize(rawBody: Uint8Array, headers: Headers): Promise<NormalizedPaymentEvent> {
     void headers
     const body = parseJsonBody(rawBody)
@@ -329,10 +346,10 @@ export class ZarinpalSandboxAdapter implements PaymentProviderAdapter {
     const eventType: PaymentEventType = status === 'OK' || status === 'paid'
       ? 'checkout_completed'
       : status === 'NOK' || status === 'failed'
-        ? 'invoice_failed'
-        : (() => {
-          throw new HttpError(422, 'PAYMENT_EVENT_UNSUPPORTED', 'Zarinpal status is unsupported.')
-        })()
+      ? 'invoice_failed'
+      : (() => {
+        throw new HttpError(422, 'PAYMENT_EVENT_UNSUPPORTED', 'Zarinpal status is unsupported.')
+      })()
     const amountToman = Number(body.amount ?? body.Amount ?? 0)
     const amountMinor = tomanDisplayToIrrMinor(amountToman)
     const event: NormalizedPaymentEvent = {

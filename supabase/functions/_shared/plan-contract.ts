@@ -570,7 +570,11 @@ function assertCatalogOption(
     for (const ingredient of option.ingredients as Record<string, unknown>[]) {
       const portion = food.ingredientPortions.get(String(ingredient.ingredient_id))
       if (!portion || Math.abs(Number(ingredient.amount) - portion.amount * multiplier) > 0.001) {
-        throw new HttpError(502, 'catalog_food_modified', 'Catalog ingredient portion was modified.')
+        throw new HttpError(
+          502,
+          'catalog_food_modified',
+          'Catalog ingredient portion was modified.',
+        )
       }
     }
   }
@@ -787,10 +791,16 @@ export function assertGeneratedPlan(
     throw new HttpError(502, 'invalid_plan_output', 'Restaurant estimates are missing.')
   }
   for (const guide of value.restaurant_guide) {
-    if (!isRecord(guide)) throw new HttpError(502, 'invalid_plan_output', 'Invalid restaurant guide.')
+    if (!isRecord(guide)) {
+      throw new HttpError(502, 'invalid_plan_output', 'Invalid restaurant guide.')
+    }
     assertNutrition(guide.estimated_nutrition)
     if ((guide.estimated_nutrition as Record<string, unknown>).source !== 'model_estimate') {
-      throw new HttpError(502, 'invalid_plan_output', 'Unreferenced restaurant estimates cannot claim catalog provenance.')
+      throw new HttpError(
+        502,
+        'invalid_plan_output',
+        'Unreferenced restaurant estimates cannot claim catalog provenance.',
+      )
     }
   }
 

@@ -168,12 +168,14 @@ export function passesLunaQualityGate(evidence: unknown, expected: {
 }): evidence is QualityEvidence {
   if (!evidence || typeof evidence !== 'object') return false
   const e = evidence as QualityEvidence
-  if (e.evalSetVersion !== EVAL_SET_VERSION || e.mode !== 'live' || e.approved !== true ||
+  if (
+    e.evalSetVersion !== EVAL_SET_VERSION || e.mode !== 'live' || e.approved !== true ||
     e.promptVersion !== expected.promptVersion || e.schemaVersion !== expected.schemaVersion ||
     e.catalogReleaseId !== expected.catalogReleaseId || !e.reviewedBy?.trim() ||
     !Number.isFinite(Date.parse(e.reviewedAt)) || !Array.isArray(e.casesCovered) ||
-    !EVAL_CASES.every(c => e.casesCovered.includes(c.id))) return false
-  return ['gpt-5.6-terra', 'gpt-5.6-luna'].every(id => {
+    !EVAL_CASES.every((c) => e.casesCovered.includes(c.id))
+  ) return false
+  return ['gpt-5.6-terra', 'gpt-5.6-luna'].every((id) => {
     const m = e.models?.[id]
     return m && m.samples >= ACCEPTANCE_CRITERIA.minSamplePerModel &&
       m.hardConstraintCompliance === 1 && m.nutritionArithmeticPassRate === 1 &&

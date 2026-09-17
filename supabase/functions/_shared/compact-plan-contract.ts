@@ -3,10 +3,10 @@ import { HttpError } from './http.ts'
 import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 import {
+  aggregateGroceryList,
   assembleExercise,
   assembleMealOption,
   assembleNutritionFromFoods,
-  aggregateGroceryList,
 } from './plan-assembly.ts'
 
 export const COMPACT_SCHEMA_VERSION = '1.1.0-compact'
@@ -195,7 +195,10 @@ export const compactPlanJsonSchema: Record<string, unknown> = {
             maxItems: 6,
             items: {
               type: 'object',
-              properties: { meal_def_id: { type: 'string' }, multiplier: { type: 'number', minimum: 0.25, maximum: 4 } },
+              properties: {
+                meal_def_id: { type: 'string' },
+                multiplier: { type: 'number', minimum: 0.25, maximum: 4 },
+              },
               required: ['meal_def_id', 'multiplier'],
               additionalProperties: false,
             },
@@ -313,9 +316,7 @@ export function expandCompactPlan(
   }
 
   const mealDefs = Array.isArray(compact.meal_definitions) ? compact.meal_definitions : []
-  const workoutDefs = Array.isArray(compact.workout_definitions)
-    ? compact.workout_definitions
-    : []
+  const workoutDefs = Array.isArray(compact.workout_definitions) ? compact.workout_definitions : []
   const days = Array.isArray(compact.days) ? compact.days : []
 
   if (days.length !== MONTHLY_PLAN_DAYS) {
@@ -364,13 +365,21 @@ export function expandCompactPlan(
     seenDays.add(dayIndex)
 
     const mealDefIds = Array.isArray(day.meal_def_ids) ? day.meal_def_ids : []
-    if (!Array.isArray(day.serving_overrides)) throw new HttpError(422, 'COMPACT_INVALID_PORTION', 'Overrides must be an array.')
+    if (!Array.isArray(day.serving_overrides)) {
+      throw new HttpError(422, 'COMPACT_INVALID_PORTION', 'Overrides must be an array.')
+    }
     const overrides = new Map<string, number>()
     for (const override of day.serving_overrides) {
-      if (!isRecord(override) || typeof override.meal_def_id !== 'string' ||
-          !mealDefIds.includes(override.meal_def_id) || overrides.has(override.meal_def_id) ||
-          typeof override.multiplier !== 'number') {
-        throw new HttpError(422, 'COMPACT_INVALID_PORTION', 'Invalid or duplicated serving override.')
+      if (
+        !isRecord(override) || typeof override.meal_def_id !== 'string' ||
+        !mealDefIds.includes(override.meal_def_id) || overrides.has(override.meal_def_id) ||
+        typeof override.multiplier !== 'number'
+      ) {
+        throw new HttpError(
+          422,
+          'COMPACT_INVALID_PORTION',
+          'Invalid or duplicated serving override.',
+        )
       }
       overrides.set(override.meal_def_id, override.multiplier)
     }
@@ -470,13 +479,9 @@ export function expandCompactPlan(
           title: def.title,
           duration_minutes: Number(def.duration_minutes),
           intensity: def.intensity,
-          warmup: locale === 'fa-IR'
-            ? ['۵ دقیقه گرم‌کردن سبک']
-            : ['5 minutes light warm-up'],
+          warmup: locale === 'fa-IR' ? ['۵ دقیقه گرم‌کردن سبک'] : ['5 minutes light warm-up'],
           exercises,
-          cooldown: locale === 'fa-IR'
-            ? ['۳ دقیقه سردکردن']
-            : ['3 minutes cool-down'],
+          cooldown: locale === 'fa-IR' ? ['۳ دقیقه سردکردن'] : ['3 minutes cool-down'],
           safety_note: def.safety_note ?? null,
         }
       }
@@ -489,16 +494,14 @@ export function expandCompactPlan(
       dayNotes.push(day.progression_note)
     }
 
-    const targets = isRecord(compact.default_targets)
-      ? { ...compact.default_targets }
-      : {
-        calories: 2_000,
-        protein_g: 100,
-        carbs_g: 200,
-        fat_g: 70,
-        fiber_g: 25,
-        water_ml: 2_500,
-      }
+    const targets = isRecord(compact.default_targets) ? { ...compact.default_targets } : {
+      calories: 2_000,
+      protein_g: 100,
+      carbs_g: 200,
+      fat_g: 70,
+      fiber_g: 25,
+      water_ml: 2_500,
+    }
 
     expandedDays.push({
       day_index: dayIndex,
@@ -520,9 +523,7 @@ export function expandCompactPlan(
   }
   expandedDays.sort((a, b) => Number(a.day_index) - Number(b.day_index))
 
-  const emergencyIds = Array.isArray(compact.emergency_food_ids)
-    ? compact.emergency_food_ids
-    : []
+  const emergencyIds = Array.isArray(compact.emergency_food_ids) ? compact.emergency_food_ids : []
   const emergency_options = emergencyIds.map((foodIdRaw, index) => {
     const foodId = requireString(foodIdRaw, 'emergency_food_id')
     if (!catalog.foods.has(foodId)) {
@@ -538,18 +539,17 @@ export function expandCompactPlan(
     })
   })
 
-  const restaurantGuide = (Array.isArray(compact.restaurant_guide)
-    ? compact.restaurant_guide
-    : []).map((item) => {
-    if (!isRecord(item)) {
-      throw new HttpError(422, 'COMPACT_PLAN_INVALID', 'Invalid restaurant guide item.')
-    }
-    return {
-      title: item.title,
-      order_instructions: item.order_instructions,
-      estimated_nutrition: item.estimated_nutrition,
-    }
-  })
+  const restaurantGuide = (Array.isArray(compact.restaurant_guide) ? compact.restaurant_guide : [])
+    .map((item) => {
+      if (!isRecord(item)) {
+        throw new HttpError(422, 'COMPACT_PLAN_INVALID', 'Invalid restaurant guide item.')
+      }
+      return {
+        title: item.title,
+        order_instructions: item.order_instructions,
+        estimated_nutrition: item.estimated_nutrition,
+      }
+    })
 
   return {
     content_locale: locale,

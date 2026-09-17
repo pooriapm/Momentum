@@ -1,6 +1,6 @@
 import { HttpError } from './http.ts'
 import type { GenerationProfileSnapshot } from './generation-profile-snapshot.ts'
-import type { CatalogFood, CatalogExercise, PlanCatalogSnapshot } from './plan-catalog.ts'
+import type { CatalogExercise, CatalogFood, PlanCatalogSnapshot } from './plan-catalog.ts'
 
 export const CATALOG_SUBSET_VERSION = 'momentum-catalog-subset/1.0.0'
 
@@ -51,9 +51,7 @@ function exerciseCompatible(
   const required = [...exercise.equipmentIds]
   if (required.length === 0) return true
   // Allow bodyweight-only and any exercise fully covered by available equipment.
-  return required.every((id) =>
-    availableEquipment.has(id) || id.includes('bodyweight')
-  )
+  return required.every((id) => availableEquipment.has(id) || id.includes('bodyweight'))
 }
 
 function scoreFood(
@@ -157,7 +155,9 @@ export function selectCatalogSubset(input: {
   const equipmentIds = new Set<string>()
   for (const id of catalog.equipmentIds) {
     const slug = id.replace(/^equipment:/, '').replace(/@v\d+$/, '').toLowerCase()
-    if (availableEquipment.size === 0 || availableEquipment.has(slug) || availableEquipment.has(id)) {
+    if (
+      availableEquipment.size === 0 || availableEquipment.has(slug) || availableEquipment.has(id)
+    ) {
       equipmentIds.add(id)
     }
   }
@@ -213,9 +213,7 @@ export function selectCatalogSubset(input: {
 
   const rankedExercises = [...safeExercises]
   const selectedExerciseIds = new Set(
-    rankedExercises.slice(0, Math.max(MIN_EXERCISES, TARGET_EXERCISES)).map((item) =>
-      item.id
-    ),
+    rankedExercises.slice(0, Math.max(MIN_EXERCISES, TARGET_EXERCISES)).map((item) => item.id),
   )
 
   let expanded = false

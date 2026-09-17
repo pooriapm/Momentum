@@ -44,7 +44,10 @@ export function assembleMealOption(input: {
     title: input.locale === 'fa-IR' ? food.name_fa : food.name_en,
     ingredients,
     serving_multiplier: input.servingMultiplier,
-    nutrition: assembleNutritionFromFoods(input.catalog, [{ foodId: food.id, multiplier: input.servingMultiplier }]),
+    nutrition: assembleNutritionFromFoods(input.catalog, [{
+      foodId: food.id,
+      multiplier: input.servingMultiplier,
+    }]),
     recipe: null,
     warnings: input.servingMultiplier !== 1
       ? [`serving_multiplier:${input.servingMultiplier}`]

@@ -100,8 +100,10 @@ export function applyDeterministicRepair(input: {
   minimumCalories?: number
 }): Record<string, unknown> {
   const { decision } = input
-  if (decision.kind === 'none' || decision.kind === 'bounded_full_retry' ||
-    decision.kind === 'escalate_review' || decision.kind === 'persist_saved_response') {
+  if (
+    decision.kind === 'none' || decision.kind === 'bounded_full_retry' ||
+    decision.kind === 'escalate_review' || decision.kind === 'persist_saved_response'
+  ) {
     return input.plan
   }
 

@@ -370,7 +370,10 @@ export function planCatalogPromptContext(catalog: PlanCatalogSnapshot): Record<s
       portable: food.portable,
       nutrition: food.nutrition,
       ingredient_ids: [...food.ingredientIds],
-      ingredient_portions: [...food.ingredientPortions].map(([ingredient_id, portion]) => ({ ingredient_id, ...portion })),
+      ingredient_portions: [...food.ingredientPortions].map(([ingredient_id, portion]) => ({
+        ingredient_id,
+        ...portion,
+      })),
     })),
     ingredients: [...catalog.ingredients.values()].map((ingredient) => ({
       id: ingredient.id,

@@ -12,8 +12,8 @@ import {
   type GenerationStore,
   type ImportedPlan,
   type PeriodRecord,
-  type SavedGeneration,
   PLAN_SCHEMA_VERSION,
+  type SavedGeneration,
 } from './monthly-generation.ts'
 import { loadPlanCatalog } from './plan-catalog.ts'
 import type { ProviderAttemptLedger } from './usage-accounting.ts'
@@ -59,7 +59,9 @@ function mapJob(row: Record<string, unknown>): GenerationJobRecord {
     attemptCount: Number(row.attempt_count ?? 0),
     errorCode: text(row.error_code),
     openaiResponseId: text(row.openai_response_id),
-    savedGeneration: isRecord(row.saved_generation) ? row.saved_generation as unknown as SavedGeneration : null,
+    savedGeneration: isRecord(row.saved_generation)
+      ? row.saved_generation as unknown as SavedGeneration
+      : null,
   }
 }
 
@@ -121,8 +123,15 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
           'Complete onboarding before generating a plan.',
         )
       }
-      if ([prefsResult, goalResult, healthResult, trainingResult, measurementResult, periodResult].some((result) => result.error)) {
-        throw new HttpError(503, 'profile_context_unavailable', 'Your plan preferences could not be loaded.')
+      if (
+        [prefsResult, goalResult, healthResult, trainingResult, measurementResult, periodResult]
+          .some((result) => result.error)
+      ) {
+        throw new HttpError(
+          503,
+          'profile_context_unavailable',
+          'Your plan preferences could not be loaded.',
+        )
       }
       const row = profileResult.data
       const allergies = Array.isArray(prefsResult.data?.allergies)
@@ -388,8 +397,15 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
     },
 
     async saveGeneration(jobId, saved) {
-      const { error } = await admin.from('ai_generation_jobs').update({ saved_generation: saved }).eq('id', jobId)
-      if (error) throw new HttpError(503, 'PLAN_IMPORT_FAILED', 'The generated plan could not be saved for recovery.')
+      const { error } = await admin.from('ai_generation_jobs').update({ saved_generation: saved })
+        .eq('id', jobId)
+      if (error) {
+        throw new HttpError(
+          503,
+          'PLAN_IMPORT_FAILED',
+          'The generated plan could not be saved for recovery.',
+        )
+      }
     },
 
     async recordAttempt(attempt: ProviderAttemptLedger) {
@@ -422,7 +438,11 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         ledger_payload: attempt,
       }, { onConflict: 'id' })
       if (error) {
-        throw new HttpError(503, 'usage_attempt_unavailable', 'Provider usage could not be recorded.')
+        throw new HttpError(
+          503,
+          'usage_attempt_unavailable',
+          'Provider usage could not be recorded.',
+        )
       }
     },
   }

@@ -78,9 +78,7 @@ function rateFor(modelId: string, serviceTier: ServiceTier): ModelRateCard | nul
     ...base,
     inputPerMillion: base.inputPerMillion / 2,
     cachedInputPerMillion: base.cachedInputPerMillion / 2,
-    cacheWritePerMillion: base.cacheWritePerMillion === null
-      ? null
-      : base.cacheWritePerMillion / 2,
+    cacheWritePerMillion: base.cacheWritePerMillion === null ? null : base.cacheWritePerMillion / 2,
     outputPerMillion: base.outputPerMillion / 2,
   }
 }
@@ -180,8 +178,7 @@ export function calculateProviderCost(input: {
   }
 
   const cached = usage.cachedInputTokens ?? 0
-  let usd =
-    (usage.uncachedInputTokens / 1_000_000) * card.inputPerMillion +
+  let usd = (usage.uncachedInputTokens / 1_000_000) * card.inputPerMillion +
     (cached / 1_000_000) * card.cachedInputPerMillion +
     (usage.outputTokens / 1_000_000) * card.outputPerMillion
 
@@ -222,6 +219,9 @@ export function costPerDeliveredPlan(
 
 export function percentile(sortedAsc: number[], p: number): number | null {
   if (sortedAsc.length === 0) return null
-  const rank = Math.min(sortedAsc.length - 1, Math.max(0, Math.ceil((p / 100) * sortedAsc.length) - 1))
+  const rank = Math.min(
+    sortedAsc.length - 1,
+    Math.max(0, Math.ceil((p / 100) * sortedAsc.length) - 1),
+  )
   return sortedAsc[rank] ?? null
 }

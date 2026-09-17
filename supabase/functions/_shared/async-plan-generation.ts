@@ -75,7 +75,10 @@ export function createAsyncGenerationState(input: {
  * Prevent double-charging when falling back from Batch/Flex to standard.
  * Returns false when fallback budget is exhausted.
  */
-export function canFallbackToStandard(state: AsyncGenerationState, estimatedMicrousd: number): boolean {
+export function canFallbackToStandard(
+  state: AsyncGenerationState,
+  estimatedMicrousd: number,
+): boolean {
   if (state.status === 'completed' || state.status === 'canceled') return false
   return state.fallback_spent_microusd + estimatedMicrousd <= state.fallback_budget_microusd
 }

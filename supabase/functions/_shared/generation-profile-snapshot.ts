@@ -132,24 +132,28 @@ export interface ProfileSnapshotRows {
     medications?: unknown
     supplements?: unknown
   } | null
-  training?: Array<{
-    weekday?: number | null
-    activity_type?: string | null
-    local_start_time?: string | null
-    duration_minutes?: number | null
-    intensity?: string | null
-    notes?: string | null
-  }> | null
-  measurements?: Array<{
-    measured_on?: string | null
-    measured_at?: string | null
-    weight_kg?: number | null
-    body_fat_percent?: number | null
-    waist_cm?: number | null
-    hip_cm?: number | null
-    source?: string | null
-    extraction_status?: string | null
-  }> | null
+  training?:
+    | Array<{
+      weekday?: number | null
+      activity_type?: string | null
+      local_start_time?: string | null
+      duration_minutes?: number | null
+      intensity?: string | null
+      notes?: string | null
+    }>
+    | null
+  measurements?:
+    | Array<{
+      measured_on?: string | null
+      measured_at?: string | null
+      weight_kg?: number | null
+      body_fat_percent?: number | null
+      waist_cm?: number | null
+      hip_cm?: number | null
+      source?: string | null
+      extraction_status?: string | null
+    }>
+    | null
   priorOutcomes?: PriorOutcomeSnapshot | null
   cycleIndex: number
   now?: Date
@@ -216,9 +220,7 @@ export function buildGenerationProfileSnapshot(
       return {
         measured_on: measuredOn,
         weight_kg: typeof row.weight_kg === 'number' ? row.weight_kg : null,
-        body_fat_percent: typeof row.body_fat_percent === 'number'
-          ? row.body_fat_percent
-          : null,
+        body_fat_percent: typeof row.body_fat_percent === 'number' ? row.body_fat_percent : null,
         waist_cm: typeof row.waist_cm === 'number' ? row.waist_cm : null,
         hip_cm: typeof row.hip_cm === 'number' ? row.hip_cm : null,
         source: (['manual', 'device', 'clinician', 'other'].includes(String(row.source))
@@ -234,9 +236,7 @@ export function buildGenerationProfileSnapshot(
     timezone: typeof rows.profile.timezone === 'string' && rows.profile.timezone
       ? rows.profile.timezone
       : 'UTC',
-    country_code: typeof rows.profile.country_code === 'string'
-      ? rows.profile.country_code
-      : null,
+    country_code: typeof rows.profile.country_code === 'string' ? rows.profile.country_code : null,
     product_region: rows.profile.product_region === 'ir' ? 'ir' : 'intl',
     age_years: ageFromDob(rows.profile.date_of_birth, now),
     sex: typeof rows.profile.sex === 'string' ? rows.profile.sex : null,
@@ -254,9 +254,7 @@ export function buildGenerationProfileSnapshot(
       }
       : null,
     dietary: {
-      dietary_pattern: typeof dietary.dietary_pattern === 'string'
-        ? dietary.dietary_pattern
-        : null,
+      dietary_pattern: typeof dietary.dietary_pattern === 'string' ? dietary.dietary_pattern : null,
       favorite_foods: stringList(dietary.favorite_foods),
       disliked_foods: stringList(dietary.disliked_foods),
       allergies: stringList(dietary.allergies),
@@ -277,17 +275,17 @@ export function buildGenerationProfileSnapshot(
         : null,
       restaurant_preferences: stringList(dietary.restaurant_preferences),
       grocery_preferences: stringList(dietary.grocery_preferences),
-      cuisine_region: typeof dietary.cuisine_region === 'string'
-        ? dietary.cuisine_region
-        : null,
+      cuisine_region: typeof dietary.cuisine_region === 'string' ? dietary.cuisine_region : null,
     },
     training_profile: {
-      location: (['home', 'gym', 'outdoor'].includes(String(dietary.training_location))
-        ? dietary.training_location
-        : null) as TrainingProfileSnapshot['location'],
-      experience: (['beginner', 'intermediate', 'advanced'].includes(String(dietary.training_experience))
-        ? dietary.training_experience
-        : null) as TrainingProfileSnapshot['experience'],
+      location:
+        (['home', 'gym', 'outdoor'].includes(String(dietary.training_location))
+          ? dietary.training_location
+          : null) as TrainingProfileSnapshot['location'],
+      experience:
+        (['beginner', 'intermediate', 'advanced'].includes(String(dietary.training_experience))
+          ? dietary.training_experience
+          : null) as TrainingProfileSnapshot['experience'],
     },
     training_schedule: (rows.training ?? [])
       .filter((item) => typeof item.weekday === 'number' && typeof item.activity_type === 'string')

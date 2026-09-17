@@ -1,10 +1,10 @@
 import {
   calculateProviderCost,
-  normalizeProviderUsage,
-  type CostCertainty,
   type CostCalculation,
-  type ServiceTier,
+  type CostCertainty,
+  normalizeProviderUsage,
   PRICING_TABLE_VERSION,
+  type ServiceTier,
 } from './provider-pricing.ts'
 import { PROFILE_SNAPSHOT_VERSION } from './generation-profile-snapshot.ts'
 
@@ -110,9 +110,7 @@ export function buildAttemptLedger(input: {
     catalog_release_id: input.catalogReleaseId,
     pricing_table_version: PRICING_TABLE_VERSION,
     profile_snapshot_version: PROFILE_SNAPSHOT_VERSION,
-    input_tokens: typeof input.usage.inputTokens === 'number'
-      ? input.usage.inputTokens
-      : null,
+    input_tokens: typeof input.usage.inputTokens === 'number' ? input.usage.inputTokens : null,
     cached_input_tokens: normalized.cachedInputTokens,
     cache_write_tokens: normalized.cacheWriteTokens,
     output_tokens: normalized.outputTokens,
