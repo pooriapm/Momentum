@@ -21,7 +21,7 @@ export function ModalShell({
   const onCloseRef = useRef(onClose)
   const motion = useRef({
     position: 0, velocity: 0, opacity: 1, opacityVelocity: 0,
-    target: 0, closing: false, frame: 0, lastTime: 0, damping: 1,
+    target: 0, closing: false, frame: 0, epoch: 0, lastTime: 0, damping: 1,
     reduced: true, completed: false,
   })
   const gesture = useRef<{
@@ -42,8 +42,10 @@ export function ModalShell({
   }
 
   function stop() {
-    window.cancelAnimationFrame(motion.current.frame)
-    motion.current.frame = 0
+    const state = motion.current
+    state.epoch += 1
+    window.cancelAnimationFrame(state.frame)
+    state.frame = 0
   }
 
   function finish() {
@@ -61,6 +63,7 @@ export function ModalShell({
   function animate(target: number, closing: boolean, momentum = false) {
     stop()
     const state = motion.current
+    const epoch = state.epoch
     state.target = target
     state.closing = closing
     state.damping = momentum ? 0.86 : 1
@@ -70,6 +73,7 @@ export function ModalShell({
     }
     state.lastTime = performance.now()
     function tick(now: number) {
+      if (state.epoch !== epoch) return
       const dt = Math.min((now - state.lastTime) / 1000, 0.064)
       state.lastTime = now
       const next = stepSpring(state, state.target, dt, state.damping)
@@ -79,6 +83,7 @@ export function ModalShell({
       state.opacity = alpha.position
       state.opacityVelocity = alpha.velocity
       paint()
+      if (state.epoch !== epoch) return
       if (Math.abs(state.position - state.target) < 0.5 && Math.abs(state.velocity) < 5 && Math.abs(state.opacity - (state.closing ? 0 : 1)) < 0.01) {
         state.frame = 0
         finish()

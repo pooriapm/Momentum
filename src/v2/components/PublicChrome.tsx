@@ -138,7 +138,7 @@ export function PublicFooter({ locale }: { locale: AppLocale }) {
         <Link href={localizedPath(locale, '/privacy')}>{locale === 'fa' ? 'حریم خصوصی' : 'Privacy'}</Link>
         <Link href={localizedPath(locale, '/terms')}>{locale === 'fa' ? 'شرایط استفاده' : 'Terms'}</Link>
       </div>
-      <small>© {new Date().getFullYear()} <bdi>Momentum</bdi> · {locale === 'fa' ? 'فقط برای سلامت عمومی' : 'General wellness only'}</small>
+      <small>© {new Date().getFullYear()} <bdi dir="ltr">Momentum</bdi> · {locale === 'fa' ? 'فقط برای سلامت عمومی' : 'General wellness only'}</small>
     </footer>
   )
 }
