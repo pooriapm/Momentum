@@ -197,7 +197,7 @@ select extensions.is(
         ('profiles'), ('onboarding_drafts'), ('goals'), ('dietary_preferences'),
         ('health_context'), ('body_composition_measurements'), ('training_schedule_items'),
         ('product_prices'), ('subscriptions'), ('entitlements'), ('usage_ledger'),
-        ('ai_generation_jobs'), ('plans'), ('plan_versions'), ('daily_checkins'),
+        ('ai_generation_jobs'), ('ai_usage_attempts'), ('plans'), ('plan_versions'), ('daily_checkins'),
         ('daily_meal_status'), ('extra_food_logs'), ('weekly_checkins'),
         ('workout_sessions'), ('workout_exercise_logs'), ('workout_set_logs'),
         ('ai_safety_reports'), ('gift_reservations'), ('monthly_plan_periods'),
@@ -230,7 +230,7 @@ select extensions.is(
       and has_table_privilege('service_role', c.oid, 'SELECT')
   ),
   array[
-    'ai_generation_jobs', 'ai_safety_reports', 'allergen_catalog',
+    'ai_generation_jobs', 'ai_safety_reports', 'ai_usage_attempts', 'allergen_catalog',
     'body_composition_measurements', 'catalog_releases', 'daily_checkins',
     'daily_meal_status', 'deletion_requests', 'dietary_preferences',
     'entitlements', 'equipment_catalog', 'exercise_catalog',
@@ -267,7 +267,7 @@ select extensions.is(
         )
       )
   ),
-  array['ai_generation_jobs', 'monthly_plan_periods', 'next_cycle_inputs']::text[],
+  array['ai_generation_jobs', 'ai_usage_attempts', 'monthly_plan_periods', 'next_cycle_inputs']::text[],
   'effective service-role writes are limited to generation lifecycle and owner-bound next-cycle input state'
 );
 

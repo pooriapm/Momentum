@@ -27,10 +27,7 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
   const open = menuPath === path
 
   useEffect(() => {
-    if (open) {
-      setMenuPresent(true)
-      return
-    }
+    if (open) return
     const timer = window.setTimeout(() => setMenuPresent(false), 480)
     return () => window.clearTimeout(timer)
   }, [open])
@@ -111,7 +108,14 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
             aria-expanded={open}
             aria-label={open ? (locale === 'fa' ? 'بستن منو' : 'Close menu') : (locale === 'fa' ? 'بازکردن منو' : 'Open menu')}
             className="public-header__menu"
-            onClick={() => setMenuPath(open ? null : path)}
+            onClick={() => {
+              if (open) {
+                setMenuPath(null)
+                return
+              }
+              setMenuPresent(true)
+              setMenuPath(path)
+            }}
             ref={menuButtonRef}
             type="button"
           >

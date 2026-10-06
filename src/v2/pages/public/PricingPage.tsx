@@ -177,7 +177,7 @@ export function PricingPage({
   }, [offers.length])
 
   return (
-    <div className="public-page pricing-page" data-inventory={ids.join(' ')}>
+    <div className="public-page pricing-page screen-enter" data-inventory={ids.join(' ')}>
       <PublicHeader locale={locale} />
       {offers.length > 1 ? (
         <div aria-hidden="true" className={`pricing-meter${meterOn ? ' is-on' : ''}`}>

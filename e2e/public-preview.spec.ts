@@ -4,7 +4,7 @@ const PREVIEW_READY_TIMEOUT_MS = 15_000
 
 test('public shell and Persian in-memory preview remain usable', async ({ page }) => {
   await page.goto('/fa')
-  await expect(page.getByRole('heading', { name: /هر روز، Momentum می‌داند/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Momentum از همین ماه شروع می‌شود/ })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
 
   await page.goto('/fa/app/today?preview=1')
@@ -15,12 +15,13 @@ test('public shell and Persian in-memory preview remain usable', async ({ page }
 
 test('English public routes remain LTR and expose safety restrictions', async ({ page }) => {
   await page.goto('/en')
-  await expect(page.getByRole('heading', { name: /Momentum always knows/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Momentum starts with this month/ })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr')
 
   await page.goto('/en/safety')
   await expect(page.getByRole('main')).toBeVisible()
-  await expect(page.getByText(/general wellness/i).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Safety boundary' })).toBeVisible()
+  await expect(page.getByText(/does not monitor emergencies/i)).toBeVisible()
 })
 
 test('mobile tab navigation returns to the top with the shared motion language', async ({ page }) => {
@@ -43,7 +44,7 @@ test('mobile tab navigation returns to the top with the shared motion language',
   await workspace.evaluate((node) => { node.scrollTop = node.scrollHeight })
   await navigation.getByRole('link', { exact: true, name: 'Progress' }).click()
   await expect(page.getByRole('heading', { name: /the trend you are building/i })).toBeVisible()
-  expect(await workspace.evaluate((node) => node.scrollTop)).toBe(0)
+  await expect.poll(() => workspace.evaluate((node) => node.scrollTop)).toBe(0)
 })
 
 test('preview help keeps bilingual support codes without inventing a mailbox', async ({ page }) => {
@@ -73,7 +74,7 @@ test('public page navigation also returns the browser viewport to the top', asyn
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 
   await footer.getByRole('link', { name: 'Pricing' }).click()
-  await expect(page.getByRole('heading', { name: /one subscription, one clear path/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /one membership, so the month can continue/i })).toBeVisible()
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
   await expect(page.locator('.pricing-page')).toHaveCSS('animation-name', 'orbit-glass-fade-in')
 })

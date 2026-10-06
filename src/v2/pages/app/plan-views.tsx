@@ -426,12 +426,46 @@ export function PlanCalendarView({
   version: PlanVersionMeta
   onSelectDate: (iso: string) => void
 }) {
-  const fa = locale === 'fa'
   const parts = calendarParts(selectedDay.localDate, locale)
-  const [cursor, setCursor] = useState({ year: parts.year, month: parts.month })
-  useEffect(() => {
-    setCursor({ year: parts.year, month: parts.month })
-  }, [parts.year, parts.month])
+  return (
+    <PlanCalendarMonth
+      key={`${parts.year}-${parts.month}`}
+      cycleDate={cycleDate}
+      days={days}
+      initialMonth={parts.month}
+      initialYear={parts.year}
+      locale={locale}
+      onSelectDate={onSelectDate}
+      selectedDay={selectedDay}
+      today={today}
+      version={version}
+    />
+  )
+}
+
+function PlanCalendarMonth({
+  locale,
+  selectedDay,
+  days,
+  today,
+  cycleDate,
+  version,
+  onSelectDate,
+  initialYear,
+  initialMonth,
+}: {
+  locale: AppLocale
+  selectedDay: MomentumPlanDayView
+  days: MomentumPlanDayView[]
+  today: string
+  cycleDate: string | null
+  version: PlanVersionMeta
+  onSelectDate: (iso: string) => void
+  initialYear: number
+  initialMonth: number
+}) {
+  const fa = locale === 'fa'
+  const [cursor, setCursor] = useState({ year: initialYear, month: initialMonth })
   const grid = monthGrid(cursor.year, cursor.month, locale)
   const weekdays = fa ? PERSIAN_WEEKDAYS : GREGORIAN_WEEKDAYS
   const byDate = new Map(days.map((day) => [day.localDate, day]))

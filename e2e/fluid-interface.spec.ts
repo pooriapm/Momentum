@@ -37,9 +37,8 @@ test('sheet drag returns, can be grabbed while settling, and flicks away', async
   y = bounds.y + bounds.height / 2
   await page.mouse.move(x, y)
   await page.mouse.down()
-  // Aim the active pointer at the handle atomically: its position changes between
-  // automation commands while the return spring is running.
-  await handle.dispatchEvent('pointerdown', { pointerId: 1, isPrimary: true, button: 0, clientX: x, clientY: y })
+  // One real pointer: a second synthetic pointerdown takes capture and cancels
+  // the drag in Firefox and WebKit before the move is measured.
   const grabbed = await sheet.evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).m42)
   await page.mouse.move(x, y + 50, { steps: 3 })
   const moved = await sheet.evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).m42)
