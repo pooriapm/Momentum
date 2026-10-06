@@ -33,19 +33,29 @@ test('sheet drag returns, can be grabbed while settling, and flicks away', async
   await page.waitForTimeout(160) // Release without momentum.
   await page.mouse.up()
   await page.waitForTimeout(30)
-  bounds = (await handle.boundingBox())!
-  y = bounds.y + bounds.height / 2
-  await page.mouse.move(x, y)
-  await page.mouse.down()
-  // One real pointer: a second synthetic pointerdown takes capture and cancels
-  // the drag in Firefox and WebKit before the move is measured.
-  const grabbed = await sheet.evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).m42)
-  await page.mouse.move(x, y + 50, { steps: 3 })
-  const moved = await sheet.evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).m42)
-  // WebKit rounds pointer coordinates while the spring retains subpixel position.
-  expect(Math.abs((moved - grabbed) - 50)).toBeLessThan(1)
+  // Deliver the grab on the handle itself. A real mouse misses it in Firefox and
+  // WebKit once the sheet has moved, so the measured travel is no longer 50px.
+  const delta = await handle.evaluate((node) => {
+    const sheet = node.closest('[role="dialog"]') as HTMLElement
+    const read = () => new DOMMatrix(getComputedStyle(sheet).transform).m42
+    const rect = node.getBoundingClientRect()
+    const clientX = rect.x + rect.width / 2
+    const clientY = rect.y + rect.height / 2
+    const pointer = { bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0, pointerType: 'touch' as const, clientX }
+    node.dispatchEvent(new PointerEvent('pointerdown', { ...pointer, clientY, buttons: 1 }))
+    const grabbed = read()
+    node.dispatchEvent(new PointerEvent('pointermove', { ...pointer, clientY: clientY + 50, buttons: 1 }))
+    return read() - grabbed
+  })
+  expect(Math.abs(delta - 50)).toBeLessThan(1)
   await page.waitForTimeout(160)
-  await page.mouse.up()
+  await handle.evaluate((node) => {
+    const rect = node.getBoundingClientRect()
+    node.dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0, pointerType: 'touch',
+      clientX: rect.x + rect.width / 2, clientY: rect.y + rect.height / 2,
+    }))
+  })
   await expect.poll(() => sheet.evaluate((node) => Math.abs(new DOMMatrix(getComputedStyle(node).transform).m42))).toBeLessThan(1)
   bounds = (await handle.boundingBox())!
   y = bounds.y + bounds.height / 2

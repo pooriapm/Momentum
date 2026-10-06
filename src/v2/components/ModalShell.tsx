@@ -166,7 +166,7 @@ export function ModalShell({
     suppressClick.current = false
     if (!event.isPrimary || event.button !== 0 || motion.current.reduced) return
     stop()
-    event.currentTarget.setPointerCapture(event.pointerId)
+    try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* The pointer is already inactive. */ }
     gesture.current = {
       pointerId: event.pointerId, startY: event.clientY, startPosition: motion.current.position,
       dragging: false, samples: [{ y: event.clientY, time: performance.now() }],
