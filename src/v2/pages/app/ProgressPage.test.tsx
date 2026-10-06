@@ -95,7 +95,7 @@ describe('ProgressPage inventory states', () => {
 
   it('uses the account unit preference for weight without changing stored metric values', () => {
     renderProgress({ plan: { ...demoPlan, displayUnitSystem: 'us_customary' } })
-    expect(screen.getByText(/160\.5 lb/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/160\.5 lb/i).length).toBeGreaterThan(0)
     expect(demoPlan.progress.currentWeight).toBe(72.8)
   })
   it('distinguishes weight loss and announces the selected chart view', () => {

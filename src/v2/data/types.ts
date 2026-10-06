@@ -109,6 +109,7 @@ export interface WeeklyProgressPoint {
   energy: number
   adherence: number
   partial?: boolean
+  weightKg?: number | null
 }
 
 export interface MomentumPlanView {
@@ -146,6 +147,7 @@ export interface MomentumPlanView {
     cycleEnding?: boolean
     safetyPaused?: boolean
     weeklySeries?: WeeklyProgressPoint[]
+    weightHistory?: Array<{ date: LocalizedText; weightKg: number }>
     recentCheckIns: Array<{
       date: LocalizedText
       score: number

@@ -133,6 +133,8 @@ export const demoPlan: MomentumPlanView = {
       { date: { fa: 'امروز', en: 'Today' }, score: 82, note: { fa: 'انرژی خوب', en: 'Good energy' }, weight: 72.8 },
       { date: { fa: 'دیروز', en: 'Yesterday' }, score: 74, note: { fa: 'خواب کوتاه', en: 'Short sleep' }, weight: 73.1 },
       { date: { fa: '۲ روز قبل', en: '2 days ago' }, score: 88, note: { fa: 'آماده', en: 'Ready' }, weight: 73.2 },
+      { date: { fa: '۳ روز قبل', en: '3 days ago' }, score: 80, note: { fa: 'تمرین کامل', en: 'Full session' }, weight: 73.6 },
+      { date: { fa: '۴ روز قبل', en: '4 days ago' }, score: 77, note: { fa: 'شروع هفته', en: 'Week started' }, weight: 74.1 },
     ],
   },
 }

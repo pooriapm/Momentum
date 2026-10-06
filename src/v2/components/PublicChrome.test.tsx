@@ -22,7 +22,7 @@ it('keeps mobile keyboard focus in navigation and restores scrolling on Escape',
   await waitFor(() => expect(opener).toHaveFocus())
 })
 
-it('dismisses the mobile overlay and unlocks scrolling when switching to desktop', () => {
+it('dismisses the mobile overlay and unlocks scrolling when switching to desktop', async () => {
   let change = () => {}
   const media = {
     matches: false,
@@ -35,7 +35,7 @@ it('dismisses the mobile overlay and unlocks scrolling when switching to desktop
   expect(document.body.style.overflow).toBe('hidden')
   act(() => { media.matches = true; change() })
   expect(screen.getByRole('button', { name: 'Open menu' })).toHaveAttribute('aria-expanded', 'false')
-  expect(document.querySelector('.public-menu-backdrop')).toBeNull()
+  await waitFor(() => expect(document.querySelector('.public-menu-backdrop')).toBeNull())
   expect(document.body.style.overflow).not.toBe('hidden')
   expect(media.removeEventListener).toHaveBeenCalled()
 })

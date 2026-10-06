@@ -235,7 +235,14 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
     energy: point.energy,
     adherence: point.adherence,
     partial: point.partial,
+    ...(typeof point.weight_kg === 'number' ? { weightKg: point.weight_kg } : {}),
   }))
+  const weightHistory = [...dashboard.recent_checkins]
+    .reverse()
+    .flatMap((item) => item.weight_kg == null ? [] : [{
+      date: localized(formatLocalDate(item.local_date, locale)),
+      weightKg: item.weight_kg,
+    }])
 
   const currentDay = mapPlanDay(plan.day, plan.id, locale)
   const loggedCalories = plan.day.meals.reduce((sum, meal) => {
@@ -291,6 +298,7 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       sleepMinutes: checkin?.sleep_minutes ?? 0,
       energyScore: checkin?.energy_score ?? 0,
       weeklySeries,
+      weightHistory,
       entitlementLabel: dashboard.entitlement_usage?.entitlement.source === 'gift'
         ? { fa: 'هدیه برنامه اول', en: 'First-plan gift' }
         : { fa: 'عضویت Momentum', en: 'Momentum membership' },

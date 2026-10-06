@@ -36,4 +36,52 @@ export function currentWeekIndex(series: WeeklyProgressPoint[]) {
   return Math.max(0, series.length - 1)
 }
 
+export function completionRate(completed: number, planned: number) {
+  if (planned <= 0) return 0
+  return Math.round((100 * completed) / planned)
+}
+
+export interface WeekComparison {
+  week: number
+  partial: boolean
+  adherence: number
+  adherenceDelta: number | null
+  meals: number
+  mealsDelta: number | null
+  workouts: number
+  workoutsDelta: number | null
+  energy: number
+  energyDelta: number | null
+  mealsCompleted: number
+  mealsPlanned: number
+  workoutsCompleted: number
+  workoutsPlanned: number
+}
+
+export function compareWeeks(series: WeeklyProgressPoint[]): WeekComparison[] {
+  return series.map((item, index) => {
+    const previous = index > 0 ? series[index - 1] : null
+    const meals = completionRate(item.mealsCompleted, item.mealsPlanned)
+    const workouts = completionRate(item.workoutsCompleted, item.workoutsPlanned)
+    const previousMeals = previous ? completionRate(previous.mealsCompleted, previous.mealsPlanned) : null
+    const previousWorkouts = previous ? completionRate(previous.workoutsCompleted, previous.workoutsPlanned) : null
+    return {
+      week: item.week,
+      partial: Boolean(item.partial),
+      adherence: item.adherence,
+      adherenceDelta: previous ? item.adherence - previous.adherence : null,
+      meals,
+      mealsDelta: previousMeals === null ? null : meals - previousMeals,
+      workouts,
+      workoutsDelta: previousWorkouts === null ? null : workouts - previousWorkouts,
+      energy: item.energy,
+      energyDelta: previous ? Math.round((item.energy - previous.energy) * 10) / 10 : null,
+      mealsCompleted: item.mealsCompleted,
+      mealsPlanned: item.mealsPlanned,
+      workoutsCompleted: item.workoutsCompleted,
+      workoutsPlanned: item.workoutsPlanned,
+    }
+  })
+}
+
 export { formatLastSync }

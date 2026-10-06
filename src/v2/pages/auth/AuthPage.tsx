@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Cloud, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'wouter'
@@ -9,10 +9,10 @@ import { classifyAuthError } from '../../../platform/auth/auth-errors'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { PublicHeader } from '../../components/PublicChrome'
 import { localizedPath } from '../../router/route-utils'
-import { Input, RequiredMark } from '../../ui/FormControls'
+import { Input } from '../../ui/FormControls'
 import { OrbitMark } from '../../ui/OrbitMark'
-import { Button, ContentCard } from '../../ui/primitives'
-import { Reveal } from '../../ui/Reveal'
+import { Button, GlassChrome } from '../../ui/primitives'
+import './auth.css'
 
 const PENDING_EMAIL_KEY = 'momentum.pendingVerificationEmail'
 const RESEND_COOLDOWN_SECONDS = 60
@@ -158,26 +158,26 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
     }
   }
 
+  const lead = isVerify
+    ? (fa ? 'لینک را در ایمیل باز کن.' : 'Open the link in your email.')
+    : isRecover
+      ? (fa ? 'لینک بازیابی را می‌فرستیم.' : 'We’ll email you a reset link.')
+      : isUpdatePassword
+        ? (fa ? 'یک رمز تازه انتخاب کن.' : 'Choose a new password.')
+        : isSignUp
+          ? (fa ? 'یک حساب برای Momentum. برنامه این ماه همین‌جا می‌ماند.' : 'An account for Momentum. This month’s plan stays here.')
+          : (fa ? 'برگرد سر برنامه.' : 'Pick up your plan.')
+
   return (
     <div className="public-page auth-page">
       <PublicHeader locale={locale} />
-      <main className="auth-layout screen-enter">
-        <Reveal as="section" className="auth-layout__story">
-          <OrbitMark animated size={76} />
-          <p className="orbit-eyebrow"><ShieldCheck size={15} />{locale === 'fa' ? 'خصوصی، شخصی و همراه' : 'Private, personal, portable'}</p>
+      <main className="auth-layout">
+        <div aria-hidden="true" className="auth-glow auth-glow--a" />
+        <div aria-hidden="true" className="auth-glow auth-glow--b" />
+        <GlassChrome className="auth-sheet" key={mode}>
+          <OrbitMark animated size={58} />
           <h1>{isVerify ? (fa ? 'تأیید ایمیل' : 'Verify your email') : isRecover ? (fa ? 'بازیابی حساب' : 'Recover your account') : isUpdatePassword ? (fa ? 'رمز تازه بساز' : 'Create a new password') : isSignUp ? t('auth.titleUp') : t('auth.titleIn')}</h1>
-          <p>{t('auth.subtitle')}</p>
-          <div className="auth-trust-list">
-            <span><Cloud size={18} />{locale === 'fa' ? 'حساب ابری رمزگذاری‌شده' : 'Encrypted cloud account'}</span>
-            <span><LockKeyhole size={18} />{locale === 'fa' ? 'اطلاعات شما فقط در حساب شما' : 'Your data stays in your account'}</span>
-            <span><ShieldCheck size={18} />{locale === 'fa' ? 'بدون تبلیغ با داده سلامت' : 'No health-data advertising'}</span>
-          </div>
-        </Reveal>
-        <ContentCard className="auth-card">
-          <div className="auth-card__heading">
-            <span className="auth-card__icon"><Mail size={21} /></span>
-            <h2>{isVerify ? (fa ? 'وضعیت تأیید' : 'Verification status') : isRecover ? (fa ? 'ارسال لینک بازیابی' : 'Send recovery link') : isUpdatePassword ? (fa ? 'تغییر رمز عبور' : 'Update password') : isSignUp ? t('common.signUp') : t('common.signIn')}</h2>
-          </div>
+          <p className="auth-lead">{lead}</p>
           {!isConfigured ? <div className="inline-notice inline-notice--warning">{t('auth.cloudMissing')}</div> : null}
           {!online ? <div className="inline-notice inline-notice--warning" role="status">{t('auth.offline')}</div> : null}
           {isVerify ? (
@@ -257,25 +257,23 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
                 />
               ) : null}
               {isSignUp ? (
-                <div className="auth-consent">
-                  <label className={`onboarding-checkbox ${fieldErrors.terms ? 'has-error' : ''}`}>
-                    <input aria-invalid={Boolean(fieldErrors.terms)} aria-describedby={fieldErrors.terms ? "auth-terms-error" : undefined} aria-required="true" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} required type="checkbox" />
-                    <span><Check size={16} /></span>
-                    <div className="onboarding-checkbox__heading">
-                      <strong>{t('onboarding.termsConsent')}</strong>
-                      <RequiredMark />
-                    </div>
-                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · <bdi dir="ltr">{legalVersions.terms}</bdi></Link>
+                <div className="auth-legal-stack">
+                  <label className={`auth-legal${fieldErrors.terms ? ' has-error' : ''}`}>
+                    <input aria-invalid={Boolean(fieldErrors.terms)} aria-describedby={fieldErrors.terms ? 'auth-terms-error' : undefined} aria-required="true" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} required type="checkbox" />
+                    <span>
+                      {t('onboarding.termsConsent')}{' '}
+                      <Link href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')}</Link>
+                      <bdi className="auth-legal__version" dir="ltr">{legalVersions.terms}</bdi>
+                    </span>
                     {fieldErrors.terms ? <small id="auth-terms-error">{fieldErrors.terms}</small> : null}
                   </label>
-                  <label className={`onboarding-checkbox ${fieldErrors.privacy ? 'has-error' : ''}`}>
-                    <input aria-invalid={Boolean(fieldErrors.privacy)} aria-describedby={fieldErrors.privacy ? "auth-privacy-error" : undefined} aria-required="true" checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} required type="checkbox" />
-                    <span><Check size={16} /></span>
-                    <div className="onboarding-checkbox__heading">
-                      <strong>{t('onboarding.privacyConsent')}</strong>
-                      <RequiredMark />
-                    </div>
-                    <Link className="onboarding-checkbox__policy" href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')} · <bdi dir="ltr">{legalVersions.privacy}</bdi></Link>
+                  <label className={`auth-legal${fieldErrors.privacy ? ' has-error' : ''}`}>
+                    <input aria-invalid={Boolean(fieldErrors.privacy)} aria-describedby={fieldErrors.privacy ? 'auth-privacy-error' : undefined} aria-required="true" checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} required type="checkbox" />
+                    <span>
+                      {t('onboarding.privacyConsent')}{' '}
+                      <Link href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')}</Link>
+                      <bdi className="auth-legal__version" dir="ltr">{legalVersions.privacy}</bdi>
+                    </span>
                     {fieldErrors.privacy ? <small id="auth-privacy-error">{fieldErrors.privacy}</small> : null}
                   </label>
                 </div>
@@ -308,7 +306,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
               {t('common.preview')} <ArrowRight className="directional-icon" size={17} />
             </Link>
           ) : null}
-        </ContentCard>
+        </GlassChrome>
       </main>
     </div>
   )

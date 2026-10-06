@@ -5,7 +5,9 @@
 .today-next-action-card {
   display: grid;
   gap: .85rem;
-  padding: 1.2rem 1.2rem 1.2rem 1.05rem;
+  justify-items: center;
+  padding: 1.2rem;
+  text-align: center;
   border-inline-start: 3px solid var(--color-energy);
   background: color-mix(in srgb, var(--color-energy-soft) 55%, var(--color-surface));
   box-shadow: none;
@@ -30,6 +32,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: .6rem;
+  justify-content: center;
+  width: 100%;
 }
 
 .today-checkin-quiet {
@@ -162,6 +166,196 @@
   flex-wrap: wrap;
   gap: .6rem;
   justify-content: center;
+}
+
+.today-wait-card.plan-build {
+  overflow: hidden;
+  padding: 1.6rem 1.2rem 1.35rem;
+  width: 100%;
+}
+
+.plan-build__show {
+  display: grid;
+  gap: .75rem;
+  justify-items: center;
+  width: 100%;
+}
+
+.plan-build__orbit {
+  height: 7.5rem;
+  position: relative;
+  width: 7.5rem;
+}
+
+.plan-build__glow,
+.plan-build__spin {
+  border-radius: 50%;
+  inset: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.plan-build__glow {
+  background: color-mix(in srgb, var(--color-brand) 34%, transparent);
+  filter: blur(18px);
+  opacity: .7;
+  transform: scale(.72);
+  animation: plan-build-float 6.5s ease-in-out infinite;
+}
+
+.plan-build__spin {
+  inset: -.2rem;
+  background: conic-gradient(from 0deg, transparent 0 68%, var(--color-brand) 86%, transparent 100%);
+  animation: plan-build-spin 2.8s linear infinite;
+  mask: radial-gradient(circle, transparent 61%, #000 64%);
+  -webkit-mask: radial-gradient(circle, transparent 61%, #000 64%);
+}
+
+.plan-build__orbit svg {
+  display: block;
+  height: 100%;
+  position: relative;
+  transform: rotate(-90deg);
+  width: 100%;
+}
+
+.plan-build__ring-track,
+.plan-build__ring-value {
+  fill: none;
+  stroke-width: 7;
+}
+
+.plan-build__ring-track {
+  stroke: color-mix(in srgb, var(--color-brand) 18%, var(--color-border));
+}
+
+.plan-build__ring-value {
+  stroke: var(--color-brand);
+  stroke-linecap: round;
+  transition: stroke-dashoffset .9s cubic-bezier(.22, 1, .36, 1);
+}
+
+.plan-build__orbit strong {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  font-size: 1.35rem;
+  inset: 0;
+  justify-content: center;
+  line-height: 1;
+  position: absolute;
+}
+
+.plan-build__orbit small {
+  color: var(--color-text-secondary);
+  font-size: .68rem;
+  font-weight: 500;
+  margin-top: .28rem;
+}
+
+.plan-build__show h1 {
+  animation: plan-build-in .45s cubic-bezier(.22, 1, .36, 1);
+  font-size: 1.28rem;
+  line-height: 1.45;
+  max-width: 22rem;
+}
+
+.plan-build__detail {
+  animation: plan-build-in .4s cubic-bezier(.22, 1, .36, 1);
+  min-height: 2.8rem;
+  max-width: 24rem;
+}
+
+.plan-build__steps {
+  display: grid;
+  gap: .28rem;
+  list-style: none;
+  margin: .15rem 0 0;
+  padding: 0;
+  text-align: start;
+  width: 100%;
+}
+
+.plan-build__step {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: flex;
+  font-size: .78rem;
+  gap: .45rem;
+  line-height: 1.35;
+  min-height: 1.35rem;
+  opacity: .42;
+}
+
+.plan-build__step.is-done {
+  opacity: .78;
+}
+
+.plan-build__step.is-current {
+  color: var(--color-text);
+  font-weight: 650;
+  opacity: 1;
+}
+
+.plan-build__mark {
+  align-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-brand) 16%, var(--color-border));
+  display: flex;
+  flex: none;
+  height: .95rem;
+  justify-content: center;
+  width: .95rem;
+}
+
+.plan-build__step.is-done .plan-build__mark,
+.plan-build__step.is-current .plan-build__mark {
+  background: var(--color-brand);
+  color: var(--color-on-brand, #fff);
+}
+
+.plan-build__step.is-current .plan-build__mark {
+  animation: plan-build-pulse 1.8s ease-in-out infinite;
+}
+
+.plan-build__track {
+  background: color-mix(in srgb, var(--color-brand) 16%, var(--color-border));
+  border-radius: 999px;
+  height: .35rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.plan-build__track > span {
+  background: linear-gradient(90deg, var(--color-brand), var(--color-energy, var(--color-brand)));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width .9s cubic-bezier(.22, 1, .36, 1);
+}
+
+.plan-build__pace {
+  color: var(--color-text-muted, var(--color-text-secondary));
+  font-size: .78rem;
+}
+
+@keyframes plan-build-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes plan-build-float {
+  0%, 100% { transform: scale(.72) translate3d(0, .15rem, 0); }
+  50% { transform: scale(.84) translate3d(0, -.2rem, 0); }
+}
+
+@keyframes plan-build-in {
+  from { opacity: 0; transform: translate3d(0, .35rem, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes plan-build-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
 }
 
 .today-wait-card__icon.is-success {

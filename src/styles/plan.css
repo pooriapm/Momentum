@@ -39,6 +39,17 @@
   padding: 1.35rem 1.4rem;
 }
 
+.plan-stack > .plan-overview-grid > .content-card {
+  justify-items: center;
+  text-align: center;
+}
+
+.plan-overview-card .plan-pattern-list,
+.plan-overview-card .inline-notice {
+  justify-self: stretch;
+  text-align: start;
+}
+
 .plan-overview-card h2,
 .plan-grocery h2,
 .plan-calendar-card h2,
@@ -67,11 +78,58 @@
   width: 100%;
 }
 
+.plan-week-toolbar,
+.plan-calendar-nav {
+  display: flex;
+  gap: .5rem;
+  justify-content: space-between;
+}
+
+.plan-week-toolbar .orbit-button,
+.plan-calendar-nav .orbit-button {
+  min-height: 2.5rem;
+}
+
+.plan-week-viewport {
+  overflow: hidden;
+}
+
+.plan-week-stage.is-next,
+.plan-week-stage.is-previous {
+  animation: plan-week-forward 480ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.plan-week-stage.is-previous {
+  animation-name: plan-week-back;
+}
+
+[dir="rtl"] .plan-week-stage.is-next {
+  animation-name: plan-week-back;
+}
+
+[dir="rtl"] .plan-week-stage.is-previous {
+  animation-name: plan-week-forward;
+}
+
+@keyframes plan-week-forward {
+  from { opacity: .35; transform: translate3d(1.75rem, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes plan-week-back {
+  from { opacity: .35; transform: translate3d(-1.75rem, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
 .plan-week {
   display: grid;
   gap: .65rem;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-columns: minmax(4.5rem, 1fr);
+  grid-auto-flow: column;
+  grid-template-columns: none;
   margin-bottom: .15rem;
+  overflow-x: auto;
+  scroll-padding-inline: .35rem;
 }
 
 .plan-page .workout-logger,
@@ -80,7 +138,7 @@
 }
 
 .plan-week__day {
-  align-items: flex-start;
+  align-items: center;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 1rem;
@@ -88,9 +146,10 @@
   cursor: pointer;
   display: grid;
   gap: .35rem;
+  justify-items: center;
   min-height: 4.6rem;
-  padding: .7rem .65rem;
-  text-align: start;
+  padding: .7rem .35rem;
+  text-align: center;
 }
 
 .plan-week__day.is-active {
@@ -166,12 +225,16 @@
 }
 
 .plan-calendar__cell {
+  align-items: center;
   aspect-ratio: 1;
   background: var(--color-surface-muted);
   border: 1px solid transparent;
   border-radius: .75rem;
   color: inherit;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
+  text-align: center;
 }
 
 .plan-calendar__cell.is-period {
@@ -190,6 +253,10 @@
 
 .plan-calendar__cell.is-outside {
   opacity: .35;
+}
+
+.plan-calendar__cell.is-past {
+  visibility: hidden;
 }
 
 .plan-status-card,
@@ -281,15 +348,25 @@
 @media (max-width: 760px) {
   .plan-overview-grid,
   .plan-grocery,
-  .plan-skeleton-grid,
-  .plan-week {
+  .plan-skeleton-grid {
     grid-template-columns: 1fr;
   }
 
   .plan-week {
-    grid-auto-flow: column;
-    grid-template-columns: repeat(7, minmax(4.6rem, 1fr));
-    overflow-x: auto;
+    gap: .4rem;
+    padding-bottom: .15rem;
+  }
+
+  .plan-week__day {
+    min-width: 0;
+    padding: .6rem .3rem;
+  }
+
+  .plan-week__day strong,
+  .plan-week__day small {
+    font-size: .72rem;
+    line-height: 1.25;
+    white-space: nowrap;
   }
 
   .plan-heading-aside {

@@ -4,6 +4,7 @@ import type {
   MomentumPlanDayView,
   MomentumPlanView,
   PlanVersionMeta,
+  WorkoutBlock,
 } from '../../data/types'
 import { formatLastSync, readStoredLastSync, writeStoredLastSync } from './today-state'
 
@@ -57,6 +58,73 @@ export function weekIsoDates(iso: string, locale: AppLocale) {
     next.setDate(start.getDate() + index)
     return dateToIso(next)
   })
+}
+
+export function shiftIsoDays(iso: string, amount: number) {
+  const date = isoToDate(iso)
+  date.setDate(date.getDate() + amount)
+  return dateToIso(date)
+}
+
+/** The first calendar day after the plan. That day has no plan yet. */
+export function nextUnplannedDate(days: Array<{ localDate: string }>) {
+  const last = days.map((day) => day.localDate).sort().at(-1)
+  return last ? shiftIsoDays(last, 1) : null
+}
+
+/** Plan days from today onward, plus the single next-cycle day when it falls in this week. */
+export function visibleDatesInWeek(
+  days: Array<{ localDate: string }>,
+  iso: string,
+  today: string,
+  locale: AppLocale,
+) {
+  const cycle = nextUnplannedDate(days)
+  const planned = new Set(days.map((day) => day.localDate))
+  return weekIsoDates(iso, locale).filter((date) => date >= today && (planned.has(date) || date === cycle))
+}
+
+export function adjacentVisibleDate(
+  days: Array<{ localDate: string }>,
+  iso: string,
+  today: string,
+  direction: -1 | 1,
+  locale: AppLocale,
+) {
+  const week = weekIsoDates(iso, locale)
+  const edge = direction < 0 ? week[0] : week[week.length - 1]
+  if (!edge) return null
+  const visible = visibleDatesInWeek(days, shiftIsoDays(edge, direction), today, locale)
+  if (!visible.length) return null
+  return direction < 0 ? visible[visible.length - 1]! : visible[0]!
+}
+
+/** First or last planned day in the week before or after `iso`, if that week is in the plan. */
+export function adjacentScheduledDate(
+  days: Array<{ localDate: string }>,
+  iso: string,
+  direction: -1 | 1,
+  locale: AppLocale,
+) {
+  const week = weekIsoDates(iso, locale)
+  const edge = direction < 0 ? week[0] : week[week.length - 1]
+  if (!edge) return null
+  const nextWeek = new Set(weekIsoDates(shiftIsoDays(edge, direction), locale))
+  const matches = days.filter((day) => nextWeek.has(day.localDate))
+  if (!matches.length) return null
+  return direction < 0 ? matches[matches.length - 1]!.localDate : matches[0]!.localDate
+}
+
+export function applyExerciseSubstitutes(workout: WorkoutBlock, names: Record<string, string>): WorkoutBlock {
+  if (!Object.keys(names).length) return workout
+  return {
+    ...workout,
+    exerciseDetails: workout.exerciseDetails.map((exercise) => {
+      const name = names[exercise.key]
+      if (!name) return exercise
+      return { ...exercise, name: { fa: name, en: name } }
+    }),
+  }
 }
 
 export function planDays(plan: MomentumPlanView): MomentumPlanDayView[] {

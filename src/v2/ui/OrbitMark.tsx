@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface OrbitMarkProps {
   size?: number
@@ -58,12 +59,13 @@ export function OrbitMark({ size = 42, animated = false, className = '' }: Orbit
 }
 
 export function BrandLockup({ compact = false }: { compact?: boolean }) {
+  const { t } = useTranslation()
   return (
     <span className={`brand-lockup ${compact ? 'brand-lockup--compact' : ''}`}>
       <OrbitMark size={compact ? 38 : 44} />
       <span className="brand-lockup__type">
         <strong>MOMENTUM</strong>
-        {!compact ? <span>Monthly fitness and nutrition plans</span> : null}
+        {!compact ? <span>{t('common.brandTagline')}</span> : null}
       </span>
     </span>
   )

@@ -54,6 +54,28 @@ export function calendarMonthLength(year: number, month: number, locale: AppLoca
   return locale === 'fa' ? getJalaliMonthLength(year, month) : new Date(Date.UTC(year, month, 0)).getUTCDate()
 }
 
+export function shiftCalendarMonth(year: number, month: number, delta: number) {
+  const absolute = year * 12 + (month - 1) + delta
+  const nextYear = Math.floor(absolute / 12)
+  return { year: nextYear, month: absolute - nextYear * 12 + 1 }
+}
+
+export function calendarMonthTitle(year: number, month: number, locale: AppLocale) {
+  if (locale === 'fa') {
+    const name = PERSIAN_MONTHS[month - 1] ?? ''
+    const yearLabel = new Intl.NumberFormat('fa-IR', { useGrouping: false }).format(year)
+    return `${name} ${yearLabel}`
+  }
+  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, 1)))
+}
+
+export function calendarMonthOverlaps(year: number, month: number, locale: AppLocale, from: string, to: string) {
+  if (!from || !to) return true
+  const first = calendarIso(year, month, 1, locale)
+  const last = calendarIso(year, month, calendarMonthLength(year, month, locale), locale)
+  return last >= from && first <= to
+}
+
 export function monthGrid(year: number, month: number, locale: AppLocale): CalendarCell[] {
   if (locale === 'fa') {
     return getJalaliMonthGrid(year, month).map((cell) => ({

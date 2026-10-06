@@ -18,6 +18,7 @@ import {
   WalletCards,
   XCircle,
 } from 'lucide-react'
+import { PLAN_BUILD_STAGES } from '../../v2/pages/app/plan-build-show'
 import { momentumEvidence, momentumSupportingVariant } from './coverage'
 import {
   localeFromStory,
@@ -93,21 +94,7 @@ const waitEyebrow = {
 } as const
 
 function waitLines(locale: SpecLocale) {
-  return locale === 'fa'
-    ? [
-        'در حال خواندن هدف و برنامه تمرینی‌ات…',
-        'در حال چیدن تمرین‌های یک ماه…',
-        'در حال چیدن وعده‌های غذایی…',
-        'در حال بررسی ایمنی غذا و حرکت…',
-        'تقریباً آماده است…',
-      ]
-    : [
-        'Reading your goal and training setup…',
-        'Laying out one month of workouts…',
-        'Laying out the meals for the month…',
-        'Checking food and movement safety…',
-        'Almost ready…',
-      ]
+  return PLAN_BUILD_STAGES.map((stage) => stage.title[locale])
 }
 
 function GenerateWaitScreen({ locale, state }: { locale: SpecLocale; state: Extract<LifecycleState, 'queued' | 'generating' | 'validating' | 'importing'> }) {
@@ -122,8 +109,8 @@ function GenerateWaitScreen({ locale, state }: { locale: SpecLocale; state: Extr
       <div className="mo-spec__generate-wait">
         <span className="mo-spec__state-icon mo-spec__state-icon--brand"><LoaderCircle className="orbit-spin" /></span>
         <p className="mo-spec__eyebrow">{tx(locale, waitEyebrow[state].fa, waitEyebrow[state].en)}</p>
-        <h1>{tx(locale, 'لطفاً منتظر بمانید. برنامه شخصی‌سازی‌شده شما در حال تولید است.', 'Please wait. Your personalized plan is being created.')}</h1>
-        <p className="mo-spec__generate-wait-rotating" aria-live="polite">{lines[index]}</p>
+        <h1>{lines[index]}</h1>
+        <p className="mo-spec__generate-wait-rotating" aria-live="polite">{PLAN_BUILD_STAGES[index]?.details[locale][0]}</p>
         <SpecProgress label={tx(locale, 'آماده‌سازی برنامه ۳۰روزه', 'Preparing the 30-day plan')} value={waitProgress[state]} />
         <p>{tx(locale, 'می‌توانی این صفحه را ببندی. اگر بعد از ۳ دقیقه آماده نشد، خطا می‌بینی و می‌توانی دوباره درخواست بدهی.', 'You can leave. If it is not ready after 3 minutes, you will see an error and can request again.')}</p>
       </div>

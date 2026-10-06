@@ -19,6 +19,7 @@ import { localize, type MealChoice, type MealSlot, type MomentumPlanView, type W
 import { Button, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
 import {
+  applyExerciseSubstitutes,
   derivePlanSurface,
   formatLastSync,
   groceryShareText,
@@ -26,7 +27,7 @@ import {
   planDays,
   readShoppingChecks,
   readStoredLastSync,
-  resolvePlanHistory,
+  nextUnplannedDate,
   resolvePlanVersion,
   shoppingPlanKey,
   type PlanSegment,
@@ -35,14 +36,13 @@ import {
   writeStoredLastSync,
 } from './plan-state'
 import {
+  NextCycleNote,
   PlanCalendarView,
   PlanErrorState,
   PlanGroceryView,
-  PlanHistoryView,
   PlanLoadingSkeleton,
   PlanNutritionView,
   PlanTrainingView,
-  PlanVersionView,
   PlanWeekView,
 } from './plan-views'
 import '../../../styles/plan.css'
@@ -82,7 +82,6 @@ export function PlanPage({
   const fa = locale === 'fa'
   const [segment, setSegment] = useState<PlanSegment>(initialSegment)
   const [selectedDate, setSelectedDate] = useState('')
-  const [showHistory, setShowHistory] = useState(false)
   const [mealDetail, setMealDetail] = useState<{ choice: MealChoice; meal: MealSlot } | null>(null)
   const [workoutDetail, setWorkoutDetail] = useState<WorkoutBlock | null>(null)
   const [substitution, setSubstitution] = useState<{ title: string; options: string[]; onConfirm: (name: string) => void } | null>(null)
@@ -92,6 +91,7 @@ export function PlanPage({
   const [savingSlot, setSavingSlot] = useState('')
   const [mealError, setMealError] = useState('')
   const [substituteNotice, setSubstituteNotice] = useState('')
+  const [exerciseSubstitutes, setExerciseSubstitutes] = useState<Record<string, Record<string, string>>>({})
   const planViewTracked = useRef(false)
   const today = currentLocalDate(plan?.timezone)
 
@@ -125,13 +125,19 @@ export function PlanPage({
 
   const activePlan = plan
   const availableDays = planDays(activePlan)
-  const selectedDay = availableDays.find((day) => day.localDate === selectedDate)
-    ?? availableDays.find((day) => day.localDate === activePlan.localDate)
-    ?? availableDays[0]
-  const isToday = selectedDay.localDate === (activePlan.localDate ?? today)
+  const cycleDate = nextUnplannedDate(availableDays)
+  const showingNextCycle = Boolean(cycleDate && selectedDate === cycleDate)
+  const upcomingDays = availableDays.filter((day) => day.localDate >= today)
+  const selectedPlanDay = availableDays.find((day) => day.localDate === selectedDate && day.localDate >= today)
+    ?? upcomingDays.find((day) => day.localDate === (activePlan.localDate && activePlan.localDate >= today ? activePlan.localDate : ''))
+    ?? upcomingDays[0]
+    ?? availableDays[availableDays.length - 1]!
+  const selectedDay = showingNextCycle && cycleDate
+    ? { ...selectedPlanDay, localDate: cycleDate, meals: [], workout: null, dateLabel: { fa: 'دوره بعد', en: 'Next period' } }
+    : selectedPlanDay
+  const isToday = !showingNextCycle && selectedDay.localDate === (activePlan.localDate ?? today)
   const version = resolvePlanVersion(activePlan)
-  const history = resolvePlanHistory(activePlan)
-  const inventoryId = view === 'error' ? 'PLAN-10' : view === 'offline' ? 'PLAN-09' : view === 'stale' ? 'PLAN-09' : showHistory ? 'PLAN-14' : segment === 'week' ? 'PLAN-01' : segment === 'nutrition' ? 'PLAN-02' : segment === 'training' ? 'PLAN-03' : segment === 'grocery' ? 'PLAN-04' : 'PLAN-05'
+  const inventoryId = view === 'error' ? 'PLAN-10' : view === 'offline' ? 'PLAN-09' : view === 'stale' ? 'PLAN-09' : segment === 'week' ? 'PLAN-01' : segment === 'nutrition' ? 'PLAN-02' : segment === 'training' ? 'PLAN-03' : segment === 'grocery' ? 'PLAN-04' : 'PLAN-05'
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, current: PlanSegment) {
     const currentIndex = PLAN_SEGMENTS.indexOf(current)
@@ -144,7 +150,6 @@ export function PlanPage({
     event.preventDefault()
     const next = PLAN_SEGMENTS[nextIndex]
     setSegment(next)
-    setShowHistory(false)
     const tab = document.getElementById(`plan-tab-${next}`)
     tab?.focus({ preventScroll: true })
     tab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
@@ -220,13 +225,12 @@ export function PlanPage({
     <main className="app-page plan-page screen-enter" data-inventory={inventoryId}>
       <section className="page-heading">
         <div>
-          <p className="orbit-eyebrow">{fa ? 'برنامه شخصی' : 'Personal plan'} · {localize(selectedDay.dateLabel, locale)}</p>
+          <p className="orbit-eyebrow">{fa ? 'برنامه شخصی' : 'Personal plan'} · {showingNextCycle ? (fa ? 'دوره بعد' : 'Next period') : localize(selectedDay.dateLabel, locale)}</p>
           <h1>{t('app.planTitle')}</h1>
           <p>{localize(activePlan.monthlyPlanBrief, locale)}</p>
         </div>
         <div className="plan-heading-aside">
           <StatusPill tone="success"><Check size={13} />{fa ? 'برنامه فعال' : 'Active plan'}</StatusPill>
-          <Button onClick={() => setShowHistory((current) => !current)} variant="ghost">{version.label} · {fa ? `چرخه ${version.cycle}` : `cycle ${version.cycle}`}</Button>
         </div>
       </section>
 
@@ -254,11 +258,11 @@ export function PlanPage({
         {segmentMeta.map(({ key, icon: Icon, fa: faLabel, en }) => (
           <button
             aria-controls={`plan-panel-${key}`}
-            aria-selected={segment === key && !showHistory}
-            className={segment === key && !showHistory ? 'is-active' : ''}
+            aria-selected={segment === key}
+            className={segment === key ? 'is-active' : ''}
             id={`plan-tab-${key}`}
             key={key}
-            onClick={() => { setSegment(key); setShowHistory(false) }}
+            onClick={() => setSegment(key)}
             onKeyDown={(event) => handleTabKeyDown(event, key)}
             role="tab"
             tabIndex={segment === key ? 0 : -1}
@@ -269,21 +273,27 @@ export function PlanPage({
         ))}
       </div>
 
-      {showHistory ? <div className="motion-panel"><PlanHistoryView history={history} locale={locale} /></div> : null}
-      {!showHistory && segment === 'week' ? (
+      {segment === 'week' ? (
         <div aria-labelledby="plan-tab-week" className="motion-panel" id="plan-panel-week" role="tabpanel">
           <PlanWeekView
             days={availableDays}
             locale={locale}
-            onOpenWorkout={() => selectedDay.workout && setWorkoutDetail(selectedDay.workout)}
+            onOpenWorkout={() => {
+              const workout = selectedDay.workout
+                ? applyExerciseSubstitutes(selectedDay.workout, exerciseSubstitutes[selectedDay.localDate] ?? {})
+                : null
+              if (workout) setWorkoutDetail(workout)
+            }}
             onSelectDate={setSelectedDate}
+            nextCycle={showingNextCycle}
             selectedDay={selectedDay}
+            today={today}
           />
         </div>
       ) : null}
-      {!showHistory && segment === 'nutrition' ? (
+      {segment === 'nutrition' ? (
         <div aria-labelledby="plan-tab-nutrition" className="motion-panel" id="plan-panel-nutrition" role="tabpanel">
-          <PlanNutritionView
+          {showingNextCycle ? <NextCycleNote locale={locale} /> : <PlanNutritionView
             completedSlots={completedSlots}
             days={availableDays}
             isToday={isToday}
@@ -295,31 +305,32 @@ export function PlanPage({
             savingSlot={savingSlot}
             selectedDay={selectedDay}
             selectedMeals={selectedMeals}
-          />
+          />}
           {mealError ? <div className="inline-notice inline-notice--error" role="alert">{mealError}</div> : null}
         </div>
       ) : null}
-      {!showHistory && segment === 'training' ? (
+      {segment === 'training' ? (
         <div aria-labelledby="plan-tab-training" className="motion-panel" id="plan-panel-training" role="tabpanel">
-          <PlanTrainingView
+          {showingNextCycle ? <NextCycleNote locale={locale} /> : <PlanTrainingView
             days={availableDays}
             locale={locale}
             onOpenWorkout={setWorkoutDetail}
             selectedDay={selectedDay}
-          />
-          {selectedDay.workout ? (
+            substitutes={exerciseSubstitutes[selectedDay.localDate]}
+          />}
+          {!showingNextCycle && selectedDay.workout ? (
             <WorkoutLogger
               enabled={isToday && !mutationsLocked && (preview || online)}
               key={`${selectedDay.localDate}-${selectedDay.workout.id}`}
               locale={locale}
               localDate={selectedDay.localDate}
               preview={preview}
-              workout={selectedDay.workout}
+              workout={applyExerciseSubstitutes(selectedDay.workout, exerciseSubstitutes[selectedDay.localDate] ?? {})}
             />
           ) : null}
         </div>
       ) : null}
-      {!showHistory && segment === 'grocery' ? (
+      {segment === 'grocery' ? (
         <div aria-labelledby="plan-tab-grocery" className="motion-panel" id="plan-panel-grocery" role="tabpanel">
           <PlanGroceryView
             checkedItems={groceryChecks}
@@ -330,20 +341,21 @@ export function PlanPage({
           />
         </div>
       ) : null}
-      {!showHistory && segment === 'calendar' ? (
+      {segment === 'calendar' ? (
         <div aria-labelledby="plan-tab-calendar" className="motion-panel" id="plan-panel-calendar" role="tabpanel">
           <PlanCalendarView
+            cycleDate={cycleDate}
             days={availableDays}
             locale={locale}
             onSelectDate={setSelectedDate}
             selectedDay={selectedDay}
+            today={today}
             version={version}
           />
         </div>
       ) : null}
 
       {substituteNotice ? <div className="inline-notice" role="status">{substituteNotice}</div> : null}
-      {!showHistory ? <PlanVersionView locale={locale} onOpenHistory={() => setShowHistory(true)} version={version} /> : null}
 
       {mealDetail ? (
         <LazyOverlay>
@@ -366,12 +378,17 @@ export function PlanPage({
         <WorkoutDetailSheet
           locale={locale}
           onClose={() => setWorkoutDetail(null)}
-          onSubstitute={(_exerciseKey, name) => {
+          onSubstitute={(exerciseKey, name) => {
+            const localDate = selectedDay.localDate
             setWorkoutDetail(null)
             setSubstitution({
               title: name,
               options: [name],
               onConfirm: () => {
+                setExerciseSubstitutes((current) => ({
+                  ...current,
+                  [localDate]: { ...current[localDate], [exerciseKey]: name },
+                }))
                 setSubstituteNotice(fa ? 'جایگزین همان الگوی حرکتی ذخیره شد. برنامه ماهانه بازتولید نمی‌شود.' : 'Same movement-pattern substitute saved. The monthly plan is not regenerated.')
                 setSubstitution(null)
               },

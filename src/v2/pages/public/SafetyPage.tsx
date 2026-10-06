@@ -1,36 +1,7 @@
-import { HeartHandshake, LockKeyhole, Scale, ShieldCheck } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import type { AppLocale } from '../../../platform/i18n/catalog'
-import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
-import { ContentCard, Eyebrow } from '../../ui/primitives'
-import { Reveal } from '../../ui/Reveal'
+import { LegalShell } from './LegalPage'
+import { legalDocument } from './legal-copy'
 
 export function SafetyPage({ locale }: { locale: AppLocale }) {
-  const { t } = useTranslation()
-  const cards = [
-    [Scale, t('safety.adult')],
-    [HeartHandshake, t('safety.clinical')],
-    [ShieldCheck, t('safety.control')],
-    [LockKeyhole, t('safety.privacy')],
-  ] as const
-  return (
-    <div className="public-page">
-      <PublicHeader locale={locale} />
-      <main className="simple-public-page safety-page screen-enter">
-        <Reveal className="simple-public-page__heading">
-          <Eyebrow>{locale === 'fa' ? 'سلامت عمومی' : 'General wellness'}</Eyebrow>
-          <h1>{t('safety.title')}</h1>
-          <p>{t('safety.intro')}</p>
-        </Reveal>
-        <div className="safety-grid">
-          {cards.map(([Icon, copy]) => <ContentCard key={copy}><Icon size={26} /><p>{copy}</p></ContentCard>)}
-        </div>
-        <ContentCard className="safety-disclaimer">
-          <strong>{t('safety.important')}</strong>
-          <p>{t('safety.emergency')}</p>
-        </ContentCard>
-      </main>
-      <PublicFooter locale={locale} />
-    </div>
-  )
+  return <LegalShell document={legalDocument('safety', locale)} locale={locale} />
 }

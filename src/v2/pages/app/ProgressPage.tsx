@@ -19,6 +19,7 @@ import {
   NEXT_CYCLE_NOTE_MAX,
   NEXT_CYCLE_NOTE_SOFT,
 } from './me-state'
+import { ComparisonTable, SplitBars, WeekComparisonStrip, WeightChart } from './ProgressCharts'
 import {
   currentWeekIndex,
   deriveProgressSurface,
@@ -162,7 +163,7 @@ export function ProgressPage({
         <div>
           <p className="orbit-eyebrow">{fa ? 'دوره جاری' : 'Current period'}</p>
           <h1>{t('app.progressTitle')}</h1>
-          <p>{fa ? 'پیشرفت روند است نه نمره. جدول و خلاصه متنی همان اطلاعات نمودار را دارند.' : 'Progress is a trend, not a grade. The table and text summary carry the same information as the chart.'}</p>
+          <p>{fa ? 'اینجا حرکت همین ماه را می‌بینی: وعده‌ها، تمرین، انرژی و وزن. نمره نیست. هر هفته را با هفته قبلش مقایسه می‌کنیم.' : 'This is the motion of the month: meals, training, energy, and weight. It is not a grade. Each week is compared with the one before it.'}</p>
         </div>
         <div className="progress-heading-actions">
           <StatusPill tone="success">{fa ? `هفته ${formatNumber(weekIndex + 1, locale)} از ${formatNumber(totalWeeks, locale)}` : `Week ${weekIndex + 1} of ${totalWeeks}`}</StatusPill>
@@ -206,6 +207,8 @@ export function ProgressPage({
           <ContentCard><span><LineChart size={19} /></span><small>{fa ? 'انرژی' : 'Energy'}</small><strong>{formatNumber(plan.progress.energyScore, locale)}</strong><em>{fa ? 'بدون فشار روند متوالی' : 'No streak pressure'}</em></ContentCard>
         </div>
       ) : null}
+      {plan && series.length > 0 ? <WeekComparisonStrip locale={locale} series={series} /> : null}
+      <div className="progress-chart-grid">
       <ContentCard className="trend-card">
         <div className="section-title-row">
           <div>
@@ -224,6 +227,26 @@ export function ProgressPage({
           <Button aria-pressed={chartView === 'table'} onClick={() => setChartView('table')} variant={chartView === 'table' ? 'primary' : 'secondary'}>{fa ? 'نمایش جدول' : 'View data table'}</Button>
         </div>
       </ContentCard>
+      {plan && series.length > 0 ? (
+        <ContentCard className="trend-card progress-side-chart">
+          <p className="orbit-eyebrow">{fa ? 'وعده در برابر تمرین' : 'Meals against training'}</p>
+          <h2>{fa ? 'سهم انجام‌شده وعده و تمرین' : 'How much of the meals and training is done'}</h2>
+          <SplitBars locale={locale} series={series} />
+        </ContentCard>
+      ) : null}
+      </div>
+      {plan ? (
+        <ContentCard className="trend-card">
+          <p className="orbit-eyebrow">{fa ? 'وزن ثبت‌شده' : 'Logged weight'}</p>
+          <h2>{fa ? 'خط وزن، از چک‌این‌ها' : 'The weight line, from your check-ins'}</h2>
+          <WeightChart locale={locale} plan={plan} />
+        </ContentCard>
+      ) : null}
+      {series.length > 0 ? (
+        <ContentCard className="trend-card progress-table-card">
+          <ComparisonTable locale={locale} series={series} />
+        </ContentCard>
+      ) : null}
       {plan ? (
         <ContentCard className="checkin-history-card">
           <div className="section-title-row"><h2>{fa ? 'چک‌این‌های اخیر' : 'Recent check-ins'}</h2><CalendarDays size={18} /></div>
@@ -321,7 +344,7 @@ function WeekBars({ locale, series }: { locale: AppLocale; series: ReturnType<ty
     <div className="progress-week-bars">
       {series.map((item) => (
         <div className="progress-week-bars__row" key={item.week}>
-          <small>{item.partial ? (fa ? `هفته ${item.week} · ناقص` : `Week ${item.week} · partial`) : (fa ? `هفته ${item.week}` : `Week ${item.week}`)}</small>
+          <small>{item.partial ? (fa ? `هفته ${formatNumber(item.week, locale)} · ناقص` : `Week ${item.week} · partial`) : (fa ? `هفته ${formatNumber(item.week, locale)}` : `Week ${item.week}`)}</small>
           <span className="progress-week-bars__track"><i className="progress-week-bars__fill" style={{ width: `${Math.min(100, item.adherence)}%` }} /></span>
           <strong>{formatNumber(item.adherence, locale)}%</strong>
         </div>
@@ -347,7 +370,7 @@ function ProgressTable({ locale, series }: { locale: AppLocale; series: ReturnTy
       <tbody>
         {series.map((item) => (
           <tr key={item.week}>
-            <td>{item.partial ? (fa ? `هفته ${item.week} · ناقص` : `Week ${item.week} · partial`) : (fa ? `هفته ${item.week}` : `Week ${item.week}`)}</td>
+            <td>{item.partial ? (fa ? `هفته ${formatNumber(item.week, locale)} · ناقص` : `Week ${item.week} · partial`) : (fa ? `هفته ${formatNumber(item.week, locale)}` : `Week ${item.week}`)}</td>
             <td>{`${formatNumber(item.workoutsCompleted, locale)} / ${formatNumber(item.workoutsPlanned, locale)}`}</td>
             <td>{`${formatNumber(item.mealsCompleted, locale)} / ${formatNumber(item.mealsPlanned, locale)}`}</td>
             <td>{formatNumber(item.energy, locale, { maximumFractionDigits: 1 })}</td>
@@ -361,7 +384,7 @@ function ProgressTable({ locale, series }: { locale: AppLocale; series: ReturnTy
 
 function textSummary(series: ReturnType<typeof resolveWeeklySeries>, locale: AppLocale) {
   const parts = series.map((item) => locale === 'fa'
-    ? `هفته ${item.week}${item.partial ? ' (ناقص)' : ''} ${formatNumber(item.adherence, locale)}٪`
+    ? `هفته ${formatNumber(item.week, locale)}${item.partial ? ' (ناقص)' : ''} ${formatNumber(item.adherence, locale)}٪`
     : `week ${item.week}${item.partial ? ' (partial)' : ''} ${item.adherence}%`)
   return locale === 'fa'
     ? `پایبندی ${parts.join('، ')} است. مقدار ناقص صفر تفسیر نمی‌شود.`

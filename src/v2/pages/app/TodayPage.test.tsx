@@ -71,7 +71,7 @@ describe('TodayPage inventory states', () => {
     vi.useFakeTimers()
     const onRetry = vi.fn()
     renderToday({ surface: 'preparing', onRetry })
-    expect(screen.getByText(/please wait\. your personalized plan is being created/i)).toBeInTheDocument()
+    expect(screen.getByText(/we're looking through what works for you/i)).toBeInTheDocument()
     expect(screen.getByText(/you can leave this page and come back/i)).toBeInTheDocument()
     await vi.advanceTimersByTimeAsync(TODAY_GENERATION_WAIT_MS)
     expect(screen.getByText(/the plan is not ready yet/i)).toBeInTheDocument()

@@ -3,9 +3,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 1rem;
   padding: clamp(1rem, 3vw, 1.35rem);
+  text-align: center;
 }
 .workout-start-card > div:first-child { flex: 1 1 12rem; min-width: 0; }
 .workout-start-card > .orbit-button { flex: 0 0 auto; }

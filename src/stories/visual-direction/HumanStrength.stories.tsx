@@ -103,7 +103,7 @@ function showcaseStyle(theme: Theme): ShowcaseStyle {
 const copy = {
   fa: {
     label: 'مسیر بصری مصوب', title: 'قدرت انسانی',
-    intro: 'رابطی آرام و توانمند که برنامه‌ریزی سلامت را شخصی، روشن و بدون قضاوت نگه می‌دارد.',
+    intro: 'رابطی که برنامه ماهانه را روشن، شخصی و قابل ادامه نگه می‌دارد.',
     glass: 'لایه عملکردی شیشه‌ای', glassBody: 'شیشه فقط برای ناوبری و کنترل‌های موقت است؛ محتوای اصلی همیشه روی سطحی خوانا و مات باقی می‌ماند.',
     opaque: 'کارت محتوای مات', opaqueBody: 'برنامه تمرینی، تغذیه، نمودار و فرم برای خوانایی به جلوه شیشه‌ای وابسته نیستند.',
     today: 'امروز', workout: 'تمرین قدرتی تمام بدن', duration: '۴۵ دقیقه', exercises: '۶ حرکت', start: 'شروع تمرین', details: 'جزئیات',
@@ -114,7 +114,7 @@ const copy = {
   },
   en: {
     label: 'Approved visual direction', title: 'Human Strength',
-    intro: 'A calm, capable interface that keeps health planning personal, clear, and free of judgment.',
+    intro: 'An interface that keeps the monthly plan clear, personal, and ready to continue.',
     glass: 'Functional glass layer', glassBody: 'Glass belongs to navigation and temporary controls; primary content always stays on a readable opaque surface.',
     opaque: 'Opaque content card', opaqueBody: 'Plans, nutrition, charts, and forms never depend on glass for hierarchy or readability.',
     today: 'Today', workout: 'Full-body strength', duration: '45 min', exercises: '6 exercises', start: 'Start workout', details: 'Details',

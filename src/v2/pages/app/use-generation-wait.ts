@@ -29,6 +29,11 @@ function readResumedSession(enabled: boolean): GenerationWaitSession | null {
 export function useGenerationWait(locale: AppLocale, hasPriorPlan: boolean, enabled = true) {
   const [session, setSession] = useState<GenerationWaitSession | null>(() => readResumedSession(enabled))
   const running = useRef(false)
+  const pollTimer = useRef<number | null>(null)
+
+  useEffect(() => () => {
+    if (pollTimer.current) window.clearTimeout(pollTimer.current)
+  }, [])
 
   function persist(next: GenerationWaitSession | null) {
     if (next) writeGenerationWaitSession(next)
@@ -45,27 +50,33 @@ export function useGenerationWait(locale: AppLocale, hasPriorPlan: boolean, enab
   async function run(current: GenerationWaitSession) {
     if (!enabled || running.current) return
     running.current = true
+    const working = current.phase === 'queued' ? { ...current, phase: 'generating' as const, failure: null } : current
+    if (working.phase !== current.phase) persistUnlessTimedOut(working)
     try {
-      const result = await requestPlanGeneration(locale, current.idempotencyKey)
+      const result = await requestPlanGeneration(locale, working.idempotencyKey)
       const phase = mapJobStatusToPhase(result.job.status)
       if (phase === 'ready') {
-        persist({ ...current, phase: 'ready', failure: null })
+        persist({ ...working, phase: 'ready', failure: null })
         clearGenerationWaitSession()
         window.location.reload()
         return
       }
-      persistUnlessTimedOut({ ...current, phase, failure: null })
+      persistUnlessTimedOut({ ...working, phase, failure: null })
     } catch (caught) {
       const mapped = mapGenerationFailure(caught)
       if (mapped === 'still_processing') {
-        persistUnlessTimedOut({
-          ...current,
-          phase: current.phase === 'queued' ? 'generating' : current.phase,
-          failure: null,
-        })
+        persistUnlessTimedOut({ ...working, phase: 'generating', failure: null })
+        if (pollTimer.current) window.clearTimeout(pollTimer.current)
+        pollTimer.current = window.setTimeout(() => {
+          pollTimer.current = null
+          const latest = readGenerationWaitSession()
+          if (!latest || latest.failure || latest.phase === 'ready' || waitHasTimedOut(latest.startedAt)) return
+          running.current = false
+          void run(latest)
+        }, 2_500)
         return
       }
-      persistUnlessTimedOut(markGenerationWaitFailure(current, mapped ?? 'provider'))
+      persistUnlessTimedOut(markGenerationWaitFailure(working, mapped ?? 'provider'))
     } finally {
       running.current = false
     }

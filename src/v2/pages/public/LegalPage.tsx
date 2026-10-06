@@ -1,70 +1,102 @@
-import { FileText, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Mail } from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { FALLBACK_LEGAL_DOCUMENT_VERSIONS, loadLegalDocumentVersions } from '../../../config/legal'
 import { runtimeConfig } from '../../../platform/config/runtime'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
-import { ContentCard, Eyebrow } from '../../ui/primitives'
-import { Reveal } from '../../ui/Reveal'
+import { GlassChrome } from '../../ui/primitives'
+import { legalDocument, type LegalDocument } from './legal-copy'
+import './legal.css'
 
 export function LegalPage({ locale, kind }: { locale: AppLocale; kind: 'privacy' | 'terms' }) {
-  const privacy = kind === 'privacy'
   const fa = locale === 'fa'
   const [legalVersions, setLegalVersions] = useState(FALLBACK_LEGAL_DOCUMENT_VERSIONS)
-  const version = privacy ? legalVersions.privacy : legalVersions.terms
+  const version = kind === 'privacy' ? legalVersions.privacy : legalVersions.terms
+  const privacyContactEmail = runtimeConfig.privacyEmail || runtimeConfig.supportEmail
   useEffect(() => {
     void loadLegalDocumentVersions().then(setLegalVersions)
   }, [])
-  const privacyContactEmail = runtimeConfig.privacyEmail || runtimeConfig.supportEmail
-  const sections = privacy
-    ? [
-        [fa ? 'چه داده‌ای نگهداری می‌شود؟' : 'What data is stored?', fa ? 'حساب، پروفایل و رضایت‌ها، هدف و ترجیحات، برنامه‌ها و ثبت‌های روزانه و در صورت انتخاب شما گزارش خصوصی ترکیب بدنی.' : 'Account, profile and consent records, goals and preferences, plans and daily logs, and—only if you choose—private body-composition reports.'],
-        [fa ? 'چرا پردازش می‌شود؟' : 'Why is it processed?', fa ? 'برای احراز هویت، تولید و نمایش برنامه ماهانه، پیگیری، ایمنی و کنترل اشتراک. Momentum داده سلامت را برای تبلیغات هدفمند نمی‌فروشد یا استفاده نمی‌کند.' : 'To authenticate you, generate and display the monthly plan, track progress, enforce safety, and verify subscription access. Momentum does not sell or use health data for targeted advertising.'],
-        [fa ? 'پردازش AI' : 'AI processing', fa ? 'فقط زمینه لازم از سمت سرور به سرویس‌دهنده AI ارسال می‌شود؛ ایمیل و نام از پرامپت برنامه حذف می‌شوند. سیاست نگهداری سرویس‌دهنده می‌تواند شامل پایش سوءاستفاده تا ۳۰ روز باشد مگر قرارداد دیگری فعال شده باشد.' : 'Only necessary context is sent server-side to the AI provider; email and name are excluded from plan prompts. Provider retention may include abuse monitoring for up to 30 days unless a different approved control is enabled.'],
-        [fa ? 'ابزار بیرونی و واردکردن رایگان' : 'External tools and free import', fa ? 'اگر مسیر رایگان را انتخاب کنید، پرامپت فقط در مرورگر ساخته می‌شود و Momentum آن را به ابزار دیگری نمی‌فرستد. با کپی، اطلاعات نمایش‌داده‌شده از Momentum خارج و تابع سیاست حریم خصوصی ابزار انتخابی شما می‌شود. Momentum فقط فایل JSON برگشتی و منبع کلی آن را پس از اعتبارسنجی ذخیره می‌کند.' : 'If you choose the free path, the prompt is built only in your browser and Momentum does not send it elsewhere. Copying moves the displayed information outside Momentum, where your chosen tool’s privacy policy applies. Momentum stores only the returned JSON and its general source category after validation.'],
-        [fa ? 'کنترل شما' : 'Your controls', fa ? 'می‌توانید اطلاعات را اصلاح کنید، گزارش اختیاری را حذف کنید و درخواست خروجی یا حذف حساب بدهید. جزئیات نگهداری backup پیش از عرضه عمومی نهایی و اعلام می‌شود.' : 'You can correct information, remove optional reports, and request an export or account deletion. Backup-retention details will be finalized and disclosed before public launch.'],
-      ]
-    : [
-        [fa ? 'دامنه محصول' : 'Product scope', fa ? 'Momentum یک محصول سلامت عمومی برای بزرگسالان است و تشخیص، درمان یا توصیه پزشکی ارائه نمی‌کند. برای تصمیم مهم سلامت با متخصص واجد شرایط مشورت کنید.' : 'Momentum is an adult general-wellness product. It does not diagnose, treat, or provide medical advice. Consult a qualified professional for important health decisions.'],
-        [fa ? 'شرایط استفاده' : 'Eligibility', fa ? 'استفاده از برنامه‌ریزی خودکار فقط برای افراد ۱۸ سال یا بیشتر و پس از غربالگری ایمنی امکان‌پذیر است.' : 'Automated planning is limited to people aged 18 or older who pass safety screening.'],
-        [fa ? 'خروجی AI' : 'AI output', fa ? 'پاسخ و برنامه AI ممکن است ناقص یا اشتباه باشد. خروجی قبل از ذخیره اعتبارسنجی ساختاری می‌شود، اما تضمین نتیجه یا دقت پزشکی وجود ندارد.' : 'AI plans and replies can be incomplete or wrong. Output is structurally validated before storage, but results and medical accuracy are not guaranteed.'],
-        [fa ? 'مسیر رایگان' : 'Free path', fa ? 'واردکردن برنامه خود کاربر اشتراک نمی‌خواهد. کاربر مسئول انتخاب ابزار بیرونی و رعایت شرایط آن است؛ Momentum پیش از فعال‌سازی، فایل را با قرارداد و محدودیت‌های ایمنی خود بررسی می‌کند.' : 'Importing your own plan does not require a subscription. You are responsible for the external tool you choose and its terms; Momentum validates the file against its contract and safety limits before activation.'],
-        [fa ? 'آلفا و پرداخت' : 'Alpha and payments', fa ? 'این نسخه آلفا است. قیمت‌ها فرضیه محصول‌اند و پرداخت فعال نیست. شرایط اشتراک، لغو و بازپرداخت پیش از فعال‌شدن پرداخت جداگانه ارائه می‌شود.' : 'This is an alpha release. Prices are product hypotheses and payments are disabled. Subscription, cancellation, and refund terms will be presented before checkout is enabled.'],
-      ]
 
   return (
-    <div className="public-page">
+    <LegalShell
+      document={legalDocument(kind, locale)}
+      locale={locale}
+      version={version}
+      contact={kind === 'privacy' ? (
+        <GlassChrome className="legal-contact">
+          <Mail size={18} />
+          <div>
+            <h2>{fa ? 'تماس حریم خصوصی' : 'Privacy contact'}</h2>
+            {privacyContactEmail ? (
+              <p>
+                {fa ? 'فقط پرسش درباره این اطلاعیه را بفرستید، نه مقدار سلامت، رمز، یا فایل برنامه: ' : 'Write only about this notice. Do not include health values, passwords, or plan files: '}
+                <a href={`mailto:${privacyContactEmail}?subject=${encodeURIComponent('Momentum privacy')}`}><bdi>{privacyContactEmail}</bdi></a>
+              </p>
+            ) : (
+              <p>{fa
+                ? 'نشانی تماس هنوز تنظیم نشده است. تا آن زمان، این صفحه سند نهایی یک شخص حقوقی معین نیست.'
+                : 'A contact address is not configured yet. Until it is, this page is not the final notice of a named legal entity.'}</p>
+            )}
+          </div>
+        </GlassChrome>
+      ) : null}
+    />
+  )
+}
+
+export function LegalShell({
+  document,
+  locale,
+  version,
+  contact,
+}: {
+  document: LegalDocument
+  locale: AppLocale
+  version?: string
+  contact?: ReactNode
+}) {
+  const fa = locale === 'fa'
+  return (
+    <div className="public-page legal-doc">
       <PublicHeader locale={locale} />
-      <main className="simple-public-page legal-page screen-enter">
-        <Reveal className="simple-public-page__heading">
-          <Eyebrow>{privacy ? <LockKeyhole size={15} /> : <FileText size={15} />}{fa ? 'نسخه آلفا' : 'Alpha notice'}</Eyebrow>
-          <h1>{privacy ? (fa ? 'اطلاعیه حریم خصوصی' : 'Privacy notice') : (fa ? 'شرایط استفاده' : 'Terms of use')}</h1>
-          <p>{fa ? 'نسخه ' : 'Version '}<bdi dir="ltr">{version}</bdi>{fa ? ' · پیش‌نویس محصول؛ پیش از عرضه عمومی نیازمند بررسی حقوقی است.' : ' · Product draft; legal review is required before public launch.'}</p>
-        </Reveal>
-        <div className="legal-sections">
-          {sections.map(([title, copy]) => <ContentCard key={title}><ShieldCheck size={21} /><div><h2>{title}</h2><p>{copy}</p></div></ContentCard>)}
-          {privacy ? (
-            <ContentCard>
-              <Mail size={21} />
-              <div>
-                <h2>{fa ? 'تماس' : 'Contact'}</h2>
-                {privacyContactEmail ? (
-                  <p>
-                    {fa ? 'برای پرسش حریم خصوصی به این نشانی بنویسید: ' : 'For privacy questions, email '}
-                    <a href={`mailto:${privacyContactEmail}?subject=${encodeURIComponent('Momentum privacy')}`}><bdi>{privacyContactEmail}</bdi></a>
-                    {fa ? '. جزئیات سلامت، رمز عبور یا JSON برنامه را نفرستید.' : '. Do not send health details, passwords, or plan JSON.'}
-                  </p>
-                ) : (
-                  <p>{fa
-                    ? 'نشانی تماس حریم خصوصی هنوز تنظیم نشده است. دعوت عمومی تا وقتی اپراتور آن را تنظیم کند در انتظار می‌ماند.'
-                    : 'A privacy contact address is not configured yet. Public invite waits until the operator sets it.'}</p>
-                )}
-              </div>
-            </ContentCard>
-          ) : null}
+      <main>
+        <header className="legal-hero">
+          <GlassChrome className="legal-hero__card">
+            <p className="legal-kicker">{document.kicker}</p>
+            <h1>{document.title}</h1>
+            <p>{document.summary}</p>
+            {version ? <p className="legal-version">{fa ? 'نسخه' : 'Version'} <bdi dir="ltr">{version}</bdi> · {fa ? 'آلفا' : 'Alpha'}</p> : null}
+          </GlassChrome>
+        </header>
+        <div className="legal-layout">
+          <nav aria-label={fa ? 'فهرست مواد' : 'Contents'} className="legal-toc">
+            <GlassChrome>
+              <p>{fa ? 'مواد' : 'Contents'}</p>
+              <ol>
+                {document.sections.map((section, index) => (
+                  <li key={section.id}><a href={`#${section.id}`}>{fa ? formatFaIndex(index + 1) : index + 1}. {section.title}</a></li>
+                ))}
+              </ol>
+            </GlassChrome>
+          </nav>
+          <div className="legal-body">
+            {document.sections.map((section, index) => (
+              <GlassChrome className="legal-article" id={section.id} key={section.id}>
+                <h2><span>{fa ? formatFaIndex(index + 1) : String(index + 1).padStart(2, '0')}</span>{section.title}</h2>
+                {section.blocks.map((block, blockIndex) => block.kind === 'p'
+                  ? <p key={blockIndex}>{block.text}</p>
+                  : <ul key={blockIndex}>{block.items.map((item) => <li key={item}>{item}</li>)}</ul>)}
+              </GlassChrome>
+            ))}
+            {contact}
+          </div>
         </div>
       </main>
       <PublicFooter locale={locale} />
     </div>
   )
+}
+
+function formatFaIndex(value: number) {
+  return new Intl.NumberFormat('fa-IR', { minimumIntegerDigits: 2, useGrouping: false }).format(value)
 }

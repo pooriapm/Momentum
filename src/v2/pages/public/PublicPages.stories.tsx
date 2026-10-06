@@ -1,14 +1,29 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { Check, FileJson2, Gift, ShieldCheck, Sparkles } from 'lucide-react'
 import { LocalizedStory } from '../../../../.storybook/LocalizedStory'
+import { AuthContext, type AuthContextValue } from '../../../platform/auth/auth-context'
 import type { AppLocale } from '../../../platform/i18n/catalog'
-import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
-import { ContentCard, StatusPill } from '../../ui/primitives'
+import { intlMembershipCatalog } from '../../entitlement'
 import { LandingPage } from './LandingPage'
 import { LegalPage } from './LegalPage'
+import { PricingPage } from './PricingPage'
 import { SafetyPage } from './SafetyPage'
 import './public-pages.stories.css'
+
+const pricingClient = new QueryClient()
+const storyAuth: AuthContextValue = {
+  isConfigured: true,
+  requestPasswordReset: async () => {},
+  resendConfirmation: async () => {},
+  session: null,
+  signIn: async () => {},
+  signOut: async () => {},
+  signUp: async () => 'confirmation-required',
+  status: 'anonymous',
+  updatePassword: async () => {},
+  user: null,
+}
 
 function localeFromGlobal(value: unknown): AppLocale {
   return value === 'en' ? 'en' : 'fa'
@@ -18,62 +33,6 @@ function Screen({ children, locale }: { children: ReactNode; locale: AppLocale }
   return (
     <div className="mo-screen-story">
       <LocalizedStory locale={locale}>{children}</LocalizedStory>
-    </div>
-  )
-}
-
-function CanonicalPricing({ locale }: { locale: AppLocale }) {
-  const fa = locale === 'fa'
-  const membershipFeatures = fa
-    ? ['یک برنامه ترکیبی تمرین و تغذیه در هر دوره', 'شروع دوره از زمان آماده‌شدن برنامه', 'ورود خودکار پس از اعتبارسنجی', 'استفاده از نتیجه دوره قبل برای برنامه بعد']
-    : ['One combined workout and nutrition plan per period', 'Period starts when the plan is ready', 'Automatic import after validation', 'Prior-period outcomes inform the next plan']
-  const giftFeatures = fa
-    ? ['برنامه اول را بدون هزینه شروع می‌کنی', 'برای دوره هدیه اطلاعات پرداخت لازم نیست']
-    : ['Start the first plan at no charge', 'No payment details are required for the gifted cycle']
-
-  return (
-    <div className="public-page">
-      <PublicHeader locale={locale} />
-      <main className="simple-public-page pricing-page">
-        <div className="simple-public-page__heading">
-          <span className="orbit-eyebrow"><Sparkles size={15} />{fa ? 'رایگان یا مدیریت‌شده' : 'Free or managed'}</span>
-          <h1>{fa ? 'دو راه روشن برای برنامه' : 'Two clear ways to get a plan'}</h1>
-          <p>{fa ? 'برنامه خودت را رایگان وارد کن، یا ساخت و به‌روزرسانی دوره‌ای را به Momentum بسپار.' : 'Import your own plan for free, or let Momentum create and update each cycle.'}</p>
-        </div>
-        <div className="pricing-grid pricing-grid--canonical">
-          <ContentCard className="pricing-card pricing-card--free">
-            <header className="pricing-card__header">
-              <StatusPill tone="energy">{fa ? 'رایگان برای همیشه' : 'Free forever'}</StatusPill>
-              <span className="pricing-card__icon-wrap"><FileJson2 size={22} /></span>
-              <h2>{fa ? 'واردکردن برنامه شخصی' : 'Bring your own plan'}</h2>
-              <p>{fa ? 'پرامپت محلی یا فایل JSON موجود؛ بدون اشتراک.' : 'Local prompt or existing JSON; no subscription.'}</p>
-            </header>
-            <ul><li><Check size={16} />{fa ? 'اعتبارسنجی و تاریخچه' : 'Validation and history'}</li><li><Check size={16} />{fa ? 'پیگیری روزانه' : 'Daily tracking'}</li></ul>
-            <button className="orbit-button orbit-button--secondary" type="button">{fa ? 'انتخاب مسیر رایگان' : 'Choose free'}</button>
-          </ContentCard>
-          <ContentCard className="pricing-card pricing-card--featured">
-            <header className="pricing-card__header">
-              <StatusPill tone="brand">{fa ? 'اشتراک Momentum' : 'Momentum membership'}</StatusPill>
-              <span className="pricing-card__icon-wrap"><ShieldCheck size={22} /></span>
-              <h2>{fa ? 'ماهانه' : 'Monthly'}</h2>
-              <p>{fa ? 'یک برنامه کامل برای کل دوره' : 'One complete plan for the full period'}</p>
-            </header>
-            <ul>{membershipFeatures.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
-            <button className="orbit-button orbit-button--primary" type="button">{fa ? 'شروع عضویت' : 'Start membership'}</button>
-          </ContentCard>
-          <ContentCard className="pricing-card pricing-card--gift">
-            <header className="pricing-card__header">
-              <StatusPill tone="energy">{fa ? 'شروع بدون هزینه' : 'Start at no charge'}</StatusPill>
-              <span className="pricing-card__icon-wrap"><Gift size={22} /></span>
-              <h2>{fa ? 'هدیه برنامه اول' : 'First-plan gift'}</h2>
-              <p>{fa ? 'اگر در دسترس باشد، برنامه اول را مهمان Momentum شروع می‌کنی.' : 'When available, Momentum covers your first plan.'}</p>
-            </header>
-            <ul>{giftFeatures.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
-            <button className="orbit-button orbit-button--secondary" type="button">{fa ? 'استفاده از هدیه' : 'Use the gift'}</button>
-          </ContentCard>
-        </div>
-      </main>
-      <PublicFooter locale={locale} />
     </div>
   )
 }
@@ -125,6 +84,14 @@ export const Terms: Story = {
 export const Pricing: Story = {
   render: (_args, context) => {
     const locale = localeFromGlobal(context.globals.locale)
-    return <Screen locale={locale}><CanonicalPricing locale={locale} /></Screen>
+    return (
+      <Screen locale={locale}>
+        <QueryClientProvider client={pricingClient}>
+          <AuthContext.Provider value={storyAuth}>
+            <PricingPage catalog={intlMembershipCatalog} giftCampaign="available" locale={locale} />
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      </Screen>
+    )
   },
 }

@@ -25,7 +25,7 @@ import { CheckInSheet, MealDetailSheet, LazyOverlay } from '../../components/Laz
 import { WorkoutLogger } from '../../components/WorkoutLogger'
 import { completeMeal, currentLocalDate, logMealSelection, undoMeal } from '../../data/repository'
 import { localize, type MealChoice, type MealSlot, type MomentumPlanView } from '../../data/types'
-import { formatNumber } from '../../lib/format'
+import { formatClock, formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, GlassChrome, StatusPill } from '../../ui/primitives'
@@ -389,7 +389,7 @@ export function TodayPage({
               <p className="orbit-eyebrow">{fa ? 'خط زمانی' : 'Timeline'}</p>
               <h2>{allMealsCompleted ? (fa ? 'همه وعده‌ها ثبت شدند' : 'All meals completed') : t('app.nextMeal')}</h2>
             </div>
-            <span><Clock3 size={16} />{nextMeal?.time ?? (allMealsCompleted ? (fa ? 'کامل' : 'Done') : '—')}</span>
+            <span><Clock3 size={16} />{nextMeal ? <bdi dir="ltr">{formatClock(nextMeal.time, locale)}</bdi> : (allMealsCompleted ? (fa ? 'کامل' : 'Done') : '—')}</span>
           </div>
 
           <div className="today-timeline-list">
@@ -399,7 +399,7 @@ export function TodayPage({
               const isNext = nextMeal?.id === meal.id
               return (
                 <ContentCard className={`today-meal-row${completed ? ' is-complete' : ''}${isNext ? ' is-next' : ''}`} key={meal.id}>
-                  <strong className="today-meal-row__time">{meal.time}</strong>
+                  <strong className="today-meal-row__time"><bdi dir="ltr">{formatClock(meal.time, locale)}</bdi></strong>
                   <div>
                     <p>{localize(meal.label, locale)}</p>
                     <h3>{choice ? localize(choice.name, locale) : localize(meal.label, locale)}</h3>
@@ -436,18 +436,18 @@ export function TodayPage({
                     onClick={() => void selectMeal(nextMeal.id, option.id)}
                     type="button"
                   >
-                    <span>{index + 1}</span>
+                    <span>{formatNumber(index + 1, locale)}</span>
                     <strong>{localize(option.name, locale)}</strong>
-                    <small>{formatNumber(option.nutrition.calories, locale)} kcal</small>
+                    <small><bdi dir={fa ? 'rtl' : 'ltr'}>{formatNumber(option.nutrition.calories, locale)} kcal</bdi></small>
                   </button>
                 ))}
               </div>
               {substituteNotice ? <div className="inline-notice inline-notice--success" role="status">{substituteNotice}</div> : null}
               {mealError ? <div className="inline-notice inline-notice--error" role="alert">{mealError}</div> : null}
               <div className="next-meal-card__footer">
-                <span><Flame size={16} />{formatNumber(nextChoice.nutrition.calories, locale)} kcal</span>
-                <span>{formatNumber(nextChoice.nutrition.protein, locale)}g {t('app.protein')}</span>
-                <span><Clock3 size={16} />{formatNumber(nextChoice.cookingMinutes, locale)} {fa ? 'دقیقه' : 'min'}</span>
+                <span><Flame size={16} /><bdi dir={fa ? 'rtl' : 'ltr'}>{formatNumber(nextChoice.nutrition.calories, locale)} kcal</bdi></span>
+                <span><bdi dir={fa ? 'rtl' : 'ltr'}><span>{formatNumber(nextChoice.nutrition.protein, locale)}</span><span>g</span></bdi> {t('app.protein')}</span>
+                <span><Clock3 size={16} /><bdi dir="ltr">{formatNumber(nextChoice.cookingMinutes, locale)}</bdi> {fa ? 'دقیقه' : 'min'}</span>
                 <Button onClick={() => setMealDetail({ choice: nextChoice, label: localize(nextMeal.label, locale) })} variant="secondary"><Eye size={16} />{fa ? 'جزئیات' : 'Details'}</Button>
                 <Button disabled={mutationsLocked} loading={savingSlot === nextMeal.id} onClick={() => void markComplete(nextMeal.id, nextChoice.id)}>
                   <Check size={17} />{t('app.complete')}
@@ -496,7 +496,9 @@ export function TodayPage({
           <ContentCard className="recovery-card">
             <div><span><MoonStar size={20} /></span><strong>{formatNumber(plan.progress.recovery, locale)}%</strong></div>
             <h3>{t('app.recovery')}</h3>
-            <p>{fa ? `خواب ${Math.floor(plan.progress.sleepMinutes / 60)}:${String(plan.progress.sleepMinutes % 60).padStart(2, '0')} · انرژی ${formatNumber(plan.progress.energyScore, locale)} از ۵` : `Sleep ${Math.floor(plan.progress.sleepMinutes / 60)}:${String(plan.progress.sleepMinutes % 60).padStart(2, '0')} · Energy ${plan.progress.energyScore} of 5`}</p>
+            <p>{fa
+              ? <>خواب <bdi dir="ltr">{formatClock(`${Math.floor(plan.progress.sleepMinutes / 60)}:${String(plan.progress.sleepMinutes % 60).padStart(2, '0')}`, locale)}</bdi>{` · انرژی ${formatNumber(plan.progress.energyScore, locale)} از ۵`}</>
+              : `Sleep ${Math.floor(plan.progress.sleepMinutes / 60)}:${String(plan.progress.sleepMinutes % 60).padStart(2, '0')} · Energy ${plan.progress.energyScore} of 5`}</p>
           </ContentCard>
         </aside>
       </section>

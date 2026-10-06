@@ -81,20 +81,3 @@ export function writeStoredLastSync(iso = new Date().toISOString()) {
     /* private mode */
   }
 }
-
-export const generationWaitLines = {
-  fa: [
-    'در حال خواندن هدف و برنامه تمرینی‌ات…',
-    'در حال چیدن تمرین‌های یک ماه…',
-    'در حال چیدن وعده‌های غذایی…',
-    'در حال بررسی ایمنی غذا و حرکت…',
-    'تقریباً آماده است…',
-  ],
-  en: [
-    'Reading your goal and training setup…',
-    'Laying out one month of workouts…',
-    'Laying out the meals for the month…',
-    'Checking food and movement safety…',
-    'Almost ready…',
-  ],
-} as const

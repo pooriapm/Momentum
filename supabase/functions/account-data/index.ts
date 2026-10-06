@@ -900,7 +900,7 @@ async function loadDashboard(
       .eq('user_id', userId)
       .lte('local_date', input.localDate)
       .order('local_date', { ascending: false })
-      .limit(14),
+      .limit(30),
     admin
       .from('body_composition_measurements')
       .select('id,measured_at,weight_kg,extraction_status')

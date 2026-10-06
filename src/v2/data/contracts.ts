@@ -157,6 +157,7 @@ const progressSeriesPointSchema = z.object({
   energy: z.number().finite().min(0).max(10),
   adherence: z.number().int().min(0).max(100),
   partial: z.boolean(),
+  weight_kg: z.number().positive().nullable().optional(),
 })
 
 export const dashboardResponseSchema = z.object({

@@ -66,7 +66,7 @@ describe('PlanPage inventory states', () => {
 
   it('PLAN-04 groups the grocery list and keeps checks offline-safe', () => {
     renderPlan({ initialSegment: 'grocery' })
-    expect(screen.getByText(/offline checkmarks are stored on this device/i)).toBeInTheDocument()
+    expect(screen.getByText(/checkmarks stay on this device and are not sent to the server/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /chicken breast/i }))
     expect(screen.getByRole('button', { name: /chicken breast/i })).toHaveAttribute('aria-pressed', 'true')
     expect(localStorage.getItem(PLAN_SHOPPING_KEY)).toContain('protein-0')
@@ -79,11 +79,11 @@ describe('PlanPage inventory states', () => {
     expect(document.querySelectorAll('.plan-calendar__cell').length).toBeGreaterThan(27)
   })
 
-  it('PLAN-06 exposes version, source cycle, interval and readable changes', () => {
+  it('PLAN-06 does not show the version trace on the plan', () => {
     renderPlan()
-    expect(screen.getAllByText(/v2 · cycle 2/i).length).toBeGreaterThan(0)
-    expect(screen.getByText('This is your current plan. New preferences are saved for your next cycle.')).toBeInTheDocument()
-    expect(screen.getByText('Training increased from 2 to 3 days')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /version trace/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /compare with previous version/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/v2 · cycle 2/i)).not.toBeInTheDocument()
   })
 
   it('PLAN-07 points a missing plan at one setup action', () => {
@@ -143,14 +143,6 @@ describe('PlanPage inventory states', () => {
     expect(screen.getByText(/only this meal changed; this month’s plan is unchanged/i)).toBeInTheDocument()
   })
 
-  it('PLAN-14 shows immutable prior versions and a human-readable cycle diff', () => {
-    renderPlan()
-    fireEvent.click(screen.getByRole('button', { name: /v2 · cycle 2/i }))
-    expect(screen.getByText('What changed from the prior period')).toBeInTheDocument()
-    expect(screen.getByText(/every version is tied to its source cycle/i)).toBeInTheDocument()
-    expect(screen.getByText(/prior v1 · cycle 1/i)).toBeInTheDocument()
-  })
-
   it('PLAN-13 workout substitutes stay on the catalog option and do not regenerate', async () => {
     renderPlan({ initialSegment: 'training' })
     fireEvent.click(screen.getByRole('button', { name: /exercise details/i }))
@@ -159,6 +151,62 @@ describe('PlanPage inventory states', () => {
     expect(await screen.findByText(/does not regenerate the monthly plan/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /choose bodyweight squat/i }))
     expect(await screen.findByText(/same movement-pattern substitute saved/i)).toBeInTheDocument()
+    expect(document.querySelector('.workout-detail-card')?.textContent).toMatch(/Bodyweight squat/)
+    expect(document.querySelector('.workout-detail-card')?.textContent).not.toMatch(/Goblet squat/)
+  })
+
+  it('hides past days and keeps the first unplanned day for the next period', () => {
+    renderPlan()
+    expect(screen.queryByText('—')).not.toBeInTheDocument()
+    const shownDays = [...document.querySelectorAll<HTMLButtonElement>('.plan-week__day')]
+    expect(shownDays.length).toBeGreaterThan(0)
+    expect(shownDays.every((day) => !day.disabled)).toBe(true)
+    let guard = 0
+    while (!screen.queryByRole('button', { name: /next period/i }) && guard < 8) {
+      const nextWeek = screen.getByRole('button', { name: /next week/i })
+      expect(nextWeek).toBeEnabled()
+      fireEvent.click(nextWeek)
+      guard += 1
+    }
+    fireEvent.click(screen.getByRole('button', { name: /next period/i }))
+    expect(screen.getByRole('heading', { name: /feedback on last month’s plan/i })).toBeInTheDocument()
+  })
+
+  it('moves to the next scheduled week without calling the plan start day today', () => {
+    renderPlan()
+    expect(screen.getByRole('button', { name: /previous week/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /today/i })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: /next week/i }))
+    expect(screen.queryByRole('button', { name: /today/i })).not.toBeInTheDocument()
+    expect(document.querySelector('.plan-week__day.is-active')?.textContent ?? '').not.toMatch(/today/i)
+  })
+
+  it('opens the next month when a 30-day plan crosses a month boundary', () => {
+    const plan = planFixture()
+    renderPlan({ initialSegment: 'calendar', plan })
+    const next = screen.getByRole('button', { name: /next month/i })
+    const spansMonths = plan.version?.validFrom.slice(0, 7) !== plan.version?.validTo.slice(0, 7)
+    if (!spansMonths) {
+      expect(next).toBeDisabled()
+      return
+    }
+    expect(next).toBeEnabled()
+    fireEvent.click(next)
+    expect(screen.getByRole('button', { name: /previous month/i })).toBeEnabled()
+    const enabled = [...document.querySelectorAll<HTMLButtonElement>('.plan-calendar__cell')].filter((day) => !day.disabled)
+    expect(enabled.length).toBeGreaterThan(0)
+  })
+
+  it('uses Persian digits for week counts, cycles, and exercise doses', () => {
+    renderPlan({ initialSegment: 'training', locale: 'fa' })
+    expect(screen.getByRole('heading', { name: /۲۸ روز تمرین در این دوره/ })).toBeInTheDocument()
+    expect(screen.getByText('هفته ۱')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /ردیابی نسخه/ })).not.toBeInTheDocument()
+    const training = document.querySelector('.workout-detail-card')?.textContent ?? ''
+    expect(training).toContain('اسکوات جام')
+    expect(training).toContain('۴ × ۸')
+    expect(training).toContain('هر طرف')
+    expect(training).toContain('دقیقه')
   })
 })
 
@@ -173,7 +221,7 @@ describe('Plan grocery completion', () => {
     const days = [...document.querySelectorAll<HTMLButtonElement>('.plan-calendar__cell')]
     expect(days.some((day) => day.disabled)).toBe(true)
     expect(days.find((day) => day.getAttribute('aria-pressed') === 'true')).not.toBeDisabled()
-    expect(days.every((day) => Boolean(day.getAttribute('aria-label')))).toBe(true)
+    expect(days.filter((day) => day.getAttribute('aria-hidden') !== 'true').every((day) => Boolean(day.getAttribute('aria-label')))).toBe(true)
   })
 
 })

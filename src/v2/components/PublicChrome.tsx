@@ -19,11 +19,21 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
   const { t } = useTranslation()
   const [path] = useLocation()
   const [menuPath, setMenuPath] = useState<string | null>(null)
+  const [menuPresent, setMenuPresent] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const linksRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
   const otherLocale: AppLocale = locale === 'fa' ? 'en' : 'fa'
   const open = menuPath === path
+
+  useEffect(() => {
+    if (open) {
+      setMenuPresent(true)
+      return
+    }
+    const timer = window.setTimeout(() => setMenuPresent(false), 480)
+    return () => window.clearTimeout(timer)
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -51,7 +61,10 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
     }
     const desktop = window.matchMedia('(min-width: 58.001rem)')
     const onResize = () => {
-      if (desktop.matches) setMenuPath(null)
+      if (desktop.matches) {
+        setMenuPath(null)
+        setMenuPresent(false)
+      }
     }
     desktop.addEventListener('change', onResize)
     document.addEventListener('keydown', onKeyDown)
@@ -64,21 +77,22 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
 
   return (
     <>
-      {open ? createPortal((
+      {menuPresent ? createPortal((
         <button
           aria-label={locale === 'fa' ? 'بستن منو' : 'Close menu'}
-          className="public-menu-backdrop"
+          className={`public-menu-backdrop${open ? ' is-open' : ''}`}
           tabIndex={-1}
           onClick={() => closeMenu(setMenuPath, menuButtonRef)}
           type="button"
         />
       ), document.body) : null}
-      <header ref={headerRef} className={`public-header-wrap${open ? ' public-header-wrap--menu-open' : ''}`}>
+      <header ref={headerRef} className={`public-header-wrap${menuPresent ? ' public-header-wrap--menu-open' : ''}`}>
         <nav aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Main navigation'} className="public-header glass-chrome">
           <Link className="public-header__brand" href={localizedPath(locale)} onClick={() => setMenuPath(null)}>
             <BrandLockup compact />
           </Link>
           <div
+            aria-hidden={menuPresent && !open ? true : undefined}
             className={`public-header__links ${open ? 'public-header__links--open' : ''}`}
             id="public-navigation-links"
             ref={linksRef}

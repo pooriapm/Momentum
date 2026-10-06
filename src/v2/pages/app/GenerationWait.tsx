@@ -10,7 +10,9 @@ import {
   waitHasTimedOut,
   waitInventoryId,
 } from './generation-wait'
-import { TODAY_GENERATION_WAIT_MS, generationWaitLines } from './today-state'
+import { PlanBuildShow } from './PlanBuildShow'
+import { rememberPlanBuildDuration } from './plan-build-show'
+import { TODAY_GENERATION_WAIT_MS } from './today-state'
 import '../../../styles/today.css'
 
 const phaseEyebrow = {
@@ -101,8 +103,6 @@ export function GenerationWait({
   online?: boolean
 }) {
   const fa = locale === 'fa'
-  const lines = generationWaitLines[locale]
-  const [index, setIndex] = useState(0)
   const [clockStart] = useState(() => startedAt ?? Date.now())
   const [localTimeout, setLocalTimeout] = useState(false)
   const origin = startedAt ?? clockStart
@@ -117,10 +117,9 @@ export function GenerationWait({
   }, [onTimeout])
 
   useEffect(() => {
-    if (!waiting) return
-    const timer = window.setInterval(() => setIndex((current) => (current + 1) % lines.length), 2800)
-    return () => window.clearInterval(timer)
-  }, [lines.length, waiting])
+    if (phase !== 'ready') return
+    rememberPlanBuildDuration(Date.now() - origin)
+  }, [origin, phase])
 
   useEffect(() => {
     if (phase === 'ready' || failure || localTimeout) return
@@ -139,25 +138,34 @@ export function GenerationWait({
 
   return (
     <main className="app-page today-page today-wait screen-enter" data-inventory={inventory} data-today="TODAY-04">
-      <ContentCard className="today-wait-card">
-        <span className={`today-wait-card__icon${activeFailure ? ' is-warning' : phase === 'ready' ? ' is-success' : ''}`} aria-hidden="true">
-          <LoaderCircle className={waiting ? 'orbit-spin' : undefined} size={28} />
-        </span>
-        <p className="orbit-eyebrow">{fa ? phaseEyebrow[phase].fa : phaseEyebrow[phase].en}</p>
-        <h1>
-          {phase === 'ready'
-            ? (fa ? 'برنامه ۳۰روزه آماده است' : 'Your 30-day plan is ready')
-            : copy?.title ?? (fa ? 'لطفاً منتظر بمانید. برنامه شخصی‌سازی‌شده شما در حال تولید است.' : 'Please wait. Your personalized plan is being created.')}
-        </h1>
-        <p className="today-wait-card__rotating" aria-live="polite">
-          {phase === 'ready'
-            ? (fa
-              ? `نسخه فعال از ${readyAt ?? 'همین حالا'} شروع شد${versionLabel ? ` · ${versionLabel}` : ''}. این نسخه تغییرناپذیر است.`
-              : `The active version started ${readyAt ?? 'just now'}${versionLabel ? ` · ${versionLabel}` : ''}. This version is immutable.`)
-            : copy?.body ?? lines[index]}
-        </p>
+      <ContentCard className={`today-wait-card glass-chrome${waiting ? ' plan-build' : ''}`}>
+        {waiting ? null : (
+          <span className={`today-wait-card__icon${activeFailure ? ' is-warning' : phase === 'ready' ? ' is-success' : ''}`} aria-hidden="true">
+            <LoaderCircle size={28} />
+          </span>
+        )}
+        {waiting ? (
+          <PlanBuildShow
+            locale={locale}
+            phase={phase}
+            startedAt={origin}
+            statusLabel={fa ? phaseEyebrow[phase].fa : phaseEyebrow[phase].en}
+          />
+        ) : (
+          <>
+            <p className="orbit-eyebrow">{fa ? phaseEyebrow[phase].fa : phaseEyebrow[phase].en}</p>
+            <h1>{phase === 'ready' ? (fa ? 'برنامه ۳۰روزه آماده است' : 'Your 30-day plan is ready') : copy?.title}</h1>
+            <p className="today-wait-card__rotating">
+              {phase === 'ready'
+                ? (fa
+                  ? `نسخه فعال از ${readyAt ?? 'همین حالا'} شروع شد${versionLabel ? ` · ${versionLabel}` : ''}. این نسخه تغییرناپذیر است.`
+                  : `The active version started ${readyAt ?? 'just now'}${versionLabel ? ` · ${versionLabel}` : ''}. This version is immutable.`)
+                : copy?.body}
+            </p>
+          </>
+        )}
         {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
-        {waiting ? <p>{fa ? 'می‌توانی این صفحه را ببندی و بعداً برگردی. کار دوم ساخته نمی‌شود.' : 'You can leave this page and come back. A second job is not created.'}</p> : null}
+        {waiting ? <p>{fa ? 'می‌تونی این صفحه رو ببندی و بعداً برگردی. همون کار ادامه پیدا می‌کنه و برنامه دوم ساخته نمی‌شه.' : 'You can leave this page and come back. We’ll keep going, and a second plan is not started.'}</p> : null}
         {hasPriorPlan && phase !== 'ready' ? (
           <div className="inline-notice" role="status">
             {fa ? 'برنامه قبلی تا ورود موفق فعال می‌ماند. فشار برای حفظ زنجیره وجود ندارد.' : 'The previous plan stays active until import succeeds. There is no pressure to keep a streak.'}

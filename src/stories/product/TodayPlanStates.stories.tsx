@@ -17,6 +17,7 @@ import {
   Utensils,
   WifiOff,
 } from 'lucide-react'
+import { PLAN_BUILD_STAGES } from '../../v2/pages/app/plan-build-show'
 import { momentumEvidence } from './coverage'
 import {
   localeFromStory,
@@ -50,21 +51,19 @@ function TodayCore({ locale, state }: { locale: SpecLocale; state: TodayCoreStat
 }
 
 function TodayPreparingView({ locale }: { locale: SpecLocale }) {
-  const lines = locale === 'fa'
-    ? ['در حال خواندن هدف و برنامه تمرینی‌ات…', 'در حال چیدن تمرین‌های یک ماه…', 'در حال چیدن وعده‌های غذایی…', 'در حال بررسی ایمنی غذا و حرکت…', 'تقریباً آماده است…']
-    : ['Reading your goal and training setup…', 'Laying out one month of workouts…', 'Laying out the meals for the month…', 'Checking food and movement safety…', 'Almost ready…']
   const [index, setIndex] = useState(0)
   useEffect(() => {
-    const timer = window.setInterval(() => setIndex((current) => (current + 1) % lines.length), 2800)
+    const timer = window.setInterval(() => setIndex((current) => (current + 1) % PLAN_BUILD_STAGES.length), 5200)
     return () => window.clearInterval(timer)
-  }, [lines.length])
+  }, [])
+  const stage = PLAN_BUILD_STAGES[index] ?? PLAN_BUILD_STAGES[0]
   return (
     <ProductFrame locale={locale} title={tx(locale, 'امروز', 'Today')}>
       <div className="mo-spec__generate-wait">
         <span className="mo-spec__state-icon mo-spec__state-icon--brand"><LoaderCircle className="orbit-spin" /></span>
         <p className="mo-spec__eyebrow">{tx(locale, 'یک برنامه برای یک ماه · در حال ساخت', 'One plan for one month · creating')}</p>
-        <h1>{tx(locale, 'لطفاً منتظر بمانید. برنامه شخصی‌سازی‌شده شما در حال تولید است.', 'Please wait. Your personalized plan is being created.')}</h1>
-        <p className="mo-spec__generate-wait-rotating" aria-live="polite">{lines[index]}</p>
+        <h1>{stage.title[locale]}</h1>
+        <p className="mo-spec__generate-wait-rotating" aria-live="polite">{stage.details[locale][0]}</p>
         <SpecProgress label={tx(locale, 'آماده‌سازی برنامه ۳۰روزه', 'Preparing the 30-day plan')} value={54} />
         <p>{tx(locale, 'می‌توانی این صفحه را ببندی. اگر بعد از ۳ دقیقه آماده نشد، خطا می‌بینی و می‌توانی دوباره درخواست بدهی.', 'You can leave. If it is not ready after 3 minutes, you will see an error and can request again.')}</p>
       </div>
@@ -168,7 +167,7 @@ function TrainingView({ locale }: { locale: SpecLocale }) {
 }
 
 function GroceryView({ locale }: { locale: SpecLocale }) {
-  return <div className="mo-spec__grid"><SpecCard className="is-wide"><SpecCallout icon={<ShoppingBasket />} title={tx(locale, 'فهرست برنامه ماهانه', 'Monthly plan list')} tone="energy">{tx(locale, 'مقدارها برای یک نفر و برنامه کامل ۳۰روزه محاسبه شده‌اند. تیک‌ها در حالت آفلاین روی دستگاه ذخیره و پس از اتصال بدون ایجاد مورد تکراری همگام می‌شوند.', 'Quantities cover one person for the complete 30-day plan. Offline checkmarks are stored on this device and sync without duplicates after reconnection.')}</SpecCallout><SpecList rows={[
+  return <div className="mo-spec__grid"><SpecCard className="is-wide"><SpecCallout icon={<ShoppingBasket />} title={tx(locale, 'فهرست برنامه ماهانه', 'Monthly plan list')} tone="energy">{tx(locale, 'مقدارها برای یک نفر و برنامه کامل ۳۰روزه محاسبه شده‌اند. تیک‌ها فقط روی همین دستگاه می‌مانند و به سرور فرستاده نمی‌شوند.', 'Quantities cover one person for the complete 30-day plan. Checkmarks stay on this device and are not sent to the server.')}</SpecCallout><SpecList rows={[
     { icon: <Check />, tone: 'success', label: tx(locale, 'ماست یونانی', 'Greek yogurt'), detail: tx(locale, '۹ ظرف ۵۰۰ گرمی', '9 × 500 g'), value: tx(locale, 'خریده شد', 'Bought') },
     { icon: <Circle />, label: tx(locale, 'سینه مرغ', 'Chicken breast'), detail: tx(locale, '۵٫۲ کیلوگرم', '5.2 kg') },
     { icon: <Circle />, label: tx(locale, 'سبزیجات فصل', 'Seasonal vegetables'), detail: tx(locale, 'حدود ۱۰٫۷ کیلوگرم', 'About 10.7 kg') },

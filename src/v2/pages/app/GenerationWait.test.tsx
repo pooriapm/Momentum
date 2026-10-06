@@ -13,8 +13,9 @@ describe('GenerationWait inventory copy', () => {
     render(<GenerationWait locale="en" phase="queued" />)
     expect(document.querySelector('[data-inventory]')?.getAttribute('data-inventory')).toBe('LIFE-12')
     expect(document.querySelector('[data-today]')?.getAttribute('data-today')).toBe('TODAY-04')
-    expect(screen.getByText(/please wait\. your personalized plan is being created/i)).toBeInTheDocument()
-    expect(screen.getByText(/you can leave this page and come back\. a second job is not created/i)).toBeInTheDocument()
+    expect(screen.getByText(/we're looking through what works for you/i)).toBeInTheDocument()
+    expect(screen.getByText(/you can leave this page and come back/i)).toBeInTheDocument()
+    expect(screen.getByText(/a second plan is not started/i)).toBeInTheDocument()
     expect(screen.queryByText(/streak/i)).not.toBeInTheDocument()
   })
 

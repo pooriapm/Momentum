@@ -1,7 +1,7 @@
 import { Clock3, Dumbbell, ListRestart, X } from 'lucide-react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { localize, type WorkoutBlock } from '../data/types'
-import { formatNumber } from '../lib/format'
+import { formatNumber, formatReps } from '../lib/format'
 import { Button, StatusPill } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
 import { useModalDismiss } from './use-modal-dismiss'
@@ -47,7 +47,7 @@ export function WorkoutDetailSheet({
             <li key={exercise.key}>
               <span>
                 <strong>{localize(exercise.name, locale)}</strong>
-                <small> · {formatNumber(exercise.sets, locale)} × {exercise.reps} · {formatNumber(exercise.restSeconds, locale)}s {fa ? 'استراحت' : 'rest'}</small>
+                <small className="metric-run" dir={fa ? 'rtl' : 'ltr'}>{` · ${formatNumber(exercise.sets, locale)} × ${formatReps(exercise.reps, locale)} · ${formatNumber(exercise.restSeconds, locale)}${fa ? ' ثانیه استراحت' : 's rest'}`}</small>
                 {exercise.adaptation ? <small> · {localize(exercise.adaptation, locale)}</small> : null}
               </span>
               {exercise.substitution && onSubstitute && !readOnly ? (
