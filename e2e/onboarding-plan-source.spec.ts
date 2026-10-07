@@ -72,7 +72,7 @@ test.describe('authenticated onboarding plan-source UI', () => {
     test.setTimeout(120_000)
     await page.goto('/en/auth/sign-in')
     await page.getByLabel('Email').fill(email)
-    await page.getByLabel('Password').fill(password)
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in to Momentum' }).click()
     await page.goto('/en/onboarding/plan-source')
 
