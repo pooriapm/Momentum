@@ -28,6 +28,14 @@ describe('ProgressPage inventory states', () => {
     await i18n.changeLanguage('en')
   })
 
+  it('shows a progress-shaped skeleton while the month is loading', () => {
+    renderProgress({ plan: null, surface: 'loading' })
+    expect(screen.getByLabelText('Loading progress')).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByText('Setting up this month’s progress…')).toBeInTheDocument()
+    expect(document.querySelectorAll('.progress-skeleton__metric')).toHaveLength(4)
+    expect(screen.queryByLabelText('Loading')).not.toBeInTheDocument()
+  })
+
   it('PROG-01 shows the available monthly-plan segments and a bold weekly report CTA', () => {
     renderProgress()
     expect(screen.getByText(/week 4 of 5/i)).toBeInTheDocument()

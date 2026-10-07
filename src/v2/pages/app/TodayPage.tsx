@@ -96,6 +96,7 @@ export function TodayPage({
   surface,
   lastSyncedAt,
   loadError = false,
+  loading = false,
   preparing = false,
   onRetry,
 }: {
@@ -105,6 +106,7 @@ export function TodayPage({
   surface?: TodaySurface
   lastSyncedAt?: string
   loadError?: boolean
+  loading?: boolean
   preparing?: boolean
   onRetry?: () => void
 }) {
@@ -167,6 +169,7 @@ export function TodayPage({
       />
     )
   }
+  if (loading && !plan) return <TodayLoadingSkeleton locale={locale} />
   if (view === 'preparing') return <GenerationWait locale={locale} onRetry={onRetry} online={online} />
   if (view === 'load-error' && !plan) {
     return (
@@ -594,4 +597,27 @@ function nextActionCopy({
     action: fa ? 'شروع تمرین' : 'Start workout',
     targetId: 'today-workout',
   }
+}
+
+function TodayLoadingSkeleton({ locale }: { locale: AppLocale }) {
+  const fa = locale === 'fa'
+  return (
+    <main aria-busy="true" aria-label={fa ? 'در حال بارگذاری امروز' : 'Loading today'} className="app-page today-page today-skeleton screen-enter">
+      <div className="today-skeleton__heading">
+        <div className="today-skeleton__block today-skeleton__line today-skeleton__line--short" />
+        <div className="today-skeleton__block today-skeleton__line today-skeleton__line--title" />
+        <div className="today-skeleton__block today-skeleton__line" />
+      </div>
+      <div className="today-skeleton__board">
+        <div className="today-skeleton__block today-skeleton__lead" />
+        <div className="today-skeleton__block today-skeleton__facts" />
+      </div>
+      <div className="today-skeleton__block today-skeleton__targets" />
+      <div className="today-skeleton__main">
+        <div className="today-skeleton__block today-skeleton__meal" />
+        <div className="today-skeleton__block today-skeleton__side" />
+      </div>
+      <p className="today-skeleton__note">{fa ? 'در حال چیدن امروز…' : 'Setting up today…'}</p>
+    </main>
+  )
 }

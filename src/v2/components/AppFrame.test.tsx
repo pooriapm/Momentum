@@ -11,6 +11,7 @@ import { demoPlan } from '../data/demo'
 import { loadAccountDashboard, type AccountDashboardView } from '../data/repository'
 import { MePage } from '../pages/app/MePage'
 import { PlanPage } from '../pages/app/PlanPage'
+import { ProgressPage } from '../pages/app/ProgressPage'
 import { TodayPage } from '../pages/app/TodayPage'
 import { AppFrame, type AppFrameContentContext, type AppTab } from './AppFrame'
 
@@ -63,8 +64,9 @@ function authValue(): AuthContextValue {
 }
 
 function livePage({ lastSyncedAt, loadError, loading, onRetry, plan, preview }: AppFrameContentContext, tab: AppTab) {
-  if (tab === 'today') return <TodayPage lastSyncedAt={lastSyncedAt} loadError={loadError} locale="en" onRetry={onRetry} plan={plan} preview={preview} />
+  if (tab === 'today') return <TodayPage lastSyncedAt={lastSyncedAt} loadError={loadError} loading={loading} locale="en" onRetry={onRetry} plan={plan} preview={preview} />
   if (tab === 'plan') return <PlanPage lastSyncedAt={lastSyncedAt} loadError={loadError} loading={loading} locale="en" onRetry={onRetry} plan={plan} preview={preview} />
+  if (tab === 'progress') return <ProgressPage lastSyncedAt={lastSyncedAt} loadError={loadError} loading={loading} locale="en" onRetry={onRetry} plan={plan} preview={preview} />
   return <MePage locale="en" plan={plan} preview={preview} />
 }
 
@@ -107,6 +109,23 @@ describe('AppFrame live plan query surfaces', () => {
     expect(document.querySelectorAll('.plan-skeleton-day').length).toBe(7)
     expect(screen.queryByLabelText('Loading')).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
+  })
+
+  it('shows a today-shaped skeleton inside the app frame while today is loading', async () => {
+    loadDashboard.mockImplementation(() => new Promise(() => {}))
+    renderLiveApp('today')
+    expect(await screen.findByLabelText('Loading today')).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByText('Setting up today…')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Loading')).not.toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
+  })
+
+  it('shows a progress-shaped skeleton inside the app frame while progress is loading', async () => {
+    loadDashboard.mockImplementation(() => new Promise(() => {}))
+    renderLiveApp('progress')
+    expect(await screen.findByLabelText('Loading progress')).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByText('Setting up this month’s progress…')).toBeInTheDocument()
+    expect(document.querySelectorAll('.progress-skeleton__metric')).toHaveLength(4)
   })
 
   it('PLAN-10 retries a cold plan load error from the page, not app-load-error', async () => {

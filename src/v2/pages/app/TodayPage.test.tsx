@@ -62,6 +62,14 @@ describe('TodayPage inventory states', () => {
     expect(await screen.findByRole('heading', { name: 'Daily check-in' })).toBeInTheDocument()
   })
 
+  it('shows a today-shaped skeleton while the plan is still loading', () => {
+    renderToday({ plan: null, loading: true })
+    expect(screen.getByLabelText('Loading today')).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByText('Setting up today…')).toBeInTheDocument()
+    expect(document.querySelectorAll('.today-skeleton__block').length).toBeGreaterThan(5)
+    expect(screen.queryByRole('heading', { name: 'No active plan' })).not.toBeInTheDocument()
+  })
+
   it('TODAY-02 renders a rest day without failure styling', () => {
     renderToday({ plan: planFixture({ workout: null }) })
     expect(screen.getAllByText('Today is for recovery and adaptation').length).toBeGreaterThan(0)

@@ -10,7 +10,7 @@ import { LazyOverlay, WeeklyCheckInSheet } from '../../components/LazyOverlay'
 import { localize, type MomentumPlanView } from '../../data/types'
 import { formatNumber } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
-import { Button, ContentCard, PageSkeleton, StatusPill } from '../../ui/primitives'
+import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { Textarea } from '../../ui/FormControls'
 import { currentLocalDate, loadNextCycleNote, saveNextCycleNote } from '../../data/repository'
 import { kilogramsToPounds, roundMeasurement } from '../../settings/measurement-system'
@@ -104,7 +104,7 @@ export function ProgressPage({
     }
   }
 
-  if (view === 'loading') return <PageSkeleton />
+  if (view === 'loading') return <ProgressLoadingSkeleton locale={locale} />
 
   if (view === 'load-error' && !plan) {
     return (
@@ -390,4 +390,25 @@ function textSummary(series: ReturnType<typeof resolveWeeklySeries>, locale: App
   return locale === 'fa'
     ? `پایبندی ${parts.join('، ')} است. مقدار ناقص صفر تفسیر نمی‌شود.`
     : `Adherence is ${parts.join(', ')}. A partial week is neither omitted nor treated as zero.`
+}
+
+function ProgressLoadingSkeleton({ locale }: { locale: AppLocale }) {
+  const fa = locale === 'fa'
+  return (
+    <main aria-busy="true" aria-label={fa ? 'در حال بارگذاری پیشرفت' : 'Loading progress'} className="app-page progress-page progress-skeleton screen-enter">
+      <div className="progress-skeleton__heading">
+        <div className="progress-skeleton__block progress-skeleton__line progress-skeleton__line--short" />
+        <div className="progress-skeleton__block progress-skeleton__line progress-skeleton__line--title" />
+        <div className="progress-skeleton__block progress-skeleton__line" />
+      </div>
+      <div className="progress-skeleton__metrics">
+        {Array.from({ length: 4 }, (_, index) => <div className="progress-skeleton__block progress-skeleton__metric" key={index} />)}
+      </div>
+      <div className="progress-skeleton__charts">
+        <div className="progress-skeleton__block progress-skeleton__chart" />
+        <div className="progress-skeleton__block progress-skeleton__chart progress-skeleton__chart--side" />
+      </div>
+      <p className="progress-skeleton__note">{fa ? 'در حال چیدن پیشرفت ماه…' : 'Setting up this month’s progress…'}</p>
+    </main>
+  )
 }

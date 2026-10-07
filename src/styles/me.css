@@ -447,6 +447,85 @@
   .progress-compare__tile { animation: none; }
   .progress-week-bars__fill,
   .progress-split__pair i,
+  .progress-skeleton__block::after,
   .progress-weight__line { animation: none; }
   .progress-weight__line { stroke-dashoffset: 0; }
+}
+
+.progress-skeleton {
+  display: grid;
+  gap: .85rem;
+}
+
+.progress-skeleton__heading {
+  display: grid;
+  gap: .45rem;
+}
+
+.progress-skeleton__block {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-skeleton__block::after {
+  animation: orbit-shimmer 1.4s infinite;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-text) 6%, transparent), transparent);
+  content: "";
+  inset: 0;
+  position: absolute;
+  transform: translateX(-100%);
+}
+
+.progress-skeleton__line {
+  height: .7rem;
+  width: min(32rem, 78%);
+}
+
+.progress-skeleton__line--short {
+  height: .55rem;
+  width: 7rem;
+}
+
+.progress-skeleton__line--title {
+  height: 1.45rem;
+  width: min(18rem, 62%);
+}
+
+.progress-skeleton__metrics {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.progress-skeleton__metric {
+  min-height: 6.5rem;
+}
+
+.progress-skeleton__charts {
+  display: grid;
+  gap: .85rem;
+  grid-template-columns: minmax(0, 1.5fr) minmax(14rem, .7fr);
+}
+
+.progress-skeleton__chart {
+  min-height: 16rem;
+}
+
+.progress-skeleton__note {
+  color: var(--color-text-muted);
+  font-size: .78rem;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .progress-skeleton__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .progress-skeleton__charts {
+    grid-template-columns: 1fr;
+  }
 }

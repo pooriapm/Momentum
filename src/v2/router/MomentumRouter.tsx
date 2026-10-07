@@ -124,7 +124,7 @@ export function MomentumRouter() {
           return (
             <AccountBoundary><AppFrame locale={locale} tab={tab}>
               {({ plan, preview, loading, loadError, lastSyncedAt, onRetry }) => {
-                if (tab === 'today') return <TodayPage lastSyncedAt={lastSyncedAt} loadError={loadError} locale={locale} onRetry={onRetry} plan={plan} preview={preview} />
+                if (tab === 'today') return <TodayPage lastSyncedAt={lastSyncedAt} loadError={loadError} loading={loading} locale={locale} onRetry={onRetry} plan={plan} preview={preview} />
                 if (tab === 'plan') return <PlanPage lastSyncedAt={lastSyncedAt} loadError={loadError} loading={loading} locale={locale} onRetry={onRetry} plan={plan} preview={preview} />
                 if (tab === 'progress') return <ProgressPage lastSyncedAt={lastSyncedAt} loadError={loadError} loading={loading} locale={locale} onRetry={onRetry} plan={plan} preview={preview} />
                 return <MePage locale={locale} plan={plan} preview={preview} />
