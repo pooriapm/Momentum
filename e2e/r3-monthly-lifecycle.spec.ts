@@ -244,6 +244,6 @@ test.describe('authenticated R3 month-one/month-two lifecycle', () => {
       .toBeVisible({ timeout: 20_000 })
     await page.locator('a[href="/en/app/plan"]:visible').first().click()
     await expect(page).toHaveURL(/\/en\/app\/plan/)
-    await expect(page.getByText(/cycle 2 imported/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Starter full-body session' })).toBeVisible()
   })
 })
