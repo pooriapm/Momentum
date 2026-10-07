@@ -20,6 +20,7 @@ import {
   NEXT_CYCLE_NOTE_SOFT,
 } from './me-state'
 import { ComparisonTable, SplitBars, WeekComparisonStrip, WeightChart } from './ProgressCharts'
+import { RecoveryValue } from './RecoveryValue'
 import {
   currentWeekIndex,
   deriveProgressSurface,
@@ -203,7 +204,7 @@ export function ProgressPage({
         <div className="progress-metrics-grid">
           <ContentCard><span><Scale size={19} /></span><small>{fa ? 'وزن فعلی' : 'Current weight'}</small><strong>{formatNumber(currentWeight, locale)} {weightUnit}</strong><em>{change < 0 ? <TrendingDown size={15} /> : change > 0 ? <TrendingUp size={15} /> : <Minus size={15} />}<span>{change === 0 ? (fa ? 'بدون تغییر' : 'No change') : `${formatNumber(weightChange, locale)} ${weightUnit} ${change < 0 ? (fa ? 'کاهش' : 'down') : (fa ? 'افزایش' : 'up')}`}</span></em></ContentCard>
           <ContentCard><span><Check size={19} /></span><small>{t('app.consistency')}</small><strong>{formatNumber(plan.progress.weeklyAdherence, locale)}%</strong><em>{fa ? 'میانگین ۷ روز اخیر' : 'Last 7-day average'}</em></ContentCard>
-          <ContentCard><span><CalendarDays size={19} /></span><small>{t('app.recovery')}</small><strong>{formatNumber(plan.progress.recovery, locale)}%</strong><em>{fa ? 'آخرین چک‌این' : 'Latest check-in'}</em></ContentCard>
+          <ContentCard><span><CalendarDays size={19} /></span><small>{t('app.recovery')}</small><strong><RecoveryValue locale={locale} score={plan.progress.recoveryScore} /></strong><em>{plan.progress.recoveryScore == null ? (fa ? 'از چک‌این روزانه' : 'From the daily check-in') : (fa ? 'امتیاز امروز' : 'Today’s score')}</em></ContentCard>
           <ContentCard><span><LineChart size={19} /></span><small>{fa ? 'انرژی' : 'Energy'}</small><strong>{formatNumber(plan.progress.energyScore, locale)}</strong><em>{fa ? 'بدون فشار روند متوالی' : 'No streak pressure'}</em></ContentCard>
         </div>
       ) : null}

@@ -118,7 +118,7 @@ export const demoPlan: MomentumPlanView = {
     ] },
   ],
   progress: {
-    currentWeight: 72.8, startWeight: 76.2, targetWeight: 69, weeklyAdherence: 84, readiness: 82, recovery: 76, streak: 12,
+    currentWeight: 72.8, startWeight: 76.2, targetWeight: 69, weeklyAdherence: 84, readiness: 82, recovery: 76, recoveryScore: 4, streak: 12,
     loggedCalories: 820, sleepMinutes: 425, energyScore: 4,
     weeklySeries: [
       { week: 1, workoutsCompleted: 2, workoutsPlanned: 3, mealsCompleted: 21, mealsPlanned: 28, energy: 6.8, adherence: 62 },

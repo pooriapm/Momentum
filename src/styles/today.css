@@ -1,39 +1,92 @@
-.today-next-action {
-  margin-bottom: 1.15rem;
+.today-page .today-heading {
+  margin-bottom: .85rem;
 }
 
-.today-next-action-card {
+.today-page .today-heading h1 {
+  font-size: 1.45rem;
+  line-height: 1.3;
+}
+
+.today-page .today-heading > div > p:not(.orbit-eyebrow) {
+  line-height: 1.5;
+  margin-top: .3rem;
+}
+
+.today-board {
+  align-items: stretch;
   display: grid;
-  gap: .85rem;
-  justify-items: center;
-  padding: 1.2rem;
-  text-align: center;
-  border-inline-start: 3px solid var(--color-energy);
-  background: color-mix(in srgb, var(--color-energy-soft) 55%, var(--color-surface));
-  box-shadow: none;
+  gap: .75rem;
+  grid-template-columns: minmax(0, 1.35fr) minmax(14rem, .8fr);
+  margin-bottom: .65rem;
+  padding: .8rem .95rem;
 }
 
-.today-next-action-card h2 {
-  font-size: 1.2rem;
+.today-board__lead h2 {
+  font-size: 1.05rem;
   font-weight: 650;
-  margin: .15rem 0 0;
   line-height: 1.35;
+  margin: .3rem 0 0;
 }
 
-.today-next-action-card p {
-  color: var(--color-text-secondary);
-  font-size: .84rem;
-  line-height: 1.7;
-  margin: 0;
-}
-
-.today-next-action-card__actions {
+.today-board__actions {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: .6rem;
-  justify-content: center;
+  gap: .4rem;
+  margin-top: .65rem;
+}
+
+.today-board__facts {
+  display: grid;
+  gap: .4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.today-fact {
+  align-content: center;
+  background: color-mix(in srgb, var(--color-text) 5%, var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: .75rem;
+  display: grid;
+  gap: .2rem;
+  margin: 0;
+  min-height: 4.1rem;
+  padding: .55rem .7rem;
+  text-align: start;
+}
+
+.today-fact--action {
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
   width: 100%;
+}
+
+.today-fact--action:disabled {
+  cursor: default;
+  opacity: .65;
+}
+
+.today-fact__label {
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.today-fact > strong {
+  align-items: baseline;
+  display: inline-flex;
+  font: 650 1.15rem var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  gap: .2rem;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.today-fact > strong small {
+  color: var(--color-text-muted);
+  font: 600 .75rem var(--font-numeric);
 }
 
 .today-checkin-quiet {
@@ -41,7 +94,50 @@
 }
 
 .today-banner {
-  margin-bottom: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: .6rem;
+}
+
+.today-banner > span {
+  flex: 1;
+  min-width: min(100%, 16rem);
+}
+
+.today-page .today-targets {
+  margin-bottom: 0;
+  padding: .75rem .95rem;
+}
+
+.today-page .today-targets .macro-row {
+  margin-top: 0;
+}
+
+.today-page .today-targets .target-track {
+  margin-top: .65rem;
+}
+
+.today-page .today-main-grid {
+  margin-top: .85rem;
+}
+
+.today-page .workout-card {
+  padding: .85rem 1rem;
+}
+
+.today-page .workout-card > small,
+.today-page .workout-card h3,
+.today-page .workout-card p {
+  text-align: start;
+}
+
+.today-page .workout-card > small {
+  margin-top: .55rem;
+}
+
+.today-page .workout-card > div:not(.section-title-row) {
+  justify-content: flex-start;
+  margin: .5rem 0 .7rem;
 }
 
 .today-timeline-list {
@@ -69,7 +165,7 @@
 
 .today-meal-row__time {
   color: var(--color-text-muted);
-  font: 700 .72rem var(--font-latin);
+  font: 700 .72rem var(--font-numeric);
 }
 
 .today-meal-row h3,
@@ -89,12 +185,18 @@
 .today-rest-card,
 .today-status-card {
   display: grid;
-  gap: .75rem;
-  padding: 1.2rem;
+  gap: .35rem;
+  padding: .85rem 1rem;
 }
 
-.today-rest-card {
-  border-color: color-mix(in srgb, var(--color-energy) 28%, var(--color-border));
+.today-rest-card h3,
+.today-rest-card p {
+  margin: 0;
+}
+
+.today-side-stack {
+  display: grid;
+  gap: .65rem;
 }
 
 .today-wait {
@@ -376,11 +478,24 @@
 }
 
 @media (max-width: 720px) {
-  .today-meal-row {
-    grid-template-columns: minmax(0, 1fr);
+  .today-board {
+    grid-template-columns: 1fr;
   }
 
-  .today-next-action-card__actions .orbit-button {
-    width: 100%;
+  .today-board__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .today-board__actions .orbit-button {
+    flex: 1 1 calc(50% - .4rem);
+  }
+
+  .today-fact,
+  .today-fact--action {
+    min-height: 3.6rem;
+  }
+
+  .today-meal-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

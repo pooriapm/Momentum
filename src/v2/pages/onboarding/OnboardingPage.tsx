@@ -53,6 +53,7 @@ import {
   onboardingDefaultValues,
   onboardingOptionLabelKey,
   onboardingSections,
+  selectedValues,
   type OnboardingField,
   type OnboardingStepKey,
   UNMAPPED_ALLERGEN,
@@ -73,7 +74,8 @@ import {
 import { countryName } from '../../onboarding/countries'
 import { formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
-import './onboarding.css'
+import { FieldGuide } from './FieldGuide'
+import { foodGuide } from './food-guides'
 
 interface OnboardingPageProps {
   locale: AppLocale
@@ -190,7 +192,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
   function updateValue(field: OnboardingField, value: string) {
     const nextValue = field.kind === 'number' ? sanitizeLocalizedNumberInput(value, field.step !== 1, field.maxDigits) : value
     const changes: Record<string, string> = { [field.key]: nextValue }
-    if (field.key === 'trainingDurationPreset' && value !== 'custom') changes.trainingDuration = value
+    if (field.key === 'allergies' && !selectedValues(nextValue).includes(UNMAPPED_ALLERGEN)) changes.otherAllergy = ''
     if (field.key === 'bodyFatPercent' || field.key === 'waistCm' || field.key === 'bodySource') changes.bodySkipped = ''
     setValueEdits((current) => ({ ...current, ...changes }))
     setErrors((current) => {
@@ -451,7 +453,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           </div>
           {!online && section.key !== 'review' ? <div className="inline-notice inline-notice--warning" role="status"><WifiOff size={18} />{locale === 'fa' ? 'آفلاین هستید. پاسخ‌هایتان در این صفحه باقی می‌ماند؛ برای ذخیره و ادامه دوباره وصل شوید.' : 'You’re offline. Your answers remain on this page; reconnect to save and continue.'}</div> : null}
           {section.key === 'basics' ? <div className="inline-notice"><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</div> : null}
-          {section.key === 'consent' ? <div className="inline-notice"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</div> : null}
+          {section.key === 'consent' ? <div className="inline-notice onboarding-lead-note"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</div> : null}
           {section.key === 'plan-source' ? (
             <PlanSourceChoice
               error={errors.planSource}
@@ -461,8 +463,8 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               value={values.planSource ?? ''}
             />
           ) : null}
-          {section.key === 'food' ? <div className="inline-notice inline-notice--success"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</div> : null}
-          {visibleFields.length > 0 && section.key !== 'plan-source' ? (
+          {section.key === 'food' ? <div className="inline-notice inline-notice--success onboarding-lead-note"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</div> : null}
+          {visibleFields.length > 0 && section.key !== 'plan-source' && section.key !== 'body' ? (
             <div className="onboarding-fields">
               <OnboardingFields
                 fields={section.fields}
@@ -504,16 +506,32 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           ) : null}
           {section.key === 'body' ? (
             <BodyStep
+              detail={values.bodyDetail === 'detailed' ? 'detailed' : values.bodyDetail === 'simple' ? 'simple' : ''}
+              heightCm={values.heightCm ?? ''}
               locale={locale}
               onCancelUpload={() => void cancelUpload()}
+              onDetail={(next) => setValueEdits((current) => ({ ...current, bodyDetail: next, bodySkipped: '' }))}
+              onField={(key, next) => {
+                const field = section.fields.find((item) => item.key === key)
+                if (field) updateValue(field, next)
+              }}
               onRemove={() => void removeReport()}
               onReportChange={handleReportChange}
               onSkip={() => void skipBody()}
+              onSource={(next) => {
+                const field = section.fields.find((item) => item.key === 'bodySource')
+                if (field) updateValue(field, next)
+                if (next === 'manual') setValueEdits((current) => ({ ...current, bodyDetail: current.bodyDetail || 'simple' }))
+              }}
               online={online}
               reportName={reportName}
               saving={saving}
               skipped={values.bodySkipped === 'yes'}
+              source={values.bodySource === 'report' ? 'report' : values.bodySource === 'manual' ? 'manual' : ''}
               uploadState={values.bodyReportPath ? 'success' : uploadState}
+              waistCm={values.waistCm ?? ''}
+              weightKg={values.weightKg ?? ''}
+              bodyFatPercent={values.bodyFatPercent ?? ''}
             />
           ) : null}
           {section.key === 'review' ? (
@@ -734,6 +752,13 @@ function HealthOutcome({ outcome }: { outcome: ReturnType<typeof healthScreening
   return null
 }
 
+function bodyMassIndex(heightCm: string, weightKg: string) {
+  const height = Number(heightCm) / 100
+  const weight = Number(weightKg)
+  if (!Number.isFinite(height) || height <= 0 || !Number.isFinite(weight) || weight <= 0) return null
+  return Math.round((weight / (height * height)) * 10) / 10
+}
+
 function BodyStep({
   locale,
   skipped,
@@ -741,10 +766,19 @@ function BodyStep({
   reportName,
   saving,
   online,
+  source,
+  detail,
+  heightCm,
+  weightKg,
+  waistCm,
+  bodyFatPercent,
   onReportChange,
   onSkip,
   onCancelUpload,
   onRemove,
+  onSource,
+  onDetail,
+  onField,
 }: {
   locale: AppLocale
   skipped: boolean
@@ -752,40 +786,94 @@ function BodyStep({
   reportName: string
   saving: boolean
   online: boolean
+  source: '' | 'manual' | 'report'
+  detail: '' | 'simple' | 'detailed'
+  heightCm: string
+  weightKg: string
+  waistCm: string
+  bodyFatPercent: string
   onReportChange: (event: ChangeEvent<HTMLInputElement>) => void
   onSkip: () => void
   onCancelUpload: () => void
   onRemove: () => void
+  onSource: (value: 'manual' | 'report') => void
+  onDetail: (value: 'simple' | 'detailed') => void
+  onField: (key: 'waistCm' | 'bodyFatPercent', value: string) => void
 }) {
   const { t } = useTranslation()
+  const fa = locale === 'fa'
+  const bmi = bodyMassIndex(heightCm, weightKg)
   return (
     <div className="body-upload-step">
       <span className="body-upload-step__icon"><UploadCloud size={31} /></span>
       <StatusPill tone="neutral">{t('onboarding.bodyOptional')}</StatusPill>
       <h3>{t('onboarding.upload')}</h3>
       <p>{t('onboarding.bodyManualCopy')}</p>
-      <p>{locale === 'fa' ? 'گزارش آپلودشده خودکار خوانده نمی‌شود. برای استفاده در برنامه، درصد چربی یا دور کمر را خودت وارد کن.' : 'Uploaded reports are not read automatically. Enter body-fat or waist values yourself for plan creation.'}</p>
       {skipped ? <div className="inline-notice">{t('onboarding.bodySkipConfirm')}</div> : null}
-      {uploadState === 'uploading' ? (
-        <div className="inline-notice" role="status">
-          {t('onboarding.uploadProgress')}
-          <Button disabled={!online} onClick={onCancelUpload} variant="ghost">{t('onboarding.uploadCancel')}</Button>
+      <div className="body-path body-path--sub" role="group" aria-label={fa ? 'روش ثبت ترکیب بدن' : 'How to record body composition'}>
+        <button aria-pressed={source === 'manual'} className={`body-path__choice${source === 'manual' ? ' is-selected' : ''}`} onClick={() => onSource('manual')} type="button">
+          <strong>{t('onboarding.sourceManual')}</strong>
+          <small>{fa ? 'قد و وزن، یا جزئیات بیشتر' : 'Height and weight, or more detail'}</small>
+        </button>
+        <button aria-pressed={source === 'report'} className={`body-path__choice${source === 'report' ? ' is-selected' : ''}`} onClick={() => onSource('report')} type="button">
+          <strong>{t('onboarding.sourceReport')}</strong>
+          <small>{fa ? 'فایل گزارش را پیوست کن' : 'Attach a report file'}</small>
+        </button>
+      </div>
+      <FieldReveal className="onboarding-reveal" open={source === 'manual'}>
+        <div className="body-path body-path--sub" role="group" aria-label={fa ? 'میزان جزئیات' : 'Level of detail'}>
+          <button aria-pressed={detail === 'simple'} className={`body-path__choice${detail === 'simple' ? ' is-selected' : ''}`} onClick={() => onDetail('simple')} type="button">
+            <strong>{fa ? 'فقط قد و وزن' : 'Height and weight only'}</strong>
+            <small>{fa ? 'شاخص توده بدنی از همین دو عدد' : 'BMI from those two numbers'}</small>
+          </button>
+          <button aria-pressed={detail === 'detailed'} className={`body-path__choice${detail === 'detailed' ? ' is-selected' : ''}`} onClick={() => onDetail('detailed')} type="button">
+            <strong>{fa ? 'با جزئیات' : 'With details'}</strong>
+            <small>{fa ? 'دور کمر و درصد چربی' : 'Waist and body fat'}</small>
+          </button>
         </div>
-      ) : null}
-      {uploadState === 'error' ? (
-        <div className="inline-notice inline-notice--error" role="alert">
-          {t('onboarding.uploadError')}
-          <Button onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button>
+      </FieldReveal>
+      <FieldReveal className="onboarding-reveal" open={source === 'manual' && detail === 'simple'}>
+        <div className="body-bmi">
+          <span>{fa ? 'شاخص توده بدنی' : 'Body mass index'}</span>
+          <strong>{bmi == null ? '—' : formatNumber(bmi, locale, { maximumFractionDigits: 1 })}</strong>
+          <p>{bmi == null
+            ? (fa ? 'قد و وزن مرحلهٔ قبل لازم است.' : 'Height and weight from the earlier step are needed.')
+            : (fa
+              ? `از قد ${formatNumber(Number(heightCm), locale, { maximumFractionDigits: 1 })} سانتی‌متر و وزن ${formatNumber(Number(weightKg), locale, { maximumFractionDigits: 1 })} کیلوگرم.`
+              : `From ${formatNumber(Number(heightCm), locale, { maximumFractionDigits: 1 })} cm and ${formatNumber(Number(weightKg), locale, { maximumFractionDigits: 1 })} kg.`)}</p>
         </div>
-      ) : null}
-      <label className={`body-upload ${uploadState === 'success' ? 'body-upload--success' : ''}`}>
-        {uploadState === 'success' ? <FileCheck2 size={22} /> : <UploadCloud size={22} />}
-        <span>{uploadState === 'success' ? (locale === 'fa' ? 'گزارش امن آپلود شد' : 'Report uploaded securely') : reportName || t('onboarding.upload')}</span>
-        <input accept=".pdf,image/jpeg,image/png,image/webp" disabled={saving || !online || uploadState === 'uploading'} onChange={onReportChange} type="file" />
-      </label>
+      </FieldReveal>
+      <FieldReveal className="onboarding-reveal" open={source === 'manual' && detail === 'detailed'}>
+        <div className="onboarding-fields body-path__fields">
+          <Input label={t('onboarding.waist')} max={200} min={40} onChange={(event) => onField('waistCm', event.target.value)} step={0.1} type="text" inputMode="decimal" value={waistCm} />
+          <Input label={t('onboarding.bodyFat')} max={60} min={3} onChange={(event) => onField('bodyFatPercent', event.target.value)} step={0.1} type="text" inputMode="decimal" value={bodyFatPercent} />
+        </div>
+      </FieldReveal>
+      <FieldReveal className="onboarding-reveal" open={source === 'report'}>
+        <div className="body-report">
+          {uploadState === 'uploading' ? (
+            <div className="inline-notice" role="status">
+              {t('onboarding.uploadProgress')}
+              <Button disabled={!online} onClick={onCancelUpload} variant="ghost">{t('onboarding.uploadCancel')}</Button>
+            </div>
+          ) : null}
+          {uploadState === 'error' ? (
+            <div className="inline-notice inline-notice--error" role="alert">
+              {t('onboarding.uploadError')}
+              <Button onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button>
+            </div>
+          ) : null}
+          <label className={`body-upload body-upload--bold${uploadState === 'success' ? ' body-upload--success' : ''}`}>
+            {uploadState === 'success' ? <FileCheck2 size={22} /> : <UploadCloud size={22} />}
+            <span>{uploadState === 'success' ? (fa ? 'گزارش امن آپلود شد' : 'Report uploaded securely') : reportName || t('onboarding.upload')}</span>
+            <input accept=".pdf,image/jpeg,image/png,image/webp" disabled={saving || !online || uploadState === 'uploading'} onChange={onReportChange} type="file" />
+          </label>
+          <small>{fa ? 'گزارش آپلودشده خودکار خوانده نمی‌شود.' : 'An uploaded report is not read automatically.'}</small>
+        </div>
+      </FieldReveal>
       <small>{t('onboarding.noMedicalClaim')}</small>
       <div className="onboarding-body-actions">
-        {uploadState === 'success' ? <Button disabled={saving || !online} onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button> : null}
+        {uploadState === 'success' && source === 'report' ? <Button disabled={saving || !online} onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button> : null}
         <Button disabled={saving || !online} onClick={onSkip} variant="secondary">{t('onboarding.skipConfirm')}</Button>
       </div>
     </div>
@@ -871,6 +959,8 @@ function DynamicField({
   placeholder?: string
 }) {
   const { t } = useTranslation()
+  const guideText = foodGuide(field.key, locale)
+  const guide = guideText ? <FieldGuide locale={locale} text={guideText} /> : undefined
   if (field.kind === 'date') {
     return <LocalizedDatePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} purpose={field.key === 'birthDate' ? 'birth' : 'report'} required={required} value={value} />
   }
@@ -880,7 +970,7 @@ function DynamicField({
   if (field.kind === 'select') {
     const options = field.options?.map((option) => ({ value: option.value, label: t(option.labelKey) })) ?? []
     return (
-      <Select error={error} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} required={required} value={value}>
+      <Select error={error} guide={guide} label={t(field.labelKey)} onChange={(event) => onChange(event.target.value)} required={required} value={value}>
         {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </Select>
     )
@@ -907,15 +997,15 @@ function DynamicField({
     return (
       <fieldset className={`onboarding-multiselect ${error ? 'has-error' : ''}`}>
         <legend>
-          {t(field.labelKey)}
+          <span>{t(field.labelKey)}</span>
           {required ? <RequiredMark /> : null}
+          {guide}
         </legend>
         <div>
           {options?.map((option) => {
             const checked = selected.has(option.value)
-            const blocked = option.value === UNMAPPED_ALLERGEN && checked
             return (
-              <label className={`${checked ? 'is-selected' : ''} ${blocked ? 'is-blocked' : ''}`} key={option.value}>
+              <label className={checked ? 'is-selected' : ''} key={option.value}>
                 <input
                   checked={checked}
                   onChange={() => {
@@ -936,7 +1026,7 @@ function DynamicField({
     )
   }
   if (field.kind === 'textarea') {
-    return <Textarea error={error} label={t(field.labelKey)} maxLength={field.maxLength} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} rows={3} value={value} />
+    return <Textarea error={error} guide={guide} label={t(field.labelKey)} maxLength={field.maxLength} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} rows={3} value={value} />
   }
   if (field.kind === 'time') {
     return <LocalizedTimePicker error={error} label={t(field.labelKey)} locale={locale} onChange={onChange} required={required} value={value} />
@@ -947,6 +1037,7 @@ function DynamicField({
         decreaseLabel={t('onboarding.stepperDecrease')}
         error={error}
         fallback={Number(field.defaultValue ?? field.min ?? 0)}
+        guide={guide}
         increaseLabel={t('onboarding.stepperIncrease')}
         label={t(field.labelKey)}
         locale={locale}
@@ -962,6 +1053,7 @@ function DynamicField({
   return (
     <Input
       error={error}
+      guide={guide}
       inputMode={field.kind === 'number' ? 'decimal' : undefined}
       label={t(field.labelKey)}
       max={field.max}
@@ -1011,9 +1103,9 @@ function ReviewGrid({
     { step: 'basics' as const, label: locale === 'fa' ? 'مشخصات و اندازه‌ها' : 'Identity and measurements', value: joinDetails(values.firstName, optionLabel('sex', values.sex), values.birthDate ? formatLocalizedDate(values.birthDate, locale) : '—', values.country ? countryName(values.country, locale) : '—', Number.isFinite(weight) && values.weightKg ? `${formatNumber(weight, locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'کیلوگرم' : 'kg'}` : '—', values.heightCm ? `${formatNumber(Number(values.heightCm), locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'سانتی‌متر' : 'cm'}` : '—') },
     { step: 'goal' as const, label: locale === 'fa' ? 'هدف' : 'Goal', value: joinDetails(optionLabel('goalType', values.goalType), values.targetWeightKg ? `${values.targetWeightKg} kg` : undefined) },
     { step: 'health' as const, label: locale === 'fa' ? 'غربالگری سلامت' : 'Health screening', value: joinDetails(healthScreeningOutcome(values) === 'eligible' ? (locale === 'fa' ? 'مانع ایمنی ثبت نشده' : 'No safety block') : (locale === 'fa' ? 'نیاز به مسیر انسانی' : 'Human path required'), `${locale === 'fa' ? 'علائم فوری' : 'Urgent symptoms'}: ${yesNo(values.urgentSymptoms)}`, values.medications, values.medicalNotes) },
-    { step: 'food' as const, label: locale === 'fa' ? 'غذا و حساسیت‌ها' : 'Food and allergies', value: joinDetails(optionLabel('dietStyle', values.dietStyle), `${locale === 'fa' ? 'حساسیت' : 'Allergies'}: ${optionList('allergies', values.allergies)}`, values.dislikedFoods ? `${locale === 'fa' ? 'پرهیز' : 'Avoid'}: ${values.dislikedFoods}` : undefined, values.favoriteFoods, mealPattern, `${mealCountLabel} / ${formatNumber(Number(values.preferredOptionCount || 3), locale)} ${locale === 'fa' ? 'گزینه' : 'options'}`, values.cookingConstraints) },
+    { step: 'food' as const, label: locale === 'fa' ? 'غذا و حساسیت‌ها' : 'Food and allergies', value: joinDetails(optionLabel('dietStyle', values.dietStyle), `${locale === 'fa' ? 'حساسیت' : 'Allergies'}: ${optionList('allergies', values.allergies)}`, values.otherAllergy, values.dislikedFoods ? `${locale === 'fa' ? 'پرهیز' : 'Avoid'}: ${values.dislikedFoods}` : undefined, values.favoriteFoods, mealPattern, `${mealCountLabel} / ${formatNumber(Number(values.preferredOptionCount || 3), locale)} ${locale === 'fa' ? 'گزینه' : 'options'}`, values.cookingConstraints) },
     { step: 'training' as const, label: locale === 'fa' ? 'برنامه تمرین' : 'Training routine', value: joinDetails(`${values.trainingDays ? formatNumber(Number(values.trainingDays), locale) : formatNumber(0, locale)} ${locale === 'fa' ? 'روز' : 'days'}`, optionLabel('primaryActivity', values.primaryActivity), optionLabel('trainingExperience', values.trainingExperience), optionLabel('trainingLocation', values.trainingLocation), values.trainingDuration ? `${formatNumber(Number(values.trainingDuration), locale)} ${locale === 'fa' ? 'دقیقه' : 'min'}` : undefined, optionList('trainingWeekdays', values.trainingWeekdays), values.trainingStartTime, values.trainingAvailability, values.equipment, values.workSchedule) },
-    { step: 'body' as const, label: locale === 'fa' ? 'اطلاعات بدن' : 'Body details', value: values.bodySkipped === 'yes' ? t('onboarding.skip') : joinDetails(values.bodyReportPath ? (locale === 'fa' ? 'گزارش پیوست شده' : 'Report attached') : undefined, values.bodyFatPercent ? `${values.bodyFatPercent}%` : undefined, values.waistCm ? `${values.waistCm} cm` : undefined) },
+    { step: 'body' as const, label: locale === 'fa' ? 'اطلاعات بدن' : 'Body details', value: values.bodySkipped === 'yes' ? t('onboarding.skip') : joinDetails(values.bodyReportPath ? (locale === 'fa' ? 'گزارش پیوست شده' : 'Report attached') : undefined, values.bodySource === 'manual' && values.bodyDetail !== 'detailed' && bodyMassIndex(values.heightCm ?? '', values.weightKg ?? '') != null ? `${locale === 'fa' ? 'شاخص' : 'BMI'} ${formatNumber(bodyMassIndex(values.heightCm ?? '', values.weightKg ?? '')!, locale, { maximumFractionDigits: 1 })}` : undefined, values.bodyFatPercent ? `${values.bodyFatPercent}%` : undefined, values.waistCm ? `${values.waistCm} cm` : undefined) },
     { step: 'consent' as const, label: locale === 'fa' ? 'رضایت‌ها' : 'Consents', value: values.termsAccepted === 'yes' && values.privacyAccepted === 'yes' && values.healthDataConsent === 'yes' ? (locale === 'fa' ? 'شرایط، حریم خصوصی و رضایت داده‌های سلامت پذیرفته شد' : 'Terms, privacy, and health-data consent accepted') : '—' },
   ]
   return (

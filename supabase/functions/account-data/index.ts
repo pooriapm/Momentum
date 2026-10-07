@@ -887,7 +887,7 @@ async function loadDashboard(
     admin
       .from('daily_checkins')
       .select(
-        'local_date,weight_kg,waist_cm,sleep_minutes,hunger_score,mood_score,energy_score,water_ml,steps,adherence_percent',
+        'local_date,weight_kg,waist_cm,sleep_minutes,hunger_score,mood_score,energy_score,recovery_score,water_ml,steps,adherence_percent',
       )
       .eq('user_id', userId)
       .eq('local_date', input.localDate)
@@ -895,7 +895,7 @@ async function loadDashboard(
     admin
       .from('daily_checkins')
       .select(
-        'local_date,weight_kg,waist_cm,sleep_minutes,hunger_score,mood_score,energy_score,water_ml,steps,adherence_percent',
+        'local_date,weight_kg,waist_cm,sleep_minutes,hunger_score,mood_score,energy_score,recovery_score,water_ml,steps,adherence_percent',
       )
       .eq('user_id', userId)
       .lte('local_date', input.localDate)

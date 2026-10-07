@@ -28,7 +28,6 @@ import {
   readShoppingChecks,
   readStoredLastSync,
   nextUnplannedDate,
-  resolvePlanVersion,
   shoppingPlanKey,
   type PlanSegment,
   type PlanSurface,
@@ -37,7 +36,6 @@ import {
 } from './plan-state'
 import {
   NextCycleNote,
-  PlanCalendarView,
   PlanErrorState,
   PlanGroceryView,
   PlanLoadingSkeleton,
@@ -52,7 +50,6 @@ const segmentMeta: Array<{ key: PlanSegment; icon: typeof Salad; fa: string; en:
   { key: 'nutrition', icon: Salad, fa: 'تغذیه', en: 'Nutrition' },
   { key: 'training', icon: Dumbbell, fa: 'تمرین', en: 'Training' },
   { key: 'grocery', icon: ShoppingBasket, fa: 'خرید', en: 'Grocery' },
-  { key: 'calendar', icon: CalendarDays, fa: 'تقویم', en: 'Calendar' },
 ]
 
 export function PlanPage({
@@ -136,8 +133,7 @@ export function PlanPage({
     ? { ...selectedPlanDay, localDate: cycleDate, meals: [], workout: null, dateLabel: { fa: 'دوره بعد', en: 'Next period' } }
     : selectedPlanDay
   const isToday = !showingNextCycle && selectedDay.localDate === (activePlan.localDate ?? today)
-  const version = resolvePlanVersion(activePlan)
-  const inventoryId = view === 'error' ? 'PLAN-10' : view === 'offline' ? 'PLAN-09' : view === 'stale' ? 'PLAN-09' : segment === 'week' ? 'PLAN-01' : segment === 'nutrition' ? 'PLAN-02' : segment === 'training' ? 'PLAN-03' : segment === 'grocery' ? 'PLAN-04' : 'PLAN-05'
+  const inventoryId = view === 'error' ? 'PLAN-10' : view === 'offline' ? 'PLAN-09' : view === 'stale' ? 'PLAN-09' : segment === 'week' ? 'PLAN-01' : segment === 'nutrition' ? 'PLAN-02' : segment === 'training' ? 'PLAN-03' : 'PLAN-04'
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, current: PlanSegment) {
     const currentIndex = PLAN_SEGMENTS.indexOf(current)
@@ -301,10 +297,12 @@ export function PlanPage({
             mutationsLocked={mutationsLocked}
             onCompleteMeal={(slotId, optionId) => void markMealComplete(slotId, optionId)}
             onOpenMeal={(meal, choice) => setMealDetail({ meal, choice })}
+            onSelectDate={setSelectedDate}
             onSelectMeal={(slotId, optionId) => void selectMeal(slotId, optionId)}
             savingSlot={savingSlot}
             selectedDay={selectedDay}
             selectedMeals={selectedMeals}
+            today={today}
           />}
           {mealError ? <div className="inline-notice inline-notice--error" role="alert">{mealError}</div> : null}
         </div>
@@ -315,8 +313,10 @@ export function PlanPage({
             days={availableDays}
             locale={locale}
             onOpenWorkout={setWorkoutDetail}
+            onSelectDate={setSelectedDate}
             selectedDay={selectedDay}
             substitutes={exerciseSubstitutes[selectedDay.localDate]}
+            today={today}
           />}
           {!showingNextCycle && selectedDay.workout ? (
             <WorkoutLogger
@@ -338,19 +338,6 @@ export function PlanPage({
             onShare={() => void shareGrocery()}
             onToggle={toggleShopping}
             plan={activePlan}
-          />
-        </div>
-      ) : null}
-      {segment === 'calendar' ? (
-        <div aria-labelledby="plan-tab-calendar" className="motion-panel" id="plan-panel-calendar" role="tabpanel">
-          <PlanCalendarView
-            cycleDate={cycleDate}
-            days={availableDays}
-            locale={locale}
-            onSelectDate={setSelectedDate}
-            selectedDay={selectedDay}
-            today={today}
-            version={version}
           />
         </div>
       ) : null}

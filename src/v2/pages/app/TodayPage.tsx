@@ -1,20 +1,17 @@
 import {
   AlertOctagon,
   AlertTriangle,
-  CalendarRange,
   Check,
   ChevronRight,
   Clock3,
   Dumbbell,
   Eye,
   Flame,
-  MoonStar,
   Salad,
-  Target,
   WifiOff,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
@@ -28,8 +25,9 @@ import { localize, type MealChoice, type MealSlot, type MomentumPlanView } from 
 import { formatClock, formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { localizedPath } from '../../router/route-utils'
-import { Button, ContentCard, GlassChrome, StatusPill } from '../../ui/primitives'
+import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
+import { RecoveryValue } from './RecoveryValue'
 import { GenerationWait } from './GenerationWait'
 import { useGenerationWait } from './use-generation-wait'
 import {
@@ -200,6 +198,7 @@ export function TodayPage({
     ?? incompleteMeals[0]
     ?? null
   const nextChoice = nextMeal ? selectedOption(nextMeal, selectedMeals) : null
+  const listedMeals = orderedMeals.filter((meal) => meal.id !== nextMeal?.id)
   const restDay = !plan.workout
 
   async function selectMeal(slotId: string, optionId: string) {
@@ -291,7 +290,7 @@ export function TodayPage({
 
   return (
     <main className="app-page today-page screen-enter">
-      <section className="page-heading">
+      <section className="page-heading today-heading">
         <div>
           <p className="orbit-eyebrow">{localize(plan.dateLabel, locale)}</p>
           <h1>{t('app.greeting', { name: localize(plan.userName, locale) })}</h1>
@@ -330,42 +329,45 @@ export function TodayPage({
         </div>
       ) : null}
 
-      {view === 'safety' ? (
-        <ContentCard className="today-status-card today-banner">
-          <span className="today-status-card__icon is-danger"><AlertOctagon size={28} /></span>
-          <p className="orbit-eyebrow">{fa ? 'ایمنی اولویت دارد' : 'Safety first'}</p>
-          <h2>{fa ? 'تمرین امروز متوقف شده' : 'Today’s workout is paused'}</h2>
-          <p>{fa ? 'Momentum جایگزین مراقبت پزشکی نیست. اگر در خطر فوری هستی با خدمات اضطراری محل زندگی تماس بگیر.' : 'Momentum does not replace medical care. If you may be in immediate danger, contact local emergency services.'}</p>
-          <div className="today-status-actions">
-            <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/safety')}>{fa ? 'دیدن راهنمای ایمنی' : 'View safety guidance'}</Link>
-          </div>
-        </ContentCard>
-      ) : null}
-
-      <section className="today-next-action">
-        <ContentCard className="today-next-action-card">
+      <ContentCard className="today-board">
+        <div className="today-board__lead">
           <StatusPill tone={view === 'completed' ? 'success' : view === 'rest' ? 'energy' : 'brand'}>
             {view === 'completed' ? (fa ? 'روز کامل' : 'Day complete') : view === 'rest' ? (fa ? 'بدون فشار' : 'No pressure') : fa ? 'قدم بعدی' : 'Next action'}
           </StatusPill>
           <h2>{nextAction.title}</h2>
-          <p>{nextAction.body}</p>
-          <div className="today-next-action-card__actions">
-            <Button disabled={view === 'safety' || view === 'stale'} onClick={() => document.getElementById(nextAction.targetId)?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })}>
-              {nextAction.action}
-            </Button>
+          <div className="today-board__actions">
+            {view === 'safety' ? (
+              <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/safety')}>{nextAction.action}</Link>
+            ) : (
+              <Button disabled={view === 'stale'} onClick={() => document.getElementById(nextAction.targetId)?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })}>
+                {nextAction.action}
+              </Button>
+            )}
             <Button className="today-checkin-quiet" disabled={mutationsLocked} onClick={(event) => { event.currentTarget.focus({ preventScroll: true }); setCheckInOpen(true) }} variant="ghost">
-              {checkInSaved ? (fa ? 'چک‌این ثبت شد' : 'Check-in saved') : (fa ? 'بررسی روزانه · اختیاری' : 'Daily check-in · optional')}
+              {checkInSaved ? (fa ? 'چک‌این ثبت شد' : 'Check-in saved') : (fa ? 'چک‌این روزانه' : 'Daily check-in')}
             </Button>
           </div>
-        </ContentCard>
-      </section>
-
-      <section className="today-hero-grid">
-        <ContentCard className="daily-brief-card">
-          <div className="card-heading-row">
-            <div><StatusPill tone="brand"><Target size={13} />{localize(plan.targetStrategy, locale)}</StatusPill><h2>{t('app.dailyBrief')}</h2></div>
-            <span className="readiness-orb" style={{ '--readiness-progress': `${Math.max(0, Math.min(100, plan.progress.readiness))}%` } as CSSProperties}><strong>{formatNumber(plan.progress.readiness, locale)}%</strong><small>{t('app.readiness')}</small></span>
+        </div>
+        <div className="today-board__facts">
+          {plan.progress.recoveryScore == null ? (
+            <button className="today-fact today-fact--recovery today-fact--action" disabled={mutationsLocked} id="today-recovery" onClick={() => setCheckInOpen(true)} type="button">
+              <span className="today-fact__label">{t('app.recovery')}</span>
+              <RecoveryValue locale={locale} score={null} />
+            </button>
+          ) : (
+            <div className="today-fact today-fact--recovery" id="today-recovery">
+              <span className="today-fact__label">{t('app.recovery')}</span>
+              <RecoveryValue locale={locale} score={plan.progress.recoveryScore} />
+            </div>
+          )}
+          <div className="today-fact">
+            <span className="today-fact__label">{t('app.readiness')}</span>
+            <strong><bdi dir="ltr">{formatNumber(plan.progress.readiness, locale)}%</bdi></strong>
           </div>
+        </div>
+      </ContentCard>
+
+      <ContentCard className="daily-brief-card today-targets">
           <div className="macro-row">
             <span><strong>{formatNumber(plan.targets.calories, locale)}</strong><small>{t('app.calories')}</small></span>
             <span><strong>{formatNumber(plan.targets.protein, locale)}g</strong><small>{t('app.protein')}</small></span>
@@ -373,46 +375,14 @@ export function TodayPage({
             <span><strong>{formatNumber(plan.targets.fat, locale)}g</strong><small>{t('app.fat')}</small></span>
           </div>
           <div className="target-track"><i style={{ width: `${Math.min(100, (plan.progress.loggedCalories / plan.targets.calories) * 100)}%` }} /></div>
-          <div className="target-track-labels"><span>{fa ? 'ثبت‌شده تا حالا' : 'Logged so far'} · {formatNumber(plan.progress.loggedCalories, locale)} kcal</span><strong>{formatNumber(Math.round((plan.progress.loggedCalories / Math.max(plan.targets.calories, 1)) * 100), locale)}%</strong></div>
+          <div className="target-track-labels"><span>{fa ? 'ثبت‌شده' : 'Logged'} · {formatNumber(plan.progress.loggedCalories, locale)}</span><strong>{formatNumber(Math.round((plan.progress.loggedCalories / Math.max(plan.targets.calories, 1)) * 100), locale)}%</strong></div>
         </ContentCard>
-        <GlassChrome className="monthly-plan-brief-card">
-          <span className="monthly-plan-brief-card__icon"><CalendarRange size={24} /></span>
-          <div><p className="orbit-eyebrow">{fa ? 'برنامه ماه جاری' : 'Current monthly plan'}</p><h2>{localize(plan.monthlyPlanBrief, locale)}</h2></div>
-          <StatusPill tone="success">{fa ? 'وارد شده' : 'Imported'}</StatusPill>
-        </GlassChrome>
-      </section>
 
       <section className="today-main-grid">
         <div className="today-timeline" id="today-meal">
           <div className="section-title-row">
-            <div>
-              <p className="orbit-eyebrow">{fa ? 'خط زمانی' : 'Timeline'}</p>
-              <h2>{allMealsCompleted ? (fa ? 'همه وعده‌ها ثبت شدند' : 'All meals completed') : t('app.nextMeal')}</h2>
-            </div>
+            <h2>{allMealsCompleted ? (fa ? 'همه وعده‌ها ثبت شدند' : 'All meals completed') : t('app.nextMeal')}</h2>
             <span><Clock3 size={16} />{nextMeal ? <bdi dir="ltr">{formatClock(nextMeal.time, locale)}</bdi> : (allMealsCompleted ? (fa ? 'کامل' : 'Done') : '—')}</span>
-          </div>
-
-          <div className="today-timeline-list">
-            {orderedMeals.map((meal) => {
-              const completed = mealIsCompleted(meal, mealOverrides)
-              const choice = selectedOption(meal, selectedMeals)
-              const isNext = nextMeal?.id === meal.id
-              return (
-                <ContentCard className={`today-meal-row${completed ? ' is-complete' : ''}${isNext ? ' is-next' : ''}`} key={meal.id}>
-                  <strong className="today-meal-row__time"><bdi dir="ltr">{formatClock(meal.time, locale)}</bdi></strong>
-                  <div>
-                    <p>{localize(meal.label, locale)}</p>
-                    <h3>{choice ? localize(choice.name, locale) : localize(meal.label, locale)}</h3>
-                  </div>
-                  <StatusPill tone={completed ? 'success' : isNext ? 'brand' : 'neutral'}>
-                    {completed ? (fa ? 'ثبت شد' : 'Logged') : isNext ? (fa ? 'بعدی' : 'Next') : (fa ? 'برنامه' : 'Planned')}
-                  </StatusPill>
-                  {completed ? (
-                    <Button disabled={mutationsLocked || savingSlot === meal.id} onClick={() => void revertMeal(meal.id)} variant="secondary">{fa ? 'برگرداندن ثبت' : 'Undo log'}</Button>
-                  ) : null}
-                </ContentCard>
-              )
-            })}
           </div>
 
           {nextMeal && nextChoice ? (
@@ -455,6 +425,29 @@ export function TodayPage({
               </div>
             </ContentCard>
           ) : null}
+          {listedMeals.length > 0 ? (
+            <div className="today-timeline-list">
+              {listedMeals.map((meal) => {
+                const completed = mealIsCompleted(meal, mealOverrides)
+                const choice = selectedOption(meal, selectedMeals)
+                return (
+                  <ContentCard className={`today-meal-row${completed ? ' is-complete' : ''}`} key={meal.id}>
+                    <strong className="today-meal-row__time"><bdi dir="ltr">{formatClock(meal.time, locale)}</bdi></strong>
+                    <div>
+                      <p>{localize(meal.label, locale)}</p>
+                      <h3>{choice ? localize(choice.name, locale) : localize(meal.label, locale)}</h3>
+                    </div>
+                    <StatusPill tone={completed ? 'success' : 'neutral'}>
+                      {completed ? (fa ? 'ثبت شد' : 'Logged') : (fa ? 'برنامه' : 'Planned')}
+                    </StatusPill>
+                    {completed ? (
+                      <Button disabled={mutationsLocked || savingSlot === meal.id} onClick={() => void revertMeal(meal.id)} variant="secondary">{fa ? 'برگرداندن ثبت' : 'Undo log'}</Button>
+                    ) : null}
+                  </ContentCard>
+                )
+              })}
+            </div>
+          ) : null}
         </div>
 
         <aside className="today-side-stack">
@@ -487,19 +480,11 @@ export function TodayPage({
               />
             </ContentCard>
           ) : (
-            <ContentCard className="today-rest-card" id="today-recovery">
-              <StatusPill tone="energy">{fa ? 'بدون فشار' : 'No pressure'}</StatusPill>
-              <h3>{fa ? 'امروز برای سازگاری و استراحت است' : 'Today is for recovery and adaptation'}</h3>
-              <p>{fa ? 'یک پیاده‌روی آرام و ۸ دقیقه حرکت نرم پیشنهاد شده؛ انجام‌ندادن آن شکست محسوب نمی‌شود.' : 'A gentle walk and 8 minutes of mobility are suggested; skipping them is not treated as failure.'}</p>
+            <ContentCard className="today-rest-card" id="today-rest">
+              <h3>{fa ? 'پیاده‌روی آرام پیشنهاد شده' : 'A gentle walk is suggested'}</h3>
+              <p>{fa ? 'انجام‌ندادنش شکست نیست.' : 'Skipping it is not a failure.'}</p>
             </ContentCard>
           )}
-          <ContentCard className="recovery-card">
-            <div><span><MoonStar size={20} /></span><strong>{formatNumber(plan.progress.recovery, locale)}%</strong></div>
-            <h3>{t('app.recovery')}</h3>
-            <p>{fa
-              ? <>خواب <bdi dir="ltr">{formatClock(`${Math.floor(plan.progress.sleepMinutes / 60)}:${String(plan.progress.sleepMinutes % 60).padStart(2, '0')}`, locale)}</bdi>{` · انرژی ${formatNumber(plan.progress.energyScore, locale)} از ۵`}</>
-              : `Sleep ${Math.floor(plan.progress.sleepMinutes / 60)}:${String(plan.progress.sleepMinutes % 60).padStart(2, '0')} · Energy ${plan.progress.energyScore} of 5`}</p>
-          </ContentCard>
         </aside>
       </section>
 
@@ -584,7 +569,7 @@ function nextActionCopy({
       title: fa ? 'امروز برای سازگاری و استراحت است' : 'Today is for recovery and adaptation',
       body: fa ? 'یک پیاده‌روی آرام و ۸ دقیقه حرکت نرم پیشنهاد شده؛ انجام‌ندادن آن شکست محسوب نمی‌شود.' : 'A gentle walk and 8 minutes of mobility are suggested; skipping them is not treated as failure.',
       action: fa ? 'دیدن بازیابی پیشنهادی' : 'View recovery suggestion',
-      targetId: 'today-recovery',
+      targetId: 'today-rest',
     }
   }
   if (view === 'partial' && nextMeal && nextChoice) {

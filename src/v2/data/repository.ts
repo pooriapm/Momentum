@@ -293,6 +293,7 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       weeklyAdherence: weeklySeries.at(-1)?.adherence ?? weeklyAdherence,
       readiness,
       recovery: recoveryFromCheckIn(checkin),
+      recoveryScore: checkin?.recovery_score ?? null,
       streak: consecutiveDays(dashboard.recent_checkins, dashboard.local_date),
       loggedCalories,
       sleepMinutes: checkin?.sleep_minutes ?? 0,

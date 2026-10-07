@@ -136,6 +136,7 @@ export interface MomentumPlanView {
     weeklyAdherence: number
     readiness: number
     recovery: number
+    recoveryScore?: number | null
     streak: number
     loggedCalories: number
     sleepMinutes: number

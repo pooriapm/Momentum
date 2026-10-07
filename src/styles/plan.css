@@ -24,9 +24,12 @@
   gap: 1.25rem;
 }
 
-.plan-overview-grid,
-.plan-grocery {
+.plan-overview-grid {
   grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+}
+
+.plan-grocery {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .plan-stack > .content-card:not(.workout-detail-card):not(.plan-meal-row),
@@ -121,15 +124,197 @@
   to { opacity: 1; transform: none; }
 }
 
+.plan-day-picker {
+  display: grid;
+  gap: .55rem;
+}
+
+.plan-day-picker__hint,
+.plan-training-count {
+  color: var(--color-text-secondary);
+  font-size: .78rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.plan-day-picker__month {
+  color: var(--color-text);
+  font-size: .82rem;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+}
+
+.plan-day-picker__chosen {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .6rem;
+  margin: 0;
+}
+
+.plan-day-picker__chosen span {
+  color: var(--color-text-muted);
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.plan-day-picker__chosen strong {
+  font-size: .84rem;
+  font-weight: 650;
+}
+
+.plan-week-toolbar {
+  align-items: center;
+}
+
 .plan-week {
   display: grid;
-  gap: .65rem;
-  grid-auto-columns: minmax(4.5rem, 1fr);
-  grid-auto-flow: column;
-  grid-template-columns: none;
-  margin-bottom: .15rem;
-  overflow-x: auto;
-  scroll-padding-inline: .35rem;
+  gap: .4rem;
+  margin-bottom: 0;
+  overflow: visible;
+}
+
+.plan-week__day {
+  gap: .12rem;
+  min-height: 4.35rem;
+  min-width: 0;
+  padding: .45rem .15rem;
+}
+
+.plan-week__day strong {
+  font-size: .72rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.plan-week__date {
+  color: var(--color-text-secondary);
+  font-family: var(--font-numeric);
+  font-size: .62rem;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.plan-week__day.is-active {
+  box-shadow: inset 0 0 0 1px var(--color-brand);
+}
+
+.plan-week__day.is-active .plan-week__date {
+  color: var(--color-text);
+}
+
+.plan-meal-option__select:only-child {
+  grid-column: 1 / -1;
+}
+
+.plan-training-title {
+  display: grid;
+  gap: .2rem;
+  justify-items: start;
+  text-align: start;
+  width: 100%;
+}
+
+.plan-page .workout-detail-card {
+  justify-items: start;
+  padding: .95rem 1rem;
+  text-align: start;
+}
+
+.plan-page .workout-detail-card h2 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.plan-page .workout-detail-card__metrics {
+  justify-content: flex-start;
+  margin: .7rem 0;
+  width: 100%;
+}
+
+.plan-page .workout-detail-card li {
+  align-items: center;
+  display: grid;
+  gap: .15rem .7rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 0;
+  padding-block: .55rem;
+}
+
+.plan-page .workout-detail-card li::before {
+  margin-inline-end: 0;
+}
+
+.plan-exercise {
+  display: grid;
+  gap: .1rem;
+  min-width: 0;
+}
+
+.plan-exercise strong {
+  font-size: .84rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.plan-exercise .metric-run {
+  color: var(--color-text-muted);
+  font-family: var(--font-numeric);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.plan-grocery-share {
+  align-items: center;
+  display: flex;
+  gap: .85rem;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.plan-grocery-share > div {
+  display: grid;
+  gap: .25rem;
+  min-width: 0;
+}
+
+.plan-grocery .shopping-grid {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.plan-grocery .shopping-grid button > span.plan-check {
+  background: transparent;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: .4rem;
+  color: transparent;
+  flex: none;
+  height: 1.15rem;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+  width: 1.15rem;
+}
+
+.plan-grocery .shopping-grid li.is-checked button > span.plan-check {
+  animation: plan-check-pop .28s cubic-bezier(.2, 1.35, .36, 1);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-on-brand, #fff);
+}
+
+@keyframes plan-check-pop {
+  from { transform: scale(.72); }
+  to { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-grocery .shopping-grid li.is-checked button > span.plan-check,
+  .plan-week-stage.is-next,
+  .plan-week-stage.is-previous {
+    animation: none;
+  }
 }
 
 .plan-page .workout-logger,
@@ -145,10 +330,11 @@
   color: inherit;
   cursor: pointer;
   display: grid;
-  gap: .35rem;
+  gap: .12rem;
   justify-items: center;
-  min-height: 4.6rem;
-  padding: .7rem .35rem;
+  min-height: 4.35rem;
+  min-width: 0;
+  padding: .45rem .15rem;
   text-align: center;
 }
 
@@ -364,9 +550,8 @@
 
   .plan-week__day strong,
   .plan-week__day small {
-    font-size: .72rem;
-    line-height: 1.25;
-    white-space: nowrap;
+    font-size: .68rem;
+    line-height: 1.15;
   }
 
   .plan-heading-aside {
@@ -378,28 +563,32 @@
 .plan-page > .page-heading { margin-bottom: 0; }
 
 .plan-page .plan-view-switch {
-  margin-bottom: 0;
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
   gap: .25rem;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  padding: .35rem;
-  scroll-padding-inline: .35rem;
-  scrollbar-width: thin;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 0;
+  max-width: 40rem;
+  overflow: visible;
+  padding: .3rem;
+  width: 100%;
 }
 .plan-page .plan-view-switch > button {
-  flex: 1 0 auto;
-  font-size: var(--text-label);
-  font-weight: 600;
+  font-size: .72rem;
+  font-weight: 650;
+  justify-content: center;
+  line-height: 1.2;
   min-height: 2.75rem;
-  padding-inline: .9rem;
-  white-space: nowrap;
+  min-width: 0;
+  padding-inline: .35rem;
+  white-space: normal;
 }
 
-.plan-week { position: relative; }
+@media (max-width: 640px) {
+  .plan-grocery-share {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
 .plan-week__day:disabled, .plan-calendar__cell:disabled { cursor: default; opacity: .45; }
 @media (max-width: 420px) {
   .plan-calendar { gap: .15rem; }

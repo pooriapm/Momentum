@@ -93,6 +93,11 @@
 .progress-week-bars__row:nth-child(4) .progress-week-bars__fill { animation-delay: .24s; }
 .progress-week-bars__row:nth-child(5) .progress-week-bars__fill { animation-delay: .32s; }
 
+.progress-week-bars strong,
+.progress-data-table td {
+  font-family: var(--font-numeric);
+}
+
 .progress-week-bars small,
 .progress-data-table caption,
 .progress-text-alt p {

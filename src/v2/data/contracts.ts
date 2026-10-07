@@ -141,6 +141,7 @@ const checkinSchema = z.object({
   hunger_score: z.number().min(1).max(5).nullable(),
   mood_score: z.number().min(1).max(5).nullable(),
   energy_score: z.number().min(1).max(5).nullable(),
+  recovery_score: z.number().int().min(1).max(5).nullable().optional(),
   water_ml: z.number().int().nonnegative().nullable(),
   steps: z.number().int().nonnegative().nullable(),
   adherence_percent: z.number().min(0).max(100).nullable(),

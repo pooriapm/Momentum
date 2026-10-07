@@ -9,6 +9,29 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Vazirmatn Digits";
+  src: url("/fonts/Vazirmatn-Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range:
+    U+0030-0039,
+    U+0660-0669,
+    U+06F0-06F9,
+    U+0025,
+    U+066A,
+    U+00D7,
+    U+003A,
+    U+002E,
+    U+002C,
+    U+060C,
+    U+066B,
+    U+066C,
+    U+002B,
+    U+2212;
+}
+
 @theme {
   --font-sans: var(--font-app);
   --breakpoint-desktop: 64rem;

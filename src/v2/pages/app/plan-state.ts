@@ -8,11 +8,11 @@ import type {
 } from '../../data/types'
 import { formatLastSync, readStoredLastSync, writeStoredLastSync } from './today-state'
 
-export type PlanSegment = 'week' | 'nutrition' | 'training' | 'grocery' | 'calendar'
+export type PlanSegment = 'week' | 'nutrition' | 'training' | 'grocery'
 export type PlanSurface = 'ready' | 'empty' | 'loading' | 'offline' | 'stale' | 'error'
 
 export const PLAN_SHOPPING_KEY = 'momentum.plan.shoppingChecks'
-export const PLAN_SEGMENTS: PlanSegment[] = ['week', 'nutrition', 'training', 'grocery', 'calendar']
+export const PLAN_SEGMENTS: PlanSegment[] = ['week', 'nutrition', 'training', 'grocery']
 
 export { formatLastSync, readStoredLastSync, writeStoredLastSync }
 

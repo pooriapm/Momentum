@@ -2,31 +2,26 @@ import {
   AlertTriangle,
   Check,
   CheckCircle2,
-  Circle,
   Clock3,
   Dumbbell,
   Eye,
   ListChecks,
   RefreshCw,
-  ShoppingBasket,
   Utensils,
-  WifiOff,
 } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { localize, type MealChoice, type MealSlot, type MomentumPlanDayView, type MomentumPlanView, type PlanVersionMeta, type WorkoutBlock } from '../../data/types'
 import { formatClock, formatNumber, formatReps } from '../../lib/format'
-import { calendarMonthOverlaps, calendarMonthTitle, calendarParts, formatLocalizedDate, GREGORIAN_WEEKDAYS, monthGrid, PERSIAN_WEEKDAYS, shiftCalendarMonth } from '../../ui/localized-date'
+import { calendarMonthTitle, calendarParts, formatLocalizedDate } from '../../ui/localized-date'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import {
   adjacentVisibleDate,
   applyExerciseSubstitutes,
-  nextUnplannedDate,
-  visibleDatesInWeek,
   formatPlanInterval,
   formatReadyAt,
-  isWithinInterval,
-  planWeeks,
+  nextUnplannedDate,
+  visibleDatesInWeek,
   weekdayLabels,
   weekIsoDates,
 } from './plan-state'
@@ -96,6 +91,85 @@ export function NextCycleNote({ locale }: { locale: AppLocale }) {
   )
 }
 
+function PlanDayStrip({
+  locale,
+  selectedDay,
+  days,
+  today,
+  onSelectDate,
+}: {
+  locale: AppLocale
+  selectedDay: MomentumPlanDayView
+  days: MomentumPlanDayView[]
+  today: string
+  onSelectDate: (iso: string) => void
+}) {
+  const fa = locale === 'fa'
+  const labels = weekdayLabels(locale)
+  const weekDates = weekIsoDates(selectedDay.localDate, locale)
+  const visibleDates = visibleDatesInWeek(days, selectedDay.localDate, today, locale)
+  const byDate = new Map(days.map((day) => [day.localDate, day]))
+  const cycleDate = nextUnplannedDate(days)
+  const previousDate = adjacentVisibleDate(days, selectedDay.localDate, today, -1, locale)
+  const nextDate = adjacentVisibleDate(days, selectedDay.localDate, today, 1, locale)
+  const [weekSlide, setWeekSlide] = useState<'next' | 'previous' | null>(null)
+  const parts = calendarParts(selectedDay.localDate, locale)
+  const nextCycle = selectedDay.localDate === cycleDate
+
+  function openWeek(date: string | null, direction: 'next' | 'previous') {
+    if (!date) return
+    setWeekSlide(direction)
+    onSelectDate(date)
+  }
+
+  return (
+    <div className="plan-day-picker">
+      <p className="plan-day-picker__hint" id="plan-day-hint">{fa ? 'یک روز را انتخاب کن' : 'Choose a day'}</p>
+      <div className="plan-week-toolbar">
+        <Button aria-label={fa ? 'هفته قبل' : 'Previous week'} disabled={!previousDate} onClick={() => openWeek(previousDate, 'previous')} type="button" variant="ghost">{fa ? 'قبل' : 'Prev'}</Button>
+        <p className="plan-day-picker__month">{calendarMonthTitle(parts.year, parts.month, locale)}</p>
+        <Button aria-label={fa ? 'هفته بعد' : 'Next week'} disabled={!nextDate} onClick={() => openWeek(nextDate, 'next')} type="button" variant="ghost">{fa ? 'بعد' : 'Next'}</Button>
+      </div>
+      <div className="plan-week-viewport">
+        <div className={`plan-week-stage${weekSlide ? ` is-${weekSlide}` : ''}`} key={weekDates[0]}>
+          <div
+            aria-labelledby="plan-day-hint"
+            className="plan-week"
+            role="group"
+            style={{ gridTemplateColumns: `repeat(${Math.max(visibleDates.length, 1)}, minmax(0, 1fr))` }}
+          >
+            {visibleDates.map((iso) => {
+              const day = byDate.get(iso)
+              const active = iso === selectedDay.localDate
+              const isCycle = iso === cycleDate
+              const labelIndex = Math.max(0, weekDates.indexOf(iso))
+              const dayNumber = formatNumber(calendarParts(iso, locale).day, locale, { useGrouping: false })
+              return (
+                <button
+                  aria-current={active ? 'date' : undefined}
+                  aria-pressed={active}
+                  className={`plan-week__day${active ? ' is-active' : ''}${day?.workout ? ' is-workout' : ''}${isCycle ? ' is-next-cycle' : ''}`}
+                  key={iso}
+                  onClick={() => onSelectDate(iso)}
+                  type="button"
+                >
+                  <strong>{labels[labelIndex]}</strong>
+                  <em className="plan-week__date">{dayNumber}</em>
+                  <small>{isCycle ? (fa ? 'دوره بعد' : 'Next period') : iso === today ? (fa ? 'امروز' : 'Today') : day?.workout ? (fa ? 'تمرین' : 'Workout') : (fa ? 'بازیابی' : 'Recovery')}</small>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+      <p className="plan-day-picker__chosen">
+        <span>{fa ? 'روز انتخاب‌شده' : 'Selected day'}</span>
+        <strong>{nextCycle ? (fa ? 'دوره بعد' : 'Next period') : formatLocalizedDate(selectedDay.localDate, locale)}</strong>
+      </p>
+    </div>
+  )
+}
+
 export function PlanWeekView({
   locale,
   selectedDay,
@@ -114,85 +188,37 @@ export function PlanWeekView({
   onOpenWorkout: () => void
 }) {
   const fa = locale === 'fa'
-  const labels = weekdayLabels(locale)
-  const weekDates = weekIsoDates(selectedDay.localDate, locale)
-  const visibleDates = visibleDatesInWeek(days, selectedDay.localDate, today, locale)
-  const byDate = new Map(days.map((day) => [day.localDate, day]))
-  const cycleDate = nextUnplannedDate(days)
   const todayWorkout = nextCycle ? null : selectedDay.workout
-  const previousDate = adjacentVisibleDate(days, selectedDay.localDate, today, -1, locale)
-  const nextDate = adjacentVisibleDate(days, selectedDay.localDate, today, 1, locale)
   const viewingToday = !nextCycle && selectedDay.localDate === today
-  const [weekSlide, setWeekSlide] = useState<'next' | 'previous' | null>(null)
-  const weekRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const selected = weekRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]')
-    selected?.scrollIntoView?.({ inline: 'center', block: 'nearest', behavior: 'instant' })
-  }, [selectedDay.localDate])
-
-  function openWeek(date: string | null, direction: 'next' | 'previous') {
-    if (!date) return
-    setWeekSlide(direction)
-    onSelectDate(date)
-  }
-
   const weekDetail: ReactNode = nextCycle ? <NextCycleNote locale={locale} /> : (
-      <div className="plan-overview-grid">
-        <ContentCard className="plan-overview-card">
-          <StatusPill tone="brand"><Dumbbell size={14} /> {viewingToday ? (fa ? 'تمرین امروز' : 'Today’s workout') : (fa ? 'تمرین این روز' : 'Workout for this day')}</StatusPill>
-          {todayWorkout ? (
-            <>
-              <h2>{localize(todayWorkout.name, locale)}</h2>
-              <p>{formatNumber(todayWorkout.exercises, locale)} {fa ? 'حرکت' : 'exercises'} · {formatNumber(todayWorkout.durationMinutes, locale)} {fa ? 'دقیقه' : 'min'}</p>
-              <Button onClick={onOpenWorkout}>{fa ? 'دیدن تمرین' : 'View workout'}</Button>
-            </>
-          ) : (
-            <>
-              <h2>{fa ? 'روز بازیابی' : 'Recovery day'}</h2>
-              <p>{fa ? 'برای این روز تمرین برنامه‌ریزی نشده است.' : 'No workout is scheduled for this day.'}</p>
-            </>
-          )}
-        </ContentCard>
-        <ContentCard>
-          <StatusPill tone="energy"><Utensils size={14} /> {formatNumber(selectedDay.meals.length, locale)} {fa ? 'وعده' : 'meals'}</StatusPill>
-          <h2>{fa ? 'پروتئین و فیبر کافی' : 'Protein & fibre'}</h2>
-          <p>{fa ? 'وعده‌ها بر اساس برنامه امروز' : 'Meals for today’s schedule'}</p>
-        </ContentCard>
-      </div>
+    <div className="plan-overview-grid">
+      <ContentCard className="plan-overview-card">
+        <StatusPill tone="brand"><Dumbbell size={14} /> {viewingToday ? (fa ? 'تمرین امروز' : 'Today’s workout') : (fa ? 'تمرین این روز' : 'Workout for this day')}</StatusPill>
+        {todayWorkout ? (
+          <>
+            <h2>{localize(todayWorkout.name, locale)}</h2>
+            <p>{formatNumber(todayWorkout.exercises, locale)} {fa ? 'حرکت' : 'exercises'} · {formatNumber(todayWorkout.durationMinutes, locale)} {fa ? 'دقیقه' : 'min'}</p>
+            <Button onClick={onOpenWorkout}>{fa ? 'دیدن تمرین' : 'View workout'}</Button>
+          </>
+        ) : (
+          <>
+            <h2>{fa ? 'روز بازیابی' : 'Recovery day'}</h2>
+            <p>{fa ? 'برای این روز تمرین برنامه‌ریزی نشده است.' : 'No workout is scheduled for this day.'}</p>
+          </>
+        )}
+      </ContentCard>
+      <ContentCard>
+        <StatusPill tone="energy"><Utensils size={14} /> {formatNumber(selectedDay.meals.length, locale)} {fa ? 'وعده' : 'meals'}</StatusPill>
+        <h2>{localize(selectedDay.dateLabel, locale)}</h2>
+        <p>{fa ? 'وعده‌های همین روز' : 'Meals on this day'}</p>
+      </ContentCard>
+    </div>
   )
 
   return (
     <div className="plan-stack" data-inventory="PLAN-01">
-      <div className="plan-week-toolbar">
-        <Button disabled={!previousDate} onClick={() => openWeek(previousDate, 'previous')} type="button" variant="ghost">{fa ? 'هفته قبل' : 'Previous week'}</Button>
-        <Button disabled={!nextDate} onClick={() => openWeek(nextDate, 'next')} type="button" variant="ghost">{fa ? 'هفته بعد' : 'Next week'}</Button>
-      </div>
-      <div className="plan-week-viewport">
-      <div className={`plan-week-stage${weekSlide ? ` is-${weekSlide}` : ''}`} key={weekDates[0]}>
-      <div className="plan-week" ref={weekRef}>
-        {visibleDates.map((iso) => {
-          const day = byDate.get(iso)
-          const active = iso === selectedDay.localDate
-          const isCycle = iso === cycleDate
-          const labelIndex = Math.max(0, weekDates.indexOf(iso))
-          return (
-            <button
-              aria-current={active ? 'date' : undefined}
-              aria-pressed={active}
-              className={`plan-week__day${active ? ' is-active' : ''}${day?.workout ? ' is-workout' : ''}${isCycle ? ' is-next-cycle' : ''}`}
-              key={iso}
-              onClick={() => onSelectDate(iso)}
-              type="button"
-            >
-              <strong>{labels[labelIndex]}</strong>
-              <small>{isCycle ? (fa ? 'دوره بعد' : 'Next period') : iso === today ? (fa ? 'امروز' : 'Today') : day?.workout ? (fa ? 'تمرین' : 'Workout') : (fa ? 'بازیابی' : 'Recovery')}</small>
-            </button>
-          )
-        })}
-      </div>
+      <PlanDayStrip days={days} locale={locale} onSelectDate={onSelectDate} selectedDay={selectedDay} today={today} />
       {weekDetail}
-      </div>
-      </div>
     </div>
   )
 }
@@ -201,11 +227,13 @@ export function PlanNutritionView({
   locale,
   selectedDay,
   days,
+  today,
   selectedMeals,
   completedSlots,
   savingSlot,
   mutationsLocked,
   isToday,
+  onSelectDate,
   onSelectMeal,
   onCompleteMeal,
   onOpenMeal,
@@ -213,35 +241,21 @@ export function PlanNutritionView({
   locale: AppLocale
   selectedDay: MomentumPlanDayView
   days: MomentumPlanDayView[]
+  today: string
   selectedMeals: Record<string, string>
   completedSlots: Record<string, boolean>
   savingSlot: string
   mutationsLocked: boolean
   isToday: boolean
+  onSelectDate: (iso: string) => void
   onSelectMeal: (slotId: string, optionId: string) => void
   onCompleteMeal: (slotId: string, optionId: string) => void
   onOpenMeal: (meal: MealSlot, choice: MealChoice) => void
 }) {
   const fa = locale === 'fa'
-  const weeks = planWeeks(days)
   return (
     <div className="plan-stack" data-inventory="PLAN-02">
-      <ContentCard>
-        <StatusPill tone="energy">{fa ? 'برنامه کامل ۳۰روزه' : 'Complete 30-day plan'}</StatusPill>
-        <h2>{fa ? 'الگوی ماهانه تغذیه' : 'Monthly nutrition pattern'}</h2>
-        <p>{fa ? 'این دوره از لحظه آماده‌شدن، ۳۰ روز کامل را پوشش می‌دهد. هر وعده چند گزینه هم‌ارزش دارد تا برنامه بدون بازتولید قابل اجرا بماند.' : 'This period covers 30 complete days from the moment the plan is ready. Every meal includes equivalent options so the plan remains practical without regeneration.'}</p>
-        <ul className="plan-pattern-list">
-          {weeks.map((week, index) => (
-            <li key={`nutrition-week-${index}`}>
-              <Check size={16} />
-              <div>
-                <strong>{fa ? `هفته ${formatNumber(index + 1, locale)}` : `Week ${index + 1}`}</strong>
-                <small>{fa ? `${formatNumber(week.length, locale)} روز پوشش‌داده‌شده · گزینه اصلی و جایگزین برای هر وعده` : `${week.length} covered days · primary option plus alternatives per meal`}</small>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </ContentCard>
+      <PlanDayStrip days={days} locale={locale} onSelectDate={onSelectDate} selectedDay={selectedDay} today={today} />
       {!isToday ? <p className="inline-notice">{fa ? 'این پیش‌نمایش روز آینده است؛ انتخاب و ثبت وعده در همان روز فعال می‌شود.' : 'This is a future-day preview. Selection and completion unlock on that day.'}</p> : null}
       <div className="plan-meal-list">
         {selectedDay.meals.map((meal) => {
@@ -265,17 +279,16 @@ export function PlanNutritionView({
                           type="button"
                         >
                           <span>{isSelected ? <Check size={14} /> : formatNumber(index + 1, locale)}</span>
-                          <span><strong>{localize(option.name, locale)}</strong><small className="metric-run"><bdi dir={fa ? 'rtl' : 'ltr'}>{formatNumber(option.nutrition.calories, locale)} kcal</bdi>{' · '}<bdi dir={fa ? 'rtl' : 'ltr'}><span>{formatNumber(option.nutrition.protein, locale)}</span><span>g</span></bdi> {fa ? 'پروتئین' : 'protein'}</small></span>
-                          <StatusPill tone={option.confidence === 'estimated' ? 'neutral' : 'success'}>{confidenceLabel(option.confidence, locale)}</StatusPill>
+                          <span><strong>{localize(option.name, locale)}</strong><small className="metric-run"><bdi dir={fa ? 'rtl' : 'ltr'}>{formatNumber(option.nutrition.calories, locale)} kcal</bdi></small></span>
                         </button>
-                        <button aria-label={fa ? `جزئیات ${localize(option.name, locale)}` : `${localize(option.name, locale)} details`} className="plan-meal-option__details" onClick={() => onOpenMeal(meal, option)} type="button"><Eye size={17} /></button>
+                        {isSelected ? <button aria-label={fa ? `جزئیات ${localize(option.name, locale)}` : `${localize(option.name, locale)} details`} className="plan-meal-option__details" onClick={() => onOpenMeal(meal, option)} type="button"><Eye size={17} /></button> : null}
                       </div>
                     )
                   })}
                 </div>
                 {isToday ? (
                   <div className="plan-meal-row__actions">
-                    <span>{completed ? (fa ? 'این وعده ثبت شده است.' : 'This meal is completed.') : (fa ? 'غذایی را که آماده کردی انتخاب و ثبت کن.' : 'Choose what you prepared, then complete it.')}</span>
+                    <span>{completed ? (fa ? 'ثبت شد' : 'Completed') : (fa ? 'یکی را انتخاب کن' : 'Pick one')}</span>
                     <Button disabled={completed || mutationsLocked} loading={savingSlot === meal.id} onClick={() => onCompleteMeal(meal.id, selectedOption.id)}><Check size={16} />{completed ? (fa ? 'ثبت شد' : 'Completed') : (fa ? 'ثبت' : 'Complete')}</Button>
                   </div>
                 ) : null}
@@ -292,44 +305,33 @@ export function PlanTrainingView({
   locale,
   selectedDay,
   days,
+  today,
   substitutes = {},
+  onSelectDate,
   onOpenWorkout,
 }: {
   locale: AppLocale
   selectedDay: MomentumPlanDayView
   days: MomentumPlanDayView[]
+  today: string
   substitutes?: Record<string, string>
+  onSelectDate: (iso: string) => void
   onOpenWorkout: (workout: WorkoutBlock) => void
 }) {
   const fa = locale === 'fa'
-  const weeks = planWeeks(days)
   const workout = selectedDay.workout ? applyExerciseSubstitutes(selectedDay.workout, substitutes) : null
+  const workoutDays = days.filter((day) => day.workout).length
   return (
     <div className="plan-stack" data-inventory="PLAN-03">
-      <ContentCard>
-        <StatusPill tone="brand">{fa ? 'برنامه کامل ۳۰روزه' : 'Complete 30-day plan'}</StatusPill>
-        <h2>{fa ? `${formatNumber(days.filter((day) => day.workout).length, locale)} روز تمرین در این دوره` : `${days.filter((day) => day.workout).length} workout days this period`}</h2>
-        <ul className="plan-pattern-list">
-          {weeks.map((week, index) => {
-            const workoutDays = week.filter((day) => day.workout)
-            return (
-              <li key={`training-week-${index}`}>
-                <Dumbbell size={16} />
-                <div>
-                  <strong>{fa ? `هفته ${formatNumber(index + 1, locale)}` : `Week ${index + 1}`}</strong>
-                  <small>{workoutDays.length ? workoutDays.map((day) => weekdayLabelFor(day.localDate, locale)).join(' · ') : (fa ? 'بدون جلسه تمرینی' : 'No workout sessions')}</small>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </ContentCard>
+      <PlanDayStrip days={days} locale={locale} onSelectDate={onSelectDate} selectedDay={selectedDay} today={today} />
+      <p className="plan-training-count">{fa ? `${formatNumber(workoutDays, locale)} روز تمرین در این دوره` : `${workoutDays} workout days this period`}</p>
       {workout ? (
         <ContentCard className="workout-detail-card">
-          <span className="workout-detail-card__icon"><Dumbbell size={29} /></span>
-          <StatusPill tone="energy">{intensityLabel(workout.intensity, locale)}</StatusPill>
-          <h2>{localize(workout.name, locale)}</h2>
-          <p>{localize(workout.focus, locale)}</p>
+          <div className="plan-training-title">
+            <StatusPill tone="energy">{intensityLabel(workout.intensity, locale)}</StatusPill>
+            <h2>{localize(workout.name, locale)}</h2>
+            <p>{localize(workout.focus, locale)}</p>
+          </div>
           <div className="workout-detail-card__metrics">
             <span><Clock3 size={18} /><strong>{formatNumber(workout.durationMinutes, locale)} {fa ? 'دقیقه' : 'min'}</strong></span>
             <span><ListChecks size={18} /><strong>{formatNumber(workout.exercises, locale)} {fa ? 'حرکت' : 'exercises'}</strong></span>
@@ -337,9 +339,10 @@ export function PlanTrainingView({
           {workout.equipment?.length ? <p>{fa ? 'تجهیزات: ' : 'Equipment: '}{workout.equipment.map((item) => localize(item, locale)).join(' · ')}</p> : null}
           <ol>{workout.exerciseDetails.map((item) => (
             <li key={item.key}>
-              {localize(item.name, locale)}
-              {' · '}
-              <ExerciseDose locale={locale} reps={item.reps} restSeconds={item.restSeconds} sets={item.sets} />
+              <div className="plan-exercise">
+                <strong>{localize(item.name, locale)}</strong>
+                <ExerciseDose locale={locale} reps={item.reps} restSeconds={item.restSeconds} sets={item.sets} />
+              </div>
             </li>
           ))}</ol>
           <Button onClick={() => onOpenWorkout(workout)}>{fa ? 'جزئیات حرکت‌ها' : 'Exercise details'}</Button>
@@ -371,12 +374,6 @@ export function PlanGroceryView({
   return (
     <div className="plan-grocery" data-inventory="PLAN-04">
       <ContentCard className="plan-grocery__list">
-        <div className="inline-notice" role="note">
-          <ShoppingBasket size={16} />
-          {fa
-            ? 'مقدارها برای یک نفر محاسبه شده‌اند. تیک‌ها فقط روی همین دستگاه می‌مانند و به سرور فرستاده نمی‌شوند.'
-            : 'Quantities cover one person. Checkmarks stay on this device and are not sent to the server.'}
-        </div>
         <div className="shopping-grid">
           {plan.shoppingGroups.map((group) => (
             <section key={group.id}>
@@ -388,7 +385,7 @@ export function PlanGroceryView({
                   return (
                     <li className={checked ? 'is-checked' : ''} key={itemKey}>
                       <button aria-pressed={checked} onClick={() => onToggle(itemKey)} type="button">
-                        <span>{checked ? <Check size={13} /> : <Circle size={13} />}</span>
+                        <span aria-hidden="true" className="plan-check">{checked ? <Check size={13} strokeWidth={3} /> : null}</span>
                         <strong>{localize(item, locale)}</strong>
                       </button>
                     </li>
@@ -399,123 +396,16 @@ export function PlanGroceryView({
           ))}
         </div>
       </ContentCard>
-      <ContentCard>
-        <StatusPill tone="neutral"><WifiOff size={14} /> {fa ? 'آماده استفاده آفلاین' : 'Available offline'}</StatusPill>
-        <h2>{fa ? 'مرتب‌سازی فروشگاه' : 'Shop order'}</h2>
-        <p>{plan.shoppingGroups.map((group) => localize(group.name, locale)).join(fa ? ' ← ' : ' → ')}</p>
-        <Button onClick={onShare} variant="secondary">{fa ? 'اشتراک فهرست' : 'Share list'}</Button>
+      <ContentCard className="plan-grocery-share">
+        <div>
+          <h2>{fa ? 'اشتراک‌گذاری فهرست خرید' : 'Share the shopping list'}</h2>
+          <p>{fa
+            ? 'فهرست را برای کسی بفرست. مقدارها برای یک نفر است. تیک‌ها فقط روی همین دستگاه می‌مانند و به سرور فرستاده نمی‌شوند.'
+            : 'Send this list to someone. Quantities cover one person. Checkmarks stay on this device and are not sent to the server.'}</p>
+        </div>
+        <Button onClick={onShare}>{fa ? 'اشتراک‌گذاری فهرست' : 'Share list'}</Button>
       </ContentCard>
     </div>
-  )
-}
-
-export function PlanCalendarView({
-  locale,
-  selectedDay,
-  days,
-  today,
-  cycleDate,
-  version,
-  onSelectDate,
-}: {
-  locale: AppLocale
-  selectedDay: MomentumPlanDayView
-  days: MomentumPlanDayView[]
-  today: string
-  cycleDate: string | null
-  version: PlanVersionMeta
-  onSelectDate: (iso: string) => void
-}) {
-  const parts = calendarParts(selectedDay.localDate, locale)
-  return (
-    <PlanCalendarMonth
-      key={`${parts.year}-${parts.month}`}
-      cycleDate={cycleDate}
-      days={days}
-      initialMonth={parts.month}
-      initialYear={parts.year}
-      locale={locale}
-      onSelectDate={onSelectDate}
-      selectedDay={selectedDay}
-      today={today}
-      version={version}
-    />
-  )
-}
-
-function PlanCalendarMonth({
-  locale,
-  selectedDay,
-  days,
-  today,
-  cycleDate,
-  version,
-  onSelectDate,
-  initialYear,
-  initialMonth,
-}: {
-  locale: AppLocale
-  selectedDay: MomentumPlanDayView
-  days: MomentumPlanDayView[]
-  today: string
-  cycleDate: string | null
-  version: PlanVersionMeta
-  onSelectDate: (iso: string) => void
-  initialYear: number
-  initialMonth: number
-}) {
-  const fa = locale === 'fa'
-  const [cursor, setCursor] = useState({ year: initialYear, month: initialMonth })
-  const grid = monthGrid(cursor.year, cursor.month, locale)
-  const weekdays = fa ? PERSIAN_WEEKDAYS : GREGORIAN_WEEKDAYS
-  const byDate = new Map(days.map((day) => [day.localDate, day]))
-  const title = calendarMonthTitle(cursor.year, cursor.month, locale)
-  const previousMonth = shiftCalendarMonth(cursor.year, cursor.month, -1)
-  const nextMonth = shiftCalendarMonth(cursor.year, cursor.month, 1)
-  const horizonEnd = cycleDate && cycleDate > version.validTo ? cycleDate : version.validTo
-  const canPrevious = calendarMonthOverlaps(previousMonth.year, previousMonth.month, locale, today > version.validFrom ? today : version.validFrom, horizonEnd)
-  const canNext = calendarMonthOverlaps(nextMonth.year, nextMonth.month, locale, version.validFrom, horizonEnd)
-  return (
-    <ContentCard className="plan-calendar-card" data-inventory="PLAN-05">
-      <div className="plan-calendar-card__heading">
-        <div>
-          <h2>{title}</h2>
-          <p>{fa ? `دوره جاری از ${formatPlanInterval(version.validFrom, version.validTo, locale)}.` : `The current period runs ${formatPlanInterval(version.validFrom, version.validTo, locale)}.`}</p>
-        </div>
-        <StatusPill tone="brand">{fa ? 'نمای ماه' : 'Month view'}</StatusPill>
-      </div>
-      <div className="plan-calendar-nav">
-        <Button disabled={!canPrevious} onClick={() => setCursor(previousMonth)} type="button" variant="ghost">{fa ? 'ماه قبل' : 'Previous month'}</Button>
-        <Button disabled={!canNext} onClick={() => setCursor(nextMonth)} type="button" variant="ghost">{fa ? 'ماه بعد' : 'Next month'}</Button>
-      </div>
-      <div className="plan-calendar">
-        {weekdays.map((day) => <strong key={day}>{day}</strong>)}
-        {grid.map((cell) => {
-          const scheduled = byDate.get(cell.isoDate)
-          const past = cell.isoDate < today
-          const isCycle = cell.isoDate === cycleDate
-          const inPeriod = !past && isWithinInterval(cell.isoDate, version.validFrom, version.validTo)
-          const selected = cell.isoDate === selectedDay.localDate
-          const selectable = cell.isCurrentMonth && !past && (Boolean(scheduled) || isCycle)
-          return (
-            <button
-              aria-current={selected ? 'date' : undefined}
-              aria-hidden={past || undefined}
-              className={`plan-calendar__cell${cell.isCurrentMonth ? '' : ' is-outside'}${past ? ' is-past' : ''}${scheduled?.workout && !past ? ' is-workout' : ''}${inPeriod ? ' is-period' : ''}${isCycle ? ' is-next-cycle' : ''}${selected ? ' is-selected' : ''}`}
-              aria-label={past ? undefined : formatLocalizedDate(cell.isoDate, locale)}
-              aria-pressed={selected}
-              disabled={!selectable}
-              key={cell.isoDate}
-              onClick={() => onSelectDate(cell.isoDate)}
-              tabIndex={past ? -1 : undefined}
-              type="button"
-            >
-              {past ? '' : formatNumber(cell.day, locale, { useGrouping: false })}
-            </button>
-          )
-        })}
-      </div>
-    </ContentCard>
   )
 }
 
@@ -577,16 +467,6 @@ export function PlanHistoryView({ locale, history }: { locale: AppLocale; histor
   )
 }
 
-function confidenceLabel(value: MealChoice['confidence'], locale: AppLocale) {
-  const labels: Record<MealChoice['confidence'], { fa: string; en: string }> = {
-    estimated: { fa: 'برآوردی', en: 'Estimated' },
-    verified: { fa: 'تأییدشده', en: 'Verified' },
-    usda: { fa: 'USDA', en: 'USDA' },
-    manufacturer: { fa: 'برچسب محصول', en: 'Manufacturer' },
-  }
-  return labels[value][locale]
-}
-
 function intensityLabel(value: WorkoutBlock['intensity'], locale: AppLocale) {
   const labels = {
     low: { fa: 'سبک', en: 'Low' },
@@ -619,6 +499,3 @@ function ExerciseDose({
   )
 }
 
-function weekdayLabelFor(iso: string, locale: AppLocale) {
-  return new Intl.DateTimeFormat(locale === 'fa' ? 'fa-IR-u-ca-persian' : 'en-US', { weekday: 'short' }).format(new Date(`${iso}T12:00:00`))
-}

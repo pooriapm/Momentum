@@ -15,6 +15,7 @@ export interface FieldCondition {
   notEquals?: string
   greaterThan?: number
   oneOf?: readonly string[]
+  includes?: string
   and?: FieldCondition
 }
 
@@ -148,6 +149,7 @@ export const onboardingSections: readonly OnboardingSection[] = [
         { value: 'vegetarian', labelKey: 'onboarding.vegetarian' },
       ] },
       { key: 'allergies', labelKey: 'onboarding.allergies', kind: 'multiselect', optionSource: 'allergens', options: ALLERGEN_CATALOG },
+      { key: 'otherAllergy', labelKey: 'onboarding.allergenOtherDetail', kind: 'text', maxLength: 160, visibleWhen: { field: 'allergies', includes: UNMAPPED_ALLERGEN }, requiredWhen: { field: 'allergies', includes: UNMAPPED_ALLERGEN } },
       { key: 'favoriteFoods', labelKey: 'onboarding.favoriteFoods', kind: 'textarea', maxLength: 4000 },
       { key: 'dislikedFoods', labelKey: 'onboarding.dislikedFoods', kind: 'textarea' },
       { key: 'requestedMealCount', labelKey: 'onboarding.mealCount', kind: 'select', required: true, defaultValue: '3', options: [
@@ -228,6 +230,7 @@ function conditionMatches(condition: FieldCondition | undefined, values: Record<
   if (condition.notEquals !== undefined && value === condition.notEquals) return false
   if (condition.greaterThan !== undefined && !(Number(value) > condition.greaterThan)) return false
   if (condition.oneOf !== undefined && !condition.oneOf.includes(value)) return false
+  if (condition.includes !== undefined && !selectedValues(value).includes(condition.includes)) return false
   if (condition.and && !conditionMatches(condition.and, values)) return false
   return true
 }

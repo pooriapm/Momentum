@@ -240,12 +240,20 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument()
   })
 
-  it('ONB-13 and ONB-14 use catalog allergen chips and block unmapped Other', async () => {
-    renderStep('food', { ...completeDraft, allergies: 'peanut,other' })
+  it('ONB-13 and ONB-14 use catalog allergen chips and reveal a note only for Other', async () => {
+    renderStep('food', { ...completeDraft, allergies: 'peanut' })
     expect(await screen.findByText('Peanut')).toBeInTheDocument()
     expect(screen.getByText('Other')).toBeInTheDocument()
-    expect(screen.queryByLabelText(/allergies & intolerances/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/name the other allergy/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/other is not mapped to the catalog/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Other'))
+    expect(screen.getByLabelText(/name the other allergy/i)).toBeEnabled()
     expect(screen.getByText(/other is not mapped to the catalog/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Other'))
+    expect(screen.queryByLabelText(/name the other allergy/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/other is not mapped to the catalog/i)).not.toBeInTheDocument()
   })
 
   it('ONB-29 requires one clearly selected plan path before continuing', async () => {
@@ -363,6 +371,26 @@ describe('OnboardingPage inventory states', () => {
     renderStep('body', { ...completeDraft, bodySkipped: '', bodyReportPath: '' })
     expect(await screen.findByText(/never uses a separate ai call/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Skip this step' })).toBeInTheDocument()
+  })
+
+  it('shows BMI from height and weight, and details only in the second manual path', async () => {
+    renderStep('body', { ...completeDraft, bodySkipped: '', bodyReportPath: '', bodySource: '', bodyDetail: '' })
+    expect(await screen.findByRole('button', { name: /manual entry/i })).toBeInTheDocument()
+    expect(screen.queryByText(/body mass index/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/waist/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /manual entry/i }))
+    expect(screen.getByText(/body mass index/i)).toBeInTheDocument()
+    expect(screen.getByText('25.7')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/waist/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /with details/i }))
+    expect(screen.getByLabelText(/waist/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/body fat percent/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /uploaded report/i }))
+    expect(document.querySelector('.body-upload--bold')).toBeTruthy()
+    expect(screen.queryByLabelText(/waist/i)).not.toBeInTheDocument()
   })
 
   it('keeps a private report attached when deletion cannot be confirmed', async () => {
@@ -491,6 +519,28 @@ describe('OnboardingPage inventory states', () => {
 
     expect(await screen.findByDisplayValue('Unsaved Sara')).toBeInTheDocument()
     expect(client.getQueryData(['onboarding-unsaved', user.id, 'basics'])).toEqual({ firstName: 'Unsaved Sara' })
+  })
+
+  it('keeps space under the versioned consent note', async () => {
+    renderStep('consent')
+    const note = (await screen.findByText(/each consent is independent and versioned/i)).closest('.onboarding-lead-note')
+    expect(note).toBeTruthy()
+    expect(getComputedStyle(note as HTMLElement).marginBottom).toBe('var(--space-6)')
+  })
+
+  it('explains a food field in a short note', async () => {
+    renderStep('food')
+    const marks = await screen.findAllByRole('button', { name: 'About this field' })
+    expect(marks.length).toBeGreaterThan(5)
+    fireEvent.click(marks[0])
+    expect(await screen.findByRole('status')).toHaveTextContent(/meals are built from that/i)
+  })
+
+  it('keeps space under the food allergen note', async () => {
+    renderStep('food')
+    const note = (await screen.findByText(/allergies are chosen from the catalog/i)).closest('.onboarding-lead-note')
+    expect(note).toBeTruthy()
+    expect(getComputedStyle(note as HTMLElement).marginBottom).toBe('var(--space-6)')
   })
 
 })

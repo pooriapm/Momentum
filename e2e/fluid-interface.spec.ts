@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('navigation changes immediately from a scrolled workspace', async ({ page }) => {
   await page.goto('/en/app/today?preview=1')
-  await expect(page.getByRole('button', { name: 'Daily check-in · optional', exact: true })).toHaveCount(1)
+  await expect(page.getByRole('button', { name: 'Daily check-in', exact: true })).toHaveCount(1)
   await expect(page.locator('#boot-splash')).toHaveCount(0)
   const path = await page.evaluate(() => {
     const workspace = document.querySelector<HTMLElement>('.app-workspace')!
@@ -17,7 +17,7 @@ test('navigation changes immediately from a scrolled workspace', async ({ page }
 
 test('sheet drag returns, can be grabbed while settling, and flicks away', async ({ page }) => {
   await page.goto('/en/app/today?preview=1')
-  const opener = page.getByRole('button', { name: 'Daily check-in · optional', exact: true })
+  const opener = page.getByRole('button', { name: 'Daily check-in', exact: true })
   await opener.click()
   const sheet = page.getByRole('dialog')
   const handle = page.getByRole('button', { name: 'Close sheet', exact: true })
@@ -88,7 +88,7 @@ test('Plan tabs stay in one row at enlarged text size in both languages', async 
 test('reduced motion and increased contrast keep sheets and navigation usable', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce', contrast: 'more' })
   await page.goto('/en/app/today?preview=1')
-  await page.getByRole('button', { name: 'Daily check-in · optional', exact: true }).click()
+  await page.getByRole('button', { name: 'Daily check-in', exact: true }).click()
   const sheet = page.getByRole('dialog')
   await expect(sheet).toHaveCSS('transform', 'none')
   await expect(sheet).toHaveCSS('backdrop-filter', 'none')

@@ -28,15 +28,17 @@ interface FieldShellProps {
   hint?: string
   error?: string
   required?: boolean
+  guide?: ReactNode
   children: ReactNode
 }
 
-function FieldShell({ controlId, descriptionId, label, hint, error, required, children }: FieldShellProps) {
+function FieldShell({ controlId, descriptionId, label, hint, error, required, guide, children }: FieldShellProps) {
   return (
     <div className={`orbit-field ${error ? 'orbit-field--error' : ''}`}>
       <div className="orbit-field__label">
         <label htmlFor={controlId}>{label}</label>
         {required ? <RequiredMark /> : null}
+        {guide}
       </div>
       {children}
       {error ? <span className="orbit-field__error" id={descriptionId} role="alert">{error}</span> : hint ? <span className="orbit-field__hint" id={descriptionId}>{hint}</span> : null}
@@ -48,14 +50,15 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
   hint?: string
   error?: string
+  guide?: ReactNode
 }
 
-export function Input({ label, hint, error, required, ...props }: InputProps) {
+export function Input({ label, hint, error, required, guide, ...props }: InputProps) {
   const generatedId = useId()
   const controlId = props.id ?? `input-${generatedId}`
   const descriptionId = error || hint ? `${controlId}-description` : undefined
   return (
-    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label} required={required}>
+    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} guide={guide} hint={hint} label={label} required={required}>
       <input {...props} aria-describedby={descriptionId} aria-invalid={Boolean(error)} aria-required={required || undefined} className="orbit-input" id={controlId} required={required} />
     </FieldShell>
   )
@@ -74,6 +77,7 @@ interface NumberStepperProps {
   increaseLabel: string
   label: string
   locale: AppLocale
+  guide?: ReactNode
   max: number
   min: number
   onChange: (value: string) => void
@@ -89,6 +93,7 @@ export function NumberStepper({
   increaseLabel,
   label,
   locale,
+  guide,
   max,
   min,
   onChange,
@@ -133,7 +138,7 @@ export function NumberStepper({
   }
 
   return (
-    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} label={label} required={required}>
+    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} guide={guide} label={label} required={required}>
       <div className="orbit-stepper">
         <button
           aria-label={decreaseLabel}
@@ -203,6 +208,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   defaultOpen?: boolean
   error?: string
   hint?: string
+  guide?: ReactNode
   label: string
 }
 
@@ -211,6 +217,7 @@ export function Select({
   defaultOpen = false,
   disabled,
   error,
+  guide,
   hint,
   id,
   label,
@@ -253,7 +260,7 @@ export function Select({
   }
 
   return (
-    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label} required={required}>
+    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} guide={guide} hint={hint} label={label} required={required}>
       <div className="orbit-select-shell" ref={rootRef}
         onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
@@ -345,14 +352,15 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string
   hint?: string
   error?: string
+  guide?: ReactNode
 }
 
-export function Textarea({ label, hint, error, required, ...props }: TextareaProps) {
+export function Textarea({ label, hint, error, required, guide, ...props }: TextareaProps) {
   const generatedId = useId()
   const controlId = props.id ?? `textarea-${generatedId}`
   const descriptionId = error || hint ? `${controlId}-description` : undefined
   return (
-    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} hint={hint} label={label} required={required}>
+    <FieldShell controlId={controlId} descriptionId={descriptionId} error={error} guide={guide} hint={hint} label={label} required={required}>
       <textarea {...props} aria-describedby={descriptionId} aria-invalid={Boolean(error)} aria-required={required || undefined} className="orbit-input orbit-textarea" id={controlId} required={required} />
     </FieldShell>
   )

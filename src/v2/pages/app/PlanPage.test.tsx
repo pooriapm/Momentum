@@ -51,9 +51,9 @@ describe('PlanPage inventory states', () => {
     expect(document.querySelector('.plan-week__day.is-active')).not.toBeNull()
   })
 
-  it('PLAN-02 shows monthly nutrition structure and meal options', () => {
+  it('PLAN-02 shows the selected day’s meals and options', () => {
     renderPlan({ initialSegment: 'nutrition' })
-    expect(screen.getByText('Monthly nutrition pattern')).toBeInTheDocument()
+    expect(screen.getByText('Choose a day')).toBeInTheDocument()
     expect(screen.getAllByText(/Vegetable omelet|Cinnamon oats|Avocado egg toast/).length).toBeGreaterThan(0)
   })
 
@@ -72,11 +72,14 @@ describe('PlanPage inventory states', () => {
     expect(localStorage.getItem(PLAN_SHOPPING_KEY)).toContain('protein-0')
   })
 
-  it('PLAN-05 renders a locale-safe calendar for the effective period', () => {
-    renderPlan({ initialSegment: 'calendar' })
-    expect(screen.getByText('Month view')).toBeInTheDocument()
-    expect(screen.getByText(/the current period runs/i)).toBeInTheDocument()
-    expect(document.querySelectorAll('.plan-calendar__cell').length).toBeGreaterThan(27)
+  it('PLAN-05 puts the calendar date on the week days', () => {
+    renderPlan()
+    expect(screen.queryByRole('tab', { name: 'Calendar' })).not.toBeInTheDocument()
+    expect(screen.getByText('Choose a day')).toBeInTheDocument()
+    expect(screen.getByText('Selected day')).toBeInTheDocument()
+    const active = document.querySelector('.plan-week__day.is-active .plan-week__date')
+    expect(active?.textContent).toMatch(/^\d{1,2}$/)
+    expect(document.querySelector('.plan-calendar')).toBeNull()
   })
 
   it('PLAN-06 does not show the version trace on the plan', () => {
@@ -181,26 +184,28 @@ describe('PlanPage inventory states', () => {
     expect(document.querySelector('.plan-week__day.is-active')?.textContent ?? '').not.toMatch(/today/i)
   })
 
-  it('opens the next month when a 30-day plan crosses a month boundary', () => {
+  it('moves across a month from the week strip when the period crosses a month', () => {
     const plan = planFixture()
-    renderPlan({ initialSegment: 'calendar', plan })
-    const next = screen.getByRole('button', { name: /next month/i })
+    renderPlan({ plan })
+    const title = () => document.querySelector('.plan-day-picker__month')?.textContent ?? ''
+    const start = title()
+    expect(start.length).toBeGreaterThan(0)
     const spansMonths = plan.version?.validFrom.slice(0, 7) !== plan.version?.validTo.slice(0, 7)
-    if (!spansMonths) {
-      expect(next).toBeDisabled()
-      return
+    if (!spansMonths) return
+    let guard = 0
+    while (title() === start && guard < 8) {
+      const next = screen.getByRole('button', { name: /next week/i })
+      expect(next).toBeEnabled()
+      fireEvent.click(next)
+      guard += 1
     }
-    expect(next).toBeEnabled()
-    fireEvent.click(next)
-    expect(screen.getByRole('button', { name: /previous month/i })).toBeEnabled()
-    const enabled = [...document.querySelectorAll<HTMLButtonElement>('.plan-calendar__cell')].filter((day) => !day.disabled)
-    expect(enabled.length).toBeGreaterThan(0)
+    expect(title()).not.toBe(start)
   })
 
   it('uses Persian digits for week counts, cycles, and exercise doses', () => {
     renderPlan({ initialSegment: 'training', locale: 'fa' })
-    expect(screen.getByRole('heading', { name: /۲۸ روز تمرین در این دوره/ })).toBeInTheDocument()
-    expect(screen.getByText('هفته ۱')).toBeInTheDocument()
+    expect(screen.getByText(/۲۸ روز تمرین در این دوره/)).toBeInTheDocument()
+    expect(screen.getByText('یک روز را انتخاب کن')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /ردیابی نسخه/ })).not.toBeInTheDocument()
     const training = document.querySelector('.workout-detail-card')?.textContent ?? ''
     expect(training).toContain('اسکوات جام')
@@ -216,12 +221,16 @@ describe('Plan grocery completion', () => {
     renderPlan({ initialSegment: 'grocery', surface: 'offline' })
     expect(screen.getByRole('button', { name: /share list/i })).toBeEnabled()
   })
-  it('does not offer calendar dates without plan content', () => {
-    renderPlan({ initialSegment: 'calendar' })
-    const days = [...document.querySelectorAll<HTMLButtonElement>('.plan-calendar__cell')]
-    expect(days.some((day) => day.disabled)).toBe(true)
-    expect(days.find((day) => day.getAttribute('aria-pressed') === 'true')).not.toBeDisabled()
-    expect(days.filter((day) => day.getAttribute('aria-hidden') !== 'true').every((day) => Boolean(day.getAttribute('aria-label')))).toBe(true)
+  it('uses a Jalali day number on a Persian plan', () => {
+    renderPlan({ locale: 'fa' })
+    expect(document.querySelector('.plan-week__day.is-active .plan-week__date')?.textContent).toMatch(/[۰-۹]/)
+  })
+  it('only offers upcoming planned days from the week strip', () => {
+    renderPlan()
+    const days = [...document.querySelectorAll<HTMLButtonElement>('.plan-week__day')]
+    expect(days.length).toBeGreaterThan(0)
+    expect(days.every((day) => !day.disabled)).toBe(true)
+    expect(document.querySelector('.plan-calendar')).toBeNull()
   })
 
 })

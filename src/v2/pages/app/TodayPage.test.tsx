@@ -49,15 +49,23 @@ describe('TodayPage inventory states', () => {
     renderToday()
     expect(screen.getByText('Next action')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /start workout/i }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: /daily check-in · optional/i })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: /daily check-in/i })).toHaveLength(1)
+    expect(screen.getByText('of 5')).toBeInTheDocument()
     expect(screen.queryByText(/one next action above the fold/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /30-second check-in/i })).not.toBeInTheDocument()
+  })
+
+  it('shows an empty recovery score as a check-in action', async () => {
+    renderToday({ plan: planFixture({ progress: { ...demoPlan.progress, recoveryScore: null } }) })
+    expect(screen.queryByText('of 5')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /not entered/i }))
+    expect(await screen.findByRole('heading', { name: 'Daily check-in' })).toBeInTheDocument()
   })
 
   it('TODAY-02 renders a rest day without failure styling', () => {
     renderToday({ plan: planFixture({ workout: null }) })
     expect(screen.getAllByText('Today is for recovery and adaptation').length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/skipping them is not treated as failure/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/skipping it is not a failure/i).length).toBeGreaterThan(0)
     expect(screen.queryByText(/failed/i)).not.toBeInTheDocument()
   })
 
@@ -130,7 +138,7 @@ describe('TodayPage inventory states', () => {
 
   it('TODAY-11 and TODAY-12 open the quiet check-in and confirm a saved log with no AI', async () => {
     renderToday()
-    fireEvent.click(screen.getAllByRole('button', { name: /daily check-in · optional/i })[0]!)
+    fireEvent.click(screen.getAllByRole('button', { name: /daily check-in/i })[0]!)
     expect(await screen.findByRole('heading', { name: 'Daily check-in' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText(/sleep last night/i), { target: { value: '7.5' } })
     fireEvent.click(screen.getByRole('button', { name: /save check-in/i }))
@@ -150,7 +158,7 @@ describe('TodayPage inventory states', () => {
   })
   it('focuses invalid daily check-in values and identifies the weight unit', async () => {
     renderToday()
-    fireEvent.click(screen.getByRole('button', { name: /daily check-in · optional/i }))
+    fireEvent.click(screen.getByRole('button', { name: /daily check-in/i }))
     const sleep = await screen.findByLabelText(/sleep last night/i)
     expect(screen.getByLabelText(/weight today in kg/i)).toBeInTheDocument()
     fireEvent.change(sleep, { target: { value: '25' } })
