@@ -141,7 +141,7 @@ export function ComparisonTable({ locale, series }: { locale: AppLocale; series:
   const rows = compareWeeks(series)
   const showWeight = series.some((item) => typeof item.weightKg === 'number')
   return (
-    <div className="progress-table-wrap">
+    <div aria-label={fa ? 'مقایسه هفته‌ها' : 'Week comparison'} className="progress-table-wrap" tabIndex={0}>
       <table className="progress-compare-table">
         <caption>{fa ? 'هر ردیف، این هفته را با هفته قبلش مقایسه می‌کند' : 'Each row compares that week with the one before it'}</caption>
         <thead>

@@ -10,9 +10,15 @@ function readScrollTop(target: ScrollTarget) {
 
 function writeScrollTop(target: ScrollTarget, top: number) {
   if (target === window) {
+    const root = document.documentElement
+    const previous = root.style.scrollBehavior
+    // The document asks for smooth scrolling. A route change has to arrive immediately,
+    // otherwise a long page is still moving when the next screen is read.
+    root.style.scrollBehavior = 'auto'
     const scrollingElement = document.scrollingElement as HTMLElement | null
     if (scrollingElement) scrollingElement.scrollTop = top
     else window.scrollTo({ behavior: 'auto', left: 0, top })
+    root.style.scrollBehavior = previous
     return
   }
   ;(target as HTMLElement).scrollTop = top
