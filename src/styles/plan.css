@@ -172,7 +172,9 @@
   display: grid;
   gap: .4rem;
   margin-bottom: 0;
-  overflow: visible;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .plan-week__day {
@@ -180,6 +182,15 @@
   min-height: 4.35rem;
   min-width: 0;
   padding: .45rem .15rem;
+}
+
+.plan-week__day strong,
+.plan-week__day small,
+.plan-week__date {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .plan-week__day strong {
@@ -567,8 +578,9 @@
   gap: .25rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 0;
-  max-width: 40rem;
-  overflow: visible;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   padding: .3rem;
   width: 100%;
 }
@@ -579,8 +591,10 @@
   line-height: 1.2;
   min-height: 2.75rem;
   min-width: 0;
+  overflow: hidden;
   padding-inline: .35rem;
-  white-space: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {

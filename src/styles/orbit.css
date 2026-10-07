@@ -1916,7 +1916,7 @@ legend {
 .meal-option-strip button { align-items: center; border: 1px solid var(--color-border); border-radius: .9rem; background: var(--color-surface-muted); cursor: pointer; display: grid; gap: .2rem; grid-template-columns: auto 1fr; padding: .65rem; text-align: start; }
 .meal-option-strip button > span { align-items: center; background: var(--color-surface); border-radius: 50%; color: var(--color-text-muted); display: flex; font: 700 .6rem var(--font-numeric); grid-row: span 2; height: 1.6rem; justify-content: center; width: 1.6rem; }
 .meal-option-strip strong { font-size: var(--text-caption, .75rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.meal-option-strip small { color: var(--color-text-muted); font: .55rem var(--font-numeric); }
+.meal-option-strip small { color: var(--color-text-secondary); font: 650 .75rem var(--font-numeric); }
 .meal-option-strip button.is-selected { border-color: var(--color-brand); background: var(--color-brand-soft); }
 .meal-option-strip button.is-selected > span { color: white; background: var(--color-brand); }
 .next-meal-card__footer { align-items: center; border-top: 1px solid var(--color-border); color: var(--color-text-muted); display: flex; font-size: var(--text-caption, .75rem); gap: 1rem; margin-top: 1rem; padding-top: .9rem; }

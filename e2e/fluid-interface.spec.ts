@@ -72,7 +72,7 @@ test('Plan tabs stay in one row at enlarged text size in both languages', async 
   await page.setViewportSize({ width: 390, height: 844 })
   for (const locale of ['en', 'fa']) {
     await page.goto(`/${locale}/app/plan?preview=1`)
-    await expect(page.getByRole('tab')).toHaveCount(5)
+    await expect(page.getByRole('tab')).toHaveCount(4)
     await page.evaluate(() => { document.documentElement.style.fontSize = '200%' })
     const layout = await page.getByRole('tab').evaluateAll((tabs) => tabs.map((tab) => tab.getBoundingClientRect().top))
     expect(new Set(layout).size).toBe(1)
