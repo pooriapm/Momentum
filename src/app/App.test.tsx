@@ -23,6 +23,15 @@ vi.mock('../platform/data/supabase', () => {
   return { supabase: client, requireSupabase: () => client }
 })
 
+// The PWA plugin's virtual module resolves to a non-file id that Vitest cannot load on Windows.
+vi.mock('virtual:pwa-register/react', () => ({
+  useRegisterSW: () => ({
+    needRefresh: [false, vi.fn()],
+    offlineReady: [false, vi.fn()],
+    updateServiceWorker: vi.fn(),
+  }),
+}))
+
 describe('Momentum public product', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/fa')
