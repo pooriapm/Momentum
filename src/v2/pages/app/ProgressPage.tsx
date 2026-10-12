@@ -21,6 +21,8 @@ import {
 } from './me-state'
 import { ComparisonTable, SplitBars, WeekComparisonStrip, WeightChart } from './ProgressCharts'
 import { RecoveryValue } from './RecoveryValue'
+import { MemberFeatureLock } from './MemberFeatureLock'
+import { hasMemberFeatures } from '../../entitlement'
 import {
   currentWeekIndex,
   deriveProgressSurface,
@@ -74,6 +76,7 @@ export function ProgressPage({
   const series = resolveWeeklySeries(plan)
   const totalWeeks = 5
   const membership = deriveMembershipStatus(plan)
+  const showTrends = hasMemberFeatures(membership, preview)
   const showNextCycle = membership === 'gift' || membership === 'cancelled' || membership === 'expired' || membership === 'none' || plan?.progress.cycleEnding
   const writesLocked = !online || view === 'offline' || view === 'stale' || view === 'load-error'
 
@@ -208,46 +211,50 @@ export function ProgressPage({
           <ContentCard><span><LineChart size={19} /></span><small>{fa ? 'انرژی' : 'Energy'}</small><strong>{formatNumber(plan.progress.energyScore, locale)}</strong><em>{fa ? 'بدون فشار روند متوالی' : 'No streak pressure'}</em></ContentCard>
         </div>
       ) : null}
-      {plan && series.length > 0 ? <WeekComparisonStrip locale={locale} series={series} /> : null}
-      <div className="progress-chart-grid">
-      <ContentCard className="trend-card">
-        <div className="section-title-row">
-          <div>
-            <p className="orbit-eyebrow">{fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence'}</p>
-            <h2>{chartView === 'text' ? (fa ? 'خلاصه متنی' : 'Text summary') : chartView === 'table' ? (fa ? 'جدول داده' : 'Data table') : (fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence')}</h2>
+      {showTrends ? (
+        <>
+          {plan && series.length > 0 ? <WeekComparisonStrip locale={locale} series={series} /> : null}
+          <div className="progress-chart-grid">
+          <ContentCard className="trend-card">
+            <div className="section-title-row">
+              <div>
+                <p className="orbit-eyebrow">{fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence'}</p>
+                <h2>{chartView === 'text' ? (fa ? 'خلاصه متنی' : 'Text summary') : chartView === 'table' ? (fa ? 'جدول داده' : 'Data table') : (fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence')}</h2>
+              </div>
+            </div>
+            <div className="progress-chart-content" key={chartView}>
+              {chartView === 'chart' ? <WeekBars locale={locale} series={series} /> : null}
+              {chartView === 'text' ? <p className="progress-text-alt">{textSummary(series, locale)}</p> : null}
+              {chartView === 'table' ? <ProgressTable locale={locale} series={series} /> : null}
+            </div>
+            <div className="progress-chart-actions">
+              <Button aria-pressed={chartView === 'chart'} onClick={() => setChartView('chart')} variant={chartView === 'chart' ? 'primary' : 'secondary'}>{fa ? 'نمودار' : 'Chart'}</Button>
+              <Button aria-pressed={chartView === 'text'} onClick={() => setChartView('text')} variant={chartView === 'text' ? 'primary' : 'secondary'}>{fa ? 'خلاصه متنی نمودار' : 'Text chart summary'}</Button>
+              <Button aria-pressed={chartView === 'table'} onClick={() => setChartView('table')} variant={chartView === 'table' ? 'primary' : 'secondary'}>{fa ? 'نمایش جدول' : 'View data table'}</Button>
+            </div>
+          </ContentCard>
+          {plan && series.length > 0 ? (
+            <ContentCard className="trend-card progress-side-chart">
+              <p className="orbit-eyebrow">{fa ? 'وعده در برابر تمرین' : 'Meals against training'}</p>
+              <h2>{fa ? 'سهم انجام‌شده وعده و تمرین' : 'How much of the meals and training is done'}</h2>
+              <SplitBars locale={locale} series={series} />
+            </ContentCard>
+          ) : null}
           </div>
-        </div>
-        <div className="progress-chart-content" key={chartView}>
-          {chartView === 'chart' ? <WeekBars locale={locale} series={series} /> : null}
-          {chartView === 'text' ? <p className="progress-text-alt">{textSummary(series, locale)}</p> : null}
-          {chartView === 'table' ? <ProgressTable locale={locale} series={series} /> : null}
-        </div>
-        <div className="progress-chart-actions">
-          <Button aria-pressed={chartView === 'chart'} onClick={() => setChartView('chart')} variant={chartView === 'chart' ? 'primary' : 'secondary'}>{fa ? 'نمودار' : 'Chart'}</Button>
-          <Button aria-pressed={chartView === 'text'} onClick={() => setChartView('text')} variant={chartView === 'text' ? 'primary' : 'secondary'}>{fa ? 'خلاصه متنی نمودار' : 'Text chart summary'}</Button>
-          <Button aria-pressed={chartView === 'table'} onClick={() => setChartView('table')} variant={chartView === 'table' ? 'primary' : 'secondary'}>{fa ? 'نمایش جدول' : 'View data table'}</Button>
-        </div>
-      </ContentCard>
-      {plan && series.length > 0 ? (
-        <ContentCard className="trend-card progress-side-chart">
-          <p className="orbit-eyebrow">{fa ? 'وعده در برابر تمرین' : 'Meals against training'}</p>
-          <h2>{fa ? 'سهم انجام‌شده وعده و تمرین' : 'How much of the meals and training is done'}</h2>
-          <SplitBars locale={locale} series={series} />
-        </ContentCard>
-      ) : null}
-      </div>
-      {plan ? (
-        <ContentCard className="trend-card">
-          <p className="orbit-eyebrow">{fa ? 'وزن ثبت‌شده' : 'Logged weight'}</p>
-          <h2>{fa ? 'خط وزن، از چک‌این‌ها' : 'The weight line, from your check-ins'}</h2>
-          <WeightChart locale={locale} plan={plan} />
-        </ContentCard>
-      ) : null}
-      {series.length > 0 ? (
-        <ContentCard className="trend-card progress-table-card">
-          <ComparisonTable locale={locale} series={series} />
-        </ContentCard>
-      ) : null}
+          {plan ? (
+            <ContentCard className="trend-card">
+              <p className="orbit-eyebrow">{fa ? 'وزن ثبت‌شده' : 'Logged weight'}</p>
+              <h2>{fa ? 'خط وزن، از چک‌این‌ها' : 'The weight line, from your check-ins'}</h2>
+              <WeightChart locale={locale} plan={plan} />
+            </ContentCard>
+          ) : null}
+          {series.length > 0 ? (
+            <ContentCard className="trend-card progress-table-card">
+              <ComparisonTable locale={locale} series={series} />
+            </ContentCard>
+          ) : null}
+        </>
+      ) : plan ? <MemberFeatureLock feature="progress-trends" locale={locale} /> : null}
       {plan ? (
         <ContentCard className="checkin-history-card">
           <div className="section-title-row"><h2>{fa ? 'چک‌این‌های اخیر' : 'Recent check-ins'}</h2><CalendarDays size={18} /></div>

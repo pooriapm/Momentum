@@ -28,6 +28,9 @@ import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
 import { RecoveryValue } from './RecoveryValue'
+import { MemberFeatureLock } from './MemberFeatureLock'
+import { deriveMembershipStatus } from './me-state'
+import { hasMemberFeatures } from '../../entitlement'
 import { GenerationWait } from './GenerationWait'
 import { useGenerationWait } from './use-generation-wait'
 import {
@@ -120,6 +123,8 @@ export function TodayPage({
   const [savingSlot, setSavingSlot] = useState('')
   const [mealError, setMealError] = useState('')
   const [substituteNotice, setSubstituteNotice] = useState('')
+  const [swapLocked, setSwapLocked] = useState(false)
+  const canSwapMeals = hasMemberFeatures(deriveMembershipStatus(plan), preview)
   const [checkInOpen, setCheckInOpen] = useState(false)
   const [checkInSaved, setCheckInSaved] = useState(false)
   const [safety, setSafety] = useState<CheckInSafety | null>(null)
@@ -208,6 +213,10 @@ export function TodayPage({
     if (mutationsLocked || savingSlot) return
     const meal = plan!.meals.find((item) => item.id === slotId)
     if (!meal || mealIsCompleted(meal, mealOverrides)) return
+    if (!canSwapMeals) {
+      setSwapLocked(optionId !== (meal.selectedOptionId ?? meal.options[0]?.id))
+      return
+    }
     const previous = selectedMeals[slotId]
     setSelectedMeals((current) => ({ ...current, [slotId]: optionId }))
     setMealError('')
@@ -415,6 +424,7 @@ export function TodayPage({
                   </button>
                 ))}
               </div>
+              {swapLocked ? <MemberFeatureLock compact feature="meal-swaps" locale={locale} /> : null}
               {substituteNotice ? <div className="inline-notice inline-notice--success" role="status">{substituteNotice}</div> : null}
               {mealError ? <div className="inline-notice inline-notice--error" role="alert">{mealError}</div> : null}
               <div className="next-meal-card__footer">

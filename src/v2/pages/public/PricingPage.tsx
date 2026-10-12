@@ -70,16 +70,18 @@ export function PricingPage({
   const showPaid = !unavailable && !loading
   const membershipFeatures = fa
     ? [
-        'هر دوره یک برنامه غذا و تمرین است، با هم، نه در دو جای جدا.',
-        'سی روز از روز آماده‌شدن برنامه حساب می‌شود، نه از اول ماه تقویمی.',
-        'بعد از بررسی ایمنی، همان برنامه وارد حسابت می‌شود.',
-        'ماه بعد از نتیجه همین دوره ساخته می‌شود، از یک صفحه سفید نه.',
+        'Momentum هر ماه برنامه غذا و تمرین سی‌روزه‌ات را می‌سازد و بعد از بررسی ایمنی وارد حسابت می‌کند.',
+        'ماه بعد از نتیجه همین ماه ساخته می‌شود، از یک صفحه سفید نه.',
+        'چند گزینه هم‌ارز برای هر وعده، و جایگزینی هر وقت خواستی.',
+        'فهرست خرید هفته، آماده.',
+        'روند و مقایسه هفته‌ها و ماه‌ها در پیشرفت.',
       ]
     : [
-        'Each period is one food and training plan, together, not in two separate places.',
-        'The thirty days start when the plan is ready, not on the first of the calendar month.',
-        'After the safety check, that plan is imported into your account.',
-        'Next month is built from how this period went, not from a blank page.',
+        'Momentum builds your thirty-day food and training plan every month, safety-checked before it goes live.',
+        'Next month is built from how this month went, not from a blank page.',
+        'Equivalent options for every meal, and swaps whenever you want.',
+        'The week’s shopping list, ready to go.',
+        'Trends and week-to-week comparisons in Progress.',
       ]
   const giftFeatures = giftUnavailable
     ? (fa
@@ -104,8 +106,8 @@ export function PricingPage({
         ? 'اگر غذا و تمرین را جای دیگری چیده‌ای، برای Momentum اشتراک لازم نیست. پرامپت آماده را در ابزاری که خودت انتخاب می‌کنی اجرا کن، یا فایل برنامه‌ات را وارد کن. کاتالوگ، حساسیت و ایمنی همین‌جا بررسی می‌شود، و Momentum آن متن را خودش به ابزار دیگری نمی‌فرستد.'
         : 'If you already built the food and the training somewhere else, Momentum does not need a subscription. Run the ready prompt in a tool you choose, or import the plan you have. Catalog, allergy, and safety checks happen here, and Momentum does not send that text on to another tool by itself.',
       features: fa
-        ? ['واردکردن، تاریخچه و پیگیری روزها، بدون اشتراک.', 'بررسی کاتالوگ، حساسیت و ایمنی قبل از اینکه برنامه فعال شود.', 'هیچ ارسال خودکاری به ابزار بیرونی انجام نمی‌شود.']
-        : ['Import, history, and day-to-day tracking, without a subscription.', 'Catalog, allergy, and safety checks before the plan goes live.', 'Nothing is sent to an outside tool unless you do that yourself.'],
+        ? ['برنامه‌ات را وارد کن و هر روز دنبالش کن: امروز، ثبت وعده و تمرین، چک‌این روزانه و هفتگی.', 'بررسی کاتالوگ، حساسیت و ایمنی قبل از اینکه برنامه فعال شود.', 'جایگزینی وعده، فهرست خرید و روند پیشرفت با عضویت می‌آیند.']
+        : ['Import your plan and follow it every day: Today, meal and workout logging, daily and weekly check-ins.', 'Catalog, allergy, and safety checks before the plan goes live.', 'Meal swaps, the shopping list, and progress trends come with membership.'],
       href: localizedPath(locale, authenticated ? '/onboarding/plan-source' : '/auth/sign-up'),
       label: fa ? 'انتخاب مسیر رایگان' : 'Choose the free path',
       primary: false,

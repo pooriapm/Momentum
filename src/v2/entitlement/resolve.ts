@@ -36,6 +36,18 @@ export function isEntitledForGeneration(snapshot: EntitlementSnapshot) {
   return snapshot.membership === 'gift' || snapshot.membership === 'active'
 }
 
+/**
+ * Free keeps the daily loop: a plan you bring, Today, logging, and check-ins (including safety).
+ * Membership adds what makes the month adapt: Momentum-built plans, meal swaps,
+ * the shopping list, and progress trends. A pending payment keeps access during grace.
+ */
+export const MEMBER_FEATURES = ['meal-swaps', 'shopping-list', 'progress-trends'] as const
+export type MemberFeature = typeof MEMBER_FEATURES[number]
+
+export function hasMemberFeatures(membership: MembershipStatus, preview = false) {
+  return preview || membership === 'gift' || membership === 'active' || membership === 'pending'
+}
+
 export function canReadSavedPlan(snapshot: EntitlementSnapshot) {
   return snapshot.hasSavedPlan
 }

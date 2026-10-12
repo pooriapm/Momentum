@@ -18,6 +18,9 @@ import { completeMeal, currentLocalDate, logMealSelection } from '../../data/rep
 import { localize, type MealChoice, type MealSlot, type MomentumPlanView, type WorkoutBlock } from '../../data/types'
 import { Button, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
+import { MemberFeatureLock } from './MemberFeatureLock'
+import { deriveMembershipStatus } from './me-state'
+import { hasMemberFeatures } from '../../entitlement'
 import {
   applyExerciseSubstitutes,
   derivePlanSurface,
@@ -89,6 +92,8 @@ export function PlanPage({
   const [mealError, setMealError] = useState('')
   const [substituteNotice, setSubstituteNotice] = useState('')
   const [exerciseSubstitutes, setExerciseSubstitutes] = useState<Record<string, Record<string, string>>>({})
+  const [swapLocked, setSwapLocked] = useState(false)
+  const memberFeatures = hasMemberFeatures(deriveMembershipStatus(plan), preview)
   const planViewTracked = useRef(false)
   const today = currentLocalDate(plan?.timezone)
 
@@ -156,6 +161,10 @@ export function PlanPage({
     const meal = selectedDay.meals.find((item) => item.id === slotId)
     if (!meal) return
     const previous = selectedMeals[slotId] ?? meal.selectedOptionId ?? meal.options[0]?.id
+    if (!memberFeatures) {
+      setSwapLocked(optionId !== previous)
+      return
+    }
     setSelectedMeals((current) => ({ ...current, [slotId]: optionId }))
     setMealError('')
     setSubstituteNotice('')
@@ -332,16 +341,19 @@ export function PlanPage({
       ) : null}
       {segment === 'grocery' ? (
         <div aria-labelledby="plan-tab-grocery" className="motion-panel" id="plan-panel-grocery" role="tabpanel">
-          <PlanGroceryView
-            checkedItems={groceryChecks}
-            locale={locale}
-            onShare={() => void shareGrocery()}
-            onToggle={toggleShopping}
-            plan={activePlan}
-          />
+          {memberFeatures ? (
+            <PlanGroceryView
+              checkedItems={groceryChecks}
+              locale={locale}
+              onShare={() => void shareGrocery()}
+              onToggle={toggleShopping}
+              plan={activePlan}
+            />
+          ) : <MemberFeatureLock feature="shopping-list" locale={locale} />}
         </div>
       ) : null}
 
+      {swapLocked ? <MemberFeatureLock compact feature="meal-swaps" locale={locale} /> : null}
       {substituteNotice ? <div className="inline-notice" role="status">{substituteNotice}</div> : null}
 
       {mealDetail ? (
@@ -354,7 +366,8 @@ export function PlanPage({
           onClose={() => setMealDetail(null)}
           onSelectAlternative={(choice) => {
             void selectMeal(mealDetail.meal.id, choice.id)
-            setMealDetail({ meal: mealDetail.meal, choice })
+            // Free members see why the swap didn't happen instead of a choice that wasn't saved.
+            setMealDetail(memberFeatures ? { meal: mealDetail.meal, choice } : null)
           }}
           readOnly={!isToday || mutationsLocked}
         />

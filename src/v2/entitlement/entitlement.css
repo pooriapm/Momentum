@@ -48,3 +48,32 @@
 .pricing-card.is-exhausted {
   opacity: 0.92;
 }
+
+/* Member-only feature in place: an invitation, not a wall. */
+.member-lock {
+  align-items: start;
+  display: grid;
+  gap: .7rem;
+  justify-items: start;
+  padding: 1.5rem;
+}
+
+.member-lock h2 { font-size: 1.2rem; margin: 0; }
+.member-lock p { color: var(--color-text-secondary); line-height: 1.75; margin: 0; max-width: 34rem; }
+
+.member-lock--compact {
+  align-items: center;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: .85rem;
+  gap: .45rem .6rem;
+  margin-top: .6rem;
+  padding: .6rem .8rem;
+}
+
+.member-lock--compact svg { color: var(--color-brand); flex: none; }
+.member-lock--compact a { color: var(--color-text); font-weight: 700; margin-inline-start: auto; text-decoration: underline; text-underline-offset: .2em; }

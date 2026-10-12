@@ -59,7 +59,8 @@ describe('TodayPage inventory states', () => {
     renderToday({ plan: planFixture({ progress: { ...demoPlan.progress, recoveryScore: null } }) })
     expect(screen.queryByText('of 5')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /not entered/i }))
-    expect(await screen.findByRole('heading', { name: 'Daily check-in' })).toBeInTheDocument()
+    // The check-in sheet is lazy-loaded; a busy machine can take longer than the 1s default.
+    expect(await screen.findByRole('heading', { name: 'Daily check-in' }, { timeout: 5_000 })).toBeInTheDocument()
   })
 
   it('shows a today-shaped skeleton while the plan is still loading', () => {

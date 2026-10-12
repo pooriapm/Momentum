@@ -12,6 +12,7 @@ import {
   requireIdempotencyKey,
 } from '../_shared/http.ts'
 import { enforceRateLimit } from '../_shared/limits.ts'
+import { assertMemberFeatureAccess } from '../_shared/membership.ts'
 import { assertCatalogGenerationGate } from '../_shared/catalog-gate.ts'
 import {
   loadPlanCatalog,
@@ -1686,6 +1687,9 @@ Deno.serve(async (request) => {
       body.action !== 'undo-meal'
     ) {
       throw new HttpError(400, 'unsupported_action', 'Action is unsupported.')
+    }
+    if (body.action === 'select-meal') {
+      await assertMemberFeatureAccess(auth.admin, auth.user.id, 'Meal swaps')
     }
     const mealRequest = parseMealMutation(body, body.action)
     const localDate = await resolveCurrentLocalDate(

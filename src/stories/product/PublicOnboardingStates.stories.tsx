@@ -391,7 +391,7 @@ function OnboardingBody({ locale, state }: { locale: SpecLocale; state: Exclude<
             <span className="mo-spec__state-icon"><FileUp /></span>
             <h2>{tx(locale, "برنامه خودم را استفاده می‌کنم", "Use my own plan")}</h2>
             <p>{tx(locale, "برنامه‌ات را وارد کن یا پرامپت ما را در ابزار دیگری اجرا کن.", "Import a plan, or use our prompt in another AI tool.")}</p>
-            <SpecBadge>{tx(locale, "همیشه رایگان · بدون اشتراک", "Always free · No subscription")}</SpecBadge>
+            <SpecBadge>{tx(locale, "پیگیری روزانه رایگان · جایگزینی وعده، خرید و روند با عضویت", "Free daily tracking · Swaps, shopping list, and trends with membership")}</SpecBadge>
           </SpecCard>
           <SpecCard tone="brand">
             <span className="mo-spec__state-icon mo-spec__state-icon--brand"><WandSparkles /></span>
