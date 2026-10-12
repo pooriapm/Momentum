@@ -1043,7 +1043,7 @@
             "$description": "Supporting copy and metadata"
           },
           "tertiary": {
-            "$value": "#736D64",
+            "$value": "#6B655C",
             "$type": "color",
             "$description": "Nonessential metadata; never the only presentation of required information"
           },
@@ -1359,7 +1359,7 @@
             "$description": "Supporting copy and metadata"
           },
           "tertiary": {
-            "$value": "#8E887D",
+            "$value": "#958F84",
             "$type": "color",
             "$description": "Nonessential metadata; never the only presentation of required information"
           },
