@@ -17,6 +17,10 @@ function readGitCommit() {
 }
 
 export default defineConfig({
+  define: {
+    // One source of truth for the shown and reported version; CI bumps package.json on every push.
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
   plugins: [
     {
       name: 'momentum-release-provenance',

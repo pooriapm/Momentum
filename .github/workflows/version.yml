@@ -1,0 +1,54 @@
+name: Version
+
+# Every push to main gets the next patch version (0.4.4 -> 0.4.5), committed back and tagged.
+# Milestones are raised by hand in package.json and kept. 0.9.0 is reserved for the first
+# release to real users; scripts/ops/next-version.mjs refuses to reach it automatically.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: version-main
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Bump version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Pushes made with GITHUB_TOKEN do not start workflows, so the release commit cannot loop.
+    if: ${{ !startsWith(github.event.head_commit.message, 'Release ') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+      - name: Work out the version
+        id: version
+        run: |
+          current=$(node -p "require('./package.json').version")
+          last=$(git tag --list 'v*' --sort=-v:refname | head -n 1 | sed 's/^v//')
+          next=$(node scripts/ops/next-version.mjs "$current" "${last:-none}")
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "Version: $current -> $next (last release ${last:-none})"
+      - name: Commit and tag the release
+        env:
+          NEXT: ${{ steps.version.outputs.next }}
+          CURRENT: ${{ steps.version.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$NEXT" != "$CURRENT" ]; then
+            npm version "$NEXT" --no-git-tag-version
+            git add package.json package-lock.json
+            git commit -m "Release $NEXT"
+          fi
+          git tag -a "v$NEXT" -m "Momentum $NEXT"
+          git push origin HEAD:main "v$NEXT"
