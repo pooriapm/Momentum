@@ -42,11 +42,11 @@ describe('Momentum public product', () => {
   it('renders the new Persian landing experience', async () => {
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: /Momentum از همین ماه شروع می‌شود/ }, { timeout: 5_000 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /یک ماه غذا و تمرین/ }, { timeout: 5_000 })).toBeInTheDocument()
     await waitFor(() => expect(document.documentElement).toHaveAttribute('lang', 'fa'))
     expect(document.documentElement).toHaveAttribute('dir', 'rtl')
     expect(document.querySelector('bdi[dir="ltr"]')).toHaveTextContent('Momentum')
-    expect(screen.getAllByRole('link', { name: 'شروع این ماه' })[0]).toHaveAttribute('href', '/fa/auth/sign-up')
+    expect(screen.getAllByRole('link', { name: 'برنامه‌ام را بساز' })[0]).toHaveAttribute('href', '/fa/auth/sign-up')
     expect(screen.getAllByText(/سلامت عمومی/).length).toBeGreaterThan(0)
   })
 
@@ -54,7 +54,7 @@ describe('Momentum public product', () => {
     window.history.replaceState({}, '', '/en')
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: /Momentum starts with this month/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /a month of meals and workouts/i })).toBeInTheDocument()
     expect(document.documentElement).toHaveAttribute('lang', 'en')
     expect(document.documentElement).toHaveAttribute('dir', 'ltr')
   })

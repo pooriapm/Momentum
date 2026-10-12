@@ -4,7 +4,7 @@ const PREVIEW_READY_TIMEOUT_MS = 15_000
 
 test('public shell and Persian in-memory preview remain usable', async ({ page }) => {
   await page.goto('/fa')
-  await expect(page.getByRole('heading', { name: /Momentum از همین ماه شروع می‌شود/ })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: /یک ماه غذا و تمرین/ })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
 
   await page.goto('/fa/app/today?preview=1')
@@ -15,7 +15,7 @@ test('public shell and Persian in-memory preview remain usable', async ({ page }
 
 test('English public routes remain LTR and expose safety restrictions', async ({ page }) => {
   await page.goto('/en')
-  await expect(page.getByRole('heading', { name: /Momentum starts with this month/ })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: /a month of meals and workouts/i })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr')
 
   await page.goto('/en/safety')

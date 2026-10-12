@@ -236,7 +236,7 @@ function expectNoProviderTraffic(state: MockState) {
 test('sign-up reaches the durable verification page without touching a live backend', async ({ context, page }) => {
   const state = await installMocks(context)
   await page.goto('/en')
-  await page.getByRole('link', { name: 'Start this month' }).first().click()
+  await page.getByRole('link', { name: 'Build my plan' }).first().click()
   await page.getByLabel('Email', { exact: true }).fill('new.audit@example.test')
   await page.getByLabel('Password', { exact: true }).fill('Audit-only-pass1!')
   for (const checkbox of await page.locator('.auth-legal input').all()) await checkbox.check({ force: true })

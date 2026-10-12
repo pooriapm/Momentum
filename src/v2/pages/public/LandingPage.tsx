@@ -1,5 +1,18 @@
-import { ArrowRight, ArrowUp, ShieldCheck } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import {
+  ArrowRight,
+  ArrowUp,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Dumbbell,
+  LineChart,
+  Repeat,
+  ShieldCheck,
+  ShoppingBasket,
+  Sun,
+  type LucideIcon,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { formatNumber } from '../../lib/format'
@@ -7,212 +20,348 @@ import { localizedPath } from '../../router/route-utils'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { GlassChrome } from '../../ui/primitives'
 import { OrbitMark } from '../../ui/OrbitMark'
+import { Reveal } from '../../ui/Reveal'
 import './landing.css'
 
 const copy = {
   fa: {
-    eyebrow: 'Momentum',
-    title: 'Momentum از همین ماه شروع می‌شود.',
-    accent: 'ماه بعد، ادامه همان حرکت است.',
-    subtitle: 'غذا و تمرین با هم می‌آیند، برای یک دوره سی‌روزه. هر روز می‌دانی وعده بعدی چیست و تمرین همان روز چطور چیده شده. وقتی دوره تمام شد، برنامه تازه از بازخورد همین ماه ساخته می‌شود؛ از یک صفحه سفید نه.',
-    start: 'شروع این ماه',
+    badge: 'غذا و تمرین · برنامه ۳۰ روزه',
+    title: 'یک ماه غذا و تمرین،',
+    accent: 'چیده‌شده برای خودت.',
+    subtitle: 'هدف‌ات، غذاهایی که دوست داری و روزهایی که وقت تمرین داری را بگو. Momentum یک برنامه سی‌روزه با همه وعده‌ها و تمرین‌ها می‌سازد، و ماه بعد را از همین ماه ادامه می‌دهد.',
+    start: 'برنامه‌ام را بساز',
     sample: 'دیدن نمونه',
-    story: 'ماه در سه بخش',
-    beats: [
+    trust: ['غذا و تمرین در یک برنامه', 'فارسی و انگلیسی', 'داده سلامت برای تبلیغ فروخته نمی‌شود'],
+    preview: {
+      label: 'نمونه صفحه امروز در Momentum',
+      day: 'روز ۱۲ از ۳۰',
+      greeting: 'صبح بخیر، آوا',
+      target: 'هدف امروز',
+      kcal: 'کالری',
+      protein: 'پروتئین',
+      nextMeal: 'وعده بعدی · ناهار',
+      meal: 'مرغ زعفرانی، برنج و سالاد شیرازی',
+      mealMeta: '۶۲۰ کالری · ۴۸ گرم پروتئین',
+      training: 'تمرین امروز',
+      workout: 'قدرتی پایین‌تنه',
+      workoutMeta: '۶ حرکت · ۴۸ دقیقه',
+      startWorkout: 'شروع تمرین',
+      streak: 'هفته ۳ · ۸۴٪ پایبندی',
+    },
+    howEyebrow: 'چطور کار می‌کند',
+    howTitle: 'سه قدم تا یک ماه منظم',
+    steps: [
       {
-        title: 'ماه را با زندگی خودت می‌چینیم',
-        body: 'اول هدف‌ات را می‌گویی، غذاهایی که دوست داری، چیزهایی که نباید بخوری، و روزهایی که برای تمرین وقت داری. Momentum از همین‌ها یک برنامه سی‌روزه درمی‌آورد: وعده‌ها، تمرین‌ها و خرید، در یک جا. لازم نیست رژیم را از یک برنامه بگیری و ورزش را از یک برنامه دیگر.',
+        title: 'از زندگی‌ات بگو',
+        body: 'هدف، غذاهای مورد علاقه، چیزهایی که نمی‌خوری و روزهایی که برای تمرین وقت داری.',
         image: '/landing/meal.webp',
         alt: 'بشقاب مرغ زعفرانی با برنج و سالاد شیرازی',
       },
       {
-        title: 'وسط ماه، هر روز از نو تصمیم نمی‌گیری',
-        body: 'امروز را که باز می‌کنی، وعده بعدی مشخص است و تمرین همان روز نوشته شده. اگر یک وعده یا یک جلسه را جا بیندازی، بقیه ماه خط نمی‌خورد. Momentum یعنی حرکت بماند: روز بعدی هنوز سر جایش است، حتی وقتی دیروز دقیقاً مطابق طرح پیش نرفت.',
+        title: 'برنامه سی‌روزه‌ات را بگیر',
+        body: 'همه وعده‌ها، همه تمرین‌ها و فهرست خرید، برای کل ماه و در یک جا.',
         image: '/landing/training.jpg',
         alt: 'تمرین قدرتی با دمبل، در نور پنجره خانه',
       },
       {
-        title: 'آخر دوره، از صفر شروع نمی‌کنی',
-        body: 'هر دوره سی روز است و از روز آماده‌شدن برنامه حساب می‌شود، نه از اول ماه. وقتی تمام شد، برنامه بعدی فرم خالی نیست. از همان چیزی ساخته می‌شود که این ماه انجام دادی، عوض کردی، یا هنوز برایت محدودیت است.',
+        title: 'هر روز دنبالش کن',
+        body: 'امروز را باز کن و وعده و تمرین بعدی را ببین. یک روز جا ماند؟ بقیه ماه سر جایش است.',
         image: '/landing/continue.jpg',
         alt: 'ادامه راه در نور صبح',
       },
     ],
-    notes: [
-      ['غذا و تمرین، یک برنامه', 'روزت بین یک برنامه غذایی و یک برنامه ورزشی نصف نمی‌شود. هر دو در همان ماه و با همان هدف چیده می‌شوند.'],
-      ['سی روز، از روز آماده‌شدن', 'دوره منتظر اول ماه تقویمی نمی‌ماند. از وقتی برنامه حاضر شد شروع می‌شود و تا پایان همان نسخه می‌ماند.'],
-      ['جزئیات سلامت، مال حساب تو', 'برای تبلیغ فروخته نمی‌شود. نمونه داخل برنامه داده نمایشی است و سابقه سلامت تو را ذخیره نمی‌کند.'],
+    featuresEyebrow: 'داخل برنامه',
+    featuresTitle: 'هر چیزی که برای این ماه لازم داری',
+    features: [
+      ['امروز', 'وعده بعدی و تمرین همان روز، بدون اینکه هر روز از نو تصمیم بگیری.'],
+      ['تقویم ماه', 'روزهای تمرین و استراحت، برنامه غذایی و تمرینی، همه در یک تقویم.'],
+      ['ثبت تمرین', 'ست، وزنه، تکرار، شدت و استراحت را همان موقع تمرین ثبت کن.'],
+      ['فهرست خرید', 'مواد لازم برای وعده‌های ماه، آماده برای خرید.'],
+      ['روند پیشرفت', 'وزن، پایبندی، ریکاوری و گزارش هفتگی، هفته به هفته.'],
+      ['ماه بعد', 'وقتی دوره تمام شد، برنامه بعدی از همین ماه ساخته می‌شود؛ نه از صفر.'],
     ],
-    safety: 'Momentum پزشک یا متخصص تغذیه نیست و جای اورژانس را هم نمی‌گیرد. این برنامه برای سلامت عمومی بزرگسالان است. اگر حال‌ات خوب نیست، به درمانگر یا اورژانس محل زندگی‌ات مراجعه کن.',
+    faqEyebrow: 'پرسش‌های رایج',
+    faqTitle: 'پیش از شروع بدان',
+    faq: [
+      ['هزینه‌اش چقدر است؟', 'آوردن برنامه‌ای که جای دیگری ساخته‌ای و پیگیری روزانه‌اش رایگان است. عضویت Momentum برنامه هر ماه را برایت می‌سازد و جایگزینی وعده، فهرست خرید و روند پیشرفت را اضافه می‌کند. پرداخت در نسخه آلفای فعلی فعال نیست.'],
+      ['دوره سی‌روزه از کی شروع می‌شود؟', 'از روزی که برنامه‌ات آماده شد، نه از اول ماه تقویمی. دوره دقیقاً سی روز ادامه دارد.'],
+      ['اگر یک وعده یا تمرین را جا بیندازم چه می‌شود؟', 'چیزی خط نمی‌خورد. بقیه ماه سر جایش می‌ماند و آنچه واقعاً اتفاق افتاد در برنامه ماه بعد لحاظ می‌شود.'],
+      ['می‌توانم زبان را عوض کنم؟', 'بله. Momentum فارسی و انگلیسی است و هر وقت بخواهی از بالای صفحه زبان را عوض می‌کنی. کشور تو دسترسی را محدود نمی‌کند.'],
+      ['با اطلاعات سلامتم چه می‌شود؟', 'در حساب خودت می‌ماند و برای تبلیغ فروخته نمی‌شود. فقط حداقل اطلاعات لازم برای برنامه‌ریزی، آن هم وقتی ساخت برنامه را شروع می‌کنی، فرستاده می‌شود.'],
+    ],
+    pricingLink: 'دیدن قیمت‌ها',
+    safety: 'Momentum پزشک یا متخصص تغذیه نیست و جای اورژانس را نمی‌گیرد. این برنامه برای سلامت عمومی بزرگسالان است.',
     safetyLink: 'مرز ایمنی',
-    finalTitle: 'این ماه را شروع کن.',
-    finalBody: 'Momentum غذا و تمرین را کنار هم می‌گذارد و ماه بعد را از همین دوره می‌سازد.',
+    finalTitle: 'این ماه را با یک برنامه شروع کن.',
+    finalBody: 'چند سؤال درباره خودت، و برنامه غذا و تمرین سی‌روزه‌ات آماده می‌شود.',
     top: 'بازگشت به بالا',
   },
   en: {
-    eyebrow: 'Momentum',
-    title: 'Momentum starts with this month.',
-    accent: 'Next month continues that same motion.',
-    subtitle: 'Food and training arrive together, for a thirty-day period. Each day you already know the next meal and how that day’s session is built. When the period ends, the new plan comes from how this month actually went, not from a blank page.',
-    start: 'Start this month',
+    badge: 'Food + training · 30-day plan',
+    title: 'A month of meals and workouts,',
+    accent: 'planned around you.',
+    subtitle: 'Tell Momentum your goal, the food you like, and the days you can train. You get a thirty-day plan with every meal and every session, and next month picks up from this one.',
+    start: 'Build my plan',
     sample: 'See a sample',
-    story: 'The month, in three parts',
-    beats: [
+    trust: ['Meals and workouts in one plan', 'Persian and English', 'Health data never sold for ads'],
+    preview: {
+      label: 'Sample of the Momentum Today screen',
+      day: 'Day 12 of 30',
+      greeting: 'Good morning, Ava',
+      target: 'Today’s target',
+      kcal: 'kcal',
+      protein: 'protein',
+      nextMeal: 'Next meal · Lunch',
+      meal: 'Saffron chicken, rice & Shirazi salad',
+      mealMeta: '620 kcal · 48 g protein',
+      training: 'Today’s training',
+      workout: 'Lower-body strength',
+      workoutMeta: '6 exercises · 48 min',
+      startWorkout: 'Start workout',
+      streak: 'Week 3 · 84% consistency',
+    },
+    howEyebrow: 'How it works',
+    howTitle: 'Three steps to a steady month',
+    steps: [
       {
-        title: 'The month is built around your life',
-        body: 'You say what you’re aiming for, the food you like, what you can’t eat, and the days you can train. Momentum turns that into one thirty-day plan: meals, workouts, and the shopping list, in the same place. You don’t collect a diet from one app and a workout from another.',
+        title: 'Tell us about your life',
+        body: 'Your goal, the food you like, what you can’t eat, and the days you have time to train.',
         image: '/landing/meal.webp',
         alt: 'Saffron chicken with rice and Shirazi salad',
       },
       {
-        title: 'Mid-month, you don’t redecide the day',
-        body: 'Open today and the next meal is already there, with that day’s session written out. Miss a meal or a workout and the rest of the month doesn’t get crossed out. Momentum means the motion stays: tomorrow is still there, even when yesterday didn’t go to plan.',
+        title: 'Get your thirty-day plan',
+        body: 'Every meal, every workout, and the shopping list for the whole month, in one place.',
         image: '/landing/training.jpg',
         alt: 'A strength session with a dumbbell, in window light at home',
       },
       {
-        title: 'At the end, you don’t start from zero',
-        body: 'Each period is thirty days, counted from the day the plan is ready, not from the first of the calendar month. When it ends, the next plan isn’t an empty form. It’s built from what you did this month, what you changed, and the limits that are still yours.',
+        title: 'Follow it day by day',
+        body: 'Open Today for the next meal and session. Missed a day? The rest of the month is still there.',
         image: '/landing/continue.jpg',
         alt: 'Walking on into the morning light',
       },
     ],
-    notes: [
-      ['Food and training, one plan', 'The day isn’t split between a diet app and a workout app. Both are laid out in the same month, for the same goal.'],
-      ['Thirty days, from the day it’s ready', 'The period doesn’t wait for the first of the calendar month. It starts when the plan is ready and stays that version until it ends.'],
-      ['Your health details stay yours', 'They aren’t sold for ads. The in-app sample is demonstration data and doesn’t store your health history.'],
+    featuresEyebrow: 'Inside the plan',
+    featuresTitle: 'Everything this month needs',
+    features: [
+      ['Today', 'The next meal and that day’s session, so you don’t redecide the day.'],
+      ['Month calendar', 'Training and rest days, nutrition and workouts, on one calendar.'],
+      ['Workout logging', 'Log sets, weight, reps, effort, and rest while you train.'],
+      ['Shopping list', 'What the month’s meals need, ready to shop.'],
+      ['Progress', 'Weight, consistency, recovery, and a weekly report, week by week.'],
+      ['Next month', 'When the period ends, the next plan builds on this one, not a blank page.'],
     ],
-    safety: 'Momentum is not a doctor or a dietitian, and it is not an emergency service. The plan is for adult general wellness. If you feel unwell, contact a clinician or local emergency services.',
+    faqEyebrow: 'FAQ',
+    faqTitle: 'Know before you start',
+    faq: [
+      ['What does it cost?', 'Bringing a plan you made elsewhere and following it day by day is free. Momentum membership builds your plan every month and adds meal swaps, the shopping list, and progress trends. Payments are not live in the current alpha.'],
+      ['When does the thirty-day period start?', 'On the day your plan is ready, not on the first of the calendar month. It lasts exactly thirty days.'],
+      ['What if I miss a meal or a workout?', 'Nothing gets crossed out. The rest of the month stays in place, and what actually happened shapes next month’s plan.'],
+      ['Can I switch language?', 'Yes. Momentum works in Persian and English, and you can switch at any time from the top of the page. Your country never blocks access.'],
+      ['What happens to my health details?', 'They stay in your account and are never sold for ads. Only the minimum planning details are sent, and only when you start building a plan.'],
+    ],
+    pricingLink: 'See pricing',
+    safety: 'Momentum is not a doctor or a dietitian, and it is not an emergency service. The plan is for adult general wellness.',
     safetyLink: 'Safety boundary',
-    finalTitle: 'Start this month.',
-    finalBody: 'Momentum puts food and training side by side, and builds next month from this period.',
+    finalTitle: 'Start this month with a plan.',
+    finalBody: 'A few questions about you, and your thirty-day food and training plan is ready.',
     top: 'Back to top',
   },
 } as const
+
+const featureIcons: readonly LucideIcon[] = [Sun, CalendarDays, Dumbbell, ShoppingBasket, LineChart, Repeat]
 
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 }
 
+function TodayPreview({ locale }: { locale: AppLocale }) {
+  const text = copy[locale].preview
+  const number = (value: number) => formatNumber(value, locale)
+  return (
+    <div aria-label={text.label} className="land-device" role="img">
+      <GlassChrome className="land-device__chip land-device__chip--day">
+        <CalendarDays aria-hidden="true" size={15} />
+        <span>{text.day}</span>
+      </GlassChrome>
+      <div aria-hidden="true" className="land-device__screen">
+        <div className="land-device__top">
+          <OrbitMark size={26} />
+          <span className="land-device__avatar">{locale === 'fa' ? 'آ' : 'A'}</span>
+        </div>
+        <p className="land-device__greeting">{text.greeting}</p>
+        <div className="land-device__card land-device__targets">
+          <div>
+            <small>{text.target}</small>
+            <strong>{number(2180)} <span>{text.kcal}</span></strong>
+          </div>
+          <div>
+            <small>{text.protein}</small>
+            <strong>{number(148)}{locale === 'fa' ? ' گرم' : 'g'}</strong>
+          </div>
+          <div className="land-device__bar"><i /></div>
+        </div>
+        <div className="land-device__card">
+          <small>{text.nextMeal}</small>
+          <div className="land-device__row">
+            <img alt="" decoding="async" src="/landing/meal.webp" />
+            <div>
+              <strong>{text.meal}</strong>
+              <span>{text.mealMeta}</span>
+            </div>
+          </div>
+        </div>
+        <div className="land-device__card land-device__card--train">
+          <small>{text.training}</small>
+          <div className="land-device__row">
+            <span className="land-device__icon"><Dumbbell size={18} /></span>
+            <div>
+              <strong>{text.workout}</strong>
+              <span>{text.workoutMeta}</span>
+            </div>
+          </div>
+          <span className="land-device__cta">{text.startWorkout}</span>
+        </div>
+      </div>
+      <GlassChrome className="land-device__chip land-device__chip--streak">
+        <Check aria-hidden="true" size={15} />
+        <span>{text.streak}</span>
+      </GlassChrome>
+    </div>
+  )
+}
+
 export function LandingPage({ locale }: { locale: AppLocale }) {
   const text = copy[locale]
-  const railRef = useRef<HTMLSpanElement>(null)
-  const storyRef = useRef<HTMLElement>(null)
-  const [beat, setBeat] = useState(0)
-  const [meterOn, setMeterOn] = useState(false)
   const [showTop, setShowTop] = useState(false)
 
   useEffect(() => {
     let frame = 0
-    const update = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      const progress = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
-      if (railRef.current) railRef.current.style.transform = `scaleY(${progress})`
-      setShowTop((current) => {
-        const next = window.scrollY > 520
-        return current === next ? current : next
-      })
-      const section = storyRef.current
-      if (!section) return
-      const rect = section.getBoundingClientRect()
-      const on = rect.top < window.innerHeight * 0.72 && rect.bottom > window.innerHeight * 0.28
-      setMeterOn((current) => current === on ? current : on)
-      let nextBeat = 0
-      section.querySelectorAll<HTMLElement>('.land-frame').forEach((panel, index) => {
-        if (panel.getBoundingClientRect().top < window.innerHeight * 0.55) nextBeat = index
-      })
-      setBeat((current) => current === nextBeat ? current : nextBeat)
-    }
+    const update = () => setShowTop(window.scrollY > 640)
     const onScroll = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(update)
     }
     update()
     window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
     return () => {
       cancelAnimationFrame(frame)
       window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
     }
   }, [])
+
+  const stepNumber = (index: number) => formatNumber(index + 1, locale)
 
   return (
     <div className="public-page land">
       <PublicHeader locale={locale} />
-      <div aria-hidden="true" className="land-rail"><span ref={railRef} /></div>
-      <div aria-hidden="true" className={`land-meter${meterOn ? ' is-on' : ''}`}>
-        <i style={{ transform: `scaleY(${beat / Math.max(text.beats.length - 1, 1)})` }} />
-        <ol>
-          {text.beats.map((item, index) => (
-            <li className={index === beat ? 'is-active' : index < beat ? 'is-done' : ''} key={item.image}>
-              {formatNumber(index + 1, locale, { minimumIntegerDigits: 2, useGrouping: false })}
-            </li>
-          ))}
-        </ol>
-      </div>
       <main>
         <section className="land-hero">
-          <div aria-hidden="true" className="land-orb land-orb--a" />
-          <div aria-hidden="true" className="land-orb land-orb--b" />
-          <div aria-hidden="true" className="land-orb land-orb--c" />
-          <GlassChrome className="land-mark">
-            <OrbitMark animated size={86} />
-          </GlassChrome>
-          <p className="land-kicker">{text.eyebrow}</p>
-          <h1>{text.title} <em>{text.accent}</em></h1>
-          <p className="land-lead">{text.subtitle}</p>
-          <div className="land-actions">
-            <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-up')}>
-              <span>{text.start}</span>
-              <ArrowRight aria-hidden="true" className="directional-icon" size={18} />
-            </Link>
-            <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today?preview=1')}>
-              <span>{text.sample}</span>
-            </Link>
+          <div aria-hidden="true" className="land-hero__glow" />
+          <div className="land-hero__copy">
+            <p className="land-badge">{text.badge}</p>
+            <h1>{text.title} <em>{text.accent}</em></h1>
+            <p className="land-lead">{text.subtitle}</p>
+            <div className="land-actions">
+              <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-up')}>
+                <span>{text.start}</span>
+                <ArrowRight aria-hidden="true" className="directional-icon" size={18} />
+              </Link>
+              <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today?preview=1')}>
+                <span>{text.sample}</span>
+              </Link>
+            </div>
+            <ul className="land-trust">
+              {text.trust.map((item) => (
+                <li key={item}><Check aria-hidden="true" size={15} />{item}</li>
+              ))}
+            </ul>
           </div>
+          <TodayPreview locale={locale} />
         </section>
 
-        <section aria-label={text.story} className="land-reel" ref={storyRef}>
-          {text.beats.map((item, index) => (
-            <article className={`land-frame land-frame--${index}`} key={item.image}>
-              <div className="land-frame__copy">
-                <p className="land-frame__index">{formatNumber(index + 1, locale, { minimumIntegerDigits: 2, useGrouping: false })}</p>
-                <h2>{item.title}</h2>
-                <p className="land-frame__body">{item.body}</p>
-              </div>
-              <figure className="land-frame__photo">
-                <img alt={item.alt} decoding="async" loading={index === 0 ? 'eager' : 'lazy'} src={item.image} />
-              </figure>
-            </article>
-          ))}
+        <section aria-labelledby="land-how" className="land-section">
+          <header className="land-section__head">
+            <p className="land-eyebrow">{text.howEyebrow}</p>
+            <h2 id="land-how">{text.howTitle}</h2>
+          </header>
+          <ol className="land-steps">
+            {text.steps.map((step, index) => (
+              <Reveal as="li" className="land-step" delay={index * 80} key={step.image}>
+                <figure className="land-step__photo">
+                  <img alt={step.alt} decoding="async" loading="lazy" src={step.image} />
+                  <span className="land-step__num">{stepNumber(index)}</span>
+                </figure>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </Reveal>
+            ))}
+          </ol>
         </section>
 
-        <section className="land-notes">
-          {text.notes.map(([title, line], index) => (
-            <GlassChrome className="land-note" key={title} style={{ animationDelay: `${index * 90}ms` }}>
-              <h2>{title}</h2>
-              <p>{line}</p>
-            </GlassChrome>
-          ))}
+        <section aria-labelledby="land-features" className="land-section">
+          <header className="land-section__head">
+            <p className="land-eyebrow">{text.featuresEyebrow}</p>
+            <h2 id="land-features">{text.featuresTitle}</h2>
+          </header>
+          <ul className="land-features">
+            {text.features.map(([title, body], index) => {
+              const Icon = featureIcons[index] ?? Check
+              return (
+                <Reveal as="li" className="land-feature" delay={(index % 3) * 70} key={title}>
+                  <span aria-hidden="true" className={`land-feature__icon land-feature__icon--${index % 3}`}>
+                    <Icon size={20} />
+                  </span>
+                  <h3>{title}</h3>
+                  <p>{body}</p>
+                </Reveal>
+              )
+            })}
+          </ul>
         </section>
 
-        <GlassChrome className="land-safety">
-          <ShieldCheck size={18} />
-          <p>{text.safety}</p>
-          <Link href={localizedPath(locale, '/safety')}>{text.safetyLink} <ArrowRight className="directional-icon" size={16} /></Link>
-        </GlassChrome>
+        <section aria-labelledby="land-faq" className="land-section land-faq">
+          <header className="land-section__head">
+            <p className="land-eyebrow">{text.faqEyebrow}</p>
+            <h2 id="land-faq">{text.faqTitle}</h2>
+          </header>
+          <div className="land-faq__list">
+            {text.faq.map(([question, answer]) => (
+              <details key={question}>
+                <summary>
+                  <span>{question}</span>
+                  <ChevronDown aria-hidden="true" size={18} />
+                </summary>
+                <p>{answer}</p>
+              </details>
+            ))}
+          </div>
+          <p className="land-faq__more">
+            <Link href={localizedPath(locale, '/pricing')}>{text.pricingLink} <ArrowRight aria-hidden="true" className="directional-icon" size={16} /></Link>
+          </p>
+        </section>
 
         <section className="land-close">
           <GlassChrome className="land-close__panel">
             <OrbitMark size={54} />
             <h2>{text.finalTitle}</h2>
             <p>{text.finalBody}</p>
-            <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-up')}>
-              <span>{text.start}</span>
-              <ArrowRight aria-hidden="true" className="directional-icon" size={18} />
-            </Link>
+            <div className="land-actions">
+              <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-up')}>
+                <span>{text.start}</span>
+                <ArrowRight aria-hidden="true" className="directional-icon" size={18} />
+              </Link>
+              <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today?preview=1')}>
+                <span>{text.sample}</span>
+              </Link>
+            </div>
           </GlassChrome>
+          <p className="land-safety">
+            <ShieldCheck aria-hidden="true" size={17} />
+            {text.safety}
+            <Link href={localizedPath(locale, '/safety')}>{text.safetyLink}</Link>
+          </p>
         </section>
       </main>
       <PublicFooter locale={locale} />
