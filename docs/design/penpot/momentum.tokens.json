@@ -8,51 +8,51 @@
             "$type": "color"
           },
           "50": {
-            "$value": "#FAF7F4",
+            "$value": "#F6F4F0",
             "$type": "color"
           },
           "100": {
-            "$value": "#F5F0ED",
+            "$value": "#F1EEE9",
             "$type": "color"
           },
           "200": {
-            "$value": "#E8DFE4",
+            "$value": "#E3DFD7",
             "$type": "color"
           },
           "300": {
-            "$value": "#D6C9D0",
+            "$value": "#CFCAC0",
             "$type": "color"
           },
           "400": {
-            "$value": "#B6A7B0",
+            "$value": "#A8A196",
             "$type": "color"
           },
           "500": {
-            "$value": "#8A7883",
+            "$value": "#8A847A",
             "$type": "color"
           },
           "600": {
-            "$value": "#675762",
+            "$value": "#5E5951",
             "$type": "color"
           },
           "700": {
-            "$value": "#4F3F48",
+            "$value": "#45413B",
             "$type": "color"
           },
           "800": {
-            "$value": "#352831",
+            "$value": "#2A2824",
             "$type": "color"
           },
           "850": {
-            "$value": "#2D2229",
+            "$value": "#24221F",
             "$type": "color"
           },
           "900": {
-            "$value": "#21191E",
+            "$value": "#1A1916",
             "$type": "color"
           },
           "950": {
-            "$value": "#161114",
+            "$value": "#0E0D0B",
             "$type": "color"
           },
           "1000": {
@@ -60,197 +60,197 @@
             "$type": "color"
           }
         },
-        "plum": {
+        "saffron": {
           "50": {
-            "$value": "#FBF3F8",
+            "$value": "#FDF8EE",
             "$type": "color"
           },
           "100": {
-            "$value": "#F3E1EC",
+            "$value": "#FCF2E1",
             "$type": "color"
           },
           "200": {
-            "$value": "#EBC4DB",
+            "$value": "#F6D9A8",
             "$type": "color"
           },
           "300": {
-            "$value": "#E0A3C8",
+            "$value": "#F6C26D",
             "$type": "color"
           },
           "400": {
-            "$value": "#C67FA9",
+            "$value": "#F0A93B",
             "$type": "color"
           },
           "500": {
-            "$value": "#A75B85",
+            "$value": "#E0901F",
             "$type": "color"
           },
           "600": {
-            "$value": "#854469",
+            "$value": "#C27A0E",
             "$type": "color"
           },
           "700": {
-            "$value": "#73395F",
+            "$value": "#A35E00",
             "$type": "color"
           },
           "800": {
-            "$value": "#5B294A",
+            "$value": "#7F4900",
             "$type": "color"
           },
           "900": {
-            "$value": "#48283A",
+            "$value": "#5C3500",
             "$type": "color"
           },
           "950": {
-            "$value": "#351329",
+            "$value": "#33270F",
             "$type": "color"
           }
         },
-        "apricot": {
+        "coral": {
           "50": {
-            "$value": "#FFF7F2",
+            "$value": "#FFF6F2",
             "$type": "color"
           },
           "100": {
-            "$value": "#FBE4DA",
+            "$value": "#FDEEE7",
             "$type": "color"
           },
           "200": {
-            "$value": "#F7C9B7",
+            "$value": "#FBD3C2",
             "$type": "color"
           },
           "300": {
-            "$value": "#FF9A73",
+            "$value": "#FF9D76",
             "$type": "color"
           },
           "400": {
-            "$value": "#E97D58",
+            "$value": "#FF8A5C",
             "$type": "color"
           },
           "500": {
-            "$value": "#D26846",
+            "$value": "#D9592A",
             "$type": "color"
           },
           "600": {
-            "$value": "#B95332",
+            "$value": "#C24E20",
             "$type": "color"
           },
           "700": {
-            "$value": "#9C3E25",
+            "$value": "#B5441A",
             "$type": "color"
           },
           "800": {
-            "$value": "#7A2D1B",
+            "$value": "#8C3414",
             "$type": "color"
           },
           "900": {
-            "$value": "#5B2015",
+            "$value": "#5E230D",
             "$type": "color"
           },
           "950": {
-            "$value": "#4B261D",
+            "$value": "#36190F",
             "$type": "color"
           }
         },
         "green": {
           "50": {
-            "$value": "#F0FAF6",
+            "$value": "#F1F8F3",
             "$type": "color"
           },
           "100": {
-            "$value": "#DDF5EA",
+            "$value": "#E3F2E8",
             "$type": "color"
           },
           "200": {
-            "$value": "#B8E8D5",
+            "$value": "#BFE3CC",
             "$type": "color"
           },
           "300": {
-            "$value": "#69D3AC",
+            "$value": "#4CC38A",
             "$type": "color"
           },
           "500": {
-            "$value": "#329877",
+            "$value": "#349A63",
             "$type": "color"
           },
           "700": {
-            "$value": "#24765D",
+            "$value": "#2B7A4B",
             "$type": "color"
           },
           "800": {
-            "$value": "#195E49",
+            "$value": "#1F5C38",
             "$type": "color"
           },
           "950": {
-            "$value": "#17382E",
+            "$value": "#112A1C",
             "$type": "color"
           }
         },
         "amber": {
           "50": {
-            "$value": "#FFF9EB",
+            "$value": "#FDF9EA",
             "$type": "color"
           },
           "100": {
-            "$value": "#FFF0C7",
+            "$value": "#FBF4DA",
             "$type": "color"
           },
           "200": {
-            "$value": "#FFE098",
+            "$value": "#F8E6A3",
             "$type": "color"
           },
           "300": {
-            "$value": "#F6C66B",
+            "$value": "#F5D35C",
             "$type": "color"
           },
           "500": {
-            "$value": "#C98112",
+            "$value": "#B58C00",
             "$type": "color"
           },
           "700": {
-            "$value": "#925B00",
+            "$value": "#8A6A00",
             "$type": "color"
           },
           "800": {
-            "$value": "#754700",
+            "$value": "#6B5200",
             "$type": "color"
           },
           "950": {
-            "$value": "#3E3017",
+            "$value": "#332A0C",
             "$type": "color"
           }
         },
         "crimson": {
           "50": {
-            "$value": "#FFF5F6",
+            "$value": "#FEF4F5",
             "$type": "color"
           },
           "100": {
-            "$value": "#FFE4E8",
+            "$value": "#FCE8EB",
             "$type": "color"
           },
           "200": {
-            "$value": "#FFC7D0",
+            "$value": "#F8C7CF",
             "$type": "color"
           },
           "300": {
-            "$value": "#FF8B9C",
+            "$value": "#FF6F80",
             "$type": "color"
           },
           "500": {
-            "$value": "#D9576E",
+            "$value": "#DB4560",
             "$type": "color"
           },
           "700": {
-            "$value": "#B23B52",
+            "$value": "#C02942",
             "$type": "color"
           },
           "800": {
-            "$value": "#913044",
+            "$value": "#981F33",
             "$type": "color"
           },
           "950": {
-            "$value": "#471F29",
+            "$value": "#3A161C",
             "$type": "color"
           }
         },
@@ -891,6 +891,18 @@
         "slow": {
           "$value": "600ms",
           "$type": "duration"
+        },
+        "glassPress": {
+          "$value": "140ms",
+          "$type": "duration"
+        },
+        "glassRelease": {
+          "$value": "320ms",
+          "$type": "duration"
+        },
+        "glassMorph": {
+          "$value": "420ms",
+          "$type": "duration"
         }
       },
       "easing": {
@@ -930,6 +942,14 @@
         "dampingFraction": {
           "$value": 0.82,
           "$type": "number"
+        },
+        "glassResponse": {
+          "$value": 0.34,
+          "$type": "number"
+        },
+        "glassDampingFraction": {
+          "$value": 0.86,
+          "$type": "number"
         }
       }
     }
@@ -949,14 +969,14 @@
             "$description": "Grouped background below opaque content surfaces"
           },
           "auraPrimary": {
-            "$value": "#73395F14",
+            "$value": "#E0901F14",
             "$type": "color",
-            "$description": "Noninformational Plum environment aura; never carries state"
+            "$description": "Noninformational saffron environment aura; never carries state"
           },
           "auraEnergy": {
-            "$value": "#B9533212",
+            "$value": "#D9592A0D",
             "$type": "color",
-            "$description": "Noninformational Apricot environment aura; never carries state"
+            "$description": "Noninformational coral environment aura; never carries state"
           }
         },
         "surface": {
@@ -966,7 +986,7 @@
             "$description": "Default opaque reading, plan, form, and card surface"
           },
           "raised": {
-            "$value": "#F1EAEF",
+            "$value": "#EFECE6",
             "$type": "color",
             "$description": "Selected or elevated opaque content surface"
           },
@@ -976,14 +996,29 @@
             "$description": "Input well and chart plotting surface"
           },
           "glassRegular": {
-            "$value": "#FFFAFCC2",
+            "$value": "#FFFFFFB8",
             "$type": "color",
             "$description": "Adaptive translucent tint for regular functional Liquid Glass"
           },
           "glassProminent": {
-            "$value": "#FFFFFFDE",
+            "$value": "#FFFFFFE6",
             "$type": "color",
             "$description": "More separated translucent tint for prominent functional Liquid Glass"
+          },
+          "glassClear": {
+            "$value": "#FFFFFF52",
+            "$type": "color",
+            "$description": "Minimal-tint Clear glass for a bounded media or aura backdrop with an explicit local legibility treatment"
+          },
+          "glassInteractionPrimary": {
+            "$value": "#1C1A171F",
+            "$type": "color",
+            "$description": "Localized ink optical response during interaction or selection; never a full-screen overlay"
+          },
+          "glassInteractionEnergy": {
+            "$value": "#B5441A24",
+            "$type": "color",
+            "$description": "Brief localized coral interaction highlight; never a persistent primary-action fill"
           },
           "glassFallback": {
             "$value": "{color.primitive.neutral.0}",
@@ -991,14 +1026,14 @@
             "$description": "Opaque fallback for every glass material when transparency is unavailable or reduced"
           },
           "scrim": {
-            "$value": "#241A21B8",
+            "$value": "#1C1A1799",
             "$type": "color",
             "$description": "Background dimming behind modal content"
           }
         },
         "text": {
           "primary": {
-            "$value": "#241A21",
+            "$value": "#1C1A17",
             "$type": "color",
             "$description": "Primary reading text"
           },
@@ -1008,7 +1043,7 @@
             "$description": "Supporting copy and metadata"
           },
           "tertiary": {
-            "$value": "#7C6A75",
+            "$value": "#736D64",
             "$type": "color",
             "$description": "Nonessential metadata; never the only presentation of required information"
           },
@@ -1025,17 +1060,17 @@
         },
         "action": {
           "primary": {
-            "$value": "{color.primitive.plum.700}",
+            "$value": "#1C1A17",
             "$type": "color",
-            "$description": "Default primary action and active navigation tint"
+            "$description": "Ink fill for the one primary action per view"
           },
           "primaryHover": {
-            "$value": "{color.primitive.plum.800}",
+            "$value": "#3A3631",
             "$type": "color",
             "$description": "Pointer hover fill for the primary action"
           },
           "primaryPressed": {
-            "$value": "{color.primitive.plum.950}",
+            "$value": "#000000",
             "$type": "color",
             "$description": "Pressed fill for the primary action"
           },
@@ -1045,22 +1080,22 @@
             "$description": "Foreground over all primary action states"
           },
           "secondary": {
-            "$value": "{color.primitive.plum.100}",
+            "$value": "{color.primitive.saffron.100}",
             "$type": "color",
-            "$description": "Low-emphasis Plum action or selected-control fill"
+            "$description": "Low-emphasis saffron action or selected-control fill"
           },
           "secondaryHover": {
-            "$value": "{color.primitive.plum.200}",
+            "$value": "{color.primitive.saffron.300}",
             "$type": "color",
             "$description": "Pointer hover fill for low-emphasis actions"
           },
           "onSecondary": {
-            "$value": "{color.primitive.plum.700}",
+            "$value": "{color.primitive.saffron.700}",
             "$type": "color",
-            "$description": "Foreground over low-emphasis Plum action fill"
+            "$description": "Foreground over low-emphasis saffron action fill"
           },
           "link": {
-            "$value": "{color.primitive.plum.700}",
+            "$value": "{color.primitive.saffron.700}",
             "$type": "color",
             "$description": "Inline and standalone link foreground; underline remains available for context"
           },
@@ -1077,24 +1112,24 @@
         },
         "plan": {
           "primary": {
-            "$value": "{color.primitive.plum.700}",
+            "$value": "{color.primitive.saffron.700}",
             "$type": "color",
-            "$description": "Monthly plan identity and generation context; not an AI-chat identity"
+            "$description": "Saffron tint: monthly plan identity, selection, and food; not an AI-chat identity"
           },
           "soft": {
-            "$value": "{color.primitive.plum.100}",
+            "$value": "{color.primitive.saffron.100}",
             "$type": "color",
             "$description": "Low-emphasis monthly plan context background"
           }
         },
         "energy": {
           "primary": {
-            "$value": "{color.primitive.apricot.600}",
+            "$value": "{color.primitive.coral.700}",
             "$type": "color",
-            "$description": "Restrained human-energy, nutrition, training, and milestone accent; never a default CTA"
+            "$description": "Coral: training and milestone accent; never a default CTA"
           },
           "soft": {
-            "$value": "{color.primitive.apricot.100}",
+            "$value": "{color.primitive.coral.100}",
             "$type": "color",
             "$description": "Low-emphasis energy context background"
           }
@@ -1168,7 +1203,7 @@
             "$description": "Default content grouping boundary"
           },
           "control": {
-            "$value": "#7C6A75",
+            "$value": "#8A847A",
             "$type": "color",
             "$description": "Control and field boundary with at least 3:1 graphical contrast"
           },
@@ -1185,19 +1220,19 @@
         },
         "focus": {
           "ring": {
-            "$value": "{color.primitive.plum.700}",
+            "$value": "{color.primitive.saffron.700}",
             "$type": "color",
             "$description": "Focus indicator with a surface-colored separation gap when adjacent to a primary action"
           }
         },
         "data": {
           "series1": {
-            "$value": "{color.primitive.plum.700}",
+            "$value": "{color.primitive.saffron.700}",
             "$type": "color",
             "$description": "Chart series one; pair with solid line and circle marker"
           },
           "series2": {
-            "$value": "{color.primitive.apricot.700}",
+            "$value": "{color.primitive.coral.800}",
             "$type": "color",
             "$description": "Chart series two; pair with dashed line and square marker"
           },
@@ -1250,14 +1285,14 @@
             "$description": "Grouped background below opaque content surfaces"
           },
           "auraPrimary": {
-            "$value": "#E0A3C81F",
+            "$value": "#F0A93B12",
             "$type": "color",
-            "$description": "Noninformational Plum environment aura; never carries state"
+            "$description": "Noninformational saffron environment aura; never carries state"
           },
           "auraEnergy": {
-            "$value": "#FF9A731A",
+            "$value": "#FF8A5C0D",
             "$type": "color",
-            "$description": "Noninformational Apricot environment aura; never carries state"
+            "$description": "Noninformational coral environment aura; never carries state"
           }
         },
         "surface": {
@@ -1277,14 +1312,29 @@
             "$description": "Input well and chart plotting surface"
           },
           "glassRegular": {
-            "$value": "#2D2229C7",
+            "$value": "#1C1A17B8",
             "$type": "color",
             "$description": "Adaptive translucent tint for regular functional Liquid Glass"
           },
           "glassProminent": {
-            "$value": "#352831E6",
+            "$value": "#24221FE0",
             "$type": "color",
             "$description": "More separated translucent tint for prominent functional Liquid Glass"
+          },
+          "glassClear": {
+            "$value": "#FFFFFF1A",
+            "$type": "color",
+            "$description": "Minimal-tint Clear glass for a bounded media or aura backdrop with an explicit local legibility treatment"
+          },
+          "glassInteractionPrimary": {
+            "$value": "#F4F1EA29",
+            "$type": "color",
+            "$description": "Localized ink optical response during interaction or selection; never a full-screen overlay"
+          },
+          "glassInteractionEnergy": {
+            "$value": "#FF8A5C33",
+            "$type": "color",
+            "$description": "Brief localized coral interaction highlight; never a persistent primary-action fill"
           },
           "glassFallback": {
             "$value": "{color.primitive.neutral.850}",
@@ -1292,24 +1342,24 @@
             "$description": "Opaque fallback for every glass material when transparency is unavailable or reduced"
           },
           "scrim": {
-            "$value": "#000000C7",
+            "$value": "#000000B8",
             "$type": "color",
             "$description": "Background dimming behind modal content"
           }
         },
         "text": {
           "primary": {
-            "$value": "#FBF5F8",
+            "$value": "#F4F1EA",
             "$type": "color",
             "$description": "Primary reading text"
           },
           "secondary": {
-            "$value": "#C2B3BC",
+            "$value": "#B3AC9F",
             "$type": "color",
             "$description": "Supporting copy and metadata"
           },
           "tertiary": {
-            "$value": "#9F8E98",
+            "$value": "#8E887D",
             "$type": "color",
             "$description": "Nonessential metadata; never the only presentation of required information"
           },
@@ -1326,42 +1376,42 @@
         },
         "action": {
           "primary": {
-            "$value": "{color.primitive.plum.300}",
+            "$value": "#F4F1EA",
             "$type": "color",
-            "$description": "Default primary action and active navigation tint"
+            "$description": "Ink fill for the one primary action per view"
           },
           "primaryHover": {
-            "$value": "{color.primitive.plum.200}",
+            "$value": "#FFFFFF",
             "$type": "color",
             "$description": "Pointer hover fill for the primary action"
           },
           "primaryPressed": {
-            "$value": "{color.primitive.plum.400}",
+            "$value": "#E3DFD7",
             "$type": "color",
             "$description": "Pressed fill for the primary action"
           },
           "onPrimary": {
-            "$value": "{color.primitive.plum.950}",
+            "$value": "#1C1A17",
             "$type": "color",
             "$description": "Foreground over all primary action states"
           },
           "secondary": {
-            "$value": "{color.primitive.plum.900}",
+            "$value": "{color.primitive.saffron.950}",
             "$type": "color",
-            "$description": "Low-emphasis Plum action or selected-control fill"
+            "$description": "Low-emphasis saffron action or selected-control fill"
           },
           "secondaryHover": {
-            "$value": "{color.primitive.plum.800}",
+            "$value": "{color.primitive.saffron.900}",
             "$type": "color",
             "$description": "Pointer hover fill for low-emphasis actions"
           },
           "onSecondary": {
-            "$value": "{color.primitive.plum.200}",
+            "$value": "{color.primitive.saffron.300}",
             "$type": "color",
-            "$description": "Foreground over low-emphasis Plum action fill"
+            "$description": "Foreground over low-emphasis saffron action fill"
           },
           "link": {
-            "$value": "{color.primitive.plum.300}",
+            "$value": "{color.primitive.saffron.400}",
             "$type": "color",
             "$description": "Inline and standalone link foreground; underline remains available for context"
           },
@@ -1378,24 +1428,24 @@
         },
         "plan": {
           "primary": {
-            "$value": "{color.primitive.plum.300}",
+            "$value": "{color.primitive.saffron.400}",
             "$type": "color",
-            "$description": "Monthly plan identity and generation context; not an AI-chat identity"
+            "$description": "Saffron tint: monthly plan identity, selection, and food; not an AI-chat identity"
           },
           "soft": {
-            "$value": "{color.primitive.plum.900}",
+            "$value": "{color.primitive.saffron.950}",
             "$type": "color",
             "$description": "Low-emphasis monthly plan context background"
           }
         },
         "energy": {
           "primary": {
-            "$value": "{color.primitive.apricot.300}",
+            "$value": "{color.primitive.coral.400}",
             "$type": "color",
-            "$description": "Restrained human-energy, nutrition, training, and milestone accent; never a default CTA"
+            "$description": "Coral: training and milestone accent; never a default CTA"
           },
           "soft": {
-            "$value": "{color.primitive.apricot.950}",
+            "$value": "{color.primitive.coral.950}",
             "$type": "color",
             "$description": "Low-emphasis energy context background"
           }
@@ -1464,12 +1514,12 @@
         },
         "border": {
           "subtle": {
-            "$value": "#FFFFFF1F",
+            "$value": "#FFFFFF1A",
             "$type": "color",
             "$description": "Default content grouping boundary"
           },
           "control": {
-            "$value": "#806D78",
+            "$value": "#7A746A",
             "$type": "color",
             "$description": "Control and field boundary with at least 3:1 graphical contrast"
           },
@@ -1479,26 +1529,26 @@
             "$description": "High-emphasis boundary and Increased Contrast replacement"
           },
           "glass": {
-            "$value": "#FFFFFF3D",
+            "$value": "#FFFFFF2E",
             "$type": "color",
             "$description": "Single optical highlight boundary for functional glass"
           }
         },
         "focus": {
           "ring": {
-            "$value": "{color.primitive.plum.300}",
+            "$value": "{color.primitive.saffron.400}",
             "$type": "color",
             "$description": "Focus indicator with a surface-colored separation gap when adjacent to a primary action"
           }
         },
         "data": {
           "series1": {
-            "$value": "{color.primitive.plum.300}",
+            "$value": "{color.primitive.saffron.400}",
             "$type": "color",
             "$description": "Chart series one; pair with solid line and circle marker"
           },
           "series2": {
-            "$value": "{color.primitive.apricot.300}",
+            "$value": "{color.primitive.coral.400}",
             "$type": "color",
             "$description": "Chart series two; pair with dashed line and square marker"
           },
@@ -1523,7 +1573,7 @@
             "$description": "Chart series six; pair with short-dash line and plus marker; does not imply danger without a status label"
           },
           "gridline": {
-            "$value": "#FFFFFF1F",
+            "$value": "#FFFFFF1A",
             "$type": "color",
             "$description": "Chart grid line; never carries a data value"
           },
@@ -1555,7 +1605,7 @@
           "y": 8,
           "blur": 24,
           "spread": -12,
-          "color": "#241A211F"
+          "color": "#1C1A171F"
         },
         "$type": "shadow",
         "$description": "Raised or selected content"
@@ -1566,7 +1616,7 @@
           "y": 16,
           "blur": 44,
           "spread": -18,
-          "color": "#241A213D"
+          "color": "#1C1A173D"
         },
         "$type": "shadow",
         "$description": "Sticky functional chrome, floating toolbar, or popover"
@@ -1577,7 +1627,7 @@
           "y": 24,
           "blur": 72,
           "spread": -20,
-          "color": "#241A2152"
+          "color": "#1C1A1752"
         },
         "$type": "shadow",
         "$description": "Dialog and blocking overlay"
@@ -1710,6 +1760,38 @@
           "$value": "{color.semantic.surface.glassFallback}",
           "$type": "color",
           "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
+        }
+      },
+      "glassClear": {
+        "fill": {
+          "$value": "{color.semantic.surface.glassClear}",
+          "$type": "color",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "blur": {
+          "$value": "18px",
+          "$type": "dimension",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "saturation": {
+          "$value": 1.2,
+          "$type": "number",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "border": {
+          "$value": "{color.semantic.border.glass}",
+          "$type": "color",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "shadow": {
+          "$value": "{shadow.1}",
+          "$type": "shadow",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
         }
       },
       "glassFallback": {
@@ -1954,6 +2036,38 @@
           "$description": "More separated Liquid Glass for a hierarchy-critical floating control or platform-conventional action surface; never a content card"
         }
       },
+      "glassClear": {
+        "fill": {
+          "$value": "{color.semantic.surface.glassClear}",
+          "$type": "color",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "blur": {
+          "$value": "18px",
+          "$type": "dimension",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "saturation": {
+          "$value": 1.14,
+          "$type": "number",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "border": {
+          "$value": "{color.semantic.border.glass}",
+          "$type": "color",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "shadow": {
+          "$value": "{shadow.1}",
+          "$type": "shadow",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        },
+        "opaqueFallback": {
+          "$value": "{color.semantic.surface.glassFallback}",
+          "$type": "color",
+          "$description": "Minimal-tint functional Liquid Glass for a controlled media or aura backdrop; requires an explicit local dimming or contrast treatment"
+        }
+      },
       "glassFallback": {
         "fill": {
           "$value": "{color.semantic.surface.glassFallback}",
@@ -2075,6 +2189,6 @@
       "Core/Motion"
     ],
     "source": "docs/design/tokens.json",
-    "sourceSchemaVersion": "3.0.0"
+    "sourceSchemaVersion": "3.1.0"
   }
 }

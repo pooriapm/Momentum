@@ -7,8 +7,8 @@
 .pricing-hero {
   align-items: center;
   background:
-    radial-gradient(ellipse 46rem 28rem at 12% 16%, color-mix(in srgb, var(--color-brand) 46%, transparent), transparent 62%),
-    radial-gradient(ellipse 34rem 22rem at 86% 80%, color-mix(in srgb, var(--color-energy) 40%, transparent), transparent 64%),
+    radial-gradient(ellipse 46rem 28rem at 12% 16%, color-mix(in srgb, var(--color-brand) 22%, transparent), transparent 62%),
+    radial-gradient(ellipse 34rem 22rem at 86% 80%, color-mix(in srgb, var(--color-energy) 16%, transparent), transparent 64%),
     var(--color-background);
   display: grid;
   justify-items: center;
@@ -31,7 +31,7 @@
   height: 20rem;
   inset-block-start: 14%;
   inset-inline-start: 6%;
-  opacity: .48;
+  opacity: .22;
   width: 20rem;
 }
 
@@ -40,7 +40,7 @@
   height: 14rem;
   inset-block-end: 10%;
   inset-inline-end: 4%;
-  opacity: .4;
+  opacity: .18;
   width: 14rem;
 }
 
@@ -119,18 +119,18 @@
 }
 
 .pricing-frame {
-  --frame: #261820;
+  --frame: var(--color-surface);
   align-content: start;
   background: var(--frame);
-  color: #f7eef3;
+  color: var(--color-text);
   display: grid;
   grid-template-columns: 1.08fr .92fr;
   min-height: 100vh;
 }
 
-.pricing-frame--membership { --frame: #3a1730; color: #f8eef4; }
-.pricing-frame--gift { --frame: #3d1c16; color: #fff3ec; }
-.pricing-frame.is-exhausted { --frame: #2a2428; color: #f4eef1; }
+.pricing-frame--membership { --frame: color-mix(in srgb, var(--color-brand) 9%, var(--color-surface)); }
+.pricing-frame--gift { --frame: color-mix(in srgb, var(--color-energy) 8%, var(--color-surface)); }
+.pricing-frame.is-exhausted { --frame: var(--color-surface-muted); color: var(--color-text-secondary); }
 
 .pricing-frame__copy {
   align-content: center;
@@ -243,7 +243,7 @@
 }
 
 .pricing-notes p {
-  background: color-mix(in srgb, var(--color-brand) 14%, var(--color-surface));
+  background: var(--color-surface-raised);
   border-radius: 1.4rem;
   color: var(--color-text-secondary);
   line-height: 1.85;
@@ -253,17 +253,8 @@
 
 .pricing-meter { display: none; }
 
-:root.light .pricing-frame--free,
-:root[data-theme="light"] .pricing-frame--free { --frame: #f3e4ec; color: #241820; }
-:root.light .pricing-frame--membership,
-:root[data-theme="light"] .pricing-frame--membership { --frame: #f6e4ee; color: #2c1824; }
-:root.light .pricing-frame--gift,
-:root[data-theme="light"] .pricing-frame--gift { --frame: #f8e7df; color: #2a1814; }
-:root.light .pricing-frame.is-exhausted,
-:root[data-theme="light"] .pricing-frame.is-exhausted { --frame: #f1e8ea; color: #2a2226; }
-
 :root.light .pricing-orb--a,
-:root[data-theme="light"] .pricing-orb--a { opacity: .6; }
+:root[data-theme="light"] .pricing-orb--a { opacity: .28; }
 
 @media (min-width: 900px) {
   .pricing-hero h1 { font-size: 4rem; }

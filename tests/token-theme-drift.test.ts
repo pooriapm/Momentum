@@ -62,12 +62,16 @@ const SUPERSEDED_ACCENT = [
   '#d9684b',
   '#6366f1',
   '#7c3aed',
+  '#e0a3c8',
+  '#73395f',
 ]
 
-describe('Human Strength production theme drift', () => {
-  it('maps canonical brand and energy hexes into theme.css', () => {
+describe('Saffron & Ink production theme drift', () => {
+  it('maps canonical action, tint, and energy hexes into theme.css', () => {
     const brandDark = hex('color.semantic.action.primary', 'dark')
     const brandLight = hex('color.semantic.action.primary', 'light')
+    const tintDark = hex('color.semantic.plan.primary', 'dark')
+    const tintLight = hex('color.semantic.plan.primary', 'light')
     const energyDark = hex('color.semantic.energy.primary', 'dark')
     const energyLight = hex('color.semantic.energy.primary', 'light')
     const canvasDark = hex('color.semantic.background.canvas', 'dark')
@@ -77,6 +81,8 @@ describe('Human Strength production theme drift', () => {
 
     expect(themeCss.toLowerCase()).toContain(brandDark)
     expect(themeCss.toLowerCase()).toContain(brandLight)
+    expect(themeCss.toLowerCase()).toContain(tintDark)
+    expect(themeCss.toLowerCase()).toContain(tintLight)
     expect(themeCss.toLowerCase()).toContain(energyDark)
     expect(themeCss.toLowerCase()).toContain(energyLight)
     expect(themeCss.toLowerCase()).toContain(canvasDark)
@@ -84,17 +90,19 @@ describe('Human Strength production theme drift', () => {
     expect(themeCss.toLowerCase()).toContain(textDark)
     expect(themeCss.toLowerCase()).toContain(textLight)
 
-    expect(brandDark).toBe('#e0a3c8')
-    expect(brandLight).toBe('#73395f')
-    expect(energyDark).toBe('#ff9a73')
-    expect(energyLight).toBe('#b95332')
+    expect(brandDark).toBe('#f4f1ea')
+    expect(brandLight).toBe('#1c1a17')
+    expect(tintDark).toBe('#f0a93b')
+    expect(tintLight).toBe('#a35e00')
+    expect(energyDark).toBe('#ff8a5c')
+    expect(energyLight).toBe('#b5441a')
   })
 
-  it('keeps --color-accent on Human Strength plum, not mint or indigo/violet/coral', () => {
+  it('keeps --color-accent on saffron, not a superseded plum, mint, or indigo accent', () => {
     const accents = declaredValues(themeCss, '--color-accent')
     expect(accents.length).toBeGreaterThanOrEqual(2)
-    expect(accents).toContain('#e0a3c8')
-    expect(accents).toContain('#73395f')
+    expect(accents).toContain('#f0a93b')
+    expect(accents).toContain('#a35e00')
 
     for (const value of accents) {
       expect(SUPERSEDED_ACCENT).not.toContain(value)

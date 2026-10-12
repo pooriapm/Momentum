@@ -274,7 +274,7 @@
 }
 
 .progress-compare__tile {
-  background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface));
+  background: var(--color-surface-raised);
   border-radius: 1.1rem;
   display: grid;
   gap: .25rem;

@@ -15,7 +15,7 @@
       name="description"
       content="Momentum — برنامه‌ریزی ماهانه دو‌زبانه برای برنامه شخصی غذا، تمرین و پیگیری پیشرفت"
     />
-    <meta name="theme-color" content="#161114" />
+    <meta name="theme-color" content="#0e0d0b" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Momentum" />
@@ -40,9 +40,8 @@
         direction: ltr;
         text-align: center;
         background:
-          radial-gradient(circle at 50% 42%, rgba(224, 163, 200, 0.22), transparent 18rem),
-          radial-gradient(circle at 55% 55%, rgba(185, 83, 58, 0.12), transparent 22rem),
-          #161114;
+          radial-gradient(circle at 50% 42%, rgba(240, 169, 59, 0.12), transparent 18rem),
+          #0e0d0b;
       }
 
       #boot-splash .boot-splash__content {
@@ -61,7 +60,7 @@
 
       #boot-splash .boot-splash__name {
         margin: 1.35rem 0 0;
-        color: #fbf5f8;
+        color: #f4f1ea;
         font: 900 0.78rem/1.4 Arial, sans-serif;
         letter-spacing: 0.3em;
       }
@@ -69,7 +68,7 @@
       #boot-splash .boot-splash__tagline {
         margin: 0.5rem 0 0;
         direction: rtl;
-        color: #c2b3bc;
+        color: #b3ac9f;
         font-size: 0.78rem;
         font-weight: 700;
         line-height: 1.8;
@@ -92,7 +91,18 @@
         margin-top: 1.6rem;
         overflow: hidden;
         border-radius: 999px;
-        background: rgba(224, 163, 200, 0.18);
+        background: rgba(240, 169, 59, 0.18);
+      }
+
+      @media (prefers-color-scheme: light) {
+        #boot-splash {
+          background:
+            radial-gradient(circle at 50% 42%, rgba(224, 144, 31, 0.1), transparent 18rem),
+            #f6f4f0;
+        }
+        #boot-splash .boot-splash__name { color: #1c1a17; }
+        #boot-splash .boot-splash__tagline { color: #5e5951; }
+        #boot-splash .boot-splash__progress { background: rgba(163, 94, 0, 0.16); }
       }
     </style>
     <title>Momentum — برنامه‌ریزی ماهانه حرکت‌های ماندگار</title>

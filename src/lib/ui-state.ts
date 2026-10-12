@@ -3,21 +3,39 @@ import type { Theme, UiState } from '../types/ui'
 
 const UI_STATE_KEY = STORAGE_KEYS.uiState
 
-const defaultUiState: UiState = {
+/** Until someone picks a theme, Momentum follows the system appearance. */
+export function systemTheme(): Theme {
+  try {
+    return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  } catch {
+    return 'dark'
+  }
+}
+
+const defaultUiState = (): UiState => ({
   locale: typeof navigator !== 'undefined' && !navigator.language.toLowerCase().startsWith('fa') ? 'en' : 'fa',
   selectedTab: 'today',
-  theme: 'dark',
+  theme: systemTheme(),
+})
+
+function readStoredState(): Partial<UiState> | null {
+  try {
+    const rawState = localStorage.getItem(UI_STATE_KEY)
+    return rawState ? JSON.parse(rawState) as Partial<UiState> : null
+  } catch {
+    return null
+  }
 }
 
 export function loadUiState(): UiState {
+  const defaults = defaultUiState()
   try {
-    const rawState = localStorage.getItem(UI_STATE_KEY)
+    const candidate = readStoredState()
 
-    if (!rawState) {
-      return defaultUiState
+    if (!candidate) {
+      return defaults
     }
 
-    const candidate = JSON.parse(rawState) as Partial<UiState>
     const validTabs: UiState['selectedTab'][] = [
       'today',
       'meal-plan',
@@ -27,14 +45,14 @@ export function loadUiState(): UiState {
     ]
 
     return {
-      locale: candidate.locale === 'en' ? 'en' : candidate.locale === 'fa' ? 'fa' : defaultUiState.locale,
+      locale: candidate.locale === 'en' ? 'en' : candidate.locale === 'fa' ? 'fa' : defaults.locale,
       selectedTab: validTabs.includes(candidate.selectedTab as UiState['selectedTab'])
         ? (candidate.selectedTab as UiState['selectedTab'])
-        : defaultUiState.selectedTab,
-      theme: candidate.theme === 'light' ? 'light' : 'dark',
+        : defaults.selectedTab,
+      theme: candidate.theme === 'light' || candidate.theme === 'dark' ? candidate.theme : defaults.theme,
     }
   } catch {
-    return defaultUiState
+    return defaults
   }
 }
 
@@ -49,11 +67,19 @@ export function hasStoredLocalePreference(): boolean {
   }
 }
 
+export function hasStoredThemePreference(): boolean {
+  const stored = readStoredState()?.theme
+  return stored === 'light' || stored === 'dark'
+}
+
 export function updateUiState(update: Partial<UiState>): UiState {
   const nextState = { ...loadUiState(), ...update }
+  // Saving another preference must not pin today’s system appearance as a choice.
+  const persisted: Partial<UiState> = { ...nextState }
+  if (!update.theme && !hasStoredThemePreference()) delete persisted.theme
 
   try {
-    localStorage.setItem(UI_STATE_KEY, JSON.stringify(nextState))
+    localStorage.setItem(UI_STATE_KEY, JSON.stringify(persisted))
   } catch {
     // UI preferences are non-critical and can safely fall back to defaults.
   }
