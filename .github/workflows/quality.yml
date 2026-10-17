@@ -126,7 +126,8 @@ jobs:
             supabase/functions/generate-monthly-plan/index.ts \
             supabase/functions/account-data/index.ts \
             supabase/functions/account-settings/index.ts \
-            supabase/functions/checkins/index.ts
+            supabase/functions/checkins/index.ts \
+            supabase/functions/payments/index.ts
 
   database:
     name: Supabase database tests

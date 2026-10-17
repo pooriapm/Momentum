@@ -10,6 +10,8 @@ import { runtimeConfig } from '../../../platform/config/runtime'
 import { applyUiTheme, updateUiState } from '../../../lib/ui-state'
 import { InstallExperienceCard } from '../../components/InstallExperienceCard'
 import { ModalShell } from '../../components/ModalShell'
+import { paymentResultFromSearch, startZarinpalCheckout, type PaymentResult } from '../../data/payments'
+import { PAYMENTS_LIVE } from '../../entitlement'
 import { type MomentumPlanView, localize } from '../../data/types'
 import { localizedPath, switchLocalePath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
@@ -42,7 +44,8 @@ export function MePage({
   const search = useSearch()
   const { user, signOut } = useAuth()
   const [lightTheme, setLightTheme] = useState(() => document.documentElement.classList.contains('light'))
-  const [view, setView] = useState<MePanel>(panel ?? 'hub')
+  const paymentResult = paymentResultFromSearch(search)
+  const [view, setView] = useState<MePanel>(panel ?? (paymentResult ? 'subscription' : 'hub'))
   const [signOutOpen, setSignOutOpen] = useState(false)
   const otherLocale: AppLocale = locale === 'fa' ? 'en' : 'fa'
   const query = preview ? '?preview=1' : ''
@@ -58,7 +61,7 @@ export function MePage({
   }
 
   if (view === 'subscription') {
-    return <MembershipPanel locale={locale} onBack={() => setView('hub')} periodEnd={plan?.progress.entitlementPeriodEnd} preview={preview} status={status} />
+    return <MembershipPanel locale={locale} onBack={() => setView('hub')} paymentResult={paymentResult} periodEnd={plan?.progress.entitlementPeriodEnd} preview={preview} productRegion={plan?.progress.productRegion} status={status} />
   }
 
   if (view === 'help') {
@@ -128,17 +131,37 @@ export function MePage({
 function MembershipPanel({
   locale,
   onBack,
+  paymentResult,
   periodEnd,
   preview,
+  productRegion,
   status,
 }: {
   locale: AppLocale
   onBack: () => void
+  paymentResult?: PaymentResult | null
   periodEnd?: string
   preview: boolean
+  productRegion?: 'ir' | 'intl'
   status: MembershipStatus
 }) {
   const fa = locale === 'fa'
+  // The website serves everyone. Zarinpal (toman) is the checkout for the Iranian market;
+  // how members outside Iran pay is still undecided, so they keep the pricing link.
+  const zarinpal = PAYMENTS_LIVE && productRegion === 'ir'
+  const [paying, setPaying] = useState(false)
+  const [payError, setPayError] = useState(false)
+  async function pay() {
+    if (preview || paying) return
+    setPaying(true)
+    setPayError(false)
+    try {
+      await startZarinpalCheckout(locale)
+    } catch {
+      setPayError(true)
+      setPaying(false)
+    }
+  }
   const copy = membershipCopy(status, locale)
   const query = preview ? '?preview=1' : ''
   const checkout = status === 'gift' || status === 'none' || status === 'cancelled' || status === 'expired' || status === 'pending'
@@ -160,9 +183,13 @@ function MembershipPanel({
           ? (fa ? `مرز بعدی واجد شرایط: ${periodEnd}` : `Next eligible boundary: ${periodEnd}`)
           : (fa ? 'فقط یک اشتراک Momentum وجود دارد؛ نردبان چندسطحی نیست.' : 'There is one Momentum membership. Dual plans are not offered.')}</p>
         {status === 'pending' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت در انتظار است. ساخت برنامه جدید شروع نمی‌شود.' : 'Payment is pending. A new plan will not start.'}</div> : null}
+        {paymentResult === 'success' ? <div className="inline-notice inline-notice--success" role="status">{fa ? 'پرداخت تأیید شد و عضویت ۳۰ روزه فعال شد.' : 'Payment confirmed. Your 30-day membership is active.'}</div> : null}
+        {paymentResult === 'cancelled' ? <div className="inline-notice" role="status">{fa ? 'پرداخت لغو شد و مبلغی کم نشد.' : 'Payment was cancelled. You were not charged.'}</div> : null}
+        {paymentResult === 'failed' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت تأیید نشد. اگر مبلغی کم شده باشد، بانک آن را حداکثر تا ۷۲ ساعت برمی‌گرداند.' : 'The payment was not confirmed. If money was taken, the bank returns it within 72 hours.'}</div> : null}
+        {payError ? <div className="inline-notice inline-notice--error" role="alert">{fa ? 'اتصال به درگاه پرداخت برقرار نشد. دوباره تلاش کن.' : 'Could not reach the payment gateway. Try again.'}</div> : null}
         {status === 'cancelled' || status === 'expired' ? <div className="inline-notice" role="status">{fa ? 'برنامه‌های قبلی خواندنی می‌مانند. چرخه بعد ساخته نمی‌شود.' : 'Previous plans stay readable. The next cycle is blocked.'}</div> : null}
         <div className="me-panel-card__actions">
-          {checkout ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{status === 'pending' ? (fa ? 'بازیابی پرداخت' : 'Recover payment') : (fa ? 'شروع عضویت' : 'Start membership')}</Link> : <StatusPill tone="success">{fa ? 'عضویت فعال' : 'Membership active'}</StatusPill>}
+          {zarinpal ? <Button disabled={preview} loading={paying} onClick={() => void pay()}>{status === 'active' ? (fa ? 'تمدید ۳۰ روز با زرین‌پال' : 'Extend 30 days with Zarinpal') : (fa ? 'پرداخت با زرین‌پال' : 'Pay with Zarinpal')}</Button> : checkout ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{status === 'pending' ? (fa ? 'بازیابی پرداخت' : 'Recover payment') : (fa ? 'شروع عضویت' : 'Start membership')}</Link> : <StatusPill tone="success">{fa ? 'عضویت فعال' : 'Membership active'}</StatusPill>}
           <Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, '/app/account')}${query}`}>{fa ? 'خروجی یا حذف' : 'Export or delete'}</Link>
         </div>
       </ContentCard>

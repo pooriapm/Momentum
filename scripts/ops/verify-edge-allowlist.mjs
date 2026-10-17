@@ -12,6 +12,7 @@ const EXPECTED_FUNCTIONS = [
   'checkins',
   'generate-monthly-plan',
   'geo-context',
+  'payments',
 ]
 const QUARANTINED_FUNCTIONS = [
   'analyze-body-composition',

@@ -15,6 +15,8 @@ export const runtimeConfig = Object.freeze({
   supabaseUrl,
   supabasePublishableKey,
   hasSupabase: Boolean(supabaseUrl && supabasePublishableKey),
+  // Build-time switch for the Zarinpal checkout; the payments function also fails closed.
+  paymentsLive: import.meta.env.VITE_PAYMENTS_LIVE?.trim() === 'true',
   supportEmail: envEmail(import.meta.env.VITE_SUPPORT_EMAIL),
   privacyEmail: envEmail(import.meta.env.VITE_PRIVACY_EMAIL),
   errorIngestUrl: import.meta.env.VITE_ERROR_INGEST_URL?.trim()

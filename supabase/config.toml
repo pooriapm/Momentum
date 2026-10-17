@@ -58,6 +58,11 @@ policy = "per_worker"
 [functions.geo-context]
 verify_jwt = false
 
+[functions.payments]
+# The Zarinpal return is an unauthenticated browser redirect; API actions
+# authenticate with auth.getUser() inside the function.
+verify_jwt = false
+
 [functions.account-data]
 # Application auth verifies the bearer token with auth.getUser(). Keeping the
 # gateway check off ensures CORS and structured request IDs also cover 401s.

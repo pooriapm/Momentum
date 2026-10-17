@@ -24,7 +24,8 @@
     "account-settings",
     "checkins",
     "generate-monthly-plan",
-    "geo-context"
+    "geo-context",
+    "payments"
   ],
   "quarantined_remote_functions": [
     "analyze-body-composition",

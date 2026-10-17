@@ -1,3 +1,5 @@
+import { runtimeConfig } from '../../platform/config/runtime'
+
 export type MembershipStatus = 'gift' | 'active' | 'pending' | 'cancelled' | 'expired' | 'none'
 export type GiftCampaignStatus = 'available' | 'exhausted' | 'disabled' | 'unknown'
 export type PaymentMethodStatus = 'missing' | 'recorded' | 'pending' | 'unavailable'
@@ -46,8 +48,8 @@ export interface EntitlementSnapshot {
 }
 
 /**
- * Thin payments (SetupIntent / Stripe.js / webhooks) are Phase 5a.
- * This slice only models client entitlement states and routing. Do not import a payment SDK here.
+ * Prepaid 30-day membership: Zarinpal on the website, Cafe Bazaar in the Android app.
+ * The client never confirms a payment; the payments Edge Function grants the period.
  */
-export const PAYMENTS_LIVE = false
+export const PAYMENTS_LIVE = runtimeConfig.paymentsLive
 export const MEMBERSHIP_PRODUCT_CODE = 'membership'
