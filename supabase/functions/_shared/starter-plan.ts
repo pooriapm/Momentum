@@ -14,6 +14,18 @@ const STARTER_FOOD_IDS_V2 = [
   'food:lentil-stew-rice@v2',
 ] as const
 
+// Matches the floor assertGeneratedPlan enforces on the deterministic starter.
+const STARTER_MINIMUM_CALORIES = 1_200
+const MAX_SERVING_MULTIPLIER = 4
+const SNACK_MEAL_TYPES = ['afternoon_snack', 'morning_snack'] as const
+const MEAL_TIMES: Record<string, string> = {
+  breakfast: '08:00',
+  morning_snack: '10:30',
+  lunch: '13:00',
+  afternoon_snack: '16:30',
+  dinner: '19:00',
+}
+
 const STARTER_EXERCISE_IDS_V1 = [
   'exercise:bodyweight-squat@v1',
   'exercise:incline-wall-pushup@v1',
@@ -49,15 +61,18 @@ function option(
   foodId: string,
   optionKey: string,
   locale: 'fa-IR' | 'en-US',
+  servingMultiplier = 1,
 ): Record<string, unknown> {
   const food = requiredFood(catalog, foodId)
   return {
     food_id: food.id,
     option_key: optionKey,
     title: locale === 'fa-IR' ? food.name_fa : food.name_en,
+    ...(servingMultiplier === 1 ? {} : { serving_multiplier: servingMultiplier }),
     ingredients: [...food.ingredientIds].map((ingredientId) => {
       const ingredient = catalog.ingredients.get(ingredientId)
-      if (!ingredient) {
+      const portion = food.ingredientPortions.get(ingredientId)
+      if (!ingredient || !portion) {
         throw new HttpError(
           503,
           'starter_catalog_incomplete',
@@ -67,13 +82,13 @@ function option(
       return {
         ingredient_id: ingredient.id,
         name: locale === 'fa-IR' ? ingredient.name_fa : ingredient.name_en,
-        amount: 1,
+        amount: portion.amount * servingMultiplier,
         unit: ingredient.default_unit,
         note: null,
       }
     }),
     nutrition: {
-      ...food.nutrition,
+      ...scaledNutrition(food, servingMultiplier),
       confidence: 'high',
       source: 'catalog_reference',
     },
@@ -112,6 +127,20 @@ function exercise(
   }
 }
 
+function roundNutrient(value: number) {
+  return Math.round(value * 100) / 100
+}
+
+function scaledNutrition(food: CatalogFood, multiplier: number) {
+  return {
+    calories: roundNutrient(food.nutrition.calories * multiplier),
+    protein_g: roundNutrient(food.nutrition.protein_g * multiplier),
+    carbs_g: roundNutrient(food.nutrition.carbs_g * multiplier),
+    fat_g: roundNutrient(food.nutrition.fat_g * multiplier),
+    fiber_g: roundNutrient(food.nutrition.fiber_g * multiplier),
+  }
+}
+
 function foodHasDeclaredAllergen(
   catalog: PlanCatalogSnapshot,
   food: CatalogFood,
@@ -121,6 +150,23 @@ function foodHasDeclaredAllergen(
     const ingredient = catalog.ingredients.get(ingredientId)
     return ingredient && [...ingredient.allergenIds].some((id) => declaredAllergenIds.has(id))
   })
+}
+
+// Fallbacks must not depend on catalog load order: most energy-dense first, ties
+// broken by ID, so the day has the best chance of clearing the calorie floor.
+function eligibleFoods(
+  catalog: PlanCatalogSnapshot,
+  mealType: string,
+  declaredAllergenIds: ReadonlySet<string>,
+): CatalogFood[] {
+  return [...catalog.foods.values()]
+    .filter((food) =>
+      food.meal_types.includes(mealType) &&
+      !foodHasDeclaredAllergen(catalog, food, declaredAllergenIds)
+    )
+    .sort((a, b) =>
+      b.nutrition.calories - a.nutrition.calories || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+    )
 }
 
 function foodForMealType(
@@ -136,16 +182,7 @@ function foodForMealType(
       !foodHasDeclaredAllergen(catalog, preferred, declaredAllergenIds)
     ) return preferred
   }
-  // Fallback must not depend on catalog load order: prefer the most energy-dense
-  // eligible food (ties broken by ID) so the day stays above the calorie floor.
-  const match = [...catalog.foods.values()]
-    .filter((food) =>
-      food.meal_types.includes(mealType) &&
-      !foodHasDeclaredAllergen(catalog, food, declaredAllergenIds)
-    )
-    .sort((a, b) =>
-      b.nutrition.calories - a.nutrition.calories || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
-    )[0]
+  const match = eligibleFoods(catalog, mealType, declaredAllergenIds)[0]
   if (!match) {
     throw new HttpError(
       422,
@@ -189,8 +226,33 @@ export function buildMonthlyStubPlan(
   const breakfast = foodForMealType(catalog, 'breakfast', foods[0], declaredAllergenIds)
   const lunch = foodForMealType(catalog, 'lunch', foods[1], declaredAllergenIds)
   const dinner = foodForMealType(catalog, 'dinner', foods[2], declaredAllergenIds)
+  const meals: Array<{ type: string; food: CatalogFood }> = [
+    { type: 'breakfast', food: breakfast },
+    { type: 'lunch', food: lunch },
+    { type: 'dinner', food: dinner },
+  ]
+  const dayCalories = () => meals.reduce((sum, meal) => sum + meal.food.nutrition.calories, 0)
+  // Allergen fallbacks can leave three meals short of the floor: add snacks
+  // first, then scale every portion by the smallest quarter-step that fits.
+  for (const snackType of SNACK_MEAL_TYPES) {
+    if (dayCalories() >= STARTER_MINIMUM_CALORIES) break
+    const snack = eligibleFoods(catalog, snackType, declaredAllergenIds)[0]
+    if (snack) meals.push({ type: snackType, food: snack })
+  }
+  meals.sort((a, b) => (MEAL_TIMES[a.type] ?? '').localeCompare(MEAL_TIMES[b.type] ?? ''))
+  const baseCalories = dayCalories()
+  const servingMultiplier = baseCalories >= STARTER_MINIMUM_CALORIES
+    ? 1
+    : Math.ceil((STARTER_MINIMUM_CALORIES / baseCalories) * 4) / 4
+  if (!(servingMultiplier <= MAX_SERVING_MULTIPLIER)) {
+    throw new HttpError(
+      422,
+      'starter_plan_allergen_unavailable',
+      'No governed starter food is available for the declared allergens.',
+    )
+  }
   const exerciseIds = exerciseIdsForStub(catalog)
-  const foodIds = [breakfast.id, lunch.id, dinner.id]
+  const foodIds = meals.map((meal) => meal.food.id)
 
   const labels = locale === 'fa-IR'
     ? {
@@ -200,7 +262,9 @@ export function buildMonthlyStubPlan(
       strategy: 'انرژی متعادل در طول روز',
       workout: 'تمرین پایه تمام‌بدن',
       breakfast: 'صبحانه',
+      morning_snack: 'میان‌وعده صبح',
       lunch: 'ناهار',
+      afternoon_snack: 'میان‌وعده عصر',
       dinner: 'شام',
       emergency: 'گزینه فوری',
       restaurant: 'گزینه ساده رستوران',
@@ -215,7 +279,9 @@ export function buildMonthlyStubPlan(
       strategy: 'Balanced energy across the day',
       workout: 'Starter full-body session',
       breakfast: 'Breakfast',
+      morning_snack: 'Morning snack',
       lunch: 'Lunch',
+      afternoon_snack: 'Afternoon snack',
       dinner: 'Dinner',
       emergency: 'Emergency option',
       restaurant: 'Simple restaurant option',
@@ -224,13 +290,15 @@ export function buildMonthlyStubPlan(
       note: 'Stop exercising if pain, dizziness, or unusual symptoms occur.',
     }
 
+  const mealNutrition = meals.map((meal) => scaledNutrition(meal.food, servingMultiplier))
+  const total = (key: keyof ReturnType<typeof scaledNutrition>) =>
+    roundNutrient(mealNutrition.reduce((sum, nutrition) => sum + nutrition[key], 0))
   const targets = {
-    calories: breakfast.nutrition.calories + lunch.nutrition.calories + dinner.nutrition.calories,
-    protein_g: breakfast.nutrition.protein_g + lunch.nutrition.protein_g +
-      dinner.nutrition.protein_g,
-    carbs_g: breakfast.nutrition.carbs_g + lunch.nutrition.carbs_g + dinner.nutrition.carbs_g,
-    fat_g: breakfast.nutrition.fat_g + lunch.nutrition.fat_g + dinner.nutrition.fat_g,
-    fiber_g: breakfast.nutrition.fiber_g + lunch.nutrition.fiber_g + dinner.nutrition.fiber_g,
+    calories: total('calories'),
+    protein_g: total('protein_g'),
+    carbs_g: total('carbs_g'),
+    fat_g: total('fat_g'),
+    fiber_g: total('fiber_g'),
     water_ml: 2200,
   }
   const days = Array.from({ length: requestedDays }, (_, dayIndex) => ({
@@ -250,32 +318,16 @@ export function buildMonthlyStubPlan(
       cooldown: [locale === 'fa-IR' ? 'پنج دقیقه راه رفتن آرام' : 'Five minutes of easy walking'],
       safety_note: labels.note,
     },
-    meals: [
-      {
-        slot_key: `breakfast-${dayIndex}`,
-        type: 'breakfast',
-        title: labels.breakfast,
-        scheduled_time: '08:00',
-        default_option_key: `breakfast-option-${dayIndex}`,
-        options: [option(catalog, breakfast.id, `breakfast-option-${dayIndex}`, locale)],
-      },
-      {
-        slot_key: `lunch-${dayIndex}`,
-        type: 'lunch',
-        title: labels.lunch,
-        scheduled_time: '13:00',
-        default_option_key: `lunch-option-${dayIndex}`,
-        options: [option(catalog, lunch.id, `lunch-option-${dayIndex}`, locale)],
-      },
-      {
-        slot_key: `dinner-${dayIndex}`,
-        type: 'dinner',
-        title: labels.dinner,
-        scheduled_time: '19:00',
-        default_option_key: `dinner-option-${dayIndex}`,
-        options: [option(catalog, dinner.id, `dinner-option-${dayIndex}`, locale)],
-      },
-    ],
+    meals: meals.map(({ type, food }) => ({
+      slot_key: `${type}-${dayIndex}`,
+      type,
+      title: labels[type as keyof typeof labels],
+      scheduled_time: MEAL_TIMES[type],
+      default_option_key: `${type}-option-${dayIndex}`,
+      options: [
+        option(catalog, food.id, `${type}-option-${dayIndex}`, locale, servingMultiplier),
+      ],
+    })),
     notes: [],
   }))
   const groceryIngredients = new Map<string, Record<string, unknown>>()

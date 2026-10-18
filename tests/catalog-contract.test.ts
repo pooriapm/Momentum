@@ -6,6 +6,7 @@ import {
 } from '../supabase/functions/_shared/plan-catalog.ts'
 import { assertGeneratedPlan } from '../supabase/functions/_shared/plan-contract.ts'
 import { buildStarterPlan } from '../supabase/functions/_shared/starter-plan.ts'
+import { coreCatalogV2Rows } from './helpers/core-catalog-v2.ts'
 
 const ingredients = [
   ['ingredient:brown-rice@v1', 'Rice', 'برنج', 'g'],
@@ -278,6 +279,41 @@ describe('governed plan catalog', () => {
 
     expect(mealFoodIds(plan)[0]).toBe('food:peanut-banana-toast@v2')
     expect(() => assertGeneratedPlan(plan, 30, 'fa-IR', {
+      catalog, declaredAllergenIds, minimumCalories: 1200,
+    })).not.toThrow()
+  })
+})
+
+describe('deterministic starter on the real momentum-core@v2 catalog', () => {
+  const catalog = createPlanCatalogSnapshot(coreCatalogV2Rows())
+  const allergenIds = [...catalog.allergens.keys()]
+
+  it('passes the 1200 kcal contract for every combination of declared allergens', () => {
+    const failures: string[] = []
+    for (let mask = 0; mask < 1 << allergenIds.length; mask += 1) {
+      const declaredAllergenIds = new Set(allergenIds.filter((_, index) => mask & (1 << index)))
+      try {
+        const plan = buildStarterPlan(catalog, 30, 'fa-IR', declaredAllergenIds)
+        assertGeneratedPlan(plan, 30, 'fa-IR', {
+          catalog, declaredAllergenIds, minimumCalories: 1200,
+        })
+      } catch (error) {
+        failures.push(`${[...declaredAllergenIds].join('+') || 'none'}: ${String(error)}`)
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  it('adds snacks and scales portions when allergens leave three meals short', () => {
+    const declaredAllergenIds = new Set(allergenIds)
+    const plan = buildStarterPlan(catalog, 30, 'en-US', declaredAllergenIds)
+    const day = (plan.days as Record<string, unknown>[])[0] as Record<string, unknown>
+    const meals = day.meals as Record<string, unknown>[]
+
+    expect(meals.map((meal) => meal.type)).toContain('afternoon_snack')
+    expect(Number((day.targets as Record<string, unknown>).calories)).toBeGreaterThanOrEqual(1200)
+    expect(() => assertGeneratedPlan(plan, 30, 'en-US', {
       catalog, declaredAllergenIds, minimumCalories: 1200,
     })).not.toThrow()
   })
