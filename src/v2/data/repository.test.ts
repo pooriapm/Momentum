@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { dashboardResponseSchema, planHistoryItemSchema } from './contracts'
-import { currentLocalDate, mapDashboardToPlan, mapPlanHistory, undoMeal } from './repository'
+import { currentLocalDate, mapDashboardToPlan, mapPlanHistory, skipMeal, undoMeal } from './repository'
 import type { DashboardResponse } from './contracts'
 
 const mocks = vi.hoisted(() => ({
@@ -255,6 +255,27 @@ describe('undo-meal account-data action', () => {
         option_key: 'chicken-rice',
       },
       headers: { 'Idempotency-Key': expect.any(String) },
+    })
+  })
+})
+
+describe('skip-meal account-data action', () => {
+  beforeEach(() => {
+    mocks.invoke.mockReset()
+    mocks.invoke.mockResolvedValue({ data: { skip: { status: 'skipped' } }, error: null })
+  })
+
+  it('persists a meal skip through account-data skip-meal', async () => {
+    await skipMeal('2026-10-18', 'lunch', 'chicken-rice', 'skip-meal-key-1')
+
+    expect(mocks.invoke).toHaveBeenCalledWith('account-data', {
+      body: {
+        action: 'skip-meal',
+        local_date: '2026-10-18',
+        slot_key: 'lunch',
+        option_key: 'chicken-rice',
+      },
+      headers: { 'Idempotency-Key': 'skip-meal-key-1' },
     })
   })
 })

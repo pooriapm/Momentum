@@ -314,7 +314,7 @@ interface DashboardRequest {
   requestedLocalDate?: string
 }
 
-type MealMutationAction = 'select-meal' | 'complete-meal' | 'undo-meal'
+type MealMutationAction = 'select-meal' | 'complete-meal' | 'undo-meal' | 'skip-meal'
 
 interface MealMutationRequest {
   action: MealMutationAction
@@ -1684,7 +1684,8 @@ Deno.serve(async (request) => {
     if (
       body.action !== 'select-meal' &&
       body.action !== 'complete-meal' &&
-      body.action !== 'undo-meal'
+      body.action !== 'undo-meal' &&
+      body.action !== 'skip-meal'
     ) {
       throw new HttpError(400, 'unsupported_action', 'Action is unsupported.')
     }
@@ -1708,6 +1709,8 @@ Deno.serve(async (request) => {
       ? 'complete_meal_option'
       : input.action === 'undo-meal'
       ? 'undo_meal_option'
+      : input.action === 'skip-meal'
+      ? 'skip_meal_option'
       : 'select_meal_option'
     const { data, error } = await auth.admin.rpc(rpcName, {
       p_user_id: auth.user.id,
@@ -1737,7 +1740,7 @@ Deno.serve(async (request) => {
         throw new HttpError(
           409,
           'meal_not_completed',
-          'Only a completed meal on the current day can be undone.',
+          'Only a completed or skipped meal on the current day can be undone.',
         )
       }
       if (error.message.includes('meal_date_not_current')) {
@@ -1764,6 +1767,7 @@ Deno.serve(async (request) => {
 
     if (input.action === 'complete-meal') return jsonResponse(request, { completion: data })
     if (input.action === 'undo-meal') return jsonResponse(request, { undo: data })
+    if (input.action === 'skip-meal') return jsonResponse(request, { skip: data })
     return jsonResponse(request, { selection: data })
   } catch (error) {
     return errorResponse(request, error)

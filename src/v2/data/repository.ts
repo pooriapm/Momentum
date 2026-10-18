@@ -408,6 +408,21 @@ export async function undoMeal(
   if (error) throw error
 }
 
+export async function skipMeal(
+  date: string,
+  slotKey: string,
+  optionKey: string,
+  idempotencyKey: string = crypto.randomUUID(),
+) {
+  assertOnline()
+  const client = requireSupabase()
+  const { error } = await client.functions.invoke('account-data', {
+    body: { action: 'skip-meal', local_date: date, slot_key: slotKey, option_key: optionKey },
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+  if (error) throw error
+}
+
 export async function exportAccountData(): Promise<AccountExportResponse> {
   assertOnline()
   const client = requireSupabase()
