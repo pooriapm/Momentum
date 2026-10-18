@@ -426,6 +426,65 @@ describe('deterministic onboarding starter plan', () => {
       today: new Date('2026-08-24T00:00:00Z'),
     })).rejects.toMatchObject({ code: 'starter_plan_allergen_unavailable' })
   })
+
+  const mainMealFoods = (content: Record<string, unknown>) => {
+    const day = (content.days as Array<{ meals: Array<{ type: string; options: Array<{ food_id: string }> }> }>)[0]
+    return Object.fromEntries(day.meals.map((meal) => [meal.type, meal.options[0].food_id]))
+  }
+
+  it('keeps the first cycle identical to the original starter plan', async () => {
+    const catalog = createPlanCatalogSnapshot(catalogRows('momentum-core@v2'))
+    const input = { profile, catalog, declaredAllergenIds: new Set<string>(), today: new Date('2026-08-24T00:00:00Z') }
+    const original = await buildValidatedDeterministicStarter(input)
+    const cycleOne = await buildValidatedDeterministicStarter({ ...input, cycleIndex: 1 })
+    expect(cycleOne).toEqual(original)
+    expect(mainMealFoods(cycleOne)).toMatchObject({
+      lunch: 'food:chicken-rice-bowl@v2',
+      dinner: 'food:lentil-stew-rice@v2',
+    })
+  })
+
+  it('rotates catalog foods for a renewal cycle and still validates the plan', async () => {
+    const catalog = createPlanCatalogSnapshot(catalogRows('momentum-core@v2'))
+    const input = { profile, catalog, declaredAllergenIds: new Set<string>(), today: new Date('2026-09-24T00:00:00Z') }
+    const cycleTwo = await buildValidatedDeterministicStarter({ ...input, cycleIndex: 2 })
+    expect(cycleTwo.days).toHaveLength(30)
+    expect(mainMealFoods(cycleTwo)).toMatchObject({
+      lunch: 'food:lentil-stew-rice@v2',
+      dinner: 'food:chicken-rice-bowl@v2',
+    })
+    const cycleThree = await buildValidatedDeterministicStarter({ ...input, cycleIndex: 3 })
+    expect(cycleThree).toEqual(await buildValidatedDeterministicStarter(input))
+  })
+
+  it('applies the same safety, age and allergen gates to renewal cycles', async () => {
+    const catalog = createPlanCatalogSnapshot(catalogRows('momentum-core@v2'))
+    await expect(buildValidatedDeterministicStarter({
+      profile: { ...profile, dateOfBirth: '2012-01-01' },
+      catalog,
+      declaredAllergenIds: new Set(),
+      today: new Date('2026-09-24T00:00:00Z'),
+      cycleIndex: 2,
+    })).rejects.toMatchObject({ code: 'starter_plan_age_blocked' })
+    await expect(buildValidatedDeterministicStarter({
+      profile: { ...profile, automationBlockReason: 'high_risk_condition' },
+      catalog,
+      declaredAllergenIds: new Set(),
+      cycleIndex: 2,
+    })).rejects.toMatchObject({ code: 'starter_plan_safety_blocked' })
+    const allergic = createPlanCatalogSnapshot({
+      ...catalogRows('momentum-core@v2'),
+      ingredientAllergens: [{ ingredient_id: 'ingredient:red-lentils@v2', allergen_id: 'allergen:milk@v2' }],
+    })
+    const content = await buildValidatedDeterministicStarter({
+      profile,
+      catalog: allergic,
+      declaredAllergenIds: new Set(['allergen:milk@v2']),
+      today: new Date('2026-09-24T00:00:00Z'),
+      cycleIndex: 2,
+    })
+    expect(JSON.stringify(content)).not.toContain('food:lentil-stew-rice@v2')
+  })
 })
 
 describe('monthly generation pipeline', () => {

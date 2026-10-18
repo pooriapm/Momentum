@@ -194,16 +194,22 @@ async function latestNextCycleNote(
   admin: Awaited<ReturnType<typeof authenticate>>['admin'],
   userId: string,
 ): Promise<{ period_id: string | null; note: string }> {
-  const { data: period, error: periodError } = await admin
+  // A renewal made in the last days of a plan starts later; until then the
+  // note still belongs to the running cycle.
+  const { data: periods, error: periodError } = await admin
     .from('monthly_plan_periods')
-    .select('id')
+    .select('id,starts_at')
     .eq('user_id', userId)
     .order('cycle_index', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(2)
   if (periodError) {
     throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note is unavailable.')
   }
+  const now = Date.now()
+  const period =
+    (periods ?? []).find((item) =>
+      typeof item.starts_at !== 'string' || Date.parse(item.starts_at) <= now
+    ) ?? periods?.[0] ?? null
   if (!period) return { period_id: null, note: '' }
   const { data: input, error: inputError } = await admin
     .from('next_cycle_inputs')
@@ -768,6 +774,7 @@ function projectPlanHistory(options: {
   plans: Array<Record<string, unknown>>
   versions: Array<Record<string, unknown>>
   periods: Array<Record<string, unknown>>
+  currentVersionId: string | null
 }): Array<Record<string, unknown>> {
   const plans = new Map(
     options.plans
@@ -779,11 +786,9 @@ function projectPlanHistory(options: {
     if (typeof period.imported_plan_version_id !== 'string') continue
     periodsByVersion.set(period.imported_plan_version_id, period)
   }
-  const activeVersionIds = new Set(
-    options.plans
-      .filter((plan) => plan.status === 'active' && typeof plan.active_version_id === 'string')
-      .map((plan) => plan.active_version_id as string),
-  )
+  // `active` marks the plan the dashboard shows today. An ended plan or a
+  // renewal that starts tomorrow can also have status 'active'.
+  const activeVersionIds = new Set(options.currentVersionId ? [options.currentVersionId] : [])
 
   return options.versions.flatMap((version) => {
     if (typeof version.id !== 'string' || typeof version.plan_id !== 'string') return []
@@ -1114,6 +1119,7 @@ async function loadDashboard(
     plans: (ownedPlansResult.data ?? []) as Array<Record<string, unknown>>,
     versions: (versionHistoryResult.data ?? []) as Array<Record<string, unknown>>,
     periods: (periodHistoryResult.data ?? []) as Array<Record<string, unknown>>,
+    currentVersionId: activePlan?.active_version_id ?? null,
   })
   if (planProjection) {
     planProjection = { ...planProjection, history: planHistory }
@@ -1372,6 +1378,26 @@ async function importExternalPlan(
   return data
 }
 
+// Mirrors the cycle choice in persist_deterministic_starter_plan so the menu can
+// rotate by cycle. The RPC stays authoritative for the stored cycle number.
+async function nextStarterCycleHint(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+  today: string,
+): Promise<number> {
+  const [latest, activeEnd] = await Promise.all([
+    admin.from('monthly_plan_periods').select('cycle_index,status').eq('user_id', userId)
+      .order('cycle_index', { ascending: false }).limit(1).maybeSingle(),
+    admin.from('plans').select('valid_to').eq('user_id', userId).eq('status', 'active')
+      .order('valid_to', { ascending: false }).limit(1).maybeSingle(),
+  ])
+  if (latest.error || activeEnd.error || !latest.data) return 1
+  const cycle = Number(latest.data.cycle_index) || 1
+  if (latest.data.status !== 'ready') return cycle
+  const end = typeof activeEnd.data?.valid_to === 'string' ? activeEnd.data.valid_to : null
+  return end && differenceInDays(today, end) >= 3 ? cycle : cycle + 1
+}
+
 async function createDeterministicStarterPlan(
   admin: Awaited<ReturnType<typeof authenticate>>['admin'],
   userId: string,
@@ -1395,6 +1421,9 @@ async function createDeterministicStarterPlan(
     )
   }
 
+  const validFrom = isoDateInTimezone(profile.data.timezone || 'UTC')
+  const validTo = addIsoDays(validFrom, MONTHLY_PLAN_DAYS - 1)
+  const cycleIndex = await nextStarterCycleHint(admin, userId, validFrom)
   const catalog = await loadPlanCatalog(admin)
   const declaredAllergenIds = resolveDeclaredAllergenIds(
     catalog,
@@ -1419,11 +1448,10 @@ async function createDeterministicStarterPlan(
     catalog,
     declaredAllergenIds,
     consentAdmin: admin,
+    cycleIndex,
   })
   const versions = await loadCurrentLegalVersions(admin)
   const contentSha256 = await sha256(canonicalJson(content))
-  const validFrom = isoDateInTimezone(profile.data.timezone || 'UTC')
-  const validTo = addIsoDays(validFrom, MONTHLY_PLAN_DAYS - 1)
   const { data, error } = await admin.rpc('persist_deterministic_starter_plan', {
     p_user_id: userId,
     p_idempotency_key: idempotencyKey,
@@ -1454,6 +1482,34 @@ async function createDeterministicStarterPlan(
         409,
         'starter_plan_gate_failed',
         'Starter-plan eligibility changed before activation.',
+      )
+    }
+    if (error.message.includes('subscription_inactive')) {
+      throw new HttpError(
+        402,
+        'SUBSCRIPTION_INACTIVE',
+        'An active membership is required for the next monthly plan.',
+      )
+    }
+    if (error.message.includes('payment_method_required')) {
+      throw new HttpError(
+        402,
+        'PAYMENT_METHOD_REQUIRED',
+        'Add a payment method before generating a plan.',
+      )
+    }
+    if (error.message.includes('plan_already_active')) {
+      throw new HttpError(
+        409,
+        'plan_already_active',
+        'The current plan has more than three days left.',
+      )
+    }
+    if (error.message.includes('generation_in_progress')) {
+      throw new HttpError(
+        409,
+        'JOB_IN_PROGRESS',
+        'A monthly generation job is already in progress.',
       )
     }
     throw new HttpError(
