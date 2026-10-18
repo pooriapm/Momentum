@@ -9,7 +9,7 @@ const STARTER_FOOD_IDS_V1 = [
 ] as const
 
 const STARTER_FOOD_IDS_V2 = [
-  'food:banana-almonds@v2',
+  'food:oat-yogurt-bowl@v2',
   'food:chicken-rice-bowl@v2',
   'food:lentil-stew-rice@v2',
 ] as const
@@ -136,10 +136,16 @@ function foodForMealType(
       !foodHasDeclaredAllergen(catalog, preferred, declaredAllergenIds)
     ) return preferred
   }
-  const match = [...catalog.foods.values()].find((food) =>
-    food.meal_types.includes(mealType) &&
-    !foodHasDeclaredAllergen(catalog, food, declaredAllergenIds)
-  )
+  // Fallback must not depend on catalog load order: prefer the most energy-dense
+  // eligible food (ties broken by ID) so the day stays above the calorie floor.
+  const match = [...catalog.foods.values()]
+    .filter((food) =>
+      food.meal_types.includes(mealType) &&
+      !foodHasDeclaredAllergen(catalog, food, declaredAllergenIds)
+    )
+    .sort((a, b) =>
+      b.nutrition.calories - a.nutrition.calories || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+    )[0]
   if (!match) {
     throw new HttpError(
       422,

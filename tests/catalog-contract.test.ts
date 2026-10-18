@@ -91,6 +91,81 @@ function firstExercise(plan: Record<string, unknown>): Record<string, unknown> {
   return (workout.exercises as Record<string, unknown>[])[0] as Record<string, unknown>
 }
 
+// v2-shaped catalog where a low-calorie breakfast loads first, mirroring the
+// production catalog order that once produced a 1154 kcal starter day.
+function v2Rows(ingredientAllergens: Record<string, unknown>[] = []): PlanCatalogRows {
+  const v2Ingredients = [
+    ['ingredient:egg@v2', 'Egg', 'تخم‌مرغ', 'piece'],
+    ['ingredient:oats@v2', 'Oats', 'جو دوسر', 'g'],
+    ['ingredient:greek-yogurt@v2', 'Greek yogurt', 'ماست یونانی', 'g'],
+    ['ingredient:bread@v2', 'Bread', 'نان', 'g'],
+    ['ingredient:peanut-butter@v2', 'Peanut butter', 'کره بادام‌زمینی', 'tbsp'],
+    ['ingredient:banana@v2', 'Banana', 'موز', 'piece'],
+    ['ingredient:almonds@v2', 'Almonds', 'بادام', 'g'],
+    ['ingredient:brown-rice@v2', 'Rice', 'برنج', 'g'],
+    ['ingredient:chicken-breast@v2', 'Chicken', 'مرغ', 'g'],
+    ['ingredient:red-lentils@v2', 'Lentils', 'عدس', 'g'],
+  ].map(([id, name_en, name_fa, default_unit]) => ({ id, name_en, name_fa, default_unit }))
+  const food = (id: string, meal_types: string[], macros: number[]) => {
+    const [calories, protein_g, carbs_g, fat_g, fiber_g] = macros
+    return {
+      id, name_en: id, name_fa: id, meal_types, portable: false,
+      calories, protein_g, carbs_g, fat_g, fiber_g,
+    }
+  }
+  // Macros copied from 202608180100_momentum_core_catalog_v2.sql.
+  const v2Foods = [
+    food('food:boiled-eggs@v2', ['breakfast', 'morning_snack', 'afternoon_snack'], [142, 12, 1, 10, 0]),
+    food('food:banana-almonds@v2', ['morning_snack', 'afternoon_snack'], [270, 8, 28, 14, 6]),
+    food('food:oat-yogurt-bowl@v2', ['breakfast'], [328, 12, 52, 8, 8]),
+    food('food:peanut-banana-toast@v2', ['breakfast'], [368, 14, 42, 16, 6]),
+    food('food:chicken-rice-bowl@v2', ['lunch', 'dinner'], [544, 45, 55, 16, 6]),
+    food('food:lentil-stew-rice@v2', ['lunch', 'dinner'], [468, 22, 68, 12, 16]),
+  ]
+  const v2FoodIngredients = [
+    ['food:boiled-eggs@v2', 'ingredient:egg@v2', 'piece'],
+    ['food:banana-almonds@v2', 'ingredient:banana@v2', 'piece'],
+    ['food:banana-almonds@v2', 'ingredient:almonds@v2', 'g'],
+    ['food:oat-yogurt-bowl@v2', 'ingredient:oats@v2', 'g'],
+    ['food:oat-yogurt-bowl@v2', 'ingredient:greek-yogurt@v2', 'g'],
+    ['food:peanut-banana-toast@v2', 'ingredient:bread@v2', 'g'],
+    ['food:peanut-banana-toast@v2', 'ingredient:peanut-butter@v2', 'tbsp'],
+    ['food:chicken-rice-bowl@v2', 'ingredient:brown-rice@v2', 'g'],
+    ['food:chicken-rice-bowl@v2', 'ingredient:chicken-breast@v2', 'g'],
+    ['food:lentil-stew-rice@v2', 'ingredient:brown-rice@v2', 'g'],
+    ['food:lentil-stew-rice@v2', 'ingredient:red-lentils@v2', 'g'],
+  ].map(([food_id, ingredient_id, unit]) => ({ food_id, ingredient_id, amount: 1, unit }))
+  const v2Exercises = [
+    ['exercise:bodyweight-squat@v2', 'Squat', 'اسکوات'],
+    ['exercise:wall-pushup@v2', 'Wall push-up', 'شنا دیوار'],
+    ['exercise:glute-bridge@v2', 'Glute bridge', 'پل باسن'],
+  ].map(([id, name_en, name_fa]) => ({ id, name_en, name_fa }))
+  return {
+    releases: [{ id: 'momentum-core@v2' }],
+    allergens: [{
+      id: 'allergen:milk@v2', slug: 'milk', name_en: 'Milk', name_fa: 'شیر',
+      aliases: ['dairy', 'لبنیات'],
+    }],
+    ingredients: v2Ingredients,
+    ingredientAllergens,
+    foods: v2Foods,
+    foodIngredients: v2FoodIngredients,
+    equipment: [{ id: 'equipment:bodyweight@v2' }],
+    exercises: v2Exercises,
+    exerciseEquipment: v2Exercises.map((item) => ({
+      exercise_id: item.id, equipment_id: 'equipment:bodyweight@v2',
+    })),
+    substitutions: [],
+  }
+}
+
+function mealFoodIds(plan: Record<string, unknown>): unknown[] {
+  const day = (plan.days as Record<string, unknown>[])[0] as Record<string, unknown>
+  return (day.meals as Record<string, unknown>[]).map((meal) =>
+    ((meal.options as Record<string, unknown>[])[0] as Record<string, unknown>).food_id
+  )
+}
+
 describe('governed plan catalog', () => {
   it('builds a deterministic non-AI starter plan that passes the same contract', () => {
     const catalog = createPlanCatalogSnapshot(rows())
@@ -183,5 +258,27 @@ describe('governed plan catalog', () => {
 
     expect(() => assertGeneratedPlan(plan, 30, 'en-US', { catalog }))
       .toThrow(expect.objectContaining({ code: 'invalid_exercise_substitution' }))
+  })
+
+  it('builds a v2 starter plan above the 1200 kcal floor regardless of catalog order', () => {
+    const catalog = createPlanCatalogSnapshot(v2Rows())
+    const plan = buildStarterPlan(catalog, 30, 'fa-IR')
+
+    expect(mealFoodIds(plan)[0]).toBe('food:oat-yogurt-bowl@v2')
+    expect(() => assertGeneratedPlan(plan, 30, 'fa-IR', { catalog, minimumCalories: 1200 }))
+      .not.toThrow()
+  })
+
+  it('falls back to the most energy-dense safe breakfast when the preferred one is excluded', () => {
+    const catalog = createPlanCatalogSnapshot(v2Rows([{
+      ingredient_id: 'ingredient:greek-yogurt@v2', allergen_id: 'allergen:milk@v2',
+    }]))
+    const declaredAllergenIds = resolveDeclaredAllergenIds(catalog, ['dairy'])
+    const plan = buildStarterPlan(catalog, 30, 'fa-IR', declaredAllergenIds)
+
+    expect(mealFoodIds(plan)[0]).toBe('food:peanut-banana-toast@v2')
+    expect(() => assertGeneratedPlan(plan, 30, 'fa-IR', {
+      catalog, declaredAllergenIds, minimumCalories: 1200,
+    })).not.toThrow()
   })
 })
