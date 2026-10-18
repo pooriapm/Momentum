@@ -164,6 +164,7 @@ select extensions.is(
         ('monthly_plan_snapshots'),
         ('daily_checkins'),
         ('weekly_checkins'),
+        ('shopping_purchases'),
         ('workout_sessions'),
         ('export_requests'),
         ('deletion_requests')
@@ -198,7 +199,7 @@ select extensions.is(
         ('health_context'), ('body_composition_measurements'), ('training_schedule_items'),
         ('product_prices'), ('subscriptions'), ('entitlements'), ('usage_ledger'),
         ('ai_generation_jobs'), ('ai_usage_attempts'), ('plans'), ('plan_versions'), ('daily_checkins'),
-        ('daily_meal_status'), ('extra_food_logs'), ('weekly_checkins'),
+        ('daily_meal_status'), ('shopping_purchases'), ('extra_food_logs'), ('weekly_checkins'),
         ('workout_sessions'), ('workout_exercise_logs'), ('workout_set_logs'),
         ('ai_safety_reports'), ('gift_reservations'), ('monthly_plan_periods'),
         ('monthly_plan_snapshots'), ('next_cycle_inputs'), ('export_requests'),
@@ -239,7 +240,7 @@ select extensions.is(
     'gift_reservations', 'goals', 'health_context', 'ingredient_allergens',
     'ingredient_catalog', 'monthly_plan_periods', 'monthly_plan_snapshots',
     'next_cycle_inputs', 'onboarding_drafts', 'plan_versions', 'plans',
-    'product_prices', 'profiles', 'starter_plan_activations', 'subscriptions', 'training_schedule_items',
+    'product_prices', 'profiles', 'shopping_purchases', 'starter_plan_activations', 'subscriptions', 'training_schedule_items',
     'usage_ledger', 'weekly_checkins', 'workout_exercise_logs',
     'workout_sessions', 'workout_set_logs'
   ]::text[],

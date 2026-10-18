@@ -58,6 +58,11 @@ interface AccountDataBody {
   note?: unknown
   event_id?: unknown
   event?: unknown
+  item_key?: unknown
+  unit?: unknown
+  amount?: unknown
+  scope?: unknown
+  purchase_id?: unknown
 }
 
 const EXPORT_TABLES = ACCOUNT_EXPORT_TABLES
@@ -366,6 +371,88 @@ function parseDashboard(body: AccountDataBody): DashboardRequest {
     action: 'dashboard',
     requestedLocalDate: body.local_date === undefined ? undefined : parseLocalDate(body.local_date),
   }
+}
+
+const SHOPPING_UNITS = new Set(['g', 'ml', 'piece', 'tbsp', 'tsp', 'cup', 'slice', 'serving'])
+const SHOPPING_SCOPES = new Set(['week', 'plan'])
+const SHOPPING_ITEM_KEY_PATTERN = /^(ingredient|name):[^\p{Cc}]*[^\p{Cc}\s][^\p{Cc}]*$/u
+const MAX_SHOPPING_AMOUNT = 100_000
+
+interface ShoppingPurchaseRequest {
+  itemKey: string
+  unit: string
+  amount: number
+  scope: string
+  requestedLocalDate: string
+}
+
+function parseShoppingPurchase(body: AccountDataBody): ShoppingPurchaseRequest {
+  if (
+    typeof body.item_key !== 'string' ||
+    body.item_key.length > 200 ||
+    !SHOPPING_ITEM_KEY_PATTERN.test(body.item_key)
+  ) {
+    throw new HttpError(400, 'invalid_item_key', 'Shopping item key is invalid.')
+  }
+  if (typeof body.unit !== 'string' || !SHOPPING_UNITS.has(body.unit)) {
+    throw new HttpError(400, 'invalid_unit', 'Shopping unit is invalid.')
+  }
+  if (
+    typeof body.amount !== 'number' ||
+    !Number.isFinite(body.amount) ||
+    body.amount <= 0 ||
+    body.amount > MAX_SHOPPING_AMOUNT
+  ) {
+    throw new HttpError(400, 'invalid_amount', 'Shopping amount is invalid.')
+  }
+  if (typeof body.scope !== 'string' || !SHOPPING_SCOPES.has(body.scope)) {
+    throw new HttpError(400, 'invalid_scope', 'Shopping scope is invalid.')
+  }
+  return {
+    itemKey: body.item_key,
+    unit: body.unit,
+    amount: body.amount,
+    scope: body.scope,
+    requestedLocalDate: parseLocalDate(body.local_date),
+  }
+}
+
+function shoppingPurchaseError(error: { message: string }, fallback: string): never {
+  if (error.message.includes('idempotency_key_reused')) {
+    throw new HttpError(
+      409,
+      'idempotency_key_reused',
+      'Idempotency key was used for different input.',
+    )
+  }
+  if (error.message.includes('purchase_date_not_current')) {
+    throw new HttpError(
+      409,
+      'local_date_mismatch',
+      'Purchases are limited to the current date in the saved profile timezone.',
+    )
+  }
+  if (error.message.includes('active_plan_not_found')) {
+    throw new HttpError(404, 'active_plan_not_found', 'There is no active plan.')
+  }
+  if (error.message.includes('shopping_purchase_not_found')) {
+    throw new HttpError(404, 'shopping_purchase_not_found', 'The purchase was not found.')
+  }
+  if (error.message.includes('shopping_purchase_limit_reached')) {
+    throw new HttpError(
+      409,
+      'shopping_purchase_limit_reached',
+      'Too many purchases were recorded for this plan.',
+    )
+  }
+  if (error.message.includes('profile_timezone_unavailable')) {
+    throw new HttpError(
+      409,
+      'profile_timezone_unavailable',
+      'Set a valid profile timezone before using day-based features.',
+    )
+  }
+  throw new HttpError(503, 'account_mutation_failed', fallback)
 }
 
 function isoDateInTimezone(timezone: string): string {
@@ -1490,6 +1577,14 @@ Deno.serve(async (request) => {
       })
     }
 
+    if (body.action === 'shopping-purchases') {
+      const { data, error } = await auth.admin.rpc('list_shopping_purchases', {
+        p_user_id: auth.user.id,
+      })
+      if (error) shoppingPurchaseError(error, 'Shopping purchases could not be loaded.')
+      return jsonResponse(request, { purchases: Array.isArray(data) ? data : [] })
+    }
+
     const idempotencyKey = requireIdempotencyKey(request)
     if (body.action === 'record-product-event') {
       if (typeof body.event_id !== 'string' || !UUID_PATTERN.test(body.event_id)) {
@@ -1679,6 +1774,53 @@ Deno.serve(async (request) => {
         )
       }
       return jsonResponse(request, { body_composition: data })
+    }
+
+    if (body.action === 'record-shopping-purchase') {
+      const purchase = parseShoppingPurchase(body)
+      const localDate = await resolveCurrentLocalDate(
+        auth.admin,
+        auth.user.id,
+        purchase.requestedLocalDate,
+      )
+      const input = {
+        action: 'record-shopping-purchase',
+        itemKey: purchase.itemKey,
+        unit: purchase.unit,
+        amount: purchase.amount,
+        scope: purchase.scope,
+        localDate,
+      }
+      const { data, error } = await auth.admin.rpc('record_shopping_purchase', {
+        p_user_id: auth.user.id,
+        p_item_key: input.itemKey,
+        p_unit: input.unit,
+        p_amount: input.amount,
+        p_scope: input.scope,
+        p_local_date: input.localDate,
+        p_idempotency_key: idempotencyKey,
+        p_request_sha256: await sha256(canonicalJson(input)),
+      })
+      if (error) shoppingPurchaseError(error, 'The purchase could not be saved.')
+      return jsonResponse(request, { purchase: data })
+    }
+
+    if (body.action === 'undo-shopping-purchase') {
+      if (typeof body.purchase_id !== 'string' || !UUID_PATTERN.test(body.purchase_id)) {
+        throw new HttpError(400, 'invalid_purchase_id', 'Purchase identifier is invalid.')
+      }
+      const input = {
+        action: 'undo-shopping-purchase',
+        purchaseId: body.purchase_id.toLowerCase(),
+      }
+      const { data, error } = await auth.admin.rpc('undo_shopping_purchase', {
+        p_user_id: auth.user.id,
+        p_purchase_id: input.purchaseId,
+        p_idempotency_key: idempotencyKey,
+        p_request_sha256: await sha256(canonicalJson(input)),
+      })
+      if (error) shoppingPurchaseError(error, 'The purchase could not be undone.')
+      return jsonResponse(request, { undo: data })
     }
 
     if (

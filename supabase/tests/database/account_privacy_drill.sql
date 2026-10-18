@@ -53,6 +53,7 @@ select extensions.is(
         'plan_versions',
         'plans',
         'profiles',
+        'shopping_purchases',
         'starter_plan_activations',
         'subscriptions',
         'training_schedule_items',

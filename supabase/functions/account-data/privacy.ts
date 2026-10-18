@@ -287,6 +287,7 @@ export const ACCOUNT_EXPORT_TABLES = [
   'daily_checkins',
   'weekly_checkins',
   'daily_meal_status',
+  'shopping_purchases',
   'extra_food_logs',
   'workout_sessions',
   'workout_exercise_logs',
