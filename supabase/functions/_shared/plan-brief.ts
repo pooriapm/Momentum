@@ -7,6 +7,8 @@ import {
 import {
   EXERCISE_PROFILE_VERSION,
   exerciseAllowedFor,
+  type InjuryArea,
+  injuryAreasFrom,
   normalizeLevel,
   type TrainingLevel,
 } from './exercise-profile.ts'
@@ -98,12 +100,13 @@ export interface PlanBrief {
     days_per_week: number
     session_min: number
     injury: boolean
+    injury_areas: InjuryArea[]
     start_weekday: number
     train_days: number[]
     light_days: number[]
   }
   history: Record<string, number | string> | null
-  foods: Array<[string, string, number, number]>
+  foods: Array<[string, string, number, number, string]>
   exercises: Array<[string, string, string, string]>
 }
 
@@ -323,12 +326,13 @@ function selectExercises(input: {
   snapshot: GenerationProfileSnapshot
   level: TrainingLevel
   injury: boolean
+  areas: InjuryArea[]
 }): CatalogExercise[] {
   const { catalog, snapshot } = input
   const available = availableEquipmentSlugs(catalog, snapshot)
   const eligible = [...catalog.exercises.values()].filter((exercise) =>
     exerciseFitsEquipment(exercise, available) &&
-    exerciseAllowedFor(exercise.id, { level: input.level, injury: input.injury })
+    exerciseAllowedFor(exercise.id, { level: input.level, injury: input.injury, areas: input.areas })
   )
   if (eligible.length === 0) {
     throw new HttpError(
@@ -442,7 +446,8 @@ export function buildPlanBrief(input: {
 
   const level = normalizeLevel(snapshot.training_profile.experience)
   const injury = snapshot.safety.medical_considerations.includes('injury_or_movement_limitation')
-  const exercises = selectExercises({ catalog, snapshot, level, injury })
+  const injuryAreas = injury ? injuryAreasFrom(snapshot.safety.medical_considerations) : []
+  const exercises = selectExercises({ catalog, snapshot, level, injury, areas: injuryAreas })
   const allowedExerciseIds = new Set(exercises.map((item) => item.id))
 
   const startWeekday = localWeekday(input.startsAt, snapshot.timezone || 'UTC')
@@ -499,6 +504,7 @@ export function buildPlanBrief(input: {
       days_per_week: calendar.trainDays.filter((day) => day < 7).length,
       session_min: sessionMinutes(snapshot) ?? 30,
       injury,
+      injury_areas: injuryAreas,
       start_weekday: startWeekday,
       train_days: calendar.trainDays,
       light_days: calendar.lightDays,
@@ -510,6 +516,8 @@ export function buildPlanBrief(input: {
         .map((slot) => MEAL_CODES[slot]).join(' '),
       Math.round(food.nutrition.calories),
       Math.round(food.nutrition.protein_g),
+      // Ingredient slugs, so the model's recipe uses only what the catalog food contains.
+      [...food.ingredientIds].map(slugOf).join(' '),
     ]),
     exercises: exercises.map((exercise) => [
       slugOf(exercise.id),

@@ -94,9 +94,17 @@ interface LeanDay {
   note: string | null
 }
 
+export interface LeanRecipe {
+  prep_minutes: number
+  cook_minutes: number
+  steps: string[]
+}
+
 export interface LeanPlan {
   planName: string
   summary: string
+  /** Keyed by catalog food id. */
+  recipes: Map<string, LeanRecipe>
   meals: Map<string, LeanMeal>
   workouts: Map<string, LeanWorkout>
   days: LeanDay[]
@@ -152,6 +160,18 @@ export function parseReps(value: string): { count: string; seconds: number | nul
   }
   return null
 }
+
+function termText(value: string): string {
+  return ` ${value.normalize('NFKC').toLocaleLowerCase().replace(/[^‌\p{L}\p{N}]+/gu, ' ').trim()} `
+}
+
+// Meat and fish words a vegetarian recipe must not mention ("تخم مرغ" is egg, removed first).
+const MEAT_TERMS = [
+  'chicken', 'beef', 'lamb', 'veal', 'meat', 'fish', 'tuna', 'salmon', 'shrimp', 'prawn', 'turkey',
+  'sausage', 'ham', 'bacon', 'kebab', 'مرغ', 'گوشت', 'ماهی', 'تن ماهی', 'میگو', 'بوقلمون', 'سوسیس',
+  'کالباس', 'کباب', 'گوساله', 'بره', 'جوجه',
+]
+const EGG_PHRASES = /تخم[\s‌]*مرغ/g
 
 const NUTRITION_NUMBER =
   /\d+(?:[.,]\d+)?\s*(?:kcal|cal\b|calories|کیلوکالری|کالری|grams?\b|g\b|گرم)/i
@@ -419,7 +439,52 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
   const generalTips = (Array.isArray(tips.general) ? tips.general : [])
     .map((tip) => textOf(tip, 140)).filter((tip): tip is string => Boolean(tip)).slice(0, 3)
   if (restaurantTips.length === 0) add('tips_restaurant', 'schema', 'tips.restaurant needs 1-3 tips of up to 140 characters.')
-  const allText = [...texts, ...restaurantTips, ...generalTips].filter((text): text is string => Boolean(text))
+
+  // Recipes: steps only. Ingredients and amounts always come from the catalog.
+  const usedFoodIds = new Set([...meals.values()].flatMap((meal) => [meal.foodId, ...meal.altIds]))
+  const recipes = new Map<string, LeanRecipe>()
+  const allergenTerms = [...ctx.declaredAllergenIds]
+    .flatMap((id) => [...(catalog.allergens.get(id)?.terms ?? [])])
+    .filter((term) => term.length >= 2)
+  const vegetarian = brief.diet.pattern === 'vegetarian' || brief.diet.pattern === 'vegan'
+  for (const [index, item] of (Array.isArray(raw.recipes) ? raw.recipes : []).entries()) {
+    const where = `recipes[${index}]`
+    if (!isRecord(item)) {
+      add('recipe_invalid', 'schema', `${where}: must be an object.`)
+      continue
+    }
+    const foodId = resolveFoodId(catalog, item.food)
+    if (!foodId || !usedFoodIds.has(foodId)) {
+      add('recipe_unknown_food', 'catalog_reference', `${where}: food "${String(item.food)}" is not used in this plan.`)
+      continue
+    }
+    if (recipes.has(foodId)) continue
+    const prep = Number(item.prep_min)
+    const cook = Number(item.cook_min)
+    const steps = (Array.isArray(item.steps) ? item.steps : []).map((step) => textOf(step, 160))
+    if (!Number.isInteger(prep) || prep < 0 || prep > 120 || !Number.isInteger(cook) || cook < 0 || cook > 240) {
+      add('recipe_minutes', 'schema', `${where}: prep_min must be 0-120 and cook_min 0-240.`)
+    }
+    if (steps.length < 1 || steps.length > 5 || steps.some((step) => !step)) {
+      add('recipe_steps', 'schema', `${where}: steps must be 1-5 texts of 1-160 characters.`)
+      continue
+    }
+    const corpus = termText(steps.join(' '))
+    const allergen = allergenTerms.find((term) => corpus.includes(` ${term} `))
+    if (allergen) {
+      add('recipe_allergen', 'allergen', `${where}: the steps mention "${allergen}", which this user is allergic to. Use only the food's listed ingredients.`)
+    }
+    if (vegetarian) {
+      const meatFree = termText(steps.join(' ').replace(EGG_PHRASES, ' '))
+      const meat = MEAT_TERMS.find((term) => meatFree.includes(termText(term)))
+      if (meat) add('recipe_not_vegetarian', 'allergen', `${where}: the user is ${brief.diet.pattern}; the steps mention "${meat}".`)
+    }
+    recipes.set(foodId, { prep_minutes: prep, cook_minutes: cook, steps: steps as string[] })
+  }
+  const missingRecipes = [...usedFoodIds].filter((id) => !recipes.has(id)).length
+  if (missingRecipes > 0) warnings.push(`${missingRecipes} foods have no recipe`)
+  const recipeText = [...recipes.values()].flatMap((recipe) => recipe.steps)
+  const allText = [...texts, ...restaurantTips, ...generalTips, ...recipeText].filter((text): text is string => Boolean(text))
   const persian = /[؀-ۿ]/
   const heading = `${planName ?? ''} ${summary ?? ''}`
   if (ctx.locale === 'fa-IR' ? !persian.test(heading) : persian.test(heading)) {
@@ -451,6 +516,7 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     plan: {
       planName: planName!,
       summary: summary!,
+      recipes,
       meals,
       workouts,
       days,
@@ -498,7 +564,7 @@ const COPY = {
     light: 'روز سبک: پیاده‌روی یا تحرک آرام',
     restaurant: 'غذا خوردن بیرون',
     stop: 'در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید.',
-    injury: 'به‌خاطر محدودیت حرکتی، حرکات پرشی و سنگین حذف شده‌اند. هر حرکتی که درد دارد را کنار بگذارید.',
+    injury: 'به‌خاطر آسیبی که گفتی، حرکاتی که به آن ناحیه فشار می‌آورند حذف شده‌اند. هر حرکتی که درد دارد را کنار بگذار.',
     seconds: (value: number) => value >= 60 ? `${Math.round(value / 60)} دقیقه` : `${value} ثانیه`,
   },
   'en-US': {
@@ -508,7 +574,7 @@ const COPY = {
     light: 'Light day: a walk or gentle mobility',
     restaurant: 'Eating out',
     stop: 'Stop exercising if pain, dizziness, or unusual symptoms occur.',
-    injury: 'Because of your movement limitation, jumping and heavy loaded lifts are left out. Skip any movement that hurts.',
+    injury: 'Because of the injury you reported, movements that load that area are left out. Skip any movement that hurts.',
     seconds: (value: number) => value >= 60 ? `${Math.round(value / 60)} min` : `${value} s`,
   },
 } as const
@@ -747,14 +813,17 @@ export function buildPlanFromLean(
           MAX_MULTIPLIER,
           Math.max(MIN_MULTIPLIER, Math.round((primaryCalories / Math.max(1, food.nutrition.calories)) * 4) / 4),
         )
-        return assembleMealOption({
-          catalog,
-          foodId: food.id,
-          optionKey: String(option.option_key),
-          locale,
-          servingMultiplier: optionMultiplier,
-          note: optionIndex === 0 ? mealNote : null,
-        })
+        return {
+          ...assembleMealOption({
+            catalog,
+            foodId: food.id,
+            optionKey: String(option.option_key),
+            locale,
+            servingMultiplier: optionMultiplier,
+            note: optionIndex === 0 ? mealNote : null,
+          }),
+          recipe: lean.recipes.get(food.id) ?? null,
+        }
       })
       groceryRefs.push({ foodId: defaults[index]!.id, multiplier })
     })
@@ -763,6 +832,9 @@ export function buildPlanFromLean(
   if (minProtein < PROTEIN_SOFT_FLOOR) warnings.push(`protein reaches ${Math.round(minProtein * 100)}% of target on some days`)
 
   plan.default_targets = dayTargets(targets, false)
+  for (const option of plan.emergency_options as Record<string, unknown>[]) {
+    option.recipe = lean.recipes.get(String(option.food_id)) ?? null
+  }
   plan.grocery_list = aggregateGroceryList(catalog, groceryRefs, locale)
 
   try {

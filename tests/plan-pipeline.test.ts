@@ -2,7 +2,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { GenerationProfileSnapshot } from '../supabase/functions/_shared/generation-profile-snapshot.ts'
 import { HttpError } from '../supabase/functions/_shared/http.ts'
-import { exerciseAllowedFor, exerciseLevel } from '../supabase/functions/_shared/exercise-profile.ts'
+import {
+  exerciseAllowedFor,
+  exerciseLevel,
+  exerciseProfile,
+} from '../supabase/functions/_shared/exercise-profile.ts'
+import { EXERCISE_PROFILE_DATA } from '../supabase/functions/_shared/exercise-profile-data.ts'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import {
   createPlanCatalogSnapshot,
   type PlanCatalogSnapshot,
@@ -320,6 +327,45 @@ describe('stage 3: per-user brief', () => {
     expect(exerciseAllowedFor('exercise:pistol-squat@v2', { level: 'intermediate', injury: false })).toBe(false)
   })
 
+  it('has a reviewed profile for every library exercise', () => {
+    const migration = readFileSync(resolve(import.meta.dirname, '../supabase/migrations/202610190101_exercise_library_catalog.sql'), 'utf8')
+    const slugs = [...migration.matchAll(/^ {2}\('exercise:([a-z0-9-]+)@v2', '[a-z0-9-]+', /gm)].map((match) => match[1])
+    expect(slugs.length).toBe(316)
+    for (const slug of slugs) expect(EXERCISE_PROFILE_DATA[slug!], slug).toMatch(/^[bia]\|[IKS]*\|[a-z_ ]*$/)
+    expect(exerciseProfile('wall-sit')).toMatchObject({ level: 'beginner', risks: [], regions: ['knee'], reviewed: true })
+    expect(exerciseProfile('leg-press').regions).toEqual(['knee', 'lower_back'])
+    expect(exerciseProfile('box-jump').risks).toContain('high_impact')
+    expect(exerciseProfile('some-new-move').reviewed).toBe(false)
+  })
+
+  it('avoids the injured body areas', () => {
+    const knee = { level: 'advanced' as const, injury: true, areas: ['knee' as const] }
+    expect(exerciseAllowedFor('exercise:bodyweight-squat@v2', knee)).toBe(false)
+    expect(exerciseAllowedFor('exercise:walking-lunge@v2', knee)).toBe(false)
+    expect(exerciseAllowedFor('exercise:dumbbell-shoulder-press@v2', knee)).toBe(true)
+    const shoulder = { level: 'advanced' as const, injury: true, areas: ['shoulder' as const] }
+    expect(exerciseAllowedFor('exercise:dumbbell-shoulder-press@v2', shoulder)).toBe(false)
+    expect(exerciseAllowedFor('exercise:bodyweight-squat@v2', shoulder)).toBe(true)
+    // Lower-limb injury also removes impact; spine injury also removes heavy axial loading.
+    expect(exerciseAllowedFor('exercise:jumping-jack@v2', { ...knee, areas: ['hip'] })).toBe(false)
+    expect(exerciseAllowedFor('exercise:shrug@v2', { ...knee, areas: ['lower_back'] })).toBe(true)
+    // Unknown area: conservative. Unreviewed exercises never go to an injured user.
+    expect(exerciseAllowedFor('exercise:burpee@v2', { level: 'advanced', injury: true, areas: [] })).toBe(false)
+    expect(exerciseAllowedFor('exercise:some-new-move@v2', { level: 'advanced', injury: true, areas: ['wrist'] })).toBe(false)
+
+    const { result } = briefFor(snapshot({
+      training_profile: { location: 'gym', experience: 'intermediate' },
+      safety: {
+        medical_considerations: ['injury_or_movement_limitation', 'injury:knee', 'injury:bogus'],
+        medications_present: false,
+        supplements_present: false,
+      },
+    }))
+    expect(result.brief.training.injury_areas).toEqual(['knee'])
+    for (const id of result.allowedExerciseIds) expect(exerciseProfile(id).regions).not.toContain('knee')
+    expect(result.brief.exercises.length).toBeGreaterThan(40)
+  })
+
   it('builds the meal slots and the training calendar', () => {
     expect(mealCount('۴ وعده')).toBe(4)
     expect(mealCount('5 meals. no breakfast')).toBe(5)
@@ -349,7 +395,7 @@ describe('stage 4: prompt', () => {
     expect(a.messages.at(-1)!.role).toBe('user')
     expect(JSON.parse(a.messages.at(-1)!.content).v).toBe('momentum-plan-brief/1.0.0')
     expect(PLAN_SYSTEM_PROMPT).not.toMatch(/fa-IR only|\{\{/)
-    expect(a.promptVersion).toBe('momentum-plan-prompt/1.0.0')
+    expect(a.promptVersion).toBe('momentum-plan-prompt/1.1.0')
   })
 
   it('repairs with the same prefix and the issues appended', () => {
@@ -492,6 +538,30 @@ describe('stage 5: validation, portion scaling and repair paths', () => {
     expect(mutated((plan) => { plan.days[0].note = 'I want to kill myself' })).toContain('unsafe_text')
   })
 
+  it('validates recipes against allergens, diet and the foods in the plan', () => {
+    const withRecipe = (steps: string[], snap = snapshot()) => mutated((plan) => {
+      plan.recipes = [{ food: plan.meals[0].food, prep_min: 5, cook_min: 10, steps }]
+    }, snap)
+    expect(withRecipe(['همه را مخلوط کن.'])).toEqual([])
+    const milk = snapshot({ dietary: { ...snapshot().dietary, allergies: ['milk'] } })
+    expect(withRecipe(['کمی شیر اضافه کن.'], milk)).toContain('recipe_allergen')
+    expect(withRecipe(['کمی شیرینی ندارد.'], milk)).toEqual([])
+    const veg = snapshot({ dietary: { ...snapshot().dietary, dietary_pattern: 'vegetarian' } })
+    expect(withRecipe(['مرغ را تفت بده.'], veg)).toContain('recipe_not_vegetarian')
+    expect(withRecipe(['تخم مرغ را بزن.'], veg)).toEqual([])
+    expect(withRecipe(['۲۰۰ گرم برنج بپز.'])).toContain('nutrition_number_in_text')
+    expect(mutated((plan) => {
+      plan.recipes = [{ food: 'lentil-stew-rice-not-used', prep_min: 5, cook_min: 10, steps: ['x'] }]
+    })).toContain('recipe_unknown_food')
+  })
+
+  it('tells the model to cook for the user country and list ingredients', () => {
+    expect(PLAN_SYSTEM_PROMPT).toContain('brief.country')
+    expect(PLAN_SYSTEM_PROMPT).toContain('Iranian home cooking')
+    const { brief } = briefFor().result
+    expect(brief.foods[0]![4]).toMatch(/^[a-z0-9-]+( [a-z0-9-]+)*$/)
+  })
+
   it('rejects a plan whose foods cannot reach the calorie target', () => {
     const ctx = ctxFor()
     const lean = validateLeanPlan(composeDeterministicLeanPlan(ctx.brief.brief), ctx)
@@ -529,7 +599,7 @@ describe('pipeline end-to-end with the stub provider', () => {
     expect(result.fallbackReason).toBeNull()
     expect(before).toEqual(['main'])
     expect(after).toEqual(['main:accepted'])
-    expect(result.promptVersion).toBe('momentum-plan-prompt/1.0.0')
+    expect(result.promptVersion).toBe('momentum-plan-prompt/1.1.0')
     expect(result.model).toBe('stub:momentum-plan-lean@1')
     expect(result.meta.targets?.kcal).toBeGreaterThanOrEqual(1200)
   })
@@ -552,15 +622,25 @@ describe('pipeline end-to-end with the stub provider', () => {
     const { result, after } = await run('invalid_always')
     expect(after).toEqual(['main:validation_failed', 'repair:validation_failed'])
     expect(result.source).toBe('deterministic_personal')
-    expect(result.fallbackReason).toBe('repair_failed:unknown_food')
+    expect(result.fallbackReason).toMatch(/^repair_failed:unknown_food/)
     expect(result.model).toBe('deterministic:momentum-personal@1')
   })
 
-  it('skips the repair on a provider outage', async () => {
-    const { result, after } = await run('provider_error')
-    expect(after).toEqual(['main:provider_failed'])
-    expect(result.source).toBe('deterministic_personal')
-    expect(result.fallbackReason).toBe('provider_error:OPENAI_UNAVAILABLE')
+  it('fails (no repair, no fallback) on a provider outage so the user can retry later', async () => {
+    await expect(run('provider_error')).rejects.toMatchObject({
+      status: 503,
+      code: 'AI_PROVIDER_UNAVAILABLE',
+    })
+  })
+
+  it('attaches the model recipes to every option that uses the food', async () => {
+    const { result } = await run('valid')
+    const days = result.content.days as Array<{ meals: Array<{ options: Array<Record<string, any>> }> }>
+    for (const option of days.flatMap((day) => day.meals.flatMap((meal) => meal.options))) {
+      expect(option.recipe?.steps?.length).toBeGreaterThan(0)
+      // Ingredients and amounts are the catalog's, scaled in code.
+      expect(option.ingredients.length).toBeGreaterThan(0)
+    }
   })
 
   it('falls back to the generic starter when no brief can be built', async () => {
@@ -614,7 +694,7 @@ describe('pipeline end-to-end with the stub provider', () => {
     const body = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body))
     expect(body.instructions).toBe(PLAN_SYSTEM_PROMPT)
     expect(body.input).toEqual([{ role: 'user', content: JSON.stringify(briefResult.brief) }])
-    expect(body.prompt_cache_key).toBe('momentum-plan-prompt/1.0.0:momentum-plan-lean/1.0.0')
+    expect(body.prompt_cache_key).toBe('momentum-plan-prompt/1.1.0:momentum-plan-lean/1.1.0')
     expect(JSON.stringify(body)).not.toContain(USER_ID)
   })
 })

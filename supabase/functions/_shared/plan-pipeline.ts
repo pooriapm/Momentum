@@ -30,10 +30,15 @@ import type { ValidationFailureCategory } from './usage-accounting.ts'
 /**
  * Brief -> prompt -> model -> validate/scale -> (one repair call) -> fallback.
  *
- * Fallback order: the deterministic plan built from the same brief (still personalised targets,
- * allowlists and calendar), then the generic deterministic starter. Every fallback carries a
- * reason. Configuration errors (provider switched off, unknown provider) are not fallbacks: they
- * fail closed so a misconfiguration can't silently ship non-AI plans.
+ * Fallback order (only after the model answered and both answers failed validation): the
+ * deterministic plan built from the same brief (still personalised targets, allowlists and
+ * calendar), then the generic deterministic starter. Every fallback carries a reason.
+ *
+ * Not fallbacks:
+ * - Provider outage (timeout, 5xx, rejected request): the job fails with AI_PROVIDER_UNAVAILABLE
+ *   and the user retries later. Nothing is imported, so the month's quota is not used.
+ * - Configuration errors (provider switched off, unknown provider): fail closed so a
+ *   misconfiguration can't silently ship non-AI plans.
  */
 export const PIPELINE_VERSION = 'momentum-plan-pipeline/1.0.0'
 export const DETERMINISTIC_PLAN_MODEL = 'deterministic:momentum-personal@1'
@@ -93,6 +98,16 @@ const CONFIG_ERRORS = new Set([
   'LUNA_QUALITY_GATE_NOT_MET',
   'BATCH_NOT_IMPLEMENTED',
 ])
+
+export const PROVIDER_UNAVAILABLE = 'AI_PROVIDER_UNAVAILABLE'
+
+function providerUnavailable(): HttpError {
+  return new HttpError(
+    503,
+    PROVIDER_UNAVAILABLE,
+    'The plan service is busy right now. Please try again in a few minutes.',
+  )
+}
 
 function isConfigError(error: unknown): boolean {
   if (error instanceof HttpError) return CONFIG_ERRORS.has(error.code)
@@ -252,9 +267,7 @@ export async function runPlanPipeline(input: {
   if (main.kind === 'ok') {
     return delivered(main, 'llm', briefResult, calls, usage, serviceTier)
   }
-  if (main.kind === 'provider_error') {
-    return personalFallback(input, ctx, `provider_error:${main.code}`, calls, usage)
-  }
+  if (main.kind === 'provider_error') throw providerUnavailable()
 
   const repair = await run('repair', assembleRepairPrompt({
     brief: briefResult.brief,
@@ -264,9 +277,9 @@ export async function runPlanPipeline(input: {
   if (repair.kind === 'ok') {
     return delivered(repair, 'llm_repaired', briefResult, calls, usage, serviceTier)
   }
-  const reason = repair.kind === 'provider_error'
-    ? `repair_provider_error:${repair.code}`
-    : `repair_failed:${[...new Set(repair.issues.map((issue) => issue.code))].slice(0, 5).join(',')}`
+  if (repair.kind === 'provider_error') throw providerUnavailable()
+  const reason =
+    `repair_failed:${[...new Set(repair.issues.map((issue) => issue.code))].slice(0, 5).join(',')}`
   return personalFallback(input, ctx, reason, calls, usage)
 }
 

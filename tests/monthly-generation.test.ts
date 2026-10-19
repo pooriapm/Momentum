@@ -553,7 +553,7 @@ describe('monthly generation pipeline', () => {
     expect(store.importedPlans).toHaveLength(1)
     const final = attempts.at(-1)!
     expect(final.pipeline.source).toBe('llm_repaired')
-    expect(final.prompt_version).toBe('momentum-plan-prompt/1.0.0')
+    expect(final.prompt_version).toBe('momentum-plan-prompt/1.1.0')
     expect(final.pipeline.calls.map((call: any) => call.call)).toEqual(['main', 'repair'])
   })
 

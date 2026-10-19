@@ -53,6 +53,16 @@ function briefFrom(messages: readonly PromptMessage[]): PlanBrief {
   return JSON.parse(user?.content ?? '{}') as PlanBrief
 }
 
+/** One short, generic recipe per food the stub plan uses, so the recipe path runs offline. */
+function stubRecipes(brief: PlanBrief, plan: Record<string, unknown>): Record<string, unknown>[] {
+  const used = new Set((plan.meals as Array<{ food: string; alts: string[] }>)
+    .flatMap((meal) => [meal.food, ...meal.alts]))
+  const steps = brief.lang === 'fa-IR'
+    ? ['مواد را بشوی و خرد کن.', 'روی حرارت ملایم بپز و با ادویه مزه‌دار کن.']
+    : ['Wash and chop the ingredients.', 'Cook over gentle heat and season with spices.']
+  return [...used].map((food) => ({ food, prep_min: 10, cook_min: 15, steps }))
+}
+
 /**
  * Offline stand-in for the model: answers with the deterministic plan for the brief it was sent.
  * Modes exercise the failure paths: "invalid" breaks only the first answer (repair succeeds),
@@ -68,7 +78,9 @@ export function createStubPlanLlm(mode: StubMode = 'valid'): PlanLlmClient {
           new HttpError(503, 'OPENAI_UNAVAILABLE', 'The plan provider is temporarily unavailable.'),
         )
       }
-      const plan = composeDeterministicLeanPlan(briefFrom(request.messages))
+      const brief = briefFrom(request.messages)
+      const plan = composeDeterministicLeanPlan(brief)
+      plan.recipes = stubRecipes(brief, plan)
       const broken = mode === 'invalid_always' || (mode === 'invalid' && request.call === 'main')
       if (broken) {
         const meals = plan.meals as Record<string, unknown>[]

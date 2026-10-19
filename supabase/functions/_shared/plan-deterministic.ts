@@ -177,6 +177,8 @@ export function composeDeterministicLeanPlan(brief: PlanBrief): Record<string, u
     meals,
     workouts,
     days,
+    // No model, no recipe text: options carry catalog ingredients with recipe null.
+    recipes: [],
     tips: { restaurant: [...text.restaurant], general: [...text.general] },
   }
 }

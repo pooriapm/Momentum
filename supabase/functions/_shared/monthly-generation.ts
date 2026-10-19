@@ -667,6 +667,9 @@ function safeFailureMessage(code: string): string {
   if (code === 'PLAN_VALIDATION_FAILED') return 'The generated plan could not be validated.'
   if (code === 'PLAN_CONTEXT_CHANGED') return 'Your profile changed. Request a fresh plan.'
   if (code === 'PLAN_IMPORT_FAILED') return 'The validated plan could not be imported.'
+  if (code === 'AI_PROVIDER_UNAVAILABLE') {
+    return 'The plan service is busy right now. Please try again in a few minutes.'
+  }
   return 'The plan provider could not complete this request.'
 }
 
