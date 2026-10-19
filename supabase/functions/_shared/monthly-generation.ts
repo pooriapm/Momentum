@@ -1,11 +1,6 @@
 import { assertAiFeatureEnabled } from './ai-gate.ts'
 import { deterministicSafetyDecision } from './ai-safety.ts'
 import { assertCatalogGenerationGate } from './catalog-gate.ts'
-import {
-  expandCompactPlan,
-  isCompactPlan,
-  stripExpansionMetadata,
-} from './compact-plan-contract.ts'
 import { assertCurrentConsents, type ConsentAdminClient } from './consent.ts'
 import { canonicalJson, sha256 } from './crypto.ts'
 import {
@@ -15,23 +10,21 @@ import {
 import { HttpError } from './http.ts'
 import type { AiReservation, ProviderUsage } from './limits.ts'
 import { ProviderResponseError } from './openai.ts'
-import { isCompactSchemaEnabled, resolvePlanModelRoute } from './plan-model-routing.ts'
-import { COMPACT_SCHEMA_VERSION } from './compact-plan-contract.ts'
 import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 import { resolveDeclaredAllergenIds } from './plan-catalog.ts'
 import { assertGeneratedPlan } from './plan-contract.ts'
 import { applyDeterministicRepair, classifyRepair } from './plan-repair.ts'
-import { normalizePlanWorkouts } from './exercise-selection.ts'
 import {
-  generateMonthlyPlanFromProvider,
-  isLiveOpenAiRequested,
   MONTHLY_PLAN_DAYS,
-  OPENAI_PROMPT_VERSION,
   PLAN_SCHEMA_VERSION,
+  resolvePlanLlmClient,
   STUB_PLAN_MODEL,
   STUB_PROMPT_VERSION,
 } from './plan-provider.ts'
 import { buildAttemptLedger, classifyValidationFailure } from './usage-accounting.ts'
+import { pseudonymousRef } from './plan-brief.ts'
+import { runPlanPipeline } from './plan-pipeline.ts'
+import { LEAN_SCHEMA_VERSION, PLAN_PROMPT_VERSION } from './plan-prompt.ts'
 
 export type GenerationJobStatus =
   | 'queued'
@@ -407,71 +400,102 @@ export async function runMonthlyGeneration(input: {
         throw new HttpError(422, 'PLAN_CHECKPOINT_INVALID', 'The saved plan could not be verified.')
       }
     } else {
-      const live = isLiveOpenAiRequested()
-      const route = resolvePlanModelRoute({
-        cycleIndex: period.cycleIndex,
-        isRenewal: period.cycleIndex >= 2,
-      })
-      attempt = buildAttemptLedger({
-        generationJobId: job.id,
-        cycleIndex: period.cycleIndex,
-        attemptId: crypto.randomUUID(),
-        // claimJob has already incremented the provider-attempt counter.
-        attemptNumber: job.attemptCount,
-        model: live ? route.modelId : STUB_PLAN_MODEL,
-        serviceTier: live ? route.serviceTier : 'standard',
-        promptVersion: live ? OPENAI_PROMPT_VERSION : STUB_PROMPT_VERSION,
-        schemaVersion: live && isCompactSchemaEnabled()
-          ? COMPACT_SCHEMA_VERSION
-          : PLAN_SCHEMA_VERSION,
-        catalogReleaseId: catalog.releaseId,
-        usage: { usageKnown: false },
-        providerResponseId: null,
-        latencyMs: null,
-        outcome: 'started',
-        reservationConsumed: false,
-        deliverySucceeded: false,
-      })
-      // Durable identity before any billable request. If this fails, do not call the provider.
-      await input.store.recordAttempt(attempt)
-      const generated = await generateMonthlyPlanFromProvider({
-        catalog,
-        locale,
-        days: MONTHLY_PLAN_DAYS,
-        invalidStub: input.invalidStub,
+      const declared = resolveDeclaredAllergenIds(catalog, snapshot.dietary.allergies)
+      const llm = await resolvePlanLlmClient({
         userId: input.userId,
-        context: profileSnapshotPromptContext(snapshot),
-        snapshot,
         cycleIndex: period.cycleIndex,
         isRenewal: period.cycleIndex >= 2,
-      })
-      attempt = buildAttemptLedger({
-        generationJobId: job.id,
-        cycleIndex: period.cycleIndex,
-        attemptId: attempt.attempt_id,
-        attemptNumber: attempt.attempt_number,
-        model: generated.model,
-        serviceTier: generated.serviceTier,
-        promptVersion: generated.promptVersion,
-        schemaVersion: generated.schemaVersion,
         catalogReleaseId: catalog.releaseId,
-        usage: generated.usage,
-        providerResponseId: generated.providerResponseId,
-        latencyMs: Date.now() - startedAt,
-        outcome: 'started',
-        reservationConsumed: true,
-        deliverySucceeded: false,
+        invalidStub: input.invalidStub,
       })
-      // Record usage before expansion or validation can throw.
-      await input.store.recordAttempt(attempt)
-      content = generated.content
-      if (isCompactPlan(content)) {
-        content = stripExpansionMetadata(expandCompactPlan(content, catalog, locale))
-      } else if ('_expansion' in content) {
-        content = stripExpansionMetadata(content)
+      const ledger = (
+        attemptId: string,
+        patch: Partial<Parameters<typeof buildAttemptLedger>[0]> = {},
+      ) =>
+        buildAttemptLedger({
+          generationJobId: job!.id,
+          cycleIndex: period.cycleIndex,
+          attemptId,
+          // claimJob has already incremented the provider-attempt counter.
+          attemptNumber: job!.attemptCount,
+          model: llm.model,
+          serviceTier: 'standard',
+          promptVersion: PLAN_PROMPT_VERSION,
+          schemaVersion: LEAN_SCHEMA_VERSION,
+          catalogReleaseId: catalog.releaseId,
+          usage: { usageKnown: false },
+          providerResponseId: null,
+          latencyMs: null,
+          outcome: 'started',
+          reservationConsumed: false,
+          deliverySucceeded: false,
+          ...patch,
+        })
+      // Brief -> model -> validation/scaling -> one repair -> deterministic fallback.
+      const result = await runPlanPipeline({
+        catalog,
+        snapshot,
+        locale,
+        declaredAllergenIds: declared,
+        subjectRef: await pseudonymousRef(input.userId),
+        startsAt: input.now ?? new Date(),
+        llm,
+        hooks: {
+          // Durable identity before any billable request. If this fails, do not call the provider.
+          beforeCall: async (call) => {
+            attempt = { ...ledger(crypto.randomUUID()), pipeline: { call } }
+            await input.store.recordAttempt(attempt)
+          },
+          // Record usage before anything else can throw.
+          afterCall: async (record) => {
+            attempt = {
+              ...ledger(attempt!.attempt_id, {
+                model: record.model,
+                serviceTier: record.serviceTier,
+                usage: record.usage ?? { usageKnown: false },
+                providerResponseId: record.providerResponseId,
+                latencyMs: record.latencyMs,
+                outcome: record.outcome === 'accepted' ? 'started' : record.outcome,
+                validationFailureCategory: record.failureCategory,
+                reservationConsumed: true,
+              }),
+              pipeline: { call: record.call, issue_codes: record.issueCodes },
+            }
+            await input.store.recordAttempt(attempt)
+          },
+        },
+      })
+      const pipeline = {
+        version: result.meta.pipeline_version,
+        source: result.source,
+        fallback_reason: result.fallbackReason,
+        calls: result.calls.map((call) => ({
+          call: call.call,
+          outcome: call.outcome,
+          issue_codes: call.issueCodes,
+        })),
+        quality: result.quality,
+        meta: result.meta,
+        total_usage: result.usage,
       }
-      // Exercise ids are resolved against the catalog; unknown ones never reach the stored plan.
-      content = normalizePlanWorkouts(content, catalog, locale)
+      if (result.source === 'llm' || result.source === 'llm_repaired') {
+        attempt = { ...attempt!, pipeline }
+      } else {
+        // The delivered plan is deterministic: give it its own ledger row (no provider spend of its
+        // own) so the fallback and its reason are on record next to the failed calls.
+        attempt = {
+          ...ledger(crypto.randomUUID(), {
+            model: result.model,
+            promptVersion: result.promptVersion,
+            schemaVersion: result.schemaVersion,
+            usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, reasoningTokens: 0 },
+            providerResponseId: result.providerResponseId,
+            latencyMs: Date.now() - startedAt,
+          }),
+          pipeline,
+        }
+      }
+      content = result.content
       contentSha256 = ''
     }
 
@@ -540,7 +564,8 @@ export async function runMonthlyGeneration(input: {
       model: attempt.model,
       providerResponseId: attempt.provider_response_id ?? 'openai:unknown',
       reservation,
-      usage: {
+      // A repaired or fallback plan carries the spend of every call made for it.
+      usage: (attempt.pipeline?.total_usage as ProviderUsage | undefined) ?? {
         inputTokens: attempt.input_tokens ?? undefined,
         outputTokens: attempt.output_tokens ?? undefined,
         cachedInputTokens: attempt.cached_input_tokens ?? undefined,

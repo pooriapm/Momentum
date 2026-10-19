@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- tests mutate loosely typed plan JSON */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   assertCatalogGenerationGate,
@@ -505,18 +506,55 @@ describe('monthly generation pipeline', () => {
     expect(store.importedPlans).toHaveLength(0)
   })
 
-  it('does not import invalid stub output', async () => {
+  it('never imports invalid model output: one repair, then a validated fallback with a reason', async () => {
     const store = new MemoryGenerationStore()
-    await expect(runMonthlyGeneration({
+    const attempts: Array<Record<string, any>> = []
+    store.recordAttempt = async (attempt) => { attempts.push(structuredClone(attempt)) }
+    let imported: Record<string, any> | undefined
+    const importPlan = store.importPlan
+    store.importPlan = async (input) => {
+      imported = input
+      return importPlan(input)
+    }
+    await runMonthlyGeneration({
       userId: store.profile.userId,
       emailConfirmed: true,
       idempotencyKey: 'generation-key-invalid',
       invalidStub: true,
       store,
-    })).rejects.toMatchObject({ code: 'PLAN_VALIDATION_FAILED' })
-    expect(store.importedPlans).toHaveLength(0)
-    const job = await store.findJobByIdempotency(store.profile.userId, 'generation-key-invalid')
-    expect(job?.status).toBe('failed')
+    })
+    expect(store.importedPlans).toHaveLength(1)
+    expect(imported?.model).toBe('deterministic:momentum-personal@1')
+    expect(JSON.stringify(imported?.content)).not.toContain('not-in-catalog')
+    const final = attempts.at(-1)!
+    expect(final.delivery_succeeded).toBe(true)
+    expect(final.pipeline.source).toBe('deterministic_personal')
+    expect(final.pipeline.fallback_reason).toMatch(/^repair_failed:unknown_food/)
+    // main + repair calls each have a started row and an outcome row.
+    const calls = attempts.filter((attempt) => attempt.pipeline?.issue_codes)
+    expect(calls.map((attempt) => [attempt.pipeline.call, attempt.outcome])).toEqual([
+      ['main', 'validation_failed'],
+      ['repair', 'validation_failed'],
+    ])
+    expect(JSON.stringify(attempts)).not.toContain(store.profile.userId)
+  })
+
+  it('imports a repaired model plan after one repair call', async () => {
+    stubEnv({ AI_PLAN_STUB_MODE: 'invalid' })
+    const store = new MemoryGenerationStore()
+    const attempts: Array<Record<string, any>> = []
+    store.recordAttempt = async (attempt) => { attempts.push(structuredClone(attempt)) }
+    await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-key-repair',
+      store,
+    })
+    expect(store.importedPlans).toHaveLength(1)
+    const final = attempts.at(-1)!
+    expect(final.pipeline.source).toBe('llm_repaired')
+    expect(final.prompt_version).toBe('momentum-plan-prompt/1.0.0')
+    expect(final.pipeline.calls.map((call: any) => call.call)).toEqual(['main', 'repair'])
   })
 
   it('replays the same job for the same idempotency key', async () => {
@@ -613,13 +651,14 @@ describe('monthly generation pipeline', () => {
   it('retries a failed generation on the same durable job', async () => {
     const store = new MemoryGenerationStore()
     const key = 'generation-failed-same-job'
+    stubEnv({ AI_PLAN_PROVIDER: 'openai' })
     await expect(runMonthlyGeneration({
       userId: store.profile.userId,
       emailConfirmed: true,
       idempotencyKey: key,
-      invalidStub: true,
       store,
-    })).rejects.toMatchObject({ code: 'PLAN_VALIDATION_FAILED' })
+    })).rejects.toMatchObject({ code: 'PROVIDER_FAILED' })
+    stubEnv()
     const failedJob = await store.findJobByIdempotency(store.profile.userId, key)
 
     const recovered = await runMonthlyGeneration({
@@ -853,23 +892,24 @@ describe('monthly generation pipeline', () => {
     fetchSpy.mockRestore()
   })
 
-  it('fails closed on invalid catalog IDs in FA and EN without importing', async () => {
+  it('never imports invalid catalog IDs in FA and EN', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
     for (const locale of ['fa-IR', 'en-US'] as const) {
       const store = new MemoryGenerationStore({
         profile: { ...entitledProfile(`invalid-${locale}`), locale },
       })
-      await expect(runMonthlyGeneration({
+      await runMonthlyGeneration({
         userId: store.profile.userId,
         emailConfirmed: true,
         idempotencyKey: `generation-key-invalid-${locale}`,
         locale,
         invalidStub: true,
         store,
-      })).rejects.toMatchObject({ code: 'PLAN_VALIDATION_FAILED' })
-      expect(store.importedPlans).toHaveLength(0)
+      })
+      // The invalid id never reaches the stored plan; the validated fallback does.
+      expect(store.importedPlans).toHaveLength(1)
       expect(store.jobs.size).toBe(1)
-      expect([...store.jobs.values()][0]?.status).toBe('failed')
+      expect([...store.jobs.values()][0]?.status).toBe('ready')
     }
     expect(fetchSpy).not.toHaveBeenCalled()
     fetchSpy.mockRestore()

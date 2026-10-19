@@ -18,6 +18,13 @@ import { isCompactSchemaEnabled, resolvePlanModelRoute } from './plan-model-rout
 import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import type { ServiceTier } from './provider-pricing.ts'
 import { buildMonthlyStubPlan } from './starter-plan.ts'
+import {
+  createOpenAiPlanLlm,
+  createStubPlanLlm,
+  type PlanLlmClient,
+  type StubMode,
+} from './plan-llm.ts'
+import { LEAN_SCHEMA_VERSION, PLAN_PROMPT_VERSION } from './plan-prompt.ts'
 
 export { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 
@@ -222,4 +229,76 @@ async function generatePlan(
   }
 
   return buildDeterministicResult(input)
+}
+
+const STUB_MODES: readonly StubMode[] = [
+  'valid',
+  'invalid',
+  'invalid_always',
+  'malformed',
+  'provider_error',
+]
+
+/**
+ * The model client for the brief-based pipeline (plan-pipeline.ts). AI_PLAN_PROVIDER=stub (the
+ * default) answers offline; AI_PLAN_STUB_MODE picks a failure path for testing. openai needs the
+ * live switch, the routed model and, for Luna, quality evidence for this prompt/schema version.
+ */
+export async function resolvePlanLlmClient(input: {
+  userId: string
+  cycleIndex: number
+  isRenewal: boolean
+  catalogReleaseId: string
+  evalCohort?: string | null
+  invalidStub?: boolean
+}): Promise<PlanLlmClient> {
+  const provider = optionalEnv('AI_PLAN_PROVIDER')?.toLowerCase() ?? 'stub'
+  if (provider === 'stub') {
+    const configured = optionalEnv('AI_PLAN_STUB_MODE') as StubMode | undefined
+    const mode = input.invalidStub
+      ? 'invalid_always'
+      : configured && STUB_MODES.includes(configured)
+      ? configured
+      : 'valid'
+    return createStubPlanLlm(mode)
+  }
+  if (provider !== 'openai') {
+    throw new HttpError(503, 'AI_PROVIDER_INVALID', 'The plan provider is unavailable.')
+  }
+  assertLiveOpenAiEnabled()
+  const routing = resolvePlanModelRoute({
+    cycleIndex: input.cycleIndex,
+    isRenewal: input.isRenewal,
+    evalCohort: input.evalCohort,
+  })
+  if (routing.route === 'luna') {
+    let evidence: unknown
+    try {
+      evidence = JSON.parse(optionalEnv('AI_PLAN_LUNA_QUALITY_EVIDENCE') ?? 'null')
+    } catch {
+      evidence = null
+    }
+    if (
+      !passesLunaQualityGate(evidence, {
+        promptVersion: PLAN_PROMPT_VERSION,
+        schemaVersion: LEAN_SCHEMA_VERSION,
+        catalogReleaseId: input.catalogReleaseId,
+      })
+    ) {
+      throw new HttpError(
+        503,
+        'LUNA_QUALITY_GATE_NOT_MET',
+        'Luna requires approved live quality evidence matching this generation version.',
+      )
+    }
+  }
+  return createOpenAiPlanLlm({
+    model: routing.modelId,
+    safetyIdentifier: await hashedSafetyIdentifier(input.userId),
+    maxOutputTokens: integerEnv('OPENAI_PLAN_MAX_OUTPUT_TOKENS', 16_000, {
+      min: 8_000,
+      max: 128_000,
+    }),
+    serviceTier: routing.serviceTier,
+  })
 }

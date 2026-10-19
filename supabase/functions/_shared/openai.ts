@@ -7,6 +7,8 @@ import type { ServiceTier } from './provider-pricing.ts'
 export interface StructuredResponse<T> {
   id: string
   parsed: T
+  /** The raw JSON text, so a repair turn can resend it byte-for-byte (prefix cache). */
+  text: string
   serviceTier: ServiceTier
   usage: ProviderUsage
 }
@@ -119,7 +121,8 @@ export async function createStructuredResponse<T>(_options: {
       body: JSON.stringify({
         model: _options.model,
         instructions: _options.instructions,
-        input: JSON.stringify(_options.input),
+        // A message list ({ role, content }[]) is sent as-is; anything else as one JSON string.
+        input: Array.isArray(_options.input) ? _options.input : JSON.stringify(_options.input),
         store: false,
         safety_identifier: _options.safetyIdentifier,
         prompt_cache_key: _options.promptCacheKey,
@@ -213,6 +216,7 @@ export async function createStructuredResponse<T>(_options: {
   return {
     id: metadata.providerResponseId,
     parsed,
+    text,
     usage: metadata.usage,
     serviceTier: metadata.serviceTier,
   }
