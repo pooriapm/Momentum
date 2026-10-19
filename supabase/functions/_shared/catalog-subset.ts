@@ -1,8 +1,13 @@
+import {
+  availableEquipmentSlugs,
+  exerciseFitsEquipment,
+  exercisePromptRows,
+} from './exercise-selection.ts'
 import { HttpError } from './http.ts'
 import type { GenerationProfileSnapshot } from './generation-profile-snapshot.ts'
 import type { CatalogExercise, CatalogFood, PlanCatalogSnapshot } from './plan-catalog.ts'
 
-export const CATALOG_SUBSET_VERSION = 'momentum-catalog-subset/1.0.0'
+export const CATALOG_SUBSET_VERSION = 'momentum-catalog-subset/1.1.0'
 
 export interface CatalogSubsetResult {
   subset_version: typeof CATALOG_SUBSET_VERSION
@@ -16,7 +21,6 @@ export interface CatalogSubsetResult {
 const MIN_FOODS_PER_MEAL_TYPE = 2
 const MIN_EXERCISES = 6
 const TARGET_FOODS = 28
-const TARGET_EXERCISES = 16
 
 const MEAL_TYPES = [
   'breakfast',
@@ -41,17 +45,6 @@ function foodHasAllergen(
     }
   }
   return false
-}
-
-function exerciseCompatible(
-  exercise: CatalogExercise,
-  availableEquipment: ReadonlySet<string>,
-): boolean {
-  if (availableEquipment.size === 0) return true
-  const required = [...exercise.equipmentIds]
-  if (required.length === 0) return true
-  // Allow bodyweight-only and any exercise fully covered by available equipment.
-  return required.every((id) => availableEquipment.has(id) || id.includes('bodyweight'))
 }
 
 function scoreFood(
@@ -148,23 +141,8 @@ export function selectCatalogSubset(input: {
   declaredAllergenIds: ReadonlySet<string>
 }): CatalogSubsetResult {
   const { catalog, snapshot, declaredAllergenIds } = input
-  const availableEquipment = new Set(
-    snapshot.dietary.available_equipment.map((item) => item.toLowerCase()),
-  )
-  // Map free-text equipment labels to catalog IDs when possible.
-  const equipmentIds = new Set<string>()
-  for (const id of catalog.equipmentIds) {
-    const slug = id.replace(/^equipment:/, '').replace(/@v\d+$/, '').toLowerCase()
-    if (
-      availableEquipment.size === 0 || availableEquipment.has(slug) || availableEquipment.has(id)
-    ) {
-      equipmentIds.add(id)
-    }
-  }
-  // Always allow bodyweight.
-  for (const id of catalog.equipmentIds) {
-    if (id.includes('bodyweight')) equipmentIds.add(id)
-  }
+  // Training location + free-text equipment (Persian or English) -> catalog equipment slugs.
+  const availableEquipment = availableEquipmentSlugs(catalog, snapshot)
 
   const safeFoods = [...catalog.foods.values()].filter(
     (food) => !foodHasAllergen(catalog, food, declaredAllergenIds),
@@ -178,7 +156,7 @@ export function selectCatalogSubset(input: {
   }
 
   const safeExercises = [...catalog.exercises.values()].filter((exercise) =>
-    exerciseCompatible(exercise, equipmentIds)
+    exerciseFitsEquipment(exercise, availableEquipment)
   )
   if (safeExercises.length === 0) {
     throw new HttpError(
@@ -211,10 +189,8 @@ export function selectCatalogSubset(input: {
     selectedFoodIds.add(food.id)
   }
 
-  const rankedExercises = [...safeExercises]
-  const selectedExerciseIds = new Set(
-    rankedExercises.slice(0, Math.max(MIN_EXERCISES, TARGET_EXERCISES)).map((item) => item.id),
-  )
+  // Every exercise the user can do goes to the model as one compact row; variety is its job.
+  const selectedExerciseIds = new Set(safeExercises.map((item) => item.id))
 
   let expanded = false
   let expansionReason: string | null = null
@@ -271,7 +247,6 @@ export function catalogSubsetPromptContext(
     release_id: subset.catalog.releaseId,
     release_version: subset.catalog.releaseVersion,
     food_ids: subset.food_ids,
-    exercise_ids: subset.exercise_ids,
     foods: [...subset.catalog.foods.values()].map((food) => ({
       id: food.id,
       name_en: food.name_en,
@@ -288,13 +263,9 @@ export function catalogSubsetPromptContext(
       default_unit: ingredient.default_unit,
       allergen_ids: [...ingredient.allergenIds],
     })),
-    exercises: [...subset.catalog.exercises.values()].map((exercise) => ({
-      id: exercise.id,
-      name_en: exercise.name_en,
-      name_fa: exercise.name_fa,
-      equipment_ids: [...exercise.equipmentIds],
-      substitution_ids: [...exercise.substitutionIds],
-    })),
+    // Use these ids as exercise_id / substitution_exercise_id. Names come from the catalog.
+    exercise_columns: ['id', 'movement', 'equipment', 'substitutes'],
+    exercises: exercisePromptRows(subset.catalog.exercises.values()),
     equipment_ids: [...subset.catalog.equipmentIds],
   }
 }

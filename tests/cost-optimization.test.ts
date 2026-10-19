@@ -328,6 +328,45 @@ describe('cost optimization foundations', () => {
     expect(() => expandCompactPlan(short, catalog, 'en-US')).toThrow(/30/)
   })
 
+  it('resolves exercise text ids and never keeps an unknown exercise', () => {
+    const catalog = createPlanCatalogSnapshot(catalogRows())
+    const compact = compactFixture('fa-IR')
+    const row = compact.workout_definitions[0]!.exercises[0]!
+    compact.workout_definitions[0]!.exercises = [
+      { ...row, exercise_id: 'barbell-bench-press-typo', substitution_exercise_id: null },
+      { ...row, exercise_id: 'bodyweight-squat', substitution_exercise_id: 'glute-bridge' },
+      { ...row, exercise_id: 'exercise:bodyweight-squat@v2', substitution_exercise_id: 'exercise:dead-bug@v2' },
+      { ...row, exercise_id: 'glute-bridge', substitution_exercise_id: 'not-in-catalog' },
+    ]
+    compact.workout_definitions.push({
+      ...compact.workout_definitions[0]!,
+      workout_def_id: 'all-wrong',
+      exercises: [{ ...row, exercise_id: 'made-up-move', substitution_exercise_id: null }],
+    })
+    compact.days[1]!.workout_def_id = 'all-wrong'
+    const plan = stripExpansionMetadata(expandCompactPlan(compact, catalog, 'fa-IR'))
+    assertGeneratedPlan(plan, MONTHLY_PLAN_DAYS, 'fa-IR', { catalog, minimumCalories: 1_200 })
+    const days = plan.days as Array<{ workout: { exercises: Array<Record<string, unknown>> } | null }>
+    const exercises = days[0]!.workout!.exercises
+    expect(exercises.map((item) => item.exercise_key)).toEqual([
+      'bodyweight-squat', 'bodyweight-squat.2', 'glute-bridge',
+    ])
+    expect(exercises.map((item) => item.exercise_id)).toEqual([
+      'exercise:bodyweight-squat@v2', 'exercise:bodyweight-squat@v2', 'exercise:glute-bridge@v2',
+    ])
+    expect(exercises[0]).toMatchObject({
+      name: 'اسکوات', substitution_exercise_id: 'exercise:glute-bridge@v2', substitution: 'پل باسن',
+    })
+    // A substitute the catalog does not pair with the exercise is cleared, not stored.
+    expect(exercises[1]).toMatchObject({ substitution_exercise_id: null, substitution: null })
+    expect(exercises[2]).toMatchObject({ substitution_exercise_id: null })
+    // A workout whose only exercise was unknown gets a safe catalog exercise instead.
+    expect(days[1]!.workout!.exercises).toEqual([
+      expect.objectContaining({ exercise_id: 'exercise:bodyweight-squat@v2', exercise_key: 'bodyweight-squat' }),
+    ])
+    expect(JSON.stringify(plan)).not.toMatch(/typo|made-up-move|not-in-catalog/)
+  })
+
   it('filters catalog subsets without relaxing allergen hard constraints', () => {
     const catalog = createPlanCatalogSnapshot({
       ...catalogRows(),
