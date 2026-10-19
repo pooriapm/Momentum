@@ -285,6 +285,7 @@ export const ACCOUNT_EXPORT_TABLES = [
   'monthly_plan_snapshots',
   'next_cycle_inputs',
   'daily_checkins',
+  'daily_water_logs',
   'weekly_checkins',
   'daily_meal_status',
   'shopping_purchases',

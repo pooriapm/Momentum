@@ -37,6 +37,7 @@ select extensions.is(
         'body_composition_measurements',
         'daily_checkins',
         'daily_meal_status',
+        'daily_water_logs',
         'deletion_requests',
         'dietary_preferences',
         'entitlements',

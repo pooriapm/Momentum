@@ -31,7 +31,7 @@ export const ACCOUNT_EXPORT_TABLES = [
   'entitlements', 'usage_ledger', 'ai_generation_jobs', 'plans', 'plan_versions',
   'starter_plan_activations', 'external_plan_imports', 'gift_reservations',
   'monthly_plan_periods', 'monthly_plan_snapshots', 'next_cycle_inputs',
-  'daily_checkins', 'weekly_checkins', 'daily_meal_status', 'shopping_purchases', 'extra_food_logs',
+  'daily_checkins', 'daily_water_logs', 'weekly_checkins', 'daily_meal_status', 'shopping_purchases', 'extra_food_logs',
   'workout_sessions', 'workout_exercise_logs', 'workout_set_logs',
   'ai_safety_reports', 'export_requests', 'deletion_requests',
 ]

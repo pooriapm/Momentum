@@ -21,6 +21,7 @@ import {
 } from '../_shared/plan-catalog.ts'
 import { assertGeneratedPlan, generatedPlanJsonSchema } from '../_shared/plan-contract.ts'
 import { MONTHLY_PLAN_DAYS, PLAN_SCHEMA_VERSION } from '../_shared/plan-provider.ts'
+import { projectRestaurantGuide } from '../_shared/restaurant-guide.ts'
 import {
   buildValidatedDeterministicStarter,
   STARTER_TEMPLATE_VERSION,
@@ -919,6 +920,7 @@ function projectPlanDay(options: {
         return [{ category: item.category, level: item.level, note: item.note }]
       })
       : [],
+    restaurant_guide: projectRestaurantGuide(content.restaurant_guide),
     day: {
       local_date: options.localDate,
       day_index: dayOffset,
@@ -950,6 +952,7 @@ async function loadDashboard(
     profileResult,
     goalResult,
     checkinResult,
+    waterResult,
     recentCheckinsResult,
     latestBodyResult,
     entitlementResult,
@@ -982,6 +985,12 @@ async function loadDashboard(
       .select(
         'local_date,weight_kg,waist_cm,sleep_minutes,hunger_score,mood_score,energy_score,recovery_score,water_ml,steps,adherence_percent',
       )
+      .eq('user_id', userId)
+      .eq('local_date', input.localDate)
+      .maybeSingle(),
+    admin
+      .from('daily_water_logs')
+      .select('local_date,water_ml')
       .eq('user_id', userId)
       .eq('local_date', input.localDate)
       .maybeSingle(),
@@ -1058,6 +1067,7 @@ async function loadDashboard(
     profileResult.error ||
     goalResult.error ||
     checkinResult.error ||
+    waterResult.error ||
     recentCheckinsResult.error ||
     latestBodyResult.error ||
     entitlementResult.error ||
@@ -1206,6 +1216,10 @@ async function loadDashboard(
       : null,
     active_goal: goalResult.data,
     checkin: checkinResult.data,
+    water_today: {
+      local_date: input.localDate,
+      water_ml: typeof waterResult.data?.water_ml === 'number' ? waterResult.data.water_ml : 0,
+    },
     recent_checkins: recentCheckinsResult.data ?? [],
     latest_body_weight: latestBodyResult.data,
     entitlement_usage: entitlementUsage,
