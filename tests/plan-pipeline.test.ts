@@ -502,6 +502,14 @@ describe('stage 5: validation, portion scaling and repair paths', () => {
     const result = validateLeanPlan(plan, ctx)
     return result.ok ? [] : result.issues.map((issue) => issue.code)
   }
+  function fixed(mutate: (plan: Record<string, any>) => void) {
+    const ctx = ctxFor()
+    const plan = composeDeterministicLeanPlan(ctx.brief.brief) as Record<string, any>
+    mutate(plan)
+    const result = validateLeanPlan(plan, ctx)
+    if (!result.ok) throw new Error(result.issues.map((issue) => issue.code).join(','))
+    return { plan: result.plan, fixes: result.autoFixes.join(' | ') }
+  }
 
   it('rejects unknown or non-allowlisted catalog and exercise ids', () => {
     expect(mutated((plan) => { plan.meals[0].food = 'pizza-margherita' })).toContain('unknown_food')
@@ -529,15 +537,55 @@ describe('stage 5: validation, portion scaling and repair paths', () => {
     const ctx = ctxFor()
     const rest = Array.from({ length: 30 }, (_, d) => d).find((d) => !ctx.brief.brief.training.train_days.includes(d))!
     const trainDay = ctx.brief.brief.training.train_days[0]!
-    expect(mutated((plan) => { plan.days[rest].workout = plan.workouts[0].id })).toContain('rest_day_workout')
+    // A workout on a rest day is dropped in code (the safe direction), not sent back for repair.
+    const dropped = fixed((plan) => { plan.days[rest].workout = plan.workouts[0].id })
+    expect(dropped.fixes).toContain('workout on a rest day removed')
+    expect(dropped.plan.days.find((day) => day.d === rest)!.workout).toBeNull()
     expect(mutated((plan) => { plan.days[trainDay].workout = null })).toContain('training_day_missing')
     expect(mutated((plan) => { plan.workouts[0].intensity = 'high' })).toContain('intensity_too_high')
     expect(mutated((plan) => {
       for (const item of plan.workouts[0].items) item.sets = 5
       plan.workouts[0].items.push({ ...plan.workouts[0].items[0], ex: plan.workouts[0].items[1].ex })
     })).toContain('workout_volume')
-    expect(mutated((plan) => { plan.workouts[0].items[0].rest = 5 })).toContain('exercise_rest')
+    expect(mutated((plan) => { plan.workouts[0].items[0].rest = 'long' })).toContain('exercise_rest')
+    expect(mutated((plan) => { plan.workouts[0].items[0].reps = 'as many as you can' })).toContain('exercise_reps')
     expect(mutated((plan) => { plan.workouts[0].minutes = 120 })).toContain('workout_minutes')
+  })
+
+  it('clamps small exercise slips in code instead of asking for a repair', () => {
+    const result = fixed((plan) => {
+      const items = plan.workouts[0].items
+      items[0].rest = 5
+      items[0].sets = 7
+      items[1].reps = '12 هر طرف'
+    })
+    expect(result.fixes).toContain('rest clamped')
+    expect(result.fixes).toContain('sets clamped')
+    expect(result.fixes).toContain('reps trimmed to a count')
+    const first = [...result.plan.workouts.values()][0]!.items
+    expect(first[0]).toMatchObject({ rest: 45, sets: 5 })
+    expect(first[1]!.reps).toBe('12')
+
+    const trimmed = fixed((plan) => {
+      const items = plan.workouts[0].items
+      for (const item of items) item.sets = 2
+      while (items.length < 9) items.push({ ...items[0] })
+    })
+    expect(trimmed.fixes).toContain('extra exercises trimmed')
+    expect([...trimmed.plan.workouts.values()][0]!.items).toHaveLength(8)
+  })
+
+  it('gives a hold written as one rep a time', () => {
+    const ctx = ctxFor()
+    const hold = [...ctx.brief.allowedExerciseIds].find((id) => /plank/.test(id))
+    if (!hold) return
+    const result = fixed((plan) => {
+      plan.workouts[0].items[0].ex = hold.replace(/^exercise:/, '').replace(/@v\d+$/, '')
+      plan.workouts[0].items[0].sub = null
+      plan.workouts[0].items[0].reps = '1'
+    })
+    expect(result.fixes).toContain('hold given a time')
+    expect([...result.plan.workouts.values()][0]!.items[0]!.reps).toBe('30s')
   })
 
   it('enforces coverage, slots, variety, language and text safety', () => {

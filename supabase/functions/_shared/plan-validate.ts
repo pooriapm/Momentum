@@ -141,6 +141,9 @@ export function resolveFoodId(catalog: PlanCatalogSnapshot, ref: unknown): strin
   return catalog.foods.has(id) ? id : null
 }
 
+/** Static holds: a rep count of 1-3 for these means the model forgot to give a time. */
+const HOLD_EXERCISE = /(?:^|[:-])(?:plank|hold|wall-sit|dead-hang|hang|hollow|l-sit)(?:-|@|$)/
+
 /** Accepts "10", "8-12", "30s" / "45 sec" / "۳۰ ثانیه", "20min" / "20 دقیقه". */
 export function parseReps(value: string): { count: string; seconds: number | null } | null {
   const text = normalizeDigits(value).trim().toLowerCase()
@@ -279,9 +282,13 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     if (!Number.isInteger(minutes) || minutes < 10 || minutes > 120 || (!light && Math.abs(minutes - session) > 15)) {
       add('workout_minutes', 'schema', `${where}: minutes must be an integer within 15 of ${session}.`)
     }
-    const rawItems = Array.isArray(item.items) ? item.items : []
+    let rawItems = Array.isArray(item.items) ? item.items : []
     const [minItems, maxItems] = light ? [1, 6] : [3, 8]
-    if (rawItems.length < minItems || rawItems.length > maxItems) {
+    if (rawItems.length > maxItems) {
+      rawItems = rawItems.slice(0, maxItems)
+      autoFixes.push(`${where}: extra exercises trimmed`)
+    }
+    if (rawItems.length < minItems) {
       add('workout_items', 'schema', `${where}: ${type} needs ${minItems}-${maxItems} exercises.`)
     }
     const items: LeanWorkoutItem[] = []
@@ -301,15 +308,42 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
         add('exercise_not_allowed', 'equipment', `${at}: exercise "${slugOf(exerciseId)}" is not in the brief's exercises list.`)
         continue
       }
-      const sets = Number(row.sets)
+      // Small numeric slips are clamped in code instead of costing a repair call. Clamping sets
+      // happens before the volume cap below, so it can never push a workout past the safe total.
+      let sets = Number(row.sets)
       const [minSets, maxSets] = light ? [1, 3] : [2, 5]
+      if (Number.isFinite(sets) && sets > 0 && (!Number.isInteger(sets) || sets < minSets || sets > maxSets)) {
+        sets = Math.min(maxSets, Math.max(minSets, Math.round(sets)))
+        autoFixes.push(`${at}: sets clamped`)
+      }
       if (!Number.isInteger(sets) || sets < minSets || sets > maxSets) {
         add('exercise_sets', 'schema', `${at}: sets must be ${minSets}-${maxSets}.`)
       }
-      const reps = typeof row.reps === 'string' ? parseReps(row.reps) : null
+      let repsText = typeof row.reps === 'string' ? row.reps : ''
+      let reps = parseReps(repsText)
+      if (!reps) {
+        // "12 each side", "10-12 per leg", "۱۰ تکرار": keep the leading count or range.
+        const lead = /^\s*([0-9۰-۹٠-٩]{1,3}(?:\s*[-–—]\s*[0-9۰-۹٠-٩]{1,3})?)(?:\s+\S.*)?$/.exec(repsText)
+        const salvaged = lead ? parseReps(lead[1]!) : null
+        if (salvaged) {
+          reps = salvaged
+          repsText = lead![1]!
+          autoFixes.push(`${at}: reps trimmed to a count`)
+        }
+      }
+      if (reps && reps.seconds === null && Number(reps.count.split('-').pop()) <= 3 && HOLD_EXERCISE.test(exerciseId)) {
+        // A plank or other hold written as "1" rep: give it a time instead.
+        reps = { count: '1', seconds: 30 }
+        repsText = '30s'
+        autoFixes.push(`${at}: hold given a time`)
+      }
       if (!reps) add('exercise_reps', 'schema', `${at}: reps must be like "10", "8-12", "30s" or "20min".`)
-      const rest = Number(row.rest)
+      let rest = Number(row.rest)
       const [minRest, maxRest] = light ? [0, 60] : [45, 180]
+      if (Number.isFinite(rest) && rest >= 0 && (!Number.isInteger(rest) || rest < minRest || rest > maxRest)) {
+        rest = Math.min(maxRest, Math.max(minRest, Math.round(rest)))
+        autoFixes.push(`${at}: rest clamped`)
+      }
       if (!Number.isInteger(rest) || rest < minRest || rest > maxRest) {
         add('exercise_rest', 'schema', `${at}: rest must be ${minRest}-${maxRest} seconds.`)
       }
@@ -325,7 +359,7 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
         }
       }
       totalSets += Number.isInteger(sets) ? sets : 0
-      items.push({ exerciseId, sets, reps: typeof row.reps === 'string' ? row.reps : '', rest, substituteId })
+      items.push({ exerciseId, sets, reps: repsText, rest, substituteId })
     }
     if (!light && totalSets > SET_CAPS[level]) {
       add('workout_volume', 'safety', `${where}: ${totalSets} total sets; at most ${SET_CAPS[level]} for a ${level}.`)
@@ -365,7 +399,13 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     } else if (slots.join(',') !== brief.meals.slots.join(',') && slots.every(Boolean)) {
       add('day_slots', 'schema', `day ${d}: meals must be one per slot in order: ${brief.meals.slots.join(', ')}.`)
     }
-    const workoutId = typeof item.workout === 'string' ? item.workout : null
+    let workoutId = typeof item.workout === 'string' ? item.workout : null
+    // Extra training is never forced on a rest or light day: drop it in code (the safe direction).
+    if (workoutId && !trainDays.has(d) && workouts.has(workoutId) &&
+      !(lightDays.has(d) && LIGHT_TYPES.has(workouts.get(workoutId)!.type))) {
+      workoutId = null
+      autoFixes.push(`day ${d}: workout on a rest day removed`)
+    }
     const workout = workoutId ? workouts.get(workoutId) : undefined
     if (workoutId && !workout && !(Array.isArray(raw.workouts) && raw.workouts.some((w) => isRecord(w) && w.id === workoutId))) {
       add('day_unknown_workout', 'schema', `day ${d}: workout "${workoutId}" is not defined.`)
