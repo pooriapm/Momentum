@@ -50,6 +50,7 @@ select extensions.is(
         'monthly_plan_snapshots',
         'next_cycle_inputs',
         'onboarding_drafts',
+        'payments',
         'plan_versions',
         'plans',
         'profiles',

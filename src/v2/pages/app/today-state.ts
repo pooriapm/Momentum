@@ -18,12 +18,24 @@ export type TodaySurface =
 
 export type WorkoutRunStatus = 'idle' | 'in_progress' | 'paused' | 'completed' | 'stopped'
 
-export function mealIsCompleted(meal: MealSlot, overrides: Record<string, boolean> = {}) {
-  if (meal.id in overrides) return overrides[meal.id]
-  return meal.completionStatus === 'completed'
+/** A meal is planned, eaten (completed), or skipped; local overrides win until the server catches up. */
+export type MealStatus = 'planned' | 'completed' | 'skipped'
+
+export function mealStatus(meal: MealSlot, overrides: Record<string, MealStatus> = {}): MealStatus {
+  return overrides[meal.id] ?? meal.completionStatus ?? 'planned'
 }
 
-export function completedMealCount(meals: MealSlot[], overrides: Record<string, boolean> = {}) {
+export function mealIsCompleted(meal: MealSlot, overrides: Record<string, MealStatus> = {}) {
+  return mealStatus(meal, overrides) === 'completed'
+}
+
+/** Eaten or skipped: either way the day has moved past this meal. */
+export function mealIsSettled(meal: MealSlot, overrides: Record<string, MealStatus> = {}) {
+  return mealStatus(meal, overrides) !== 'planned'
+}
+
+/** Only eaten meals count toward what was logged. */
+export function completedMealCount(meals: MealSlot[], overrides: Record<string, MealStatus> = {}) {
   return meals.filter((meal) => mealIsCompleted(meal, overrides)).length
 }
 
@@ -32,7 +44,7 @@ export function deriveTodaySurface(input: {
   online: boolean
   today: string
   safetyLevel?: 'normal' | 'caution' | 'urgent' | null
-  mealOverrides?: Record<string, boolean>
+  mealOverrides?: Record<string, MealStatus>
   workoutStatus?: WorkoutRunStatus
   loadError?: boolean
   preparing?: boolean
@@ -45,12 +57,12 @@ export function deriveTodaySurface(input: {
   if (input.plan.localDate && input.plan.localDate !== input.today) return 'stale'
 
   const meals = input.plan.meals
-  const completed = completedMealCount(meals, input.mealOverrides)
-  const allMealsDone = meals.length > 0 && completed === meals.length
+  const settled = meals.filter((meal) => mealIsSettled(meal, input.mealOverrides)).length
+  const allMealsDone = meals.length > 0 && settled === meals.length
   const workoutDone = !input.plan.workout || input.workoutStatus === 'completed' || input.workoutStatus === 'stopped'
   if (allMealsDone && workoutDone) return 'completed'
   if (!input.plan.workout) return 'rest'
-  if (completed > 0 || input.workoutStatus === 'in_progress' || input.workoutStatus === 'paused') return 'partial'
+  if (settled > 0 || input.workoutStatus === 'in_progress' || input.workoutStatus === 'paused') return 'partial'
   return 'active'
 }
 

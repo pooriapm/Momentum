@@ -6,7 +6,7 @@ import { AuthContext, type AuthContextValue } from '../../../platform/auth/auth-
 import { I18nProvider } from '../../../platform/i18n/I18nProvider'
 import { demoPlan } from '../../data/demo'
 import type { MomentumPlanView } from '../../data/types'
-import { startZarinpalCheckout } from '../../data/payments'
+import { loadCardDetails, loadLatestCardPayment, registerMembershipInterest, submitCardPayment, uploadReceipt } from '../../data/payments'
 import { MePage } from './MePage'
 
 vi.mock('../../entitlement', async (importOriginal) => ({
@@ -16,7 +16,12 @@ vi.mock('../../entitlement', async (importOriginal) => ({
 
 vi.mock('../../data/payments', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../data/payments')>()),
-  startZarinpalCheckout: vi.fn(async () => undefined),
+  loadCardDetails: vi.fn(async () => ({ card_number: '6037991234567890', card_holder: 'Pooria', amount_minor: 4_900_000, currency: 'IRR' as const })),
+  loadLatestCardPayment: vi.fn(async () => null),
+  uploadReceipt: vi.fn(async () => 'u1/0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f.jpg'),
+  discardReceipt: vi.fn(async () => undefined),
+  submitCardPayment: vi.fn(async () => ({ payment_id: '0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', status: 'pending' as const })),
+  registerMembershipInterest: vi.fn(async () => ({ registered: true as const })),
 }))
 
 const searchMock = vi.hoisted(() => ({ value: '' }))
@@ -50,37 +55,45 @@ function renderMembership(locale: 'fa' | 'en', region: 'ir' | 'intl') {
   )
 }
 
-describe('website membership checkout', () => {
+describe('website membership payment', () => {
   beforeEach(() => {
-    vi.mocked(startZarinpalCheckout).mockClear()
+    vi.clearAllMocks()
     searchMock.value = ''
+    // jsdom has no object URLs; the receipt preview only needs a string.
+    URL.createObjectURL = vi.fn(() => 'blob:receipt')
+    URL.revokeObjectURL = vi.fn()
   })
 
-  it('offers Zarinpal to Iranian members in English and returns them to English', async () => {
+  it('lets an Iranian member pay by card transfer and submit a receipt for review', async () => {
     await i18n.changeLanguage('en')
     renderMembership('en', 'ir')
-    fireEvent.click(screen.getByRole('button', { name: 'Pay with Zarinpal' }))
-    await waitFor(() => expect(startZarinpalCheckout).toHaveBeenCalledWith('en'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Pay by card transfer' }))
+    expect(await screen.findByText('6037 9912 3456 7890')).toBeInTheDocument()
+    expect(loadCardDetails).toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Submit receipt' })).toBeDisabled()
+
+    const file = new File(['receipt'], 'receipt.png', { type: 'image/png' })
+    fireEvent.change(screen.getByLabelText('Upload the payment receipt'), { target: { files: [file] } })
+    await waitFor(() => expect(uploadReceipt).toHaveBeenCalledWith('u1', file))
+    fireEvent.click(await screen.findByRole('button', { name: 'Submit receipt' }))
+    await waitFor(() => expect(submitCardPayment).toHaveBeenCalledWith('u1/0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f.jpg'))
+    expect(await screen.findByText(/reviewing it/)).toBeInTheDocument()
   })
 
-  it('offers Zarinpal to Iranian members in Persian', async () => {
+  it('shows the receipt under review instead of a second payment button', async () => {
+    vi.mocked(loadLatestCardPayment).mockResolvedValueOnce({ provider: 'card_transfer', status: 'pending', failure_code: null, created_at: '' })
     await i18n.changeLanguage('fa')
     renderMembership('fa', 'ir')
-    fireEvent.click(screen.getByRole('button', { name: 'پرداخت با زرین‌پال' }))
-    await waitFor(() => expect(startZarinpalCheckout).toHaveBeenCalledWith('fa'))
+    expect(await screen.findByText(/در حال بررسی است/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'پرداخت کارت به کارت' })).not.toBeInTheDocument()
   })
 
-  it('keeps members outside Iran on the pricing path while their payment is undecided', async () => {
+  it('asks members outside Iran to be notified instead of paying', async () => {
     await i18n.changeLanguage('en')
     renderMembership('en', 'intl')
-    expect(screen.queryByRole('button', { name: /zarinpal/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Start membership' })).toHaveAttribute('href', '/en/pricing')
-  })
-
-  it('shows the gateway result after Zarinpal sends the buyer back', async () => {
-    await i18n.changeLanguage('en')
-    searchMock.value = 'payment=success'
-    renderMembership('en', 'ir')
-    expect(screen.getByText('Payment confirmed. Your 30-day membership is active.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /card transfer/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Notify me when it opens' }))
+    await waitFor(() => expect(registerMembershipInterest).toHaveBeenCalled())
+    expect(await screen.findByRole('button', { name: 'We will let you know' })).toBeDisabled()
   })
 })

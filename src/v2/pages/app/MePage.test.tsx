@@ -83,13 +83,14 @@ describe('MePage inventory states', () => {
   it('LIFE-08 and LIFE-10 keep a single offer and block generation while pending', () => {
     renderMe({ panel: 'subscription', membershipStatus: 'pending' })
     expect(screen.getAllByText(/a new plan will not start/i).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: /recover payment/i })).toHaveAttribute('href', '/en/pricing')
+    // The demo member is outside Iran, where payment is not open yet: they can ask to hear later.
+    expect(screen.getByRole('button', { name: /notify me when it opens/i })).toBeInTheDocument()
   })
 
   it('keeps cancelled membership terminal instead of presenting it as active', () => {
     renderMe({ panel: 'subscription', membershipStatus: 'cancelled' })
     expect(screen.getAllByText(/cancelled or expired/i).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/pricing')
+    expect(screen.getByRole('button', { name: /notify me when it opens/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /renewal is active/i })).not.toBeInTheDocument()
   })
 

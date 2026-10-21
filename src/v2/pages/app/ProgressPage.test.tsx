@@ -87,9 +87,10 @@ describe('ProgressPage inventory states', () => {
   it('PROG-05 and PROG-06 open the weekly report and keep the month unchanged', async () => {
     renderProgress()
     fireEvent.click(screen.getAllByRole('button', { name: /save weekly report/i })[0]!)
-    expect(await screen.findByRole('heading', { name: 'Weekly check-in' })).toBeInTheDocument()
+    // The weekly sheet is lazy-loaded; a busy machine can take longer than the 1s default.
+    expect(await screen.findByRole('heading', { name: 'Weekly check-in' }, { timeout: 5_000 })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /save and calculate trend/i }))
-    expect(await screen.findByText(/weekly check-in saved/i)).toBeInTheDocument()
+    expect(await screen.findByText(/weekly check-in saved/i, {}, { timeout: 5_000 })).toBeInTheDocument()
     expect(screen.getAllByText(/this month’s plan is unchanged|your current plan continues unchanged|no ai was called/i).length).toBeGreaterThan(0)
   })
 

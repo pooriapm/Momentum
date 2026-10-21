@@ -202,7 +202,7 @@ select extensions.is(
         ('workout_sessions'), ('workout_exercise_logs'), ('workout_set_logs'),
         ('ai_safety_reports'), ('gift_reservations'), ('monthly_plan_periods'),
         ('monthly_plan_snapshots'), ('next_cycle_inputs'), ('export_requests'),
-        ('deletion_requests'), ('external_plan_imports'), ('starter_plan_activations'),
+        ('deletion_requests'), ('external_plan_imports'), ('starter_plan_activations'), ('payments'),
         ('catalog_releases'), ('allergen_catalog'),
         ('ingredient_catalog'), ('ingredient_allergens'), ('food_catalog'),
         ('food_catalog_ingredients'), ('equipment_catalog'), ('exercise_catalog'),
@@ -238,7 +238,7 @@ select extensions.is(
     'external_plan_imports', 'extra_food_logs', 'food_catalog', 'food_catalog_ingredients',
     'gift_reservations', 'goals', 'health_context', 'ingredient_allergens',
     'ingredient_catalog', 'monthly_plan_periods', 'monthly_plan_snapshots',
-    'next_cycle_inputs', 'onboarding_drafts', 'plan_versions', 'plans',
+    'next_cycle_inputs', 'onboarding_drafts', 'payments', 'plan_versions', 'plans',
     'product_prices', 'profiles', 'starter_plan_activations', 'subscriptions', 'training_schedule_items',
     'usage_ledger', 'weekly_checkins', 'workout_exercise_logs',
     'workout_sessions', 'workout_set_logs'

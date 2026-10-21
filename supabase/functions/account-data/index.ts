@@ -268,6 +268,27 @@ async function deleteAccountStorage(
       )
     }
   }
+
+  // Card-to-card receipts live in their own private bucket, one flat folder per member.
+  const { data: receipts, error: receiptListError } = await admin.storage
+    .from('payment-receipts')
+    .list(userId, { limit: 1000 })
+  if (receiptListError) {
+    throw new HttpError(503, 'account_delete_storage_failed', 'Private files could not be removed.')
+  }
+  const receiptPaths = (receipts ?? []).filter((item) => item.id).map((item) =>
+    `${userId}/${item.name}`
+  )
+  if (receiptPaths.length) {
+    const { error } = await admin.storage.from('payment-receipts').remove(receiptPaths)
+    if (error) {
+      throw new HttpError(
+        503,
+        'account_delete_storage_failed',
+        'Private files could not be removed.',
+      )
+    }
+  }
 }
 
 async function deleteAccountIdentity(

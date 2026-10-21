@@ -274,6 +274,7 @@ export const ACCOUNT_EXPORT_TABLES = [
   'training_schedule_items',
   'subscriptions',
   'entitlements',
+  'payments',
   'usage_ledger',
   'ai_generation_jobs',
   'plans',

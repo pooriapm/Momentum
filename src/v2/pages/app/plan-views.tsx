@@ -262,6 +262,8 @@ export function PlanNutritionView({
           const selectedOptionId = selectedMeals[meal.id] ?? meal.selectedOptionId ?? meal.options[0]?.id
           const selectedOption = meal.options.find((option) => option.id === selectedOptionId) ?? meal.options[0]
           const completed = completedSlots[meal.id] || meal.completionStatus === 'completed'
+          // A skipped meal is settled for today: its option is locked, as on the server.
+          const skipped = !completed && meal.completionStatus === 'skipped'
           return (
             <ContentCard className="plan-meal-row" key={meal.id}>
               <div className="plan-meal-row__time"><strong><bdi dir="ltr">{formatClock(meal.time, locale)}</bdi></strong><small>{localize(meal.label, locale)}</small></div>
@@ -274,7 +276,7 @@ export function PlanNutritionView({
                         <button
                           aria-pressed={isSelected}
                           className="plan-meal-option__select"
-                          disabled={!isToday || completed || mutationsLocked || Boolean(savingSlot)}
+                          disabled={!isToday || completed || skipped || mutationsLocked || Boolean(savingSlot)}
                           onClick={() => onSelectMeal(meal.id, option.id)}
                           type="button"
                         >
@@ -288,7 +290,7 @@ export function PlanNutritionView({
                 </div>
                 {isToday ? (
                   <div className="plan-meal-row__actions">
-                    <span>{completed ? (fa ? 'ثبت شد' : 'Completed') : (fa ? 'یکی را انتخاب کن' : 'Pick one')}</span>
+                    <span>{completed ? (fa ? 'ثبت شد' : 'Completed') : skipped ? (fa ? 'رد شد' : 'Skipped') : (fa ? 'یکی را انتخاب کن' : 'Pick one')}</span>
                     <Button disabled={completed || mutationsLocked} loading={savingSlot === meal.id} onClick={() => onCompleteMeal(meal.id, selectedOption.id)}><Check size={16} />{completed ? (fa ? 'ثبت شد' : 'Completed') : (fa ? 'ثبت' : 'Complete')}</Button>
                   </div>
                 ) : null}

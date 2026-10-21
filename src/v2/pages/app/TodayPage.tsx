@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Check,
   ChevronRight,
+  CircleMinus,
   Clock3,
   Dumbbell,
   Eye,
@@ -20,7 +21,7 @@ import { eventContext, trackProductEvent } from '../../analytics/events'
 import type { CheckInSafety } from '../../checkins/contracts'
 import { CheckInSheet, MealDetailSheet, LazyOverlay } from '../../components/LazyOverlay'
 import { WorkoutLogger } from '../../components/WorkoutLogger'
-import { completeMeal, currentLocalDate, logMealSelection, undoMeal } from '../../data/repository'
+import { completeMeal, currentLocalDate, logMealSelection, skipMeal, undoMeal } from '../../data/repository'
 import { localize, type MealChoice, type MealSlot, type MomentumPlanView } from '../../data/types'
 import { formatClock, formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
@@ -36,7 +37,9 @@ import { useGenerationWait } from './use-generation-wait'
 import {
   deriveTodaySurface,
   formatLastSync,
-  mealIsCompleted,
+  mealIsSettled,
+  mealStatus,
+  type MealStatus,
   readStoredLastSync,
   writeStoredLastSync,
   type TodaySurface,
@@ -119,7 +122,7 @@ export function TodayPage({
   const wait = useGenerationWait(locale, Boolean(plan), !preview)
   const fa = locale === 'fa'
   const [selectedMeals, setSelectedMeals] = useState<Record<string, string>>({})
-  const [mealOverrides, setMealOverrides] = useState<Record<string, boolean>>({})
+  const [mealOverrides, setMealOverrides] = useState<Record<string, MealStatus>>({})
   const [savingSlot, setSavingSlot] = useState('')
   const [mealError, setMealError] = useState('')
   const [substituteNotice, setSubstituteNotice] = useState('')
@@ -200,7 +203,8 @@ export function TodayPage({
 
   const currentTime = currentTimeInZone(plan.timezone)
   const orderedMeals = [...plan.meals].sort((left, right) => left.time.localeCompare(right.time))
-  const incompleteMeals = orderedMeals.filter((meal) => !mealIsCompleted(meal, mealOverrides))
+  // Eaten and skipped meals are both behind the user; the next meal is the first one still planned.
+  const incompleteMeals = orderedMeals.filter((meal) => !mealIsSettled(meal, mealOverrides))
   const allMealsCompleted = orderedMeals.length > 0 && incompleteMeals.length === 0
   const nextMeal = incompleteMeals.find((meal) => meal.time !== '—' && meal.time >= currentTime)
     ?? incompleteMeals[0]
@@ -212,7 +216,7 @@ export function TodayPage({
   async function selectMeal(slotId: string, optionId: string) {
     if (mutationsLocked || savingSlot) return
     const meal = plan!.meals.find((item) => item.id === slotId)
-    if (!meal || mealIsCompleted(meal, mealOverrides)) return
+    if (!meal || mealIsSettled(meal, mealOverrides)) return
     if (!canSwapMeals) {
       setSwapLocked(optionId !== (meal.selectedOptionId ?? meal.options[0]?.id))
       return
@@ -257,10 +261,30 @@ export function TodayPage({
         trackProductEvent({ ...eventContext(locale, plan?.progress.productRegion), event_name: 'meaningful_action_completed', surface: 'today', action_kind: 'meal', outcome: 'completed' })
         delete mutationAttempts.current[attempt]
       }
-      setMealOverrides((current) => ({ ...current, [slotId]: true }))
+      setMealOverrides((current) => ({ ...current, [slotId]: 'completed' }))
       if (!preview) await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
     } catch {
       setMealError(fa ? 'ثبت وعده انجام نشد؛ دوباره تلاش کن.' : 'The meal could not be completed. Try again.')
+    } finally {
+      setSavingSlot('')
+    }
+  }
+
+  async function markSkipped(slotId: string, optionId: string) {
+    if (mutationsLocked) return
+    setSavingSlot(slotId)
+    setMealError('')
+    try {
+      if (!preview) {
+        const attempt = `skip:${slotId}`
+        const idempotencyKey = retryKey(mutationAttempts.current, attempt, `${plan!.localDate ?? today}:${slotId}:${optionId}`)
+        await skipMeal(plan!.localDate ?? today, slotId, optionId, idempotencyKey)
+        delete mutationAttempts.current[attempt]
+      }
+      setMealOverrides((current) => ({ ...current, [slotId]: 'skipped' }))
+      if (!preview) await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
+    } catch {
+      setMealError(fa ? 'رد کردن وعده ثبت نشد؛ دوباره تلاش کن.' : 'The meal could not be skipped. Try again.')
     } finally {
       setSavingSlot('')
     }
@@ -270,8 +294,8 @@ export function TodayPage({
     if (mutationsLocked) return
     const meal = plan!.meals.find((item) => item.id === slotId)
     const optionId = meal ? selectedOption(meal, selectedMeals)?.id : undefined
-    const previous = mealOverrides[slotId]
-    setMealOverrides((current) => ({ ...current, [slotId]: false }))
+    const previous = meal ? mealStatus(meal, mealOverrides) : 'completed'
+    setMealOverrides((current) => ({ ...current, [slotId]: 'planned' }))
     setMealError('')
     if (preview || !optionId) return
     setSavingSlot(slotId)
@@ -282,7 +306,7 @@ export function TodayPage({
       delete mutationAttempts.current[attempt]
       await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
     } catch {
-      setMealOverrides((current) => ({ ...current, [slotId]: previous ?? true }))
+      setMealOverrides((current) => ({ ...current, [slotId]: previous }))
       setMealError(fa ? 'برگرداندن ثبت انجام نشد؛ دوباره تلاش کن.' : 'The meal could not be undone. Try again.')
     } finally {
       setSavingSlot('')
@@ -393,7 +417,7 @@ export function TodayPage({
       <section className="today-main-grid">
         <div className="today-timeline" id="today-meal">
           <div className="section-title-row">
-            <h2>{allMealsCompleted ? (fa ? 'همه وعده‌ها ثبت شدند' : 'All meals completed') : t('app.nextMeal')}</h2>
+            <h2>{allMealsCompleted ? (fa ? 'همه وعده‌ها ثبت شدند' : 'All meals logged') : t('app.nextMeal')}</h2>
             <span><Clock3 size={16} />{nextMeal ? <bdi dir="ltr">{formatClock(nextMeal.time, locale)}</bdi> : (allMealsCompleted ? (fa ? 'کامل' : 'Done') : '—')}</span>
           </div>
 
@@ -432,6 +456,9 @@ export function TodayPage({
                 <span><bdi dir={fa ? 'rtl' : 'ltr'}><span>{formatNumber(nextChoice.nutrition.protein, locale)}</span><span>g</span></bdi> {t('app.protein')}</span>
                 <span><Clock3 size={16} /><bdi dir="ltr">{formatNumber(nextChoice.cookingMinutes, locale)}</bdi> {fa ? 'دقیقه' : 'min'}</span>
                 <Button onClick={() => setMealDetail({ choice: nextChoice, label: localize(nextMeal.label, locale) })} variant="secondary"><Eye size={16} />{fa ? 'جزئیات' : 'Details'}</Button>
+                <Button disabled={mutationsLocked || Boolean(savingSlot)} onClick={() => void markSkipped(nextMeal.id, nextChoice.id)} variant="secondary">
+                  <CircleMinus size={16} />{fa ? 'رد کردن وعده' : 'Skip meal'}
+                </Button>
                 <Button disabled={mutationsLocked} loading={savingSlot === nextMeal.id} onClick={() => void markComplete(nextMeal.id, nextChoice.id)}>
                   <Check size={17} />{t('app.complete')}
                 </Button>
@@ -441,21 +468,26 @@ export function TodayPage({
           {listedMeals.length > 0 ? (
             <div className="today-timeline-list">
               {listedMeals.map((meal) => {
-                const completed = mealIsCompleted(meal, mealOverrides)
+                const status = mealStatus(meal, mealOverrides)
                 const choice = selectedOption(meal, selectedMeals)
                 return (
-                  <ContentCard className={`today-meal-row${completed ? ' is-complete' : ''}`} key={meal.id}>
+                  <ContentCard className={`today-meal-row${status === 'completed' ? ' is-complete' : status === 'skipped' ? ' is-skipped' : ''}`} key={meal.id}>
                     <strong className="today-meal-row__time"><bdi dir="ltr">{formatClock(meal.time, locale)}</bdi></strong>
                     <div>
                       <p>{localize(meal.label, locale)}</p>
                       <h3>{choice ? localize(choice.name, locale) : localize(meal.label, locale)}</h3>
                     </div>
-                    <StatusPill tone={completed ? 'success' : 'neutral'}>
-                      {completed ? (fa ? 'ثبت شد' : 'Logged') : (fa ? 'برنامه' : 'Planned')}
+                    <StatusPill tone={status === 'completed' ? 'success' : 'neutral'}>
+                      {status === 'completed' ? (fa ? 'ثبت شد' : 'Logged') : status === 'skipped' ? (fa ? 'رد شد' : 'Skipped') : (fa ? 'برنامه' : 'Planned')}
                     </StatusPill>
-                    {completed ? (
+                    {status === 'planned' ? (
+                      <div className="today-meal-row__actions">
+                        <Button aria-label={fa ? `ثبت ${localize(meal.label, locale)}` : `Log ${localize(meal.label, locale)}`} disabled={mutationsLocked || Boolean(savingSlot) || !choice} loading={savingSlot === meal.id} onClick={() => choice && void markComplete(meal.id, choice.id)}><Check size={16} />{fa ? 'خوردم' : 'Ate it'}</Button>
+                        <Button aria-label={fa ? `رد کردن ${localize(meal.label, locale)}` : `Skip ${localize(meal.label, locale)}`} disabled={mutationsLocked || Boolean(savingSlot) || !choice} onClick={() => choice && void markSkipped(meal.id, choice.id)} variant="secondary"><CircleMinus size={16} />{fa ? 'رد کردن' : 'Skip'}</Button>
+                      </div>
+                    ) : (
                       <Button disabled={mutationsLocked || savingSlot === meal.id} onClick={() => void revertMeal(meal.id)} variant="secondary">{fa ? 'برگرداندن ثبت' : 'Undo log'}</Button>
-                    ) : null}
+                    )}
                   </ContentCard>
                 )
               })}

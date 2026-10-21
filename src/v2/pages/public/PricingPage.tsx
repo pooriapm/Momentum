@@ -67,6 +67,9 @@ export function PricingPage({
   const giftHref = localizedPath(locale, authenticated ? '/onboarding/review' : '/auth/sign-up')
   const primaryLabel = authenticated ? t('pricing.viewMembership') : t('pricing.choose')
   const giftUnavailable = campaign === 'exhausted' || campaign === 'disabled'
+  // Payment outside Iran is not open yet: the membership offer collects interest instead.
+  const abroad = (membership?.currency ?? pricingContext?.suggested_currency) === 'USD'
+  const membershipLabel = abroad ? (fa ? 'وقتی عضویت باز شد خبرم کن' : 'Notify me when membership opens') : primaryLabel
   const showPaid = !unavailable && !loading
   const membershipFeatures = fa
     ? [
@@ -126,7 +129,7 @@ export function PricingPage({
           : 'This is the one membership. Momentum builds the thirty-day food and training plan, keeps the period from the day it is ready, and shapes next month from how this one went.',
         features: membershipFeatures,
         href: primaryHref,
-        label: primaryLabel,
+        label: membershipLabel,
         primary: true,
       },
       {

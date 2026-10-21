@@ -59,7 +59,8 @@ describe('PricingPage inventory states', () => {
     expect(screen.getByRole('heading', { name: 'Momentum membership', level: 2 })).toBeInTheDocument()
     expect(screen.getByText(/\$14\.99/)).toBeInTheDocument()
     expect(screen.getByText(/reservation happens only after authenticated review/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/auth/sign-up')
+    // Payment outside Iran is not open yet, so the USD offer collects interest instead.
+    expect(screen.getByRole('link', { name: /notify me when membership opens/i })).toHaveAttribute('href', '/en/auth/sign-up')
     expect(screen.queryByText(/Core\/Pro/i)).not.toBeInTheDocument()
   })
 
@@ -84,6 +85,7 @@ describe('PricingPage inventory states', () => {
     expect(screen.getByText(/490,000 toman/i)).toBeInTheDocument()
     expect(screen.getByText(/Iranian gateway and toman/i)).toBeInTheDocument()
     expect(screen.queryByText(/not available in your region|unavailable market/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /notify me/i })).not.toBeInTheDocument()
   })
 
   it('PUB-11 does not guess a currency or amount when the catalog is missing', () => {
@@ -96,7 +98,7 @@ describe('PricingPage inventory states', () => {
 
   it('sends authenticated members to Me instead of a payment SDK', () => {
     renderPricing(intlMembershipCatalog, { authenticated: true, giftCampaign: 'available' })
-    expect(screen.getByRole('link', { name: /view membership/i })).toHaveAttribute('href', '/en/app/me')
+    expect(screen.getByRole('link', { name: /notify me when membership opens/i })).toHaveAttribute('href', '/en/app/me')
     expect(screen.getByRole('link', { name: /use the gift/i })).toHaveAttribute('href', '/en/onboarding/review')
     expect(screen.getByText(/live checkout is not enabled/i)).toBeInTheDocument()
   })

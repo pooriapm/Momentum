@@ -158,6 +158,20 @@
   border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border));
 }
 
+/* Skipped is neutral, never an error: the meal is crossed out and the day moves on. */
+.today-meal-row.is-skipped h3 {
+  color: var(--color-text-secondary);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.today-meal-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  justify-content: flex-end;
+}
+
 .today-meal-row.is-next {
   border-color: color-mix(in srgb, var(--color-energy) 45%, var(--color-border));
   background: color-mix(in srgb, var(--color-energy-soft) 35%, var(--color-surface));
@@ -497,6 +511,14 @@
 
   .today-meal-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .today-meal-row__actions {
+    justify-content: stretch;
+  }
+
+  .today-meal-row__actions .orbit-button {
+    flex: 1 1 0;
   }
 }
 

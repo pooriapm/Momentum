@@ -18,6 +18,7 @@ const ProgressPage = lazy(async () => ({ default: (await import('../pages/app/Pr
 const MePage = lazy(async () => ({ default: (await import('../pages/app/MePage')).MePage }))
 const AccountDataPage = lazy(async () => ({ default: (await import('../pages/app/AccountDataPage')).AccountDataPage }))
 const AccountSettingsPage = lazy(async () => ({ default: (await import('../pages/app/AccountSettingsPage')).AccountSettingsPage }))
+const AdminPaymentsPage = lazy(async () => ({ default: (await import('../pages/app/AdminPaymentsPage')).AdminPaymentsPage }))
 const ExternalPlanImportPage = lazy(async () => ({ default: (await import('../pages/app/ExternalPlanImportPage')).ExternalPlanImportPage }))
 const AuthPage = lazy(async () => ({ default: (await import('../pages/auth/AuthPage')).AuthPage }))
 const OnboardingPage = lazy(async () => ({ default: (await import('../pages/onboarding/OnboardingPage')).OnboardingPage }))
@@ -116,6 +117,11 @@ export function MomentumRouter() {
       <Route path="/:locale/app/import-plan">
         {(params) => withLocale(params.locale, (locale) => (
           <AccountBoundary><ExternalPlanImportPage locale={locale} /></AccountBoundary>
+        ))}
+      </Route>
+      <Route path="/:locale/app/admin/payments">
+        {(params) => withLocale(params.locale, (locale) => (
+          <AccountBoundary><AdminPaymentsPage locale={locale} /></AccountBoundary>
         ))}
       </Route>
       <Route path="/:locale/app/:tab">
