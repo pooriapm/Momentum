@@ -45,6 +45,8 @@ export interface CatalogExercise {
   id: string
   name_en: string
   name_fa: string
+  /** Coarse family (squat, hinge, push, pull, core, ...); optional for older fixtures. */
+  movementPattern?: string
   equipmentIds: ReadonlySet<string>
   substitutionIds: ReadonlySet<string>
 }
@@ -308,6 +310,9 @@ export function createPlanCatalogSnapshot(rows: PlanCatalogRows): PlanCatalogSna
       id,
       name_en: requiredString(row, 'name_en'),
       name_fa: requiredString(row, 'name_fa'),
+      ...(typeof row.movement_pattern === 'string'
+        ? { movementPattern: row.movement_pattern }
+        : {}),
       equipmentIds: exerciseEquipment,
       substitutionIds: substitutionsByExercise.get(id) ?? new Set(),
     })
@@ -427,7 +432,7 @@ export async function loadPlanCatalog(admin: SupabaseClient): Promise<PlanCatalo
       .limit(MAX_CATALOG_ROWS + 1),
     admin.from('equipment_catalog').select('id').eq('catalog_release_id', releaseId)
       .eq('active', true).limit(MAX_CATALOG_ROWS + 1),
-    admin.from('exercise_catalog').select('id,name_en,name_fa')
+    admin.from('exercise_catalog').select('id,name_en,name_fa,movement_pattern')
       .eq('catalog_release_id', releaseId).eq('active', true).limit(MAX_CATALOG_ROWS + 1),
     admin.from('exercise_equipment').select('exercise_id,equipment_id')
       .limit(MAX_CATALOG_ROWS + 1),

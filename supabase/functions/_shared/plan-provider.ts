@@ -13,6 +13,7 @@ import {
 import { planCatalogPromptContext, type PlanCatalogSnapshot } from './plan-catalog.ts'
 import { resolveDeclaredAllergenIds } from './plan-catalog.ts'
 import { generatedPlanJsonSchema } from './plan-contract.ts'
+import { withExerciseRefs } from './exercise-selection.ts'
 import { isCompactSchemaEnabled, resolvePlanModelRoute } from './plan-model-routing.ts'
 import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import type { ServiceTier } from './provider-pricing.ts'
@@ -22,7 +23,7 @@ export { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 
 export const STUB_PLAN_MODEL = 'stub:momentum-monthly@1'
 export const STUB_PROMPT_VERSION = 'momentum-monthly-stub/1.0.0'
-export const OPENAI_PROMPT_VERSION = 'momentum-monthly-openai/2.0.0'
+export const OPENAI_PROMPT_VERSION = 'momentum-monthly-openai/2.1.0'
 export const PLAN_SCHEMA_VERSION = '1.0.0'
 
 export interface GeneratedPlanResult {
@@ -68,6 +69,9 @@ function buildDeterministicResult(input: {
   }
 }
 
+// The model may name exercises by their short library id; the server resolves them.
+const providerPlanJsonSchema = withExerciseRefs(generatedPlanJsonSchema)
+
 /**
  * Stable instructions first (cache-friendly), then dynamic user/catalog content.
  * Explicitly requires a complete 30-day plan; internal meal/workout reuse via the
@@ -80,6 +84,7 @@ function buildInstructions(locale: 'fa-IR' | 'en-US', compact: boolean): string 
       ? `Return the compact schema (${COMPACT_SCHEMA_VERSION}): define reusable meals and workouts once, then reference them from exactly 30 day entries with progression overrides where needed.`
       : 'Return the full monthly plan schema.',
     'Use only catalog identifiers supplied in the input.',
+    'Choose every workout exercise from catalog.exercises and set exercise_id to its id (for example "barbell-bench-press"); substitution_exercise_id must be one of the substitutes listed for that exercise or null. Exercise names, equipment and keys are filled in from the catalog.',
     'Every day index from 0 through 29 must be present exactly once after expansion. Do not omit days.',
     'Internal reuse of meal/workout definitions is allowed; collapsing the delivered month into fewer than 30 day entries is not.',
     'Prefer identifiers, portions, scheduling, sets/reps/rest, and short personalized notes. Do not invent catalog names or nutrition totals that conflict with catalog data.',
@@ -194,7 +199,7 @@ async function generatePlan(
         context: input.context ?? {},
       },
       schemaName: compact ? 'momentum_monthly_plan_compact' : 'momentum_monthly_plan',
-      schema: compact ? compactPlanJsonSchema : generatedPlanJsonSchema,
+      schema: compact ? compactPlanJsonSchema : providerPlanJsonSchema,
       safetyIdentifier: await hashedSafetyIdentifier(input.userId),
       promptCacheKey: `${OPENAI_PROMPT_VERSION}:${
         compact ? 'compact' : 'full'

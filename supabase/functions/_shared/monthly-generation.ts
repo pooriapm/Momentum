@@ -21,6 +21,7 @@ import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 import { resolveDeclaredAllergenIds } from './plan-catalog.ts'
 import { assertGeneratedPlan } from './plan-contract.ts'
 import { applyDeterministicRepair, classifyRepair } from './plan-repair.ts'
+import { normalizePlanWorkouts } from './exercise-selection.ts'
 import {
   generateMonthlyPlanFromProvider,
   isLiveOpenAiRequested,
@@ -469,6 +470,8 @@ export async function runMonthlyGeneration(input: {
       } else if ('_expansion' in content) {
         content = stripExpansionMetadata(content)
       }
+      // Exercise ids are resolved against the catalog; unknown ones never reach the stored plan.
+      content = normalizePlanWorkouts(content, catalog, locale)
       contentSha256 = ''
     }
 

@@ -4,13 +4,13 @@ import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 import {
   aggregateGroceryList,
-  assembleExercise,
   assembleMealOption,
   assembleNutritionFromFoods,
 } from './plan-assembly.ts'
+import { EXERCISE_REF_PATTERN, normalizeWorkoutExercises } from './exercise-selection.ts'
 
-export const COMPACT_SCHEMA_VERSION = '1.1.0-compact'
-export const COMPACT_EXPANSION_VERSION = 'momentum-compact-expand/1.1.0'
+export const COMPACT_SCHEMA_VERSION = '1.2.0-compact'
+export const COMPACT_EXPANSION_VERSION = 'momentum-compact-expand/1.2.0'
 
 /**
  * Compact provider schema: define meals/workouts once, reference from 30 days.
@@ -127,7 +127,7 @@ export const compactPlanJsonSchema: Record<string, unknown> = {
               properties: {
                 exercise_id: {
                   type: 'string',
-                  pattern: '^exercise:[a-z0-9._-]+@v[1-9][0-9]*$',
+                  pattern: EXERCISE_REF_PATTERN,
                 },
                 sets: { type: 'integer', minimum: 1, maximum: 20 },
                 reps: { type: 'string', minLength: 1, maxLength: 40 },
@@ -135,7 +135,7 @@ export const compactPlanJsonSchema: Record<string, unknown> = {
                 intensity_note: { type: ['string', 'null'], maxLength: 240 },
                 substitution_exercise_id: {
                   type: ['string', 'null'],
-                  pattern: '^exercise:[a-z0-9._-]+@v[1-9][0-9]*$',
+                  pattern: EXERCISE_REF_PATTERN,
                 },
               },
               required: [
@@ -452,28 +452,11 @@ export function expandCompactPlan(
       }
       trainingType = String(def.training_type)
       if (trainingType !== 'rest') {
-        const exerciseRows = Array.isArray(def.exercises) ? def.exercises : []
-        const exercises = exerciseRows.map((row, index) => {
-          if (!isRecord(row)) {
-            throw new HttpError(422, 'COMPACT_PLAN_INVALID', 'Invalid exercise row.')
-          }
-          const exerciseId = requireString(row.exercise_id, 'exercise_id')
-          if (!catalog.exercises.has(exerciseId)) {
-            throw new HttpError(422, 'unknown_catalog_id', `Unknown exercise: ${exerciseId}`)
-          }
-          return assembleExercise({
-            catalog,
-            exerciseId,
-            exerciseKey: `${workoutDefId}-${index}`,
-            locale,
-            sets: Number(row.sets),
-            reps: String(row.reps),
-            restSeconds: Number(row.rest_seconds),
-            intensityNote: typeof row.intensity_note === 'string' ? row.intensity_note : null,
-            substitutionExerciseId: typeof row.substitution_exercise_id === 'string'
-              ? row.substitution_exercise_id
-              : null,
-          })
+        // Unknown exercise ids are dropped and rows are rebuilt from the catalog.
+        const exercises = normalizeWorkoutExercises({
+          catalog,
+          locale,
+          rows: Array.isArray(def.exercises) ? def.exercises : [],
         })
         workout = {
           title: def.title,
