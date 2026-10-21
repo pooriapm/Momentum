@@ -171,7 +171,7 @@ export function createCompatiblePlanLlm(options: CompatibleLlmOptions): PlanLlmC
     kind: 'compatible',
     model: options.model,
     async complete(request): Promise<PlanLlmResponse> {
-      const deadline = now() + options.totalBudgetMs
+      const deadline = Math.min(now() + options.totalBudgetMs, request.deadlineAt ?? Infinity)
       let downgraded = false
       for (let attempt = 0; ; attempt += 1) {
         const remaining = deadline - now()

@@ -33,6 +33,8 @@ export function assessPlanComplexity(
     reasons.push('user_wish')
   }
   if (result.relaxations.length > 0 || brief.foods.length < 30) reasons.push('narrow_foods')
+  // Big targets need energy-dense picks at large portions; the cheap model missed them in the eval.
+  if (brief.targets.kcal >= 3_000) reasons.push('high_energy')
   const bmi = brief.person.weight_kg / (brief.person.height_cm / 100) ** 2
   if (bmi >= 35 || brief.person.age >= 60) reasons.push('body_risk')
 

@@ -85,6 +85,19 @@ describe('stage 1: OpenAI-compatible provider client', () => {
     expect(body).not.toHaveProperty('reasoning_effort')
   })
 
+  it('never runs past the pipeline deadline', async () => {
+    let clock = 0
+    const fetchImpl = vi.fn(async () => new Response('busy', { status: 503 }))
+    const llm = client(fetchImpl as unknown as typeof fetch, {
+      now: () => clock,
+      sleep: async (ms: number) => { clock += ms },
+      maxRetries: 5,
+    })
+    // Plenty of per-call budget, but the pipeline deadline is only 20 s away.
+    await expect(llm.complete({ ...request, deadlineAt: 20_000 })).rejects.toMatchObject({ code: 'LLM_UNAVAILABLE' })
+    expect(clock).toBeLessThanOrEqual(20_000)
+  })
+
   it('sends reasoning_effort only when configured', async () => {
     const fetchImpl = vi.fn(async () => ok('{"a":1}'))
     await client(fetchImpl as unknown as typeof fetch, { reasoningEffort: 'low' }).complete(request)

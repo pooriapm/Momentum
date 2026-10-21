@@ -478,6 +478,21 @@ describe('stage 5: validation, portion scaling and repair paths', () => {
     expect(built.ok ? [] : built.issues.map((issue) => issue.code)).toEqual([])
   })
 
+  it('caps protein at what a vegan food list can reach instead of failing every plan', () => {
+    const snap = snapshot({
+      goal: { goal_type: 'fat_loss', start_weight_kg: 70, target_weight_kg: 63, target_date: null },
+      dietary: { ...snapshot().dietary, dietary_pattern: 'vegan', requested_meal_pattern: '۴ وعده' },
+    })
+    const ctx = ctxFor(snap)
+    expect(ctx.brief.targets.adjustments).toContain('protein_capped_by_foods')
+    expect(ctx.brief.brief.targets.protein_g).toBe(ctx.brief.targets.protein_g)
+    expect(ctx.brief.targets.protein_g).toBeLessThan(126)
+    const built = validateAndBuildPlan(composeDeterministicLeanPlan(ctx.brief.brief), ctx)
+    expect(built.ok ? [] : built.issues.map((issue) => issue.code)).toEqual([])
+    // An omnivore with the same body keeps the full target.
+    expect(ctxFor().brief.targets.adjustments).not.toContain('protein_capped_by_foods')
+  })
+
   it('scales portions in code', () => {
     const foods = [...catalog.foods.values()].slice(0, 3)
     const result = scaleDayPortions(foods, { calories: 2400, protein_g: 140, carbs_g: 260, fat_g: 80 })
@@ -700,6 +715,25 @@ describe('pipeline end-to-end with the stub provider', () => {
     const allergyOnly = await route(snapshot({ dietary: { ...snapshot().dietary, allergies: ['milk'] } }))
     expect(allergyOnly.complexity).toEqual({ tier: 'simple', reasons: ['allergens'] })
     expect(allergyOnly.models).toEqual(['cheap'])
+  })
+
+  it('skips the repair when the time budget is nearly spent', async () => {
+    const snap = snapshot()
+    const input = {
+      catalog,
+      snapshot: snap,
+      locale: 'fa-IR' as const,
+      declaredAllergenIds: resolveDeclaredAllergenIds(catalog, snap.dietary.allergies),
+      subjectRef: await pseudonymousRef(USER_ID),
+      startsAt: STARTS_AT,
+      llm: createStubPlanLlm('invalid'),
+    }
+    const tight = await runPlanPipeline({ ...input, deadlineAt: 1_000_000 + 30_000, now: () => 1_000_000 })
+    expect(tight.source).toBe('deterministic_personal')
+    expect(tight.fallbackReason).toBe('repair_skipped:time_budget')
+    expect(tight.calls.map((call) => call.call)).toEqual(['main'])
+    const roomy = await runPlanPipeline({ ...input, deadlineAt: 1_000_000 + 100_000, now: () => 1_000_000 })
+    expect(roomy.source).toBe('llm_repaired')
   })
 
   it('delivers the model plan when it validates', async () => {

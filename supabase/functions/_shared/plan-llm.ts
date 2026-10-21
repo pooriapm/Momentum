@@ -18,6 +18,8 @@ export interface PlanLlmRequest {
   schema: Record<string, unknown>
   /** Provider prompt-cache routing key; identical for every user. */
   cacheKey: string
+  /** Epoch ms by which the call must have returned (the pipeline's time budget); optional. */
+  deadlineAt?: number
 }
 
 export interface PlanLlmResponse {

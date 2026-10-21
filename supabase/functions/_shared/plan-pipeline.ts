@@ -112,6 +112,9 @@ const CONFIG_ERRORS = new Set([
 
 export const PROVIDER_UNAVAILABLE = 'AI_PROVIDER_UNAVAILABLE'
 
+/** A repair needs about as long as a main call; with less time left, deliver the personal fallback. */
+export const MIN_REPAIR_MS = 45_000
+
 function providerUnavailable(): HttpError {
   return new HttpError(
     503,
@@ -172,6 +175,13 @@ export async function runPlanPipeline(input: {
   hooks?: PipelineHooks
   /** Per-plan Toman cap: when the first answer already cost this much, skip the repair call. */
   maxCostToman?: number | null
+  /**
+   * Epoch ms by which the pipeline must finish (Edge Functions are stopped at their wall-clock
+   * limit). Model calls are cut off at it, and the repair is skipped when too little time is left.
+   */
+  deadlineAt?: number | null
+  /** Injected in tests. */
+  now?: () => number
 }): Promise<PipelineResult> {
   const calls: PipelineCallRecord[] = []
   let usage: ProviderUsage = { costCertainty: 'estimated' }
@@ -214,6 +224,7 @@ export async function runPlanPipeline(input: {
         schemaName: prompt.schemaName,
         schema: prompt.schema,
         cacheKey: prompt.cacheKey,
+        ...(input.deadlineAt ? { deadlineAt: input.deadlineAt } : {}),
       })
       let parsed: unknown
       try {
@@ -292,6 +303,10 @@ export async function runPlanPipeline(input: {
   const spent = totalToman(calls)
   if (input.maxCostToman && spent !== null && spent >= input.maxCostToman) {
     return personalFallback(input, ctx, 'repair_skipped:plan_cost_cap', calls, usage)
+  }
+  const now = input.now ?? Date.now
+  if (input.deadlineAt && input.deadlineAt - now() < MIN_REPAIR_MS) {
+    return personalFallback(input, ctx, 'repair_skipped:time_budget', calls, usage)
   }
 
   const repair = await run('repair', assembleRepairPrompt({

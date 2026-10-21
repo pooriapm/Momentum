@@ -2,6 +2,7 @@ import { assertAiFeatureEnabled } from './ai-gate.ts'
 import { deterministicSafetyDecision } from './ai-safety.ts'
 import { assertCatalogGenerationGate } from './catalog-gate.ts'
 import { assertCurrentConsents, type ConsentAdminClient } from './consent.ts'
+import { integerEnv } from './config.ts'
 import { canonicalJson, sha256 } from './crypto.ts'
 import {
   type GenerationProfileSnapshot,
@@ -197,6 +198,9 @@ export async function runMonthlyGeneration(input: {
   now?: Date
 }): Promise<GenerationSuccess> {
   assertAiFeatureEnabled('AI_PLAN_ENABLED')
+  // Edge Functions stop at their wall-clock limit (150 s on the free plan, 400 s paid); the whole
+  // pipeline must finish inside it, with room left to save the plan.
+  const deadlineAt = Date.now() + integerEnv('PLAN_PIPELINE_BUDGET_MS', 130_000, { min: 30_000, max: 380_000 })
   if (!input.emailConfirmed) {
     throw new HttpError(403, 'EMAIL_UNVERIFIED', 'Confirm your email before generating a plan.')
   }
@@ -447,6 +451,7 @@ export async function runMonthlyGeneration(input: {
         llm,
         llmComplex,
         maxCostToman: planCostCapToman(),
+        deadlineAt,
         hooks: {
           // Durable identity before any billable request. If this fails, do not call the provider.
           beforeCall: async (call, meta) => {

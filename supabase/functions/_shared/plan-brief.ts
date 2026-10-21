@@ -247,6 +247,31 @@ function matchesAny(terms: string, phrases: readonly string[]): boolean {
   })
 }
 
+/**
+ * Protein no allowed food mix can reach (a vegan list, several allergies) would fail every plan
+ * and push the user to the generic starter plan. Cap it at ~90% of the best protein density per
+ * slot, calories split evenly, and give the freed energy to carbohydrate so calories don't change.
+ */
+export function capProteinToFoods(
+  targets: PlanTargets,
+  foods: readonly CatalogFood[],
+  slots: readonly MealSlot[],
+): PlanTargets {
+  const densities = slots.map((slot) =>
+    Math.max(0, ...foods.filter((food) => food.meal_types.includes(slot) && food.nutrition.calories > 0)
+      .map((food) => food.nutrition.protein_g / food.nutrition.calories))
+  )
+  if (densities.length === 0) return targets
+  const reachable = Math.round(0.9 * targets.calories * densities.reduce((a, b) => a + b, 0) / densities.length)
+  if (reachable >= targets.protein_g) return targets
+  return {
+    ...targets,
+    protein_g: reachable,
+    carbs_g: targets.carbs_g + (targets.protein_g - reachable),
+    adjustments: [...targets.adjustments, 'protein_capped_by_foods'],
+  }
+}
+
 function selectFoods(input: {
   catalog: PlanCatalogSnapshot
   snapshot: GenerationProfileSnapshot
@@ -433,7 +458,6 @@ export function buildPlanBrief(input: {
   startsAt: Date
 }): PlanBriefResult {
   const { catalog, snapshot } = input
-  const targets = computePlanTargets(targetInputsFromSnapshot(snapshot, input.startsAt))
   const relaxations: string[] = []
   const requestedSlots = mealSlotsFor(mealCount(snapshot.dietary.requested_meal_pattern))
   const { foods, favorites, slots } = selectFoods({
@@ -443,6 +467,11 @@ export function buildPlanBrief(input: {
     slots: requestedSlots,
     relaxations,
   })
+  const targets = capProteinToFoods(
+    computePlanTargets(targetInputsFromSnapshot(snapshot, input.startsAt)),
+    foods,
+    slots,
+  )
 
   const level = normalizeLevel(snapshot.training_profile.experience)
   const injury = snapshot.safety.medical_considerations.includes('injury_or_movement_limitation')
