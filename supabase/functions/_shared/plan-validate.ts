@@ -454,8 +454,9 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
       continue
     }
     const foodId = resolveFoodId(catalog, item.food)
+    // A recipe for a food the plan doesn't use (often one whose meal was rejected) is harmless: drop it.
     if (!foodId || !usedFoodIds.has(foodId)) {
-      add('recipe_unknown_food', 'catalog_reference', `${where}: food "${String(item.food)}" is not used in this plan.`)
+      autoFixes.push(`${where}: recipe for an unused food dropped`)
       continue
     }
     if (recipes.has(foodId)) continue
@@ -628,7 +629,10 @@ export function scaleDayPortions(
   const error = (totals: MealNutrition) => {
     const rel = (actual: number, target: number) => target > 0 ? (actual - target) / target : 0
     const protein = rel(totals.protein_g, targets.protein_g)
-    return 10 * rel(totals.calories, targets.calories) ** 2 +
+    const calories = rel(totals.calories, targets.calories)
+    // Calories inside +-4.5% are a hard requirement: macros never pull a day out of that band.
+    const outside = Math.max(0, Math.abs(calories) - 0.045)
+    return 1e4 * outside ** 2 + 10 * calories ** 2 +
       3 * (protein < 0 ? protein * 1.5 : protein * 0.5) ** 2 +
       rel(totals.carbs_g, targets.carbs_g) ** 2 + rel(totals.fat_g, targets.fat_g) ** 2
   }

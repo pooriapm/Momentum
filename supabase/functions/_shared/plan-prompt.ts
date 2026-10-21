@@ -10,7 +10,7 @@ import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
  * Bump PLAN_PROMPT_VERSION whenever the rules or the schema change; it is stored with every plan
  * and every usage row.
  */
-export const PLAN_PROMPT_VERSION = 'momentum-plan-prompt/1.1.0'
+export const PLAN_PROMPT_VERSION = 'momentum-plan-prompt/1.2.0'
 export const LEAN_SCHEMA_VERSION = 'momentum-plan-lean/1.1.0'
 export const LEAN_SCHEMA_NAME = 'momentum_plan_lean'
 
@@ -152,9 +152,9 @@ BRIEF
 
 FOOD RULES
 1. Use only food_id values from foods, only for a slot whose meal code the row lists.
-2. A meal definition is one slot + one food + up to (meals.options - 1) alts from the same list and slot, close in kcal. Reuse definitions across days.
+2. A meal definition is one slot + one food + up to (meals.options - 1) alts from the same list and slot, close in kcal. Reuse definitions across days. Ids are short and unique: b1, b2, ms1, l1, as1, d1, ps1 for meals and w1, w2 for workouts.
 3. Every day lists one meal definition per slot, in meals.slots order.
-4. Variety over the month: at least 4 different foods per slot when the list has them; the same food at most 3 days in a row in a slot; lunch and dinner differ on a day.
+4. Variety over the month: define at least 4 meal definitions with different main foods for every slot that has 4 or more listed foods, and rotate them so each slot uses at least 4 different main foods over the month (alts don't count); the same main food at most 3 days in a row in a slot; lunch and dinner differ on a day.
 5. Pick foods whose summed kcal and protein per day land near targets at 1 serving each; prefer protein-dense foods for fat_loss and muscle_gain.
 6. Respect diet.favorites, diet.cooking flags (quick, no_cooking, meal_prep, portable_lunch, no_oven) and budget.
 7. Food culture: build the month around what people in brief.country actually eat day to day (cuisine, if set, refines it). region ir: Iranian home cooking and Iranian meal habits (bread and cheese style breakfasts, rice or stew at lunch, a lighter dinner). Among the listed foods, prefer the ones closest to that culture; do not pick foods that would feel foreign there unless the list has nothing closer.

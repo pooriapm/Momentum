@@ -396,7 +396,7 @@ describe('stage 4: prompt', () => {
     expect(a.messages.at(-1)!.role).toBe('user')
     expect(JSON.parse(a.messages.at(-1)!.content).v).toBe('momentum-plan-brief/1.0.0')
     expect(PLAN_SYSTEM_PROMPT).not.toMatch(/fa-IR only|\{\{/)
-    expect(a.promptVersion).toBe('momentum-plan-prompt/1.1.0')
+    expect(a.promptVersion).toBe('momentum-plan-prompt/1.2.0')
   })
 
   it('repairs with the same prefix and the issues appended', () => {
@@ -457,6 +457,25 @@ describe('stage 5: validation, portion scaling and repair paths', () => {
       const built = validateAndBuildPlan(composeDeterministicLeanPlan(ctx.brief.brief), ctx)
       expect(built.ok, pattern).toBe(true)
     }
+  })
+
+  it('reaches high calorie targets with light vegetarian foods (macros never pull a day out of band)', () => {
+    const snap = snapshot({
+      age_years: 24,
+      sex: 'male',
+      height_cm: 180,
+      goal: { goal_type: 'muscle_gain', start_weight_kg: 68, target_weight_kg: 75, target_date: null },
+      dietary: { ...snapshot().dietary, dietary_pattern: 'vegetarian', requested_meal_pattern: '۵ وعده', budget_tier: 'low' },
+      training_profile: { location: 'gym', experience: 'intermediate' },
+      training_schedule: [0, 1, 3, 4, 5].map((weekday) => ({
+        weekday, activity_type: 'strength', local_start_time: '18:00', duration_minutes: 70,
+        intensity: 'moderate', availability_note: null,
+      })),
+    })
+    const ctx = ctxFor(snap)
+    expect(ctx.brief.targets.calories).toBeGreaterThan(3000)
+    const built = validateAndBuildPlan(composeDeterministicLeanPlan(ctx.brief.brief), ctx)
+    expect(built.ok ? [] : built.issues.map((issue) => issue.code)).toEqual([])
   })
 
   it('scales portions in code', () => {
@@ -553,7 +572,7 @@ describe('stage 5: validation, portion scaling and repair paths', () => {
     expect(withRecipe(['۲۰۰ گرم برنج بپز.'])).toContain('nutrition_number_in_text')
     expect(mutated((plan) => {
       plan.recipes = [{ food: 'lentil-stew-rice-not-used', prep_min: 5, cook_min: 10, steps: ['x'] }]
-    })).toContain('recipe_unknown_food')
+    })).toEqual([]) // a recipe for a food the plan doesn't use is dropped, not an error
   })
 
   it('tells the model to cook for the user country and list ingredients', () => {
@@ -600,7 +619,7 @@ describe('pipeline end-to-end with the stub provider', () => {
     expect(result.fallbackReason).toBeNull()
     expect(before).toEqual(['main'])
     expect(after).toEqual(['main:accepted'])
-    expect(result.promptVersion).toBe('momentum-plan-prompt/1.1.0')
+    expect(result.promptVersion).toBe('momentum-plan-prompt/1.2.0')
     expect(result.model).toBe('stub:momentum-plan-lean@1')
     expect(result.meta.targets?.kcal).toBeGreaterThanOrEqual(1200)
   })
@@ -745,7 +764,7 @@ describe('pipeline end-to-end with the stub provider', () => {
     const body = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body))
     expect(body.instructions).toBe(PLAN_SYSTEM_PROMPT)
     expect(body.input).toEqual([{ role: 'user', content: JSON.stringify(briefResult.brief) }])
-    expect(body.prompt_cache_key).toBe('momentum-plan-prompt/1.1.0:momentum-plan-lean/1.1.0')
+    expect(body.prompt_cache_key).toBe('momentum-plan-prompt/1.2.0:momentum-plan-lean/1.1.0')
     expect(JSON.stringify(body)).not.toContain(USER_ID)
   })
 })
