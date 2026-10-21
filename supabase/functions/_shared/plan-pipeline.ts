@@ -164,6 +164,8 @@ export async function runPlanPipeline(input: {
   startsAt: Date
   llm: PlanLlmClient
   hooks?: PipelineHooks
+  /** Per-plan Toman cap: when the first answer already cost this much, skip the repair call. */
+  maxCostToman?: number | null
 }): Promise<PipelineResult> {
   const calls: PipelineCallRecord[] = []
   let usage: ProviderUsage = { costCertainty: 'estimated' }
@@ -278,6 +280,10 @@ export async function runPlanPipeline(input: {
     return delivered(main, 'llm', briefResult, calls, usage, serviceTier)
   }
   if (main.kind === 'provider_error') throw providerUnavailable()
+  const spent = totalToman(calls)
+  if (input.maxCostToman && spent !== null && spent >= input.maxCostToman) {
+    return personalFallback(input, ctx, 'repair_skipped:plan_cost_cap', calls, usage)
+  }
 
   const repair = await run('repair', assembleRepairPrompt({
     brief: briefResult.brief,

@@ -68,6 +68,11 @@ export function compatibleLlmOptionsFromEnv(): CompatibleLlmOptions {
   const input = priceEnv('LLM_PRICE_TOMAN_PER_1M_INPUT')
   const output = priceEnv('LLM_PRICE_TOMAN_PER_1M_OUTPUT')
   const cachedInput = priceEnv('LLM_PRICE_TOMAN_PER_1M_CACHED_INPUT')
+  // A Toman cap can only be enforced when calls are priced in Toman.
+  if ((optionalEnv('AI_DAILY_BUDGET_TOMAN') || optionalEnv('AI_PLAN_MAX_COST_TOMAN')) &&
+    (input === null || output === null)) {
+    throw new Error('invalid_env:LLM_PRICE_TOMAN_PER_1M_INPUT')
+  }
   return {
     baseUrl,
     apiKey: requiredEnv('LLM_API_KEY'),

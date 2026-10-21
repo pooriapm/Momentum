@@ -539,6 +539,34 @@ describe('monthly generation pipeline', () => {
     expect(JSON.stringify(attempts)).not.toContain(store.profile.userId)
   })
 
+  it('pauses on the daily Toman budget: the job fails, nothing is imported or spent', async () => {
+    stubEnv({ AI_DAILY_BUDGET_TOMAN: '1000000' })
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const store = new MemoryGenerationStore()
+    const recorded: unknown[] = []
+    store.recordAttempt = async (attempt) => { recorded.push(attempt) }
+    store.spentTomanSince = async () => 1_000_000
+    await expect(runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-key-budget',
+      store,
+    })).rejects.toMatchObject({ status: 503, code: 'AI_BUDGET_PAUSED' })
+    expect(store.importedPlans).toHaveLength(0)
+    expect(recorded).toHaveLength(0)
+    expect([...store.jobs.values()][0]?.status).toBe('failed')
+
+    // Spend rolls off: the same key retries and succeeds.
+    store.spentTomanSince = async () => 10
+    await runMonthlyGeneration({
+      userId: store.profile.userId,
+      emailConfirmed: true,
+      idempotencyKey: 'generation-key-budget',
+      store,
+    })
+    expect(store.importedPlans).toHaveLength(1)
+  })
+
   it('imports a repaired model plan after one repair call', async () => {
     stubEnv({ AI_PLAN_STUB_MODE: 'invalid' })
     const store = new MemoryGenerationStore()

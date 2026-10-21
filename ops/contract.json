@@ -110,6 +110,34 @@
       "ownerRole": "support_lead",
       "condition": "Public invite path has no VITE_SUPPORT_EMAIL",
       "page": false
+    },
+    {
+      "id": "ai_budget_80pct",
+      "severity": "P2",
+      "ownerRole": "engineering_oncall",
+      "condition": "Plan-generation provider spend over the last 24h reached 80% of AI_DAILY_BUDGET_TOMAN (scripts/ops/ai-plan-report.mjs)",
+      "page": false
+    },
+    {
+      "id": "ai_budget_exhausted",
+      "severity": "P1",
+      "ownerRole": "engineering_oncall",
+      "condition": "Plan-generation spend reached AI_DAILY_BUDGET_TOMAN; new generations fail with AI_BUDGET_PAUSED until spend rolls off",
+      "page": true
+    },
+    {
+      "id": "ai_plan_fallback_rate_high",
+      "severity": "P2",
+      "ownerRole": "engineering_oncall",
+      "condition": "More than 20% of plans delivered today (min 5) were deterministic fallbacks after failed model answers",
+      "page": false
+    },
+    {
+      "id": "ai_provider_failure_rate_high",
+      "severity": "P1",
+      "ownerRole": "engineering_oncall",
+      "condition": "More than 20% of plan-generation provider calls today (min 5) failed with timeout or outage",
+      "page": true
     }
   ],
   "oncall": {

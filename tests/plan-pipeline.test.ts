@@ -695,6 +695,28 @@ describe('pipeline end-to-end with the stub provider', () => {
     expect(result.usage.inputTokens).toBe(6_000)
   })
 
+  it('skips the repair call when the first answer already hit the per-plan Toman cap', async () => {
+    const snap = snapshot()
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: '{"schema_version":"x"}' }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 3_000, completion_tokens: 2_000 },
+    }), { status: 200 }))
+    const llm = createCompatiblePlanLlm({
+      baseUrl: 'https://llm.example.ir/v1', apiKey: 'k', model: 'm', jsonMode: 'json_schema',
+      timeoutMs: 30_000, maxRetries: 0, totalBudgetMs: 60_000, maxOutputTokens: 12_000,
+      prices: { input: 100_000, cachedInput: 100_000, output: 500_000 },
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    })
+    const result = await runPlanPipeline({
+      catalog, snapshot: snap, locale: 'fa-IR', declaredAllergenIds: new Set(),
+      subjectRef: 'abcdefghabcdefgh', startsAt: STARTS_AT, llm, maxCostToman: 1_000,
+    })
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    expect(result.source).toBe('deterministic_personal')
+    expect(result.fallbackReason).toBe('repair_skipped:plan_cost_cap')
+    expect(result.costToman).toBe(1_300)
+  })
+
   it('sends a cache-friendly, PII-free request through the OpenAI-compatible client', async () => {
     env = { AI_PLAN_LIVE_OPENAI: 'true', OPENAI_API_KEY: 'test-key' }
     const snap = snapshot()

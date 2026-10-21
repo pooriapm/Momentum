@@ -24,6 +24,7 @@ import {
 import { buildAttemptLedger, classifyValidationFailure } from './usage-accounting.ts'
 import { pseudonymousRef } from './plan-brief.ts'
 import { runPlanPipeline } from './plan-pipeline.ts'
+import { assertDailyBudget, planCostCapToman } from './ai-budget.ts'
 import { LEAN_SCHEMA_VERSION, PLAN_PROMPT_VERSION } from './plan-prompt.ts'
 
 export type GenerationJobStatus =
@@ -159,6 +160,8 @@ export interface GenerationStore {
   /** Save the validated response before importing; required for persistence-only recovery. */
   saveGeneration(jobId: string, saved: SavedGeneration | null): Promise<void>
   recordAttempt(attempt: ReturnType<typeof buildAttemptLedger>): Promise<void>
+  /** Toman spent on provider calls since a moment (daily budget cap). */
+  spentTomanSince?(sinceIso: string): Promise<number>
 }
 
 export interface GenerationSuccess {
@@ -440,9 +443,15 @@ export async function runMonthlyGeneration(input: {
         subjectRef: await pseudonymousRef(input.userId),
         startsAt: input.now ?? new Date(),
         llm,
+        maxCostToman: planCostCapToman(),
         hooks: {
           // Durable identity before any billable request. If this fails, do not call the provider.
           beforeCall: async (call) => {
+            // Daily Toman budget: over the cap, fail the job (retry later) before spending more.
+            await assertDailyBudget(
+              input.store.spentTomanSince?.bind(input.store),
+              input.now ?? new Date(),
+            )
             attempt = { ...ledger(crypto.randomUUID()), pipeline: { call } }
             await input.store.recordAttempt(attempt)
           },
@@ -484,7 +493,8 @@ export async function runMonthlyGeneration(input: {
         total_cost_toman: result.costToman,
       }
       if (result.source === 'llm' || result.source === 'llm_repaired') {
-        attempt = { ...attempt!, pipeline }
+        // Keep the delivering call's own fields (call, cost_toman) next to the summary.
+        attempt = { ...attempt!, pipeline: { ...attempt!.pipeline, ...pipeline } }
       } else {
         // The delivered plan is deterministic: give it its own ledger row (no provider spend of its
         // own) so the fallback and its reason are on record next to the failed calls.
@@ -672,6 +682,9 @@ function safeFailureMessage(code: string): string {
   if (code === 'PLAN_VALIDATION_FAILED') return 'The generated plan could not be validated.'
   if (code === 'PLAN_CONTEXT_CHANGED') return 'Your profile changed. Request a fresh plan.'
   if (code === 'PLAN_IMPORT_FAILED') return 'The validated plan could not be imported.'
+  if (code === 'AI_BUDGET_PAUSED') {
+    return 'The plan service is busy right now. Please try again in a few hours.'
+  }
   if (code === 'AI_PROVIDER_UNAVAILABLE') {
     return 'The plan service is busy right now. Please try again in a few minutes.'
   }
