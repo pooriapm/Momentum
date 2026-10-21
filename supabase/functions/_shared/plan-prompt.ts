@@ -10,7 +10,7 @@ import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
  * Bump PLAN_PROMPT_VERSION whenever the rules or the schema change; it is stored with every plan
  * and every usage row.
  */
-export const PLAN_PROMPT_VERSION = 'momentum-plan-prompt/1.2.0'
+export const PLAN_PROMPT_VERSION = 'momentum-plan-prompt/1.3.0'
 export const LEAN_SCHEMA_VERSION = 'momentum-plan-lean/1.1.0'
 export const LEAN_SCHEMA_NAME = 'momentum_plan_lean'
 
@@ -162,7 +162,7 @@ FOOD RULES
 
 TRAINING RULES
 9. Use only exercise_id values from exercises; sub is one of that row's substitutes or null.
-10. Put a workout on every train_days index and on no other day except light_days (type walk or mobility, intensity low). All other days: workout null.
+10. Put a workout on every train_days index and on no other day except light_days (type walk or mobility, intensity low). All other days: workout null. When training.focus is walk or mobility, train_days workouts are of that type.
 11. Each workout fits training.session_min within 10 minutes. strength/full_body/crossfit/cardio: 3-8 items, 2-5 sets per item, rest 45-180 s. walk/mobility: 1-6 items, rest 0-60 s.
 12. Total sets per workout at most 16 (beginner), 22 (intermediate), 26 (advanced). Beginners and anyone with injury true: intensity low or moderate only. reps is a count or range ("8-12") or time ("30s").
 13. Balance movement patterns across each week (squat, hinge, push, pull, core). Spread hard sessions; no two high-intensity days in a row.

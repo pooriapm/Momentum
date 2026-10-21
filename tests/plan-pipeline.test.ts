@@ -396,7 +396,7 @@ describe('stage 4: prompt', () => {
     expect(a.messages.at(-1)!.role).toBe('user')
     expect(JSON.parse(a.messages.at(-1)!.content).v).toBe('momentum-plan-brief/1.0.0')
     expect(PLAN_SYSTEM_PROMPT).not.toMatch(/fa-IR only|\{\{/)
-    expect(a.promptVersion).toBe('momentum-plan-prompt/1.2.0')
+    expect(a.promptVersion).toBe('momentum-plan-prompt/1.3.0')
   })
 
   it('repairs with the same prefix and the issues appended', () => {
@@ -507,6 +507,9 @@ describe('stage 5: validation, portion scaling and repair paths', () => {
     expect(parseReps('8-12')).toEqual({ count: '8-12', seconds: null })
     expect(parseReps('۳۰ ثانیه')).toEqual({ count: '1', seconds: 30 })
     expect(parseReps('20min')).toEqual({ count: '1', seconds: 1200 })
+    expect(parseReps('20-30s')).toEqual({ count: '1', seconds: 25 })
+    expect(parseReps('8-10m')).toEqual({ count: '1', seconds: 540 })
+    expect(parseReps('30-20s')).toBeNull()
     expect(parseReps('as many as possible')).toBeNull()
   })
 
@@ -565,6 +568,30 @@ describe('stage 5: validation, portion scaling and repair paths', () => {
     expect(mutated((plan) => { plan.workouts[0].items[0].rest = 'long' })).toContain('exercise_rest')
     expect(mutated((plan) => { plan.workouts[0].items[0].reps = 'as many as you can' })).toContain('exercise_reps')
     expect(mutated((plan) => { plan.workouts[0].minutes = 120 })).toContain('workout_minutes')
+  })
+
+  it('lets a walking-focused user train with walks', () => {
+    const snap = snapshot({
+      training_schedule: [1, 3, 5].map((weekday) => ({
+        weekday, activity_type: 'walk', local_start_time: '18:00', duration_minutes: 30,
+        intensity: 'low', availability_note: null,
+      })),
+    })
+    const ctx = ctxFor(snap)
+    expect(ctx.brief.brief.training.focus).toBe('walk')
+    const plan = composeDeterministicLeanPlan(ctx.brief.brief) as Record<string, any>
+    const walkId = 'w-walk'
+    const walkEx = ctx.brief.brief.exercises[0]![0]
+    plan.workouts.push({ id: walkId, title: 'پیاده‌روی', type: 'walk', minutes: 30, intensity: 'low',
+      items: [{ ex: walkEx, sets: 1, reps: '20min', rest: 0, sub: null }], note: null })
+    for (const day of plan.days) if (ctx.brief.brief.training.train_days.includes(day.d)) day.workout = walkId
+    const result = validateLeanPlan(plan, ctx)
+    expect(result.ok ? [] : result.issues.map((issue) => issue.code)).not.toContain('training_day_missing')
+    // Everyone else still needs a real session on a training day.
+    expect(mutated((p) => {
+      p.workouts.push({ ...p.workouts[0], id: 'w-walk', type: 'walk', intensity: 'low' })
+      p.days[ctxFor().brief.brief.training.train_days[0]!].workout = 'w-walk'
+    })).toContain('training_day_missing')
   })
 
   it('clamps small exercise slips in code instead of asking for a repair', () => {
@@ -742,7 +769,7 @@ describe('pipeline end-to-end with the stub provider', () => {
     expect(result.fallbackReason).toBeNull()
     expect(before).toEqual(['main'])
     expect(after).toEqual(['main:accepted'])
-    expect(result.promptVersion).toBe('momentum-plan-prompt/1.2.0')
+    expect(result.promptVersion).toBe('momentum-plan-prompt/1.3.0')
     expect(result.model).toBe('stub:momentum-plan-lean@1')
     expect(result.meta.targets?.kcal).toBeGreaterThanOrEqual(1200)
   })
@@ -887,7 +914,7 @@ describe('pipeline end-to-end with the stub provider', () => {
     const body = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body))
     expect(body.instructions).toBe(PLAN_SYSTEM_PROMPT)
     expect(body.input).toEqual([{ role: 'user', content: JSON.stringify(briefResult.brief) }])
-    expect(body.prompt_cache_key).toBe('momentum-plan-prompt/1.2.0:momentum-plan-lean/1.1.0')
+    expect(body.prompt_cache_key).toBe('momentum-plan-prompt/1.3.0:momentum-plan-lean/1.1.0')
     expect(JSON.stringify(body)).not.toContain(USER_ID)
   })
 })

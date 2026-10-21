@@ -153,14 +153,18 @@ export function parseReps(value: string): { count: string; seconds: number | nul
     const max = range[2] ? Number(range[2]) : min
     return min >= 1 && max <= 100 && min <= max ? { count: text.replace(/\s+/g, ''), seconds: null } : null
   }
-  const seconds = /^(\d{1,3})\s*(s|sec|secs|seconds|ثانیه)$/.exec(text)
-  if (seconds && Number(seconds[1]) >= 5 && Number(seconds[1]) <= 180) {
-    return { count: '1', seconds: Number(seconds[1]) }
+  // Times, single or as a range ("20-30s", "8-10min"); a range is held for its midpoint.
+  const time = (max: number, pattern: RegExp) => {
+    const match = pattern.exec(text)
+    if (!match) return null
+    const low = Number(match[1])
+    const high = match[2] ? Number(match[2]) : low
+    return low <= high && high <= max ? (low + high) / 2 : null
   }
-  const minutes = /^(\d{1,2})\s*(m|min|mins|minutes|دقیقه)$/.exec(text)
-  if (minutes && Number(minutes[1]) >= 1 && Number(minutes[1]) <= 60) {
-    return { count: '1', seconds: Number(minutes[1]) * 60 }
-  }
+  const seconds = time(180, /^(\d{1,3})(?:\s*[-–—]\s*(\d{1,3}))?\s*(?:s|sec|secs|seconds|ثانیه)$/)
+  if (seconds !== null && seconds >= 5) return { count: '1', seconds: Math.round(seconds) }
+  const minutes = time(60, /^(\d{1,3})(?:\s*[-–—]\s*(\d{1,3}))?\s*(?:m|min|mins|minutes|دقیقه)$/)
+  if (minutes !== null && minutes >= 1) return { count: '1', seconds: Math.round(minutes * 60) }
   return null
 }
 
@@ -410,8 +414,12 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     if (workoutId && !workout && !(Array.isArray(raw.workouts) && raw.workouts.some((w) => isRecord(w) && w.id === workoutId))) {
       add('day_unknown_workout', 'schema', `day ${d}: workout "${workoutId}" is not defined.`)
     }
-    if (trainDays.has(d) && (!workoutId || (workout && LIGHT_TYPES.has(workout.type)))) {
-      add('training_day_missing', 'schema', `day ${d} is a training day: it needs a non-walk, non-mobility workout.`)
+    // Someone whose chosen activity is walking or mobility trains with exactly that.
+    const lightFocus = brief.training.focus === 'walk' || brief.training.focus === 'mobility'
+    if (trainDays.has(d) && (!workoutId || (workout && LIGHT_TYPES.has(workout.type) && !lightFocus))) {
+      add('training_day_missing', 'schema', lightFocus
+        ? `day ${d} is a training day: it needs a workout.`
+        : `day ${d} is a training day: it needs a non-walk, non-mobility workout.`)
     } else if (lightDays.has(d) && workout && !LIGHT_TYPES.has(workout.type)) {
       add('light_day_too_hard', 'safety', `day ${d} is a light day: use a walk or mobility workout or null.`)
     } else if (!trainDays.has(d) && !lightDays.has(d) && workoutId) {
