@@ -613,6 +613,47 @@ describe('pipeline end-to-end with the stub provider', () => {
     return { result, before, after }
   }
 
+  it('routes complex briefs to the complex model and simple ones to the cheap model', async () => {
+    const cheap = { ...createStubPlanLlm('valid'), model: 'cheap' }
+    const strong = { ...createStubPlanLlm('valid'), model: 'strong' }
+    const route = async (snap: GenerationProfileSnapshot) => {
+      const models: string[] = []
+      const result = await runPlanPipeline({
+        catalog,
+        snapshot: snap,
+        locale: 'fa-IR',
+        declaredAllergenIds: resolveDeclaredAllergenIds(catalog, snap.dietary.allergies),
+        subjectRef: await pseudonymousRef(USER_ID),
+        startsAt: STARTS_AT,
+        llm: cheap,
+        llmComplex: strong,
+        hooks: { beforeCall: async (_call, meta) => { models.push(meta.model) } },
+      })
+      // Main and repair calls both stay on the routed model.
+      return { models: [...new Set(models)], complexity: result.meta.complexity }
+    }
+    const simple = await route(snapshot())
+    expect(simple.models).toEqual(['cheap'])
+    expect(simple.complexity?.tier).toBe('simple')
+
+    const injured = await route(snapshot({
+      safety: { medical_considerations: ['injury_or_movement_limitation', 'injury:knee'], medications_present: false, supplements_present: false },
+    }))
+    expect(injured.models).toEqual(['strong'])
+    expect(injured.complexity).toEqual({ tier: 'complex', reasons: expect.arrayContaining(['injury']) })
+
+    const stacked = await route(snapshot({
+      dietary: { ...snapshot().dietary, dietary_pattern: 'vegetarian', allergies: ['milk'] },
+    }))
+    expect(stacked.models).toEqual(['strong'])
+    expect(stacked.complexity?.reasons).toEqual(expect.arrayContaining(['allergens', 'plant_based']))
+
+    // One soft constraint alone stays on the cheap model.
+    const allergyOnly = await route(snapshot({ dietary: { ...snapshot().dietary, allergies: ['milk'] } }))
+    expect(allergyOnly.complexity).toEqual({ tier: 'simple', reasons: ['allergens'] })
+    expect(allergyOnly.models).toEqual(['cheap'])
+  })
+
   it('delivers the model plan when it validates', async () => {
     const { result, before, after } = await run('valid')
     expect(result.source).toBe('llm')

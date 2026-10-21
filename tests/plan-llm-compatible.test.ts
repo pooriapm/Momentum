@@ -8,7 +8,7 @@ import {
   costInToman,
   createCompatiblePlanLlm,
 } from '../supabase/functions/_shared/plan-llm-compatible.ts'
-import { resolvePlanLlmClient } from '../supabase/functions/_shared/plan-provider.ts'
+import { resolveComplexPlanLlmClient, resolvePlanLlmClient } from '../supabase/functions/_shared/plan-provider.ts'
 import type { PlanLlmRequest } from '../supabase/functions/_shared/plan-llm.ts'
 
 const KEY = 'sk-test-secret-key-0123456789'
@@ -169,6 +169,35 @@ describe('stage 1: OpenAI-compatible provider client', () => {
     await expect(resolvePlanLlmClient({
       userId: 'u', cycleIndex: 1, isRenewal: false, catalogReleaseId: 'momentum-core@v2',
     })).rejects.toMatchObject({ code: 'LIVE_LLM_DISABLED' })
+  })
+
+  it('configures an optional complex model with its own price list', () => {
+    env = {
+      AI_PLAN_PROVIDER: 'compatible',
+      AI_PLAN_LIVE_LLM: 'true',
+      LLM_API_BASE_URL: 'https://llm.example.ir/v1',
+      LLM_API_KEY: KEY,
+      LLM_PLAN_MODEL: 'cheap',
+      LLM_PRICE_TOMAN_PER_1M_INPUT: '10000',
+      LLM_PRICE_TOMAN_PER_1M_OUTPUT: '50000',
+    }
+    expect(compatibleLlmOptionsFromEnv('complex')).toBeNull()
+    expect(resolveComplexPlanLlmClient()).toBeNull()
+    env.LLM_PLAN_MODEL_COMPLEX = 'cheap' // same model: no separate route
+    expect(resolveComplexPlanLlmClient()).toBeNull()
+    env.LLM_PLAN_MODEL_COMPLEX = 'strong'
+    env.LLM_COMPLEX_PRICE_TOMAN_PER_1M_INPUT = '20000'
+    env.LLM_COMPLEX_PRICE_TOMAN_PER_1M_OUTPUT = '120000'
+    expect(compatibleLlmOptionsFromEnv('complex')).toMatchObject({
+      model: 'strong',
+      prices: { input: 20_000, cachedInput: 20_000, output: 120_000 },
+    })
+    expect(resolveComplexPlanLlmClient()?.model).toBe('strong')
+    expect(compatibleLlmOptionsFromEnv().model).toBe('cheap')
+    // A Toman cap needs prices for the complex model too.
+    env.AI_DAILY_BUDGET_TOMAN = '1000000'
+    delete env.LLM_COMPLEX_PRICE_TOMAN_PER_1M_OUTPUT
+    expect(() => compatibleLlmOptionsFromEnv('complex')).toThrow('invalid_env:LLM_COMPLEX_PRICE_TOMAN_PER_1M_INPUT')
   })
 
   it('maps alternative usage shapes and leaves unknown cost unknown', () => {

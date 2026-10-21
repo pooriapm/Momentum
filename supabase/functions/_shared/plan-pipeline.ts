@@ -7,6 +7,7 @@ import type { PlanCatalogSnapshot } from './plan-catalog.ts'
 import { assertGeneratedPlan } from './plan-contract.ts'
 import { composeDeterministicLeanPlan, DETERMINISTIC_PLAN_VERSION } from './plan-deterministic.ts'
 import type { PlanLlmClient, PlanLlmResponse } from './plan-llm.ts'
+import { assessPlanComplexity, type PlanComplexityDecision } from './plan-complexity.ts'
 import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import {
   assemblePlanPrompt,
@@ -91,6 +92,8 @@ export interface PipelineResult {
     validator_version: typeof PLAN_VALIDATOR_VERSION
     targets: Record<string, number | string> | null
     relaxations: string[]
+    /** Which model tier the brief was routed to, and why (reason codes only). */
+    complexity: PlanComplexityDecision | null
   }
 }
 
@@ -162,7 +165,10 @@ export async function runPlanPipeline(input: {
   declaredAllergenIds: ReadonlySet<string>
   subjectRef: string
   startsAt: Date
+  /** The "simple" model; also used for complex briefs when llmComplex is not given. */
   llm: PlanLlmClient
+  /** Stronger model for briefs that assessPlanComplexity marks complex. */
+  llmComplex?: PlanLlmClient | null
   hooks?: PipelineHooks
   /** Per-plan Toman cap: when the first answer already cost this much, skip the repair call. */
   maxCostToman?: number | null
@@ -193,13 +199,16 @@ export async function runPlanPipeline(input: {
     declaredAllergenIds: input.declaredAllergenIds,
   }
 
+  const routed = assessPlanComplexity(briefResult, input.declaredAllergenIds)
+  const llm = routed.tier === 'complex' && input.llmComplex ? input.llmComplex : input.llm
+
   const run = async (call: 'main' | 'repair', prompt: AssembledPrompt): Promise<Attempt> => {
-    await input.hooks?.beforeCall?.(call, { model: input.llm.model })
+    await input.hooks?.beforeCall?.(call, { model: llm.model })
     const startedAt = Date.now()
     let response: PlanLlmResponse | null = null
     let attempt: Attempt
     try {
-      response = await input.llm.complete({
+      response = await llm.complete({
         call,
         messages: prompt.messages,
         schemaName: prompt.schemaName,
@@ -251,7 +260,7 @@ export async function runPlanPipeline(input: {
     }
     const record: PipelineCallRecord = {
       call,
-      model: response?.model ?? input.llm.model,
+      model: response?.model ?? llm.model,
       providerResponseId: response?.providerResponseId ?? null,
       usage: response?.usage ?? null,
       costToman: response ? response.costToman ?? null : null,
@@ -277,7 +286,7 @@ export async function runPlanPipeline(input: {
   const prompt = assemblePlanPrompt(briefResult.brief)
   const main = await run('main', prompt)
   if (main.kind === 'ok') {
-    return delivered(main, 'llm', briefResult, calls, usage, serviceTier)
+    return delivered(main, 'llm', briefResult, calls, usage, serviceTier, input.declaredAllergenIds)
   }
   if (main.kind === 'provider_error') throw providerUnavailable()
   const spent = totalToman(calls)
@@ -291,7 +300,7 @@ export async function runPlanPipeline(input: {
     issues: main.issues.map((issue) => issue.detail),
   }))
   if (repair.kind === 'ok') {
-    return delivered(repair, 'llm_repaired', briefResult, calls, usage, serviceTier)
+    return delivered(repair, 'llm_repaired', briefResult, calls, usage, serviceTier, input.declaredAllergenIds)
   }
   if (repair.kind === 'provider_error') throw providerUnavailable()
   const reason =
@@ -310,7 +319,7 @@ export function totalToman(calls: readonly PipelineCallRecord[]): number | null 
   return total
 }
 
-function meta(brief: PlanBriefResult | null): PipelineResult['meta'] {
+function meta(brief: PlanBriefResult | null, declaredAllergenIds: ReadonlySet<string>): PipelineResult['meta'] {
   return {
     pipeline_version: PIPELINE_VERSION,
     brief_version: brief ? BRIEF_VERSION : null,
@@ -329,6 +338,7 @@ function meta(brief: PlanBriefResult | null): PipelineResult['meta'] {
       }
       : null,
     relaxations: brief ? [...brief.relaxations, ...brief.targets.adjustments] : [],
+    complexity: brief ? assessPlanComplexity(brief, declaredAllergenIds) : null,
   }
 }
 
@@ -339,6 +349,7 @@ function delivered(
   calls: PipelineCallRecord[],
   usage: ProviderUsage,
   serviceTier: ServiceTier,
+  declaredAllergenIds: ReadonlySet<string>,
 ): PipelineResult {
   return {
     content: attempt.content,
@@ -353,7 +364,7 @@ function delivered(
     calls,
     fallbackReason: null,
     quality: attempt.quality,
-    meta: meta(brief),
+    meta: meta(brief, declaredAllergenIds),
   }
 }
 
@@ -382,7 +393,7 @@ function personalFallback(
     calls,
     fallbackReason: reason,
     quality: built.quality,
-    meta: meta(ctx.brief),
+    meta: meta(ctx.brief, input.declaredAllergenIds),
   }
 }
 
@@ -418,6 +429,6 @@ function starterFallback(
     calls,
     fallbackReason: reason,
     quality: null,
-    meta: meta(brief),
+    meta: meta(brief, input.declaredAllergenIds),
   }
 }

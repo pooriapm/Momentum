@@ -21,6 +21,8 @@ import type { PlanLlmClient, PlanLlmRequest, PlanLlmResponse } from './plan-llm.
  * - LLM_TOTAL_BUDGET_MS        all attempts of one call, default 120000
  * - LLM_MAX_OUTPUT_TOKENS      default 12000
  * - LLM_PRICE_TOMAN_PER_1M_INPUT / _CACHED_INPUT / _OUTPUT   price list for cost in Toman
+ * - LLM_PLAN_MODEL_COMPLEX     stronger model for complex briefs (plan-complexity.ts), with its own
+ *                              LLM_COMPLEX_PRICE_TOMAN_PER_1M_INPUT / _CACHED_INPUT / _OUTPUT
  *
  * Errors: timeouts and outages become LLM_TIMEOUT / LLM_UNAVAILABLE (the pipeline fails the job so
  * the user retries later); a rejected key or model becomes a configuration error (fail closed);
@@ -56,8 +58,16 @@ function priceEnv(name: string): number | null {
   return value
 }
 
-/** Reads and validates the environment. Throws a configuration error when the switch is off. */
-export function compatibleLlmOptionsFromEnv(): CompatibleLlmOptions {
+/**
+ * Reads and validates the environment. Throws a configuration error when the switch is off.
+ * tier 'complex' returns null when no separate complex model is configured.
+ */
+export function compatibleLlmOptionsFromEnv(): CompatibleLlmOptions
+export function compatibleLlmOptionsFromEnv(tier: 'complex'): CompatibleLlmOptions | null
+export function compatibleLlmOptionsFromEnv(tier: 'simple' | 'complex' = 'simple'): CompatibleLlmOptions | null {
+  const complexModel = optionalEnv('LLM_PLAN_MODEL_COMPLEX')
+  if (tier === 'complex' && (!complexModel || complexModel === optionalEnv('LLM_PLAN_MODEL'))) return null
+  const pricePrefix = tier === 'complex' ? 'LLM_COMPLEX_PRICE_TOMAN_PER_1M' : 'LLM_PRICE_TOMAN_PER_1M'
   if (optionalEnv('AI_PLAN_LIVE_LLM')?.toLowerCase() !== 'true') {
     throw new HttpError(503, 'LIVE_LLM_DISABLED', 'Live plan generation is switched off.')
   }
@@ -65,18 +75,18 @@ export function compatibleLlmOptionsFromEnv(): CompatibleLlmOptions {
   if (!/^https:\/\/[^\s/]+/.test(baseUrl) && !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(baseUrl)) {
     throw new Error('invalid_env:LLM_API_BASE_URL')
   }
-  const input = priceEnv('LLM_PRICE_TOMAN_PER_1M_INPUT')
-  const output = priceEnv('LLM_PRICE_TOMAN_PER_1M_OUTPUT')
-  const cachedInput = priceEnv('LLM_PRICE_TOMAN_PER_1M_CACHED_INPUT')
+  const input = priceEnv(`${pricePrefix}_INPUT`)
+  const output = priceEnv(`${pricePrefix}_OUTPUT`)
+  const cachedInput = priceEnv(`${pricePrefix}_CACHED_INPUT`)
   // A Toman cap can only be enforced when calls are priced in Toman.
   if ((optionalEnv('AI_DAILY_BUDGET_TOMAN') || optionalEnv('AI_PLAN_MAX_COST_TOMAN')) &&
     (input === null || output === null)) {
-    throw new Error('invalid_env:LLM_PRICE_TOMAN_PER_1M_INPUT')
+    throw new Error(`invalid_env:${pricePrefix}_INPUT`)
   }
   return {
     baseUrl,
     apiKey: requiredEnv('LLM_API_KEY'),
-    model: requiredEnv('LLM_PLAN_MODEL'),
+    model: tier === 'complex' ? complexModel! : requiredEnv('LLM_PLAN_MODEL'),
     jsonMode: enumEnv('LLM_JSON_MODE', ['json_schema', 'json_object', 'none'] as const) ?? 'json_schema',
     timeoutMs: integerEnv('LLM_TIMEOUT_MS', 90_000, { min: 5_000, max: 300_000 }),
     maxRetries: integerEnv('LLM_MAX_RETRIES', 2, { min: 0, max: 5 }),

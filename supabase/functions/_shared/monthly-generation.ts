@@ -17,6 +17,7 @@ import { applyDeterministicRepair, classifyRepair } from './plan-repair.ts'
 import {
   MONTHLY_PLAN_DAYS,
   PLAN_SCHEMA_VERSION,
+  resolveComplexPlanLlmClient,
   resolvePlanLlmClient,
   STUB_PLAN_MODEL,
   STUB_PROMPT_VERSION,
@@ -411,6 +412,7 @@ export async function runMonthlyGeneration(input: {
         catalogReleaseId: catalog.releaseId,
         invalidStub: input.invalidStub,
       })
+      const llmComplex = input.invalidStub ? null : resolveComplexPlanLlmClient()
       const ledger = (
         attemptId: string,
         patch: Partial<Parameters<typeof buildAttemptLedger>[0]> = {},
@@ -443,16 +445,17 @@ export async function runMonthlyGeneration(input: {
         subjectRef: await pseudonymousRef(input.userId),
         startsAt: input.now ?? new Date(),
         llm,
+        llmComplex,
         maxCostToman: planCostCapToman(),
         hooks: {
           // Durable identity before any billable request. If this fails, do not call the provider.
-          beforeCall: async (call) => {
+          beforeCall: async (call, meta) => {
             // Daily Toman budget: over the cap, fail the job (retry later) before spending more.
             await assertDailyBudget(
               input.store.spentTomanSince?.bind(input.store),
               input.now ?? new Date(),
             )
-            attempt = { ...ledger(crypto.randomUUID()), pipeline: { call } }
+            attempt = { ...ledger(crypto.randomUUID(), { model: meta.model }), pipeline: { call } }
             await input.store.recordAttempt(attempt)
           },
           // Record usage before anything else can throw.

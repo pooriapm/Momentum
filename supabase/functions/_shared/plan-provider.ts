@@ -241,6 +241,16 @@ const STUB_MODES: readonly StubMode[] = [
 ]
 
 /**
+ * The stronger model for complex briefs (LLM_PLAN_MODEL_COMPLEX), or null when only one model is
+ * configured: then every brief uses resolvePlanLlmClient's model. Compatible provider only.
+ */
+export function resolveComplexPlanLlmClient(): PlanLlmClient | null {
+  if (optionalEnv('AI_PLAN_PROVIDER')?.toLowerCase() !== 'compatible') return null
+  const options = compatibleLlmOptionsFromEnv('complex')
+  return options ? createCompatiblePlanLlm(options) : null
+}
+
+/**
  * The model client for the brief-based pipeline (plan-pipeline.ts). AI_PLAN_PROVIDER=stub (the
  * default) answers offline; AI_PLAN_STUB_MODE picks a failure path for testing. compatible is any
  * OpenAI-compatible Chat Completions provider (plan-llm-compatible.ts, AI_PLAN_LIVE_LLM switch).
