@@ -699,7 +699,8 @@ function safeFailureMessage(code: string): string {
   return 'The plan provider could not complete this request.'
 }
 
-function generationFailure(job: GenerationJobRecord): HttpError {
+/** The user-facing error for a failed job (also reported by the status poll). */
+export function generationFailure(job: GenerationJobRecord): HttpError {
   const code = job.errorCode ?? 'PROVIDER_FAILED'
   return new HttpError(422, code, safeFailureMessage(code))
 }
