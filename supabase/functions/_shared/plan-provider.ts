@@ -25,6 +25,7 @@ import {
   type StubMode,
 } from './plan-llm.ts'
 import { LEAN_SCHEMA_VERSION, PLAN_PROMPT_VERSION } from './plan-prompt.ts'
+import { compatibleLlmOptionsFromEnv, createCompatiblePlanLlm } from './plan-llm-compatible.ts'
 
 export { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 
@@ -241,8 +242,10 @@ const STUB_MODES: readonly StubMode[] = [
 
 /**
  * The model client for the brief-based pipeline (plan-pipeline.ts). AI_PLAN_PROVIDER=stub (the
- * default) answers offline; AI_PLAN_STUB_MODE picks a failure path for testing. openai needs the
- * live switch, the routed model and, for Luna, quality evidence for this prompt/schema version.
+ * default) answers offline; AI_PLAN_STUB_MODE picks a failure path for testing. compatible is any
+ * OpenAI-compatible Chat Completions provider (plan-llm-compatible.ts, AI_PLAN_LIVE_LLM switch).
+ * openai needs the live switch, the routed model and, for Luna, quality evidence for this
+ * prompt/schema version.
  */
 export async function resolvePlanLlmClient(input: {
   userId: string
@@ -261,6 +264,9 @@ export async function resolvePlanLlmClient(input: {
       ? configured
       : 'valid'
     return createStubPlanLlm(mode)
+  }
+  if (provider === 'compatible') {
+    return createCompatiblePlanLlm(compatibleLlmOptionsFromEnv())
   }
   if (provider !== 'openai') {
     throw new HttpError(503, 'AI_PROVIDER_INVALID', 'The plan provider is unavailable.')

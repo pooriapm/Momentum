@@ -26,6 +26,7 @@ import {
 } from '../supabase/functions/_shared/plan-brief.ts'
 import { composeDeterministicLeanPlan } from '../supabase/functions/_shared/plan-deterministic.ts'
 import { createOpenAiPlanLlm, createStubPlanLlm } from '../supabase/functions/_shared/plan-llm.ts'
+import { createCompatiblePlanLlm } from '../supabase/functions/_shared/plan-llm-compatible.ts'
 import { runPlanPipeline } from '../supabase/functions/_shared/plan-pipeline.ts'
 import {
   assemblePlanPrompt,
@@ -664,6 +665,34 @@ describe('pipeline end-to-end with the stub provider', () => {
       userId: USER_ID, cycleIndex: 1, isRenewal: false, catalogReleaseId: 'momentum-core@v2',
     })
     expect(stub.kind).toBe('stub')
+  })
+
+  it('runs main + repair through the Chat Completions client and totals the Toman cost', async () => {
+    const snap = snapshot()
+    const { result: briefResult } = briefFor(snap)
+    const good = JSON.stringify(composeDeterministicLeanPlan(briefResult.brief))
+    const reply = (content: string) => new Response(JSON.stringify({
+      id: `c-${content.length}`,
+      choices: [{ message: { content }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 3_000, completion_tokens: 2_000 },
+    }), { status: 200 })
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(reply('{"schema_version":"x"}'))
+      .mockResolvedValueOnce(reply(good))
+    const llm = createCompatiblePlanLlm({
+      baseUrl: 'https://llm.example.ir/v1', apiKey: 'k', model: 'm', jsonMode: 'json_schema',
+      timeoutMs: 30_000, maxRetries: 0, totalBudgetMs: 60_000, maxOutputTokens: 12_000,
+      prices: { input: 100_000, cachedInput: 100_000, output: 500_000 },
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    })
+    const result = await runPlanPipeline({
+      catalog, snapshot: snap, locale: 'fa-IR', declaredAllergenIds: new Set(),
+      subjectRef: 'abcdefghabcdefgh', startsAt: STARTS_AT, llm,
+    })
+    expect(result.source).toBe('llm_repaired')
+    expect(result.calls.map((call) => call.costToman)).toEqual([1_300, 1_300])
+    expect(result.costToman).toBe(2_600)
+    expect(result.usage.inputTokens).toBe(6_000)
   })
 
   it('sends a cache-friendly, PII-free request through the OpenAI-compatible client', async () => {

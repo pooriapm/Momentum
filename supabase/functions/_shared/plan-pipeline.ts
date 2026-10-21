@@ -53,6 +53,8 @@ export interface PipelineCallRecord {
   model: string
   providerResponseId: string | null
   usage: ProviderUsage | null
+  /** Provider cost in Toman for this call; null when no Toman price list is configured. */
+  costToman: number | null
   serviceTier: ServiceTier
   latencyMs: number
   outcome: 'accepted' | 'validation_failed' | 'provider_failed'
@@ -76,6 +78,8 @@ export interface PipelineResult {
   providerResponseId: string
   /** Summed over every provider call made for this plan, delivered or not. */
   usage: ProviderUsage
+  /** Summed Toman cost of those calls; null if any call's cost is unknown. */
+  costToman: number | null
   serviceTier: ServiceTier
   calls: PipelineCallRecord[]
   fallbackReason: string | null
@@ -97,6 +101,10 @@ const CONFIG_ERRORS = new Set([
   'AI_CONTEXT_INVALID',
   'LUNA_QUALITY_GATE_NOT_MET',
   'BATCH_NOT_IMPLEMENTED',
+  'LIVE_LLM_DISABLED',
+  'LLM_AUTH_FAILED',
+  'LLM_MODEL_NOT_FOUND',
+  'LLM_REQUEST_REJECTED',
 ])
 
 export const PROVIDER_UNAVAILABLE = 'AI_PROVIDER_UNAVAILABLE'
@@ -221,6 +229,7 @@ export async function runPlanPipeline(input: {
           providerResponseId: error.metadata.providerResponseId,
           usage: error.metadata.usage,
           serviceTier: error.metadata.serviceTier,
+          costToman: (error as { costToman?: number | null }).costToman ?? null,
         }
         attempt = {
           kind: 'invalid',
@@ -243,6 +252,7 @@ export async function runPlanPipeline(input: {
       model: response?.model ?? input.llm.model,
       providerResponseId: response?.providerResponseId ?? null,
       usage: response?.usage ?? null,
+      costToman: response ? response.costToman ?? null : null,
       serviceTier: response?.serviceTier ?? 'standard',
       latencyMs: Date.now() - startedAt,
       outcome: attempt.kind === 'ok'
@@ -283,6 +293,17 @@ export async function runPlanPipeline(input: {
   return personalFallback(input, ctx, reason, calls, usage)
 }
 
+/** Sum of the calls' Toman cost; unknown (null) if any billable call's cost is unknown. */
+export function totalToman(calls: readonly PipelineCallRecord[]): number | null {
+  let total = 0
+  for (const call of calls) {
+    if (!call.usage) continue
+    if (call.costToman === null) return null
+    total += call.costToman
+  }
+  return total
+}
+
 function meta(brief: PlanBriefResult | null): PipelineResult['meta'] {
   return {
     pipeline_version: PIPELINE_VERSION,
@@ -321,6 +342,7 @@ function delivered(
     schemaVersion: LEAN_SCHEMA_VERSION,
     providerResponseId: attempt.response.providerResponseId,
     usage,
+    costToman: totalToman(calls),
     serviceTier,
     calls,
     fallbackReason: null,
@@ -349,6 +371,7 @@ function personalFallback(
     schemaVersion: LEAN_SCHEMA_VERSION,
     providerResponseId: `deterministic:${crypto.randomUUID()}`,
     usage,
+    costToman: totalToman(calls),
     serviceTier: 'standard',
     calls,
     fallbackReason: reason,
@@ -384,6 +407,7 @@ function starterFallback(
     schemaVersion: STARTER_SCHEMA_VERSION,
     providerResponseId: `deterministic:${crypto.randomUUID()}`,
     usage,
+    costToman: totalToman(calls),
     serviceTier: 'standard',
     calls,
     fallbackReason: reason,

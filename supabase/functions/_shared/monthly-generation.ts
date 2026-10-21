@@ -459,7 +459,11 @@ export async function runMonthlyGeneration(input: {
                 validationFailureCategory: record.failureCategory,
                 reservationConsumed: true,
               }),
-              pipeline: { call: record.call, issue_codes: record.issueCodes },
+              pipeline: {
+                call: record.call,
+                issue_codes: record.issueCodes,
+                cost_toman: record.costToman,
+              },
             }
             await input.store.recordAttempt(attempt)
           },
@@ -477,6 +481,7 @@ export async function runMonthlyGeneration(input: {
         quality: result.quality,
         meta: result.meta,
         total_usage: result.usage,
+        total_cost_toman: result.costToman,
       }
       if (result.source === 'llm' || result.source === 'llm_repaired') {
         attempt = { ...attempt!, pipeline }

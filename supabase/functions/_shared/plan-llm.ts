@@ -27,10 +27,12 @@ export interface PlanLlmResponse {
   providerResponseId: string
   usage: ProviderUsage
   serviceTier: ServiceTier
+  /** Provider cost in Toman when a Toman price list is configured; null when unknown. */
+  costToman?: number | null
 }
 
 export interface PlanLlmClient {
-  readonly kind: 'stub' | 'openai'
+  readonly kind: 'stub' | 'openai' | 'compatible'
   readonly model: string
   complete(request: PlanLlmRequest): Promise<PlanLlmResponse>
 }
@@ -95,6 +97,7 @@ export function createStubPlanLlm(mode: StubMode = 'valid'): PlanLlmClient {
         providerResponseId: `stub:${crypto.randomUUID()}`,
         usage: ZERO_USAGE,
         serviceTier: 'standard',
+        costToman: 0,
       })
     },
   }
