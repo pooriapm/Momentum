@@ -272,6 +272,9 @@ Deno.serve(async (request) => {
           'This purchase belongs to another account.',
         )
       }
+      // Idempotent retry (e.g. the app lost the response before consuming). This must
+      // run before validation: once consumed, Bazaar reports the token as consumed and
+      // validation rejects it as a replay (purchase_already_consumed).
       if (known?.status === 'paid') {
         return jsonResponse(request, await grant(auth.admin, known.id, ''))
       }
