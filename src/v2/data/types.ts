@@ -21,7 +21,7 @@ export interface MealChoice {
   confidenceLevel?: 'low' | 'medium' | 'high'
   nutritionSource?: 'model_estimate' | 'catalog_reference' | 'food_label' | 'verified_database' | 'user_provided'
   cookingMinutes: number
-  ingredients?: Array<{ name: LocalizedText; amount: number; unit: string; note?: LocalizedText }>
+  ingredients?: Array<{ id?: string; name: LocalizedText; amount: number; unit: string; note?: LocalizedText }>
   recipe?: {
     prepMinutes: number
     cookMinutes: number

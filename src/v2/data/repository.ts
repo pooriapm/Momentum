@@ -158,6 +158,7 @@ function mapPlanDay(day: DashboardPlanDay, planId: string, locale: AppLocale): M
         nutritionSource: option.nutrition.source,
         cookingMinutes: (option.recipe?.prep_minutes ?? 0) + (option.recipe?.cook_minutes ?? 0),
         ingredients: option.ingredients.map((ingredient) => ({
+          id: ingredient.ingredient_id ?? undefined,
           name: localized(ingredient.name),
           amount: ingredient.amount,
           unit: ingredient.unit,
