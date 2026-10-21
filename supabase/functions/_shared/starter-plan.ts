@@ -208,7 +208,7 @@ function foodForCycle(
     first,
     ...eligibleFoods(catalog, mealType, declaredAllergenIds).filter((food) => food.id !== first.id),
   ]
-  return candidates[(cycleIndex - 1) % candidates.length]
+  return candidates[(cycleIndex - 1) % candidates.length] ?? first
 }
 
 function exerciseIdsForStub(catalog: PlanCatalogSnapshot): string[] {
