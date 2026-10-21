@@ -602,3 +602,77 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Water and eating out (Today side stack). */
+.water-card,
+.eating-out-card {
+  display: grid;
+  gap: .55rem;
+}
+
+.water-card h3,
+.eating-out-card h3 { font-size: 1.15rem; margin: 0; }
+.water-card h3 span { color: var(--color-text-secondary); font-size: .9rem; font-weight: 600; }
+.water-card__ml,
+.eating-out-card > p { color: var(--color-text-secondary); font-size: .85rem; margin: 0; }
+
+.water-card__icon,
+.eating-out-card__icon {
+  align-items: center;
+  background: var(--color-brand-soft);
+  border-radius: .8rem;
+  color: var(--color-brand);
+  display: flex;
+  height: 2.4rem;
+  justify-content: center;
+  width: 2.4rem;
+}
+
+.water-card__track {
+  background: var(--color-surface-muted);
+  border-radius: 999px;
+  height: .45rem;
+  overflow: hidden;
+}
+
+.water-card__track i {
+  background: var(--color-brand);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width var(--motion-normal) var(--motion-ease-out);
+}
+
+.water-card__glasses { color: var(--color-border-strong); display: flex; flex-wrap: wrap; gap: .25rem; }
+.water-card__glasses .is-full { color: var(--color-brand); }
+.water-card__done { color: var(--color-success); font-weight: 700; margin: 0; }
+.water-card.is-reached { border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-border)); }
+
+.water-card__actions { display: flex; gap: .5rem; }
+.water-card__actions .orbit-button:last-child { flex: 1 1 auto; }
+
+.eating-out-card__list { display: grid; gap: .5rem; }
+
+.eating-out-card details {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: .55rem .75rem;
+}
+
+.eating-out-card summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-weight: 700;
+  gap: .5rem;
+  justify-content: space-between;
+  min-height: 2.75rem;
+}
+
+.eating-out-card summary small { color: var(--color-text-muted); font-weight: 600; white-space: nowrap; }
+.eating-out-card ul { color: var(--color-text-secondary); line-height: 1.75; margin: .3rem 0 .2rem; padding-inline-start: 1.1rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .water-card__track i { transition: none; }
+}

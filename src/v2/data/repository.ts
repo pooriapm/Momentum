@@ -286,6 +286,16 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       name: localized(group.category),
       items: group.items.map((item) => localized(`${item.name} · ${item.amount} ${item.unit}`)),
     })),
+    water: {
+      goalMl: Math.round(plan.day.targets.water_ml) || 2500,
+      loggedMl: dashboard.water_today?.local_date === dashboard.local_date ? dashboard.water_today.water_ml : 0,
+    },
+    restaurantGuide: plan.restaurant_guide.map((tip) => ({
+      title: localized(tip.title),
+      orderInstructions: tip.order_instructions.map(localized),
+      calories: tip.estimated_nutrition.calories,
+      protein: tip.estimated_nutrition.protein_g,
+    })),
     progress: {
       currentWeight,
       startWeight: goal.start_weight_kg,

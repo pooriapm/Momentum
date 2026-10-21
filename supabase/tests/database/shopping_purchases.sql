@@ -48,7 +48,8 @@ insert into public.plan_versions(
   jsonb_build_object(
     'plan_name', 'Shopping plan',
     'default_targets', '{}'::jsonb,
-    'days', '[]'::jsonb
+    -- Plan versions must hold exactly 30 day entries (plan_versions_thirty_day_content).
+    'days', (select jsonb_agg(jsonb_build_object('day_index', i) order by i) from generate_series(0, 29) as i)
   ),
   repeat('b', 64)
 );

@@ -112,6 +112,13 @@ export interface WeeklyProgressPoint {
   weightKg?: number | null
 }
 
+export interface RestaurantTip {
+  title: LocalizedText
+  orderInstructions: LocalizedText[]
+  calories: number
+  protein: number
+}
+
 export interface MomentumPlanView {
   localDate?: string
   timezone?: string
@@ -126,6 +133,9 @@ export interface MomentumPlanView {
   meals: MealSlot[]
   workout: WorkoutBlock | null
   shoppingGroups: ShoppingGroup[]
+  /** Today's water: the plan's goal and what the server has logged for the profile-local day. */
+  water?: { goalMl: number; loggedMl: number }
+  restaurantGuide?: RestaurantTip[]
   days?: MomentumPlanDayView[]
   version?: PlanVersionMeta
   history?: PlanVersionMeta[]

@@ -29,6 +29,7 @@ import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
 import { RecoveryValue } from './RecoveryValue'
+import { EatingOutCard, WaterCard } from './DailyExtras'
 import { MemberFeatureLock } from './MemberFeatureLock'
 import { deriveMembershipStatus } from './me-state'
 import { hasMemberFeatures } from '../../entitlement'
@@ -496,6 +497,8 @@ export function TodayPage({
         </div>
 
         <aside className="today-side-stack">
+          <WaterCard locale={locale} locked={mutationsLocked} plan={plan} preview={preview} />
+          <EatingOutCard locale={locale} plan={plan} />
           {plan.workout ? (
             <ContentCard className="workout-card" id="today-workout">
               <div className="section-title-row"><span className="workout-card__icon"><Dumbbell size={22} /></span><StatusPill tone="energy">{intensityLabel(plan.workout.intensity, locale)}</StatusPill></div>
