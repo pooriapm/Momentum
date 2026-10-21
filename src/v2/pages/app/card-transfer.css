@@ -87,7 +87,8 @@
 .card-transfer__actions .orbit-button { flex: 1 1 0; }
 
 /* Admin review */
-.admin-receipts { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); }
+.admin-receipts { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); }
+@media (max-width: 40rem) { .admin-receipts { grid-template-columns: minmax(0, 1fr); } }
 .admin-receipt { display: grid; gap: .6rem; padding: 1rem; }
 .admin-receipt__head { align-items: center; display: flex; gap: .5rem; justify-content: space-between; }
 .admin-receipt p { color: var(--color-text-secondary); margin: 0; }

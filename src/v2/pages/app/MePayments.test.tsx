@@ -88,6 +88,14 @@ describe('website membership payment', () => {
     expect(screen.queryByRole('button', { name: 'پرداخت کارت به کارت' })).not.toBeInTheDocument()
   })
 
+  it('tells the member why their receipt was rejected', async () => {
+    vi.mocked(loadLatestCardPayment).mockResolvedValueOnce({ provider: 'card_transfer', status: 'failed', failure_code: 'card_amount_mismatch', created_at: '' })
+    await i18n.changeLanguage('en')
+    renderMembership('en', 'ir')
+    expect(await screen.findByText(/the amount did not match the membership price/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Pay by card transfer' })).toBeInTheDocument()
+  })
+
   it('asks members outside Iran to be notified instead of paying', async () => {
     await i18n.changeLanguage('en')
     renderMembership('en', 'intl')

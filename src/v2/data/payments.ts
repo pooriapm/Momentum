@@ -124,23 +124,3 @@ export async function loadLatestCardPayment(userId: string): Promise<LatestPayme
 export function registerMembershipInterest() {
   return invokePayments({ action: 'membership-interest' }, z.object({ registered: z.literal(true) }))
 }
-
-// Admin review.
-
-const pendingReceiptSchema = z.object({
-  payment_id: z.string().uuid(),
-  email: z.string().nullable(),
-  amount_minor: z.number(),
-  submitted_at: z.string(),
-  receipt_url: z.string().url().nullable(),
-})
-export type PendingReceipt = z.infer<typeof pendingReceiptSchema>
-
-export async function loadPendingReceipts() {
-  const { items } = await invokePayments({ action: 'admin-card-list' }, z.object({ items: z.array(pendingReceiptSchema) }))
-  return items
-}
-
-export function reviewReceipt(paymentId: string, approve: boolean) {
-  return invokePayments({ action: 'admin-card-review', paymentId, approve }, z.record(z.string(), z.unknown()))
-}

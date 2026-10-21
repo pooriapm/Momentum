@@ -1,11 +1,14 @@
 import type { User } from '@supabase/supabase-js'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import i18n from 'i18next'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '../../../platform/auth/auth-context'
 import { I18nProvider } from '../../../platform/i18n/I18nProvider'
 import { demoPlan } from '../../data/demo'
+import { loadIsAdmin } from '../../data/admin'
 import { MePage } from './MePage'
+
+vi.mock('../../data/admin', () => ({ loadIsAdmin: vi.fn(async () => false) }))
 
 const runtimeMock = vi.hoisted(() => ({
   runtimeConfig: {
@@ -70,6 +73,22 @@ describe('MePage inventory states', () => {
     expect(screen.getByRole('link', { name: /profile & preferences/i })).toHaveAttribute('href', '/en/app/settings')
     expect(screen.getByRole('button', { name: /subscription/i })).toBeInTheDocument()
     expect(screen.queryByText(/private/i)).not.toBeInTheDocument()
+  })
+
+  it('shows the admin panel link only to admins', async () => {
+    runtimeMock.runtimeConfig.hasSupabase = true
+    vi.mocked(loadIsAdmin).mockResolvedValueOnce(true)
+    renderMe()
+    expect(await screen.findByRole('link', { name: /admin panel/i })).toHaveAttribute('href', '/en/app/admin')
+    runtimeMock.runtimeConfig.hasSupabase = false
+  })
+
+  it('hides the admin panel link from everyone else', async () => {
+    runtimeMock.runtimeConfig.hasSupabase = true
+    renderMe()
+    await waitFor(() => expect(loadIsAdmin).toHaveBeenCalled())
+    expect(screen.queryByRole('link', { name: /admin panel/i })).not.toBeInTheDocument()
+    runtimeMock.runtimeConfig.hasSupabase = false
   })
 
   it('ME-05 shows one Momentum membership and immutable history', () => {

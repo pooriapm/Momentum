@@ -22,7 +22,7 @@ insert into auth.users(
 
 select extensions.ok(
   not has_function_privilege('authenticated', 'public.submit_card_payment(uuid, text)', 'EXECUTE')
-    and not has_function_privilege('authenticated', 'public.review_card_payment(uuid, boolean, uuid)', 'EXECUTE')
+    and not has_function_privilege('authenticated', 'public.review_card_payment(uuid, boolean, uuid, text)', 'EXECUTE')
     and not has_function_privilege('authenticated', 'public.register_membership_interest(uuid)', 'EXECUTE'),
   'browsers cannot submit, review, or register interest directly'
 );

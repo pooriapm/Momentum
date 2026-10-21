@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { authenticate } from '../_shared/auth.ts'
+import { type AuthContext, authenticate } from '../_shared/auth.ts'
 import { validateBazaarPurchase } from '../_shared/bazaar.ts'
 import { integerEnv, optionalEnv, requiredEnv } from '../_shared/config.ts'
 import {
@@ -13,8 +13,17 @@ import {
 import { enforceRateLimit } from '../_shared/limits.ts'
 import { requestZarinpalPayment, verifyZarinpalPayment } from '../_shared/zarinpal.ts'
 import {
+  adminCardHistory,
+  adminFindMembers,
+  adminGrantDays,
+  adminMemberDetail,
+  adminOverview,
+  adminWaitlist,
+} from '../_shared/admin-panel.ts'
+import {
   assertPaymentAdmin,
   cardDestination,
+  isPaymentAdmin,
   listPendingCardPayments,
   reviewCardPayment,
   submitCardPayment,
@@ -23,7 +32,10 @@ import {
 // One prepaid 30-day membership, sold in IRR:
 //   POST {action: 'card-details'}                      website card-to-card → card + amount
 //   POST {action: 'card-submit', receiptPath}          uploaded receipt → pending review
-//   POST {action: 'admin-card-list' | 'admin-card-review', paymentId, approve}  admin review
+//   POST {action: 'admin-card-list' | 'admin-card-review', paymentId, approve, reason?}  admin review
+//   POST {action: 'admin-whoami' | 'admin-overview' | 'admin-card-history' | 'admin-waitlist'}
+//   POST {action: 'admin-member-search', query} | {action: 'admin-member', userId}
+//   POST {action: 'admin-grant-days', userId, days, note}     audited manual membership days
 //   POST {action: 'membership-interest'}               members outside Iran ask to hear later
 //   POST {action: 'zarinpal-start', locale: 'fa'|'en'}   website checkout → { url }
 //   GET  ?provider=zarinpal&locale=..&Authority=..&Status=OK|NOK  Zarinpal return → /{locale}/app/me
@@ -38,6 +50,62 @@ interface PaymentsBody {
   receiptPath?: unknown
   paymentId?: unknown
   approve?: unknown
+  reason?: unknown
+  query?: unknown
+  userId?: unknown
+  days?: unknown
+  note?: unknown
+}
+
+/** Admin actions: their own, larger rate limit, and nothing answers for non-admins. */
+async function adminAction(
+  request: Request,
+  auth: AuthContext,
+  body: PaymentsBody,
+): Promise<Response> {
+  await enforceRateLimit(
+    auth.admin,
+    auth.user.id,
+    'payments-admin',
+    integerEnv('PAYMENTS_ADMIN_RATE_LIMIT', 600, { min: 10, max: 5_000 }),
+    3600,
+  )
+  if (body.action === 'admin-whoami') {
+    return jsonResponse(request, { admin: isPaymentAdmin(auth.user.id) })
+  }
+  assertPaymentAdmin(auth.user.id)
+  switch (body.action) {
+    case 'admin-overview':
+      return jsonResponse(request, { overview: await adminOverview(auth.admin) })
+    case 'admin-card-list':
+      return jsonResponse(request, { items: await listPendingCardPayments(auth.admin) })
+    case 'admin-card-review':
+      return jsonResponse(
+        request,
+        await reviewCardPayment(
+          auth.admin,
+          body.paymentId,
+          body.approve,
+          auth.user.id,
+          body.reason,
+        ),
+      )
+    case 'admin-card-history':
+      return jsonResponse(request, { items: await adminCardHistory(auth.admin) })
+    case 'admin-member-search':
+      return jsonResponse(request, { members: await adminFindMembers(auth.admin, body.query) })
+    case 'admin-member':
+      return jsonResponse(request, { member: await adminMemberDetail(auth.admin, body.userId) })
+    case 'admin-grant-days':
+      return jsonResponse(
+        request,
+        await adminGrantDays(auth.admin, body.userId, body.days, body.note, auth.user.id),
+      )
+    case 'admin-waitlist':
+      return jsonResponse(request, { items: await adminWaitlist(auth.admin) })
+    default:
+      throw new HttpError(400, 'unknown_action', 'Unknown admin action.')
+  }
 }
 
 interface PaymentRow {
@@ -186,6 +254,10 @@ Deno.serve(async (request) => {
     }
     const auth = await authenticate(request)
     const body = await readJsonBody<PaymentsBody>(request, 4_096)
+    // Admin review works even while new payments are paused.
+    if (typeof body.action === 'string' && body.action.startsWith('admin-')) {
+      return await adminAction(request, auth, body)
+    }
     await enforceRateLimit(
       auth.admin,
       auth.user.id,
@@ -201,19 +273,6 @@ Deno.serve(async (request) => {
       })
       if (error) throw new HttpError(503, 'interest_not_saved', 'Your request was not saved.')
       return jsonResponse(request, { registered: true })
-    }
-
-    // Admin review of card-transfer receipts works even while new payments are paused.
-    if (body.action === 'admin-card-list') {
-      assertPaymentAdmin(auth.user.id)
-      return jsonResponse(request, { items: await listPendingCardPayments(auth.admin) })
-    }
-    if (body.action === 'admin-card-review') {
-      assertPaymentAdmin(auth.user.id)
-      return jsonResponse(
-        request,
-        await reviewCardPayment(auth.admin, body.paymentId, body.approve, auth.user.id),
-      )
     }
 
     assertPaymentsEnabled()

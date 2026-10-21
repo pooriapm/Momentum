@@ -1,5 +1,5 @@
 import { useModalDismiss } from '../../components/use-modal-dismiss'
-import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Info, Languages, LifeBuoy, LockKeyhole, LogOut, Mail, MoonStar, ShieldAlert, ShieldCheck, Sun, WalletCards } from 'lucide-react'
+import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Info, Languages, LifeBuoy, LockKeyhole, LogOut, Mail, MoonStar, ShieldAlert, ShieldCheck, Sun, UserCog, WalletCards } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useSearch } from 'wouter'
@@ -10,6 +10,7 @@ import { runtimeConfig } from '../../../platform/config/runtime'
 import { applyUiTheme, updateUiState } from '../../../lib/ui-state'
 import { InstallExperienceCard } from '../../components/InstallExperienceCard'
 import { ModalShell } from '../../components/ModalShell'
+import { loadIsAdmin } from '../../data/admin'
 import { loadLatestCardPayment, paymentResultFromSearch, registerMembershipInterest, type LatestPayment, type PaymentResult } from '../../data/payments'
 import { CardTransferPanel } from './CardTransferPanel'
 import { PAYMENTS_LIVE } from '../../entitlement'
@@ -55,6 +56,16 @@ export function MePage({
   const name = plan ? localize(plan.userName, locale) : (user?.email ?? t('nav.me'))
   const status = membershipStatus ?? deriveMembershipStatus(plan)
   const membership = membershipCopy(status, locale)
+  const [isAdmin, setIsAdmin] = useState(false)
+  // Only admins (ADMIN_USER_IDS on the server) see the admin panel link.
+  useEffect(() => {
+    if (preview || !runtimeConfig.hasSupabase || !user?.id) return
+    let active = true
+    loadIsAdmin()
+      .then((value) => { if (active) setIsAdmin(value) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [preview, user?.id])
 
   function toggleTheme() {
     const nextTheme = lightTheme ? 'dark' : 'light'
@@ -117,6 +128,13 @@ export function MePage({
           <span className="me-row__label">{t('app.help')}</span>
           <ChevronRight className="directional-icon" size={18} />
         </button>
+        {isAdmin ? (
+          <Link className="me-row" href={localizedPath(locale, '/app/admin')}>
+            <span className="me-row__icon"><UserCog size={18} /></span>
+            <span className="me-row__label">{locale === 'fa' ? 'پنل مدیریت' : 'Admin panel'}</span>
+            <ChevronRight className="directional-icon" size={18} />
+          </Link>
+        ) : null}
         <InstallExperienceCard locale={locale} />
       </nav>
 
@@ -206,7 +224,7 @@ function MembershipPanel({
         {paymentResult === 'cancelled' ? <div className="inline-notice" role="status">{fa ? 'پرداخت لغو شد و مبلغی کم نشد.' : 'Payment was cancelled. You were not charged.'}</div> : null}
         {paymentResult === 'failed' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت تأیید نشد. اگر مبلغی کم شده باشد، بانک آن را حداکثر تا ۷۲ ساعت برمی‌گرداند.' : 'The payment was not confirmed. If money was taken, the bank returns it within 72 hours.'}</div> : null}
         {receiptInReview ? <div className="inline-notice" role="status">{fa ? 'رسید کارت به کارتت دریافت شد و در حال بررسی است. حداکثر تا ۲۴ ساعت عضویتت فعال می‌شود.' : 'We received your card transfer receipt and are reviewing it. Your membership starts within 24 hours.'}</div> : null}
-        {latestCard?.status === 'failed' && latestCard.failure_code === 'card_rejected' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'رسید قبلی تأیید نشد. اگر فکر می‌کنی اشتباهی شده، با پشتیبانی تماس بگیر.' : 'Your last receipt was not approved. If you think this is a mistake, contact support.'}</div> : null}
+        {latestCard?.status === 'failed' && latestCard.failure_code?.startsWith('card_') ? <div className="inline-notice inline-notice--warning" role="status">{rejectionNotice(latestCard.failure_code, fa)}</div> : null}
         {notifyAbroad ? <div className="inline-notice" role="status">{interest === 'saved'
           ? (fa ? 'ثبت شد. وقتی عضویت برای کشورت باز شد خبرت می‌کنیم.' : 'Saved. We will let you know when membership opens in your country.')
           : (fa ? 'پرداخت عضویت برای کشورت هنوز باز نشده. مسیر رایگان در دسترس است.' : 'Membership payment is not open in your country yet. The free path is available.')}</div> : null}
@@ -264,6 +282,23 @@ function MembershipDaysLeft({
       {renewable ? <small>{fa ? 'پرداخت زودتر چیزی را هدر نمی‌دهد: ۳۰ روز به انتهای عضویت فعلی اضافه می‌شود.' : 'Paying early wastes nothing: 30 days are added to the end of your current membership.'}</small> : null}
     </div>
   )
+}
+
+/** What the member reads when their card-transfer receipt was rejected, and what to do next. */
+function rejectionNotice(code: string, fa: boolean) {
+  const after = fa ? ' اگر فکر می‌کنی اشتباهی شده، با پشتیبانی تماس بگیر.' : ' If you think this is a mistake, contact support.'
+  switch (code) {
+    case 'card_amount_mismatch':
+      return (fa ? 'رسید قبلی تأیید نشد: مبلغ واریزی با قیمت عضویت یکی نبود.' : 'Your last receipt was not approved: the amount did not match the membership price.') + after
+    case 'card_not_received':
+      return (fa ? 'رسید قبلی تأیید نشد: این واریزی به حساب ما نرسیده بود.' : 'Your last receipt was not approved: the transfer did not reach our account.') + after
+    case 'card_unreadable':
+      return (fa ? 'رسید قبلی تأیید نشد: تصویر خوانا نبود. یک عکس واضح از رسید بفرست.' : 'Your last receipt was not approved: the image was not readable. Send a clear photo of the receipt.') + after
+    case 'card_duplicate':
+      return (fa ? 'رسید قبلی تأیید نشد: این رسید قبلاً ثبت شده بود.' : 'Your last receipt was not approved: this receipt had already been used.') + after
+    default:
+      return (fa ? 'رسید قبلی تأیید نشد.' : 'Your last receipt was not approved.') + after
+  }
 }
 
 function tMembershipTitle(status: MembershipStatus, fa: boolean) {

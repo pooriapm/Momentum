@@ -8,6 +8,7 @@ import { HttpError } from './http.ts'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const RECEIPT_BUCKET = 'payment-receipts'
+const REJECTION_REASONS = new Set(['amount_mismatch', 'not_received', 'unreadable', 'duplicate'])
 
 /** Admins are listed by account id in ADMIN_USER_IDS; nobody else can review receipts. */
 export function isPaymentAdmin(userId: string): boolean {
@@ -38,6 +39,9 @@ function rpcFailure(message: string | undefined) {
   }
   if (message?.includes('payment_not_pending')) {
     return new HttpError(409, 'payment_not_pending', 'This payment was already reviewed.')
+  }
+  if (message?.includes('invalid_reason')) {
+    return new HttpError(422, 'invalid_reason', 'The rejection reason is invalid.')
   }
   if (message?.includes('payment_not_found')) {
     return new HttpError(404, 'payment_not_found', 'The payment was not found.')
@@ -104,16 +108,21 @@ export async function reviewCardPayment(
   paymentId: unknown,
   approve: unknown,
   reviewerId: string,
+  reason?: unknown,
 ) {
   if (
     typeof paymentId !== 'string' || !UUID_PATTERN.test(paymentId) || typeof approve !== 'boolean'
   ) {
     throw new HttpError(422, 'invalid_review', 'The review request is invalid.')
   }
+  if (reason != null && (approve || typeof reason !== 'string' || !REJECTION_REASONS.has(reason))) {
+    throw new HttpError(422, 'invalid_reason', 'The rejection reason is invalid.')
+  }
   const { data, error } = await admin.rpc('review_card_payment', {
     p_payment_id: paymentId,
     p_approve: approve,
     p_reviewer: reviewerId,
+    p_reason: reason ?? null,
   })
   if (error) throw rpcFailure(error.message)
   return data as Record<string, unknown>
