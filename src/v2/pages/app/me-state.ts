@@ -64,6 +64,18 @@ export function defaultMePreferencesFor(locale: AppLocale): MePreferences {
   }
 }
 
+const DAY_MS = 86_400_000
+
+/** Days left in the current period (rounded up), its length, and whether to remind about renewing. */
+export function membershipDays(periodStart: string | undefined, periodEnd: string | undefined, now = Date.now()) {
+  const end = periodEnd ? Date.parse(periodEnd) : Number.NaN
+  if (!Number.isFinite(end) || end <= now) return null
+  const daysLeft = Math.ceil((end - now) / DAY_MS)
+  const start = periodStart ? Date.parse(periodStart) : Number.NaN
+  const totalDays = Number.isFinite(start) ? Math.max(daysLeft, Math.ceil((end - start) / DAY_MS)) : Math.max(30, daysLeft)
+  return { daysLeft, totalDays, endingSoon: daysLeft <= 5, end: new Date(end) }
+}
+
 export function deriveMembershipStatus(plan: MomentumPlanView | null): MembershipStatus {
   if (plan?.progress.entitlementStatus) return plan.progress.entitlementStatus
   const label = plan?.progress.entitlementLabel?.en?.toLowerCase() ?? ''

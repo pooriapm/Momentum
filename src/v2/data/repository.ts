@@ -158,6 +158,7 @@ function mapPlanDay(day: DashboardPlanDay, planId: string, locale: AppLocale): M
         nutritionSource: option.nutrition.source,
         cookingMinutes: (option.recipe?.prep_minutes ?? 0) + (option.recipe?.cook_minutes ?? 0),
         ingredients: option.ingredients.map((ingredient) => ({
+          id: ingredient.ingredient_id ?? undefined,
           name: localized(ingredient.name),
           amount: ingredient.amount,
           unit: ingredient.unit,
@@ -286,6 +287,16 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
       name: localized(group.category),
       items: group.items.map((item) => localized(`${item.name} · ${item.amount} ${item.unit}`)),
     })),
+    water: {
+      goalMl: Math.round(plan.day.targets.water_ml) || 2500,
+      loggedMl: dashboard.water_today?.local_date === dashboard.local_date ? dashboard.water_today.water_ml : 0,
+    },
+    restaurantGuide: plan.restaurant_guide.map((tip) => ({
+      title: localized(tip.title),
+      orderInstructions: tip.order_instructions.map(localized),
+      calories: tip.estimated_nutrition.calories,
+      protein: tip.estimated_nutrition.protein_g,
+    })),
     progress: {
       currentWeight,
       startWeight: goal.start_weight_kg,
@@ -304,6 +315,7 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
         ? { fa: 'هدیه برنامه اول', en: 'First-plan gift' }
         : { fa: 'عضویت Momentum', en: 'Momentum membership' },
       entitlementStatus: planEntitlementStatus(dashboard.entitlement_usage),
+      entitlementPeriodStart: dashboard.entitlement_usage?.entitlement.period_start,
       entitlementPeriodEnd: dashboard.entitlement_usage?.entitlement.period_end,
       productRegion: dashboard.profile.product_region,
       recentCheckIns: dashboard.recent_checkins.slice(0, 7).map((item) => ({

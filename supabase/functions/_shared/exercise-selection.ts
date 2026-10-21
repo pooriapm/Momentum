@@ -72,10 +72,14 @@ export function withExerciseRefs<T>(schema: T): T {
   const visit = (node: unknown): unknown => {
     if (Array.isArray(node)) return node.map(visit)
     if (!isRecord(node)) return node
-    return Object.fromEntries(Object.entries(node).map(([key, value]) => [
-      key,
-      key === 'pattern' && value === STRICT_EXERCISE_PATTERN ? EXERCISE_REF_PATTERN : visit(value),
-    ]))
+    return Object.fromEntries(
+      Object.entries(node).map(([key, value]) => [
+        key,
+        key === 'pattern' && value === STRICT_EXERCISE_PATTERN
+          ? EXERCISE_REF_PATTERN
+          : visit(value),
+      ]),
+    )
   }
   return visit(schema) as T
 }

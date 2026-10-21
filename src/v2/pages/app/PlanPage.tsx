@@ -19,6 +19,7 @@ import { localize, type MealChoice, type MealSlot, type MomentumPlanView, type W
 import { Button, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
 import { MemberFeatureLock } from './MemberFeatureLock'
+import { ShoppingLedger } from './ShoppingLedger'
 import { deriveMembershipStatus } from './me-state'
 import { hasMemberFeatures } from '../../entitlement'
 import {
@@ -204,6 +205,7 @@ export function PlanPage({
   }
 
   const shoppingKey = shoppingPlanKey(activePlan)
+  const hasShoppingLedger = Boolean(activePlan.days?.some((day) => day.meals.some((meal) => meal.options.some((option) => option.ingredients?.length))))
   const groceryChecks = checkedShoppingItems[shoppingKey] ?? readShoppingChecks(shoppingKey)
 
   function toggleShopping(itemKey: string) {
@@ -341,7 +343,9 @@ export function PlanPage({
       ) : null}
       {segment === 'grocery' ? (
         <div aria-labelledby="plan-tab-grocery" className="motion-panel" id="plan-panel-grocery" role="tabpanel">
-          {memberFeatures ? (
+          {memberFeatures && hasShoppingLedger ? (
+            <ShoppingLedger locale={locale} plan={activePlan} preview={preview} today={activePlan.localDate ?? today} />
+          ) : memberFeatures ? (
             <PlanGroceryView
               checkedItems={groceryChecks}
               locale={locale}

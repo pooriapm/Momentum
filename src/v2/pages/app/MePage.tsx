@@ -1,6 +1,6 @@
 import { useModalDismiss } from '../../components/use-modal-dismiss'
-import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Info, Languages, LifeBuoy, LockKeyhole, LogOut, Mail, MoonStar, ShieldAlert, ShieldCheck, Sun, WalletCards } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronRight, CircleUserRound, CreditCard, Download, FileClock, Info, Languages, LifeBuoy, LockKeyhole, LogOut, Mail, MoonStar, ShieldAlert, ShieldCheck, Sun, UserCog, WalletCards } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useSearch } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
@@ -10,14 +10,18 @@ import { runtimeConfig } from '../../../platform/config/runtime'
 import { applyUiTheme, updateUiState } from '../../../lib/ui-state'
 import { InstallExperienceCard } from '../../components/InstallExperienceCard'
 import { ModalShell } from '../../components/ModalShell'
-import { paymentResultFromSearch, startZarinpalCheckout, type PaymentResult } from '../../data/payments'
+import { loadIsAdmin } from '../../data/admin'
+import { loadLatestCardPayment, paymentResultFromSearch, registerMembershipInterest, type LatestPayment, type PaymentResult } from '../../data/payments'
+import { CardTransferPanel } from './CardTransferPanel'
 import { PAYMENTS_LIVE } from '../../entitlement'
 import { type MomentumPlanView, localize } from '../../data/types'
 import { localizedPath, switchLocalePath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
+import { formatNumber } from '../../lib/format'
 import {
   deriveMembershipStatus,
   membershipCopy,
+  membershipDays,
   SUPPORT_ISSUE_CODES,
   supportMailtoHref,
   type MePanel,
@@ -52,6 +56,16 @@ export function MePage({
   const name = plan ? localize(plan.userName, locale) : (user?.email ?? t('nav.me'))
   const status = membershipStatus ?? deriveMembershipStatus(plan)
   const membership = membershipCopy(status, locale)
+  const [isAdmin, setIsAdmin] = useState(false)
+  // Only admins (ADMIN_USER_IDS on the server) see the admin panel link.
+  useEffect(() => {
+    if (preview || !runtimeConfig.hasSupabase || !user?.id) return
+    let active = true
+    loadIsAdmin()
+      .then((value) => { if (active) setIsAdmin(value) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [preview, user?.id])
 
   function toggleTheme() {
     const nextTheme = lightTheme ? 'dark' : 'light'
@@ -61,7 +75,7 @@ export function MePage({
   }
 
   if (view === 'subscription') {
-    return <MembershipPanel locale={locale} onBack={() => setView('hub')} paymentResult={paymentResult} periodEnd={plan?.progress.entitlementPeriodEnd} preview={preview} productRegion={plan?.progress.productRegion} status={status} />
+    return <MembershipPanel locale={locale} onBack={() => setView('hub')} paymentResult={paymentResult} periodEnd={plan?.progress.entitlementPeriodEnd} periodStart={plan?.progress.entitlementPeriodStart} preview={preview} productRegion={plan?.progress.productRegion} status={status} />
   }
 
   if (view === 'help') {
@@ -114,6 +128,13 @@ export function MePage({
           <span className="me-row__label">{t('app.help')}</span>
           <ChevronRight className="directional-icon" size={18} />
         </button>
+        {isAdmin ? (
+          <Link className="me-row" href={localizedPath(locale, '/app/admin')}>
+            <span className="me-row__icon"><UserCog size={18} /></span>
+            <span className="me-row__label">{locale === 'fa' ? 'پنل مدیریت' : 'Admin panel'}</span>
+            <ChevronRight className="directional-icon" size={18} />
+          </Link>
+        ) : null}
         <InstallExperienceCard locale={locale} />
       </nav>
 
@@ -133,6 +154,7 @@ function MembershipPanel({
   onBack,
   paymentResult,
   periodEnd,
+  periodStart,
   preview,
   productRegion,
   status,
@@ -141,28 +163,41 @@ function MembershipPanel({
   onBack: () => void
   paymentResult?: PaymentResult | null
   periodEnd?: string
+  periodStart?: string
   preview: boolean
   productRegion?: 'ir' | 'intl'
   status: MembershipStatus
 }) {
   const fa = locale === 'fa'
-  // The website serves everyone. Zarinpal (toman) is the checkout for the Iranian market;
-  // how members outside Iran pay is still undecided, so they keep the pricing link.
-  const zarinpal = PAYMENTS_LIVE && productRegion === 'ir'
-  const [paying, setPaying] = useState(false)
-  const [payError, setPayError] = useState(false)
-  async function pay() {
-    if (preview || paying) return
-    setPaying(true)
-    setPayError(false)
+  const { user } = useAuth()
+  // The website serves everyone. Iranian members pay by card-to-card with a receipt that
+  // is reviewed by hand; members outside Iran cannot pay yet and can ask to hear later.
+  const cardTransfer = PAYMENTS_LIVE && productRegion === 'ir'
+  const notifyAbroad = productRegion === 'intl'
+  const [cardOpen, setCardOpen] = useState(false)
+  const [latestCard, setLatestCard] = useState<LatestPayment>(null)
+  const [interest, setInterest] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
+  useEffect(() => {
+    if (!cardTransfer || preview || !user?.id) return
+    let active = true
+    loadLatestCardPayment(user.id)
+      .then((value) => { if (active) setLatestCard(value) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [cardTransfer, preview, user?.id])
+  const receiptInReview = latestCard?.status === 'pending'
+  async function askToHear() {
+    if (preview || interest === 'saving' || interest === 'saved') return
+    setInterest('saving')
     try {
-      await startZarinpalCheckout(locale)
+      await registerMembershipInterest()
+      setInterest('saved')
     } catch {
-      setPayError(true)
-      setPaying(false)
+      setInterest('failed')
     }
   }
   const copy = membershipCopy(status, locale)
+  const days = membershipDays(periodStart, periodEnd)
   const query = preview ? '?preview=1' : ''
   const checkout = status === 'gift' || status === 'none' || status === 'cancelled' || status === 'expired' || status === 'pending'
   const tone = status === 'active' ? 'success' : status === 'pending' ? 'energy' : status === 'gift' ? 'brand' : 'neutral'
@@ -179,19 +214,38 @@ function MembershipPanel({
       <ContentCard className="me-panel-card">
         <StatusPill tone={tone}>{status === 'active' ? (fa ? 'فعال' : 'Active') : copy.label}</StatusPill>
         <h2>{tMembershipTitle(status, fa)}</h2>
-        <p>{periodEnd
-          ? (fa ? `مرز بعدی واجد شرایط: ${periodEnd}` : `Next eligible boundary: ${periodEnd}`)
-          : (fa ? 'فقط یک اشتراک Momentum وجود دارد؛ نردبان چندسطحی نیست.' : 'There is one Momentum membership. Dual plans are not offered.')}</p>
+        {days && (status === 'active' || status === 'gift') ? (
+          <MembershipDaysLeft days={days} locale={locale} renewable={cardTransfer} />
+        ) : (
+          <p>{fa ? 'فقط یک اشتراک Momentum وجود دارد؛ نردبان چندسطحی نیست.' : 'There is one Momentum membership. Dual plans are not offered.'}</p>
+        )}
         {status === 'pending' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت در انتظار است. ساخت برنامه جدید شروع نمی‌شود.' : 'Payment is pending. A new plan will not start.'}</div> : null}
         {paymentResult === 'success' ? <div className="inline-notice inline-notice--success" role="status">{fa ? 'پرداخت تأیید شد و عضویت ۳۰ روزه فعال شد.' : 'Payment confirmed. Your 30-day membership is active.'}</div> : null}
         {paymentResult === 'cancelled' ? <div className="inline-notice" role="status">{fa ? 'پرداخت لغو شد و مبلغی کم نشد.' : 'Payment was cancelled. You were not charged.'}</div> : null}
         {paymentResult === 'failed' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت تأیید نشد. اگر مبلغی کم شده باشد، بانک آن را حداکثر تا ۷۲ ساعت برمی‌گرداند.' : 'The payment was not confirmed. If money was taken, the bank returns it within 72 hours.'}</div> : null}
-        {payError ? <div className="inline-notice inline-notice--error" role="alert">{fa ? 'اتصال به درگاه پرداخت برقرار نشد. دوباره تلاش کن.' : 'Could not reach the payment gateway. Try again.'}</div> : null}
+        {receiptInReview ? <div className="inline-notice" role="status">{fa ? 'رسید کارت به کارتت دریافت شد و در حال بررسی است. حداکثر تا ۲۴ ساعت عضویتت فعال می‌شود.' : 'We received your card transfer receipt and are reviewing it. Your membership starts within 24 hours.'}</div> : null}
+        {latestCard?.status === 'failed' && latestCard.failure_code?.startsWith('card_') ? <div className="inline-notice inline-notice--warning" role="status">{rejectionNotice(latestCard.failure_code, fa)}</div> : null}
+        {notifyAbroad ? <div className="inline-notice" role="status">{interest === 'saved'
+          ? (fa ? 'ثبت شد. وقتی عضویت برای کشورت باز شد خبرت می‌کنیم.' : 'Saved. We will let you know when membership opens in your country.')
+          : (fa ? 'پرداخت عضویت برای کشورت هنوز باز نشده. مسیر رایگان در دسترس است.' : 'Membership payment is not open in your country yet. The free path is available.')}</div> : null}
+        {interest === 'failed' ? <div className="inline-notice inline-notice--error" role="alert">{fa ? 'درخواست ثبت نشد. دوباره تلاش کن.' : 'Your request was not saved. Try again.'}</div> : null}
         {status === 'cancelled' || status === 'expired' ? <div className="inline-notice" role="status">{fa ? 'برنامه‌های قبلی خواندنی می‌مانند. چرخه بعد ساخته نمی‌شود.' : 'Previous plans stay readable. The next cycle is blocked.'}</div> : null}
         <div className="me-panel-card__actions">
-          {zarinpal ? <Button disabled={preview} loading={paying} onClick={() => void pay()}>{status === 'active' ? (fa ? 'تمدید ۳۰ روز با زرین‌پال' : 'Extend 30 days with Zarinpal') : (fa ? 'پرداخت با زرین‌پال' : 'Pay with Zarinpal')}</Button> : checkout ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{status === 'pending' ? (fa ? 'بازیابی پرداخت' : 'Recover payment') : (fa ? 'شروع عضویت' : 'Start membership')}</Link> : <StatusPill tone="success">{fa ? 'عضویت فعال' : 'Membership active'}</StatusPill>}
+          {cardTransfer && !receiptInReview && !cardOpen ? <Button disabled={preview} onClick={() => setCardOpen(true)}>{status === 'active' ? (fa ? 'تمدید ۳۰ روز با کارت به کارت' : 'Extend 30 days by card transfer') : (fa ? 'پرداخت کارت به کارت' : 'Pay by card transfer')}</Button> : notifyAbroad ? <Button disabled={preview || interest === 'saved'} loading={interest === 'saving'} onClick={() => void askToHear()}>{interest === 'saved' ? (fa ? 'خبرت می‌کنیم' : 'We will let you know') : (fa ? 'وقتی باز شد خبرم کن' : 'Notify me when it opens')}</Button> : cardTransfer ? null : checkout ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{status === 'pending' ? (fa ? 'بازیابی پرداخت' : 'Recover payment') : (fa ? 'شروع عضویت' : 'Start membership')}</Link> : <StatusPill tone="success">{fa ? 'عضویت فعال' : 'Membership active'}</StatusPill>}
           <Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, '/app/account')}${query}`}>{fa ? 'خروجی یا حذف' : 'Export or delete'}</Link>
         </div>
+        {cardOpen ? (
+          <CardTransferPanel
+            locale={locale}
+            onCancel={() => setCardOpen(false)}
+            onSubmitted={() => {
+              setCardOpen(false)
+              setLatestCard({ provider: 'card_transfer', status: 'pending', failure_code: null, created_at: new Date().toISOString() })
+            }}
+            preview={preview}
+            userId={user?.id}
+          />
+        ) : null}
       </ContentCard>
       <ContentCard className="me-panel-card">
         <div className="section-title-row"><h2>{fa ? 'تاریخچه برنامه‌ها' : 'Plan history'}</h2><FileClock size={18} /></div>
@@ -201,6 +255,50 @@ function MembershipPanel({
       </ContentCard>
     </main>
   )
+}
+
+function MembershipDaysLeft({
+  days,
+  locale,
+  renewable,
+}: {
+  days: NonNullable<ReturnType<typeof membershipDays>>
+  locale: AppLocale
+  renewable: boolean
+}) {
+  const fa = locale === 'fa'
+  const date = (value: Date) => new Intl.DateTimeFormat(fa ? 'fa-IR' : 'en', { day: 'numeric', month: 'long', year: 'numeric' }).format(value)
+  const renewFrom = new Date(days.end.getTime() - 5 * 86_400_000)
+  const remaining = Math.min(100, Math.max(0, Math.round((days.daysLeft / days.totalDays) * 100)))
+  return (
+    <div className={`me-days-left${days.endingSoon ? ' is-ending' : ''}`}>
+      <p className="me-days-left__count"><strong>{formatNumber(days.daysLeft, locale)}</strong> {fa ? 'روز مانده' : days.daysLeft === 1 ? 'day left' : 'days left'}</p>
+      <div aria-label={fa ? 'باقی‌مانده دوره' : 'Period remaining'} aria-valuemax={100} aria-valuemin={0} aria-valuenow={remaining} className="me-days-left__bar" role="progressbar">
+        <span style={{ width: `${remaining}%` }} />
+      </div>
+      <p>{fa ? `پایان: ${date(days.end)}` : `Ends ${date(days.end)}`}{' · '}{days.endingSoon
+        ? (fa ? 'برای اینکه برنامه‌ات قطع نشود همین حالا تمدید کن.' : 'Renew now so your plan is not interrupted.')
+        : (fa ? `زمان تمدید: از ${date(renewFrom)}` : `Renew from ${date(renewFrom)}`)}</p>
+      {renewable ? <small>{fa ? 'پرداخت زودتر چیزی را هدر نمی‌دهد: ۳۰ روز به انتهای عضویت فعلی اضافه می‌شود.' : 'Paying early wastes nothing: 30 days are added to the end of your current membership.'}</small> : null}
+    </div>
+  )
+}
+
+/** What the member reads when their card-transfer receipt was rejected, and what to do next. */
+function rejectionNotice(code: string, fa: boolean) {
+  const after = fa ? ' اگر فکر می‌کنی اشتباهی شده، با پشتیبانی تماس بگیر.' : ' If you think this is a mistake, contact support.'
+  switch (code) {
+    case 'card_amount_mismatch':
+      return (fa ? 'رسید قبلی تأیید نشد: مبلغ واریزی با قیمت عضویت یکی نبود.' : 'Your last receipt was not approved: the amount did not match the membership price.') + after
+    case 'card_not_received':
+      return (fa ? 'رسید قبلی تأیید نشد: این واریزی به حساب ما نرسیده بود.' : 'Your last receipt was not approved: the transfer did not reach our account.') + after
+    case 'card_unreadable':
+      return (fa ? 'رسید قبلی تأیید نشد: تصویر خوانا نبود. یک عکس واضح از رسید بفرست.' : 'Your last receipt was not approved: the image was not readable. Send a clear photo of the receipt.') + after
+    case 'card_duplicate':
+      return (fa ? 'رسید قبلی تأیید نشد: این رسید قبلاً ثبت شده بود.' : 'Your last receipt was not approved: this receipt had already been used.') + after
+    default:
+      return (fa ? 'رسید قبلی تأیید نشد.' : 'Your last receipt was not approved.') + after
+  }
 }
 
 function tMembershipTitle(status: MembershipStatus, fa: boolean) {

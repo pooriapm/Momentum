@@ -6,6 +6,7 @@ import {
   defaultMePreferencesFor,
   isExportExpired,
   membershipCopy,
+  membershipDays,
   productVersionCopy,
 } from './me-state'
 import {
@@ -59,5 +60,19 @@ describe('Progress surface derivation', () => {
   it('returns four-week series for a populated plan', () => {
     expect(resolveWeeklySeries(demoPlan)).toHaveLength(4)
     expect(resolveWeeklySeries(demoPlan).some((item) => item.partial)).toBe(true)
+  })
+})
+
+describe('membership days left', () => {
+  const now = Date.parse('2026-10-21T12:00:00Z')
+
+  it('rounds the days left up and measures the period from its start', () => {
+    expect(membershipDays('2026-10-01T12:00:00Z', '2026-10-31T12:00:00Z', now)).toMatchObject({ daysLeft: 10, totalDays: 30, endingSoon: false })
+    expect(membershipDays(undefined, '2026-10-25T00:00:00Z', now)).toMatchObject({ daysLeft: 4, totalDays: 30, endingSoon: true })
+  })
+
+  it('has nothing to count once the period is over or unknown', () => {
+    expect(membershipDays('2026-09-01T00:00:00Z', '2026-10-21T11:00:00Z', now)).toBeNull()
+    expect(membershipDays(undefined, undefined, now)).toBeNull()
   })
 })

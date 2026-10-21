@@ -50,6 +50,21 @@ export async function saveDailyCheckIn(
   return dailyCheckInResponseSchema.parse(data)
 }
 
+/** Sets today's water total (ml) for the profile-local day; water never creates a daily report. */
+export async function saveWater(
+  waterMl: number,
+  localDate: string,
+  timezone: string,
+  idempotencyKey: string = crypto.randomUUID(),
+) {
+  assertOnline()
+  const { error } = await requireSupabase().functions.invoke('checkins', {
+    body: { action: 'save-water', local_date: localDate, timezone, water_ml: waterMl },
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+  if (error) throw error
+}
+
 export async function saveWeeklyCheckIn(
   input: WeeklyCheckInInput,
   weekStart: string,

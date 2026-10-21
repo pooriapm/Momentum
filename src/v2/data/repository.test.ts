@@ -149,6 +149,7 @@ const dashboard: DashboardResponse['dashboard'] = {
   plan: {
     id: '22222222-2222-4222-8222-222222222222',
     version_id: currentVersionId,
+    restaurant_guide: [{ title: 'Grilled chicken plate', order_instructions: ['Ask for rice on the side'], estimated_nutrition: { calories: 620, protein_g: 45, carbs_g: 60, fat_g: 18 } }],
     schema_version: '1.2.0',
     content_locale: 'fa-IR',
     name: 'August plan',

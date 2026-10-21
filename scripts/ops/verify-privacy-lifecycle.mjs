@@ -28,10 +28,10 @@ const forbiddenProviderKeys = new Set(['prompt', 'instructions', 'input', 'healt
 export const ACCOUNT_EXPORT_TABLES = [
   'profiles', 'onboarding_drafts', 'goals', 'dietary_preferences', 'health_context',
   'body_composition_measurements', 'training_schedule_items', 'subscriptions',
-  'entitlements', 'usage_ledger', 'ai_generation_jobs', 'plans', 'plan_versions',
+  'entitlements', 'payments', 'usage_ledger', 'ai_generation_jobs', 'plans', 'plan_versions',
   'starter_plan_activations', 'external_plan_imports', 'gift_reservations',
   'monthly_plan_periods', 'monthly_plan_snapshots', 'next_cycle_inputs',
-  'daily_checkins', 'weekly_checkins', 'daily_meal_status', 'extra_food_logs',
+  'daily_checkins', 'daily_water_logs', 'weekly_checkins', 'daily_meal_status', 'shopping_purchases', 'extra_food_logs',
   'workout_sessions', 'workout_exercise_logs', 'workout_set_logs',
   'ai_safety_reports', 'export_requests', 'deletion_requests',
 ]

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { authenticate } from '../_shared/auth.ts'
+import { type AuthContext, authenticate } from '../_shared/auth.ts'
 import { validateBazaarPurchase } from '../_shared/bazaar.ts'
 import { integerEnv, optionalEnv, requiredEnv } from '../_shared/config.ts'
 import {
@@ -12,8 +12,31 @@ import {
 } from '../_shared/http.ts'
 import { enforceRateLimit } from '../_shared/limits.ts'
 import { requestZarinpalPayment, verifyZarinpalPayment } from '../_shared/zarinpal.ts'
+import {
+  adminCardHistory,
+  adminFindMembers,
+  adminGrantDays,
+  adminMemberDetail,
+  adminOverview,
+  adminWaitlist,
+} from '../_shared/admin-panel.ts'
+import {
+  assertPaymentAdmin,
+  cardDestination,
+  isPaymentAdmin,
+  listPendingCardPayments,
+  reviewCardPayment,
+  submitCardPayment,
+} from '../_shared/card-transfer.ts'
 
 // One prepaid 30-day membership, sold in IRR:
+//   POST {action: 'card-details'}                      website card-to-card → card + amount
+//   POST {action: 'card-submit', receiptPath}          uploaded receipt → pending review
+//   POST {action: 'admin-card-list' | 'admin-card-review', paymentId, approve, reason?}  admin review
+//   POST {action: 'admin-whoami' | 'admin-overview' | 'admin-card-history' | 'admin-waitlist'}
+//   POST {action: 'admin-member-search', query} | {action: 'admin-member', userId}
+//   POST {action: 'admin-grant-days', userId, days, note}     audited manual membership days
+//   POST {action: 'membership-interest'}               members outside Iran ask to hear later
 //   POST {action: 'zarinpal-start', locale: 'fa'|'en'}   website checkout → { url }
 //   GET  ?provider=zarinpal&locale=..&Authority=..&Status=OK|NOK  Zarinpal return → /{locale}/app/me
 //   POST {action: 'bazaar-verify', productId, purchaseToken}  Android purchase → { period_end }
@@ -24,6 +47,65 @@ interface PaymentsBody {
   locale?: unknown
   productId?: unknown
   purchaseToken?: unknown
+  receiptPath?: unknown
+  paymentId?: unknown
+  approve?: unknown
+  reason?: unknown
+  query?: unknown
+  userId?: unknown
+  days?: unknown
+  note?: unknown
+}
+
+/** Admin actions: their own, larger rate limit, and nothing answers for non-admins. */
+async function adminAction(
+  request: Request,
+  auth: AuthContext,
+  body: PaymentsBody,
+): Promise<Response> {
+  await enforceRateLimit(
+    auth.admin,
+    auth.user.id,
+    'payments-admin',
+    integerEnv('PAYMENTS_ADMIN_RATE_LIMIT', 600, { min: 10, max: 5_000 }),
+    3600,
+  )
+  if (body.action === 'admin-whoami') {
+    return jsonResponse(request, { admin: isPaymentAdmin(auth.user.id) })
+  }
+  assertPaymentAdmin(auth.user.id)
+  switch (body.action) {
+    case 'admin-overview':
+      return jsonResponse(request, { overview: await adminOverview(auth.admin) })
+    case 'admin-card-list':
+      return jsonResponse(request, { items: await listPendingCardPayments(auth.admin) })
+    case 'admin-card-review':
+      return jsonResponse(
+        request,
+        await reviewCardPayment(
+          auth.admin,
+          body.paymentId,
+          body.approve,
+          auth.user.id,
+          body.reason,
+        ),
+      )
+    case 'admin-card-history':
+      return jsonResponse(request, { items: await adminCardHistory(auth.admin) })
+    case 'admin-member-search':
+      return jsonResponse(request, { members: await adminFindMembers(auth.admin, body.query) })
+    case 'admin-member':
+      return jsonResponse(request, { member: await adminMemberDetail(auth.admin, body.userId) })
+    case 'admin-grant-days':
+      return jsonResponse(
+        request,
+        await adminGrantDays(auth.admin, body.userId, body.days, body.note, auth.user.id),
+      )
+    case 'admin-waitlist':
+      return jsonResponse(request, { items: await adminWaitlist(auth.admin) })
+    default:
+      throw new HttpError(400, 'unknown_action', 'Unknown admin action.')
+  }
 }
 
 interface PaymentRow {
@@ -70,9 +152,33 @@ async function grant(admin: SupabaseClient, paymentId: string, receipt: string) 
   return data as { period_end: string; already_granted: boolean }
 }
 
+// The service role only reads payments; changes go through reviewed SQL functions.
+async function startPayment(
+  admin: SupabaseClient,
+  userId: string,
+  provider: 'zarinpal' | 'bazaar',
+  reference: string,
+): Promise<string> {
+  const { data, error } = await admin.rpc('start_payment', {
+    p_user_id: userId,
+    p_provider: provider,
+    p_provider_reference: reference,
+  })
+  if (error?.message.includes('payment_owned_elsewhere')) {
+    throw new HttpError(
+      409,
+      'purchase_owned_elsewhere',
+      'This purchase belongs to another account.',
+    )
+  }
+  if (error || typeof data !== 'string') {
+    throw new HttpError(503, 'payment_not_recorded', 'The payment could not be recorded.')
+  }
+  return data
+}
+
 async function markFailed(admin: SupabaseClient, paymentId: string, code: string) {
-  await admin.from('payments').update({ status: 'failed', failure_code: code })
-    .eq('id', paymentId).eq('status', 'pending')
+  await admin.rpc('fail_payment', { p_payment_id: paymentId, p_failure_code: code })
 }
 
 type SiteLocale = 'fa' | 'en'
@@ -146,9 +252,12 @@ Deno.serve(async (request) => {
     if (request.method !== 'POST') {
       throw new HttpError(405, 'method_not_allowed', 'Only POST is supported.')
     }
-    assertPaymentsEnabled()
     const auth = await authenticate(request)
     const body = await readJsonBody<PaymentsBody>(request, 4_096)
+    // Admin review works even while new payments are paused.
+    if (typeof body.action === 'string' && body.action.startsWith('admin-')) {
+      return await adminAction(request, auth, body)
+    }
     await enforceRateLimit(
       auth.admin,
       auth.user.id,
@@ -156,7 +265,35 @@ Deno.serve(async (request) => {
       integerEnv('PAYMENTS_RATE_LIMIT', 20, { min: 1, max: 120 }),
       integerEnv('PAYMENTS_RATE_WINDOW_SECONDS', 3600, { min: 60, max: 86_400 }),
     )
+
+    // Members outside Iran cannot pay yet; they can ask to hear when membership opens.
+    if (body.action === 'membership-interest') {
+      const { error } = await auth.admin.rpc('register_membership_interest', {
+        p_user_id: auth.user.id,
+      })
+      if (error) throw new HttpError(503, 'interest_not_saved', 'Your request was not saved.')
+      return jsonResponse(request, { registered: true })
+    }
+
+    assertPaymentsEnabled()
     const price = await membershipPrice(auth.admin)
+
+    if (body.action === 'card-details') {
+      const { cardNumber, cardHolder } = cardDestination()
+      return jsonResponse(request, {
+        card_number: cardNumber,
+        card_holder: cardHolder,
+        amount_minor: price.amount_minor,
+        currency: 'IRR',
+      })
+    }
+    if (body.action === 'card-submit') {
+      cardDestination()
+      return jsonResponse(
+        request,
+        await submitCardPayment(auth.admin, auth.user.id, body.receiptPath),
+      )
+    }
 
     if (body.action === 'zarinpal-start') {
       const checkout = await requestZarinpalPayment({
@@ -167,17 +304,7 @@ Deno.serve(async (request) => {
         description: 'Momentum membership · عضویت یک‌ماهه Momentum',
         email: auth.user.email ?? undefined,
       })
-      const { error } = await auth.admin.from('payments').insert({
-        user_id: auth.user.id,
-        provider: 'zarinpal',
-        product_price_id: price.id,
-        amount_minor: price.amount_minor,
-        currency: 'IRR',
-        provider_reference: checkout.authority,
-      })
-      if (error) {
-        throw new HttpError(503, 'payment_not_recorded', 'The payment could not be started.')
-      }
+      await startPayment(auth.admin, auth.user.id, 'zarinpal', checkout.authority)
       return jsonResponse(request, { url: checkout.redirectUrl })
     }
 
@@ -204,6 +331,9 @@ Deno.serve(async (request) => {
           'This purchase belongs to another account.',
         )
       }
+      // Idempotent retry (e.g. the app lost the response before consuming). This must
+      // run before validation: once consumed, Bazaar reports the token as consumed and
+      // validation rejects it as a replay (purchase_already_consumed).
       if (known?.status === 'paid') {
         return jsonResponse(request, await grant(auth.admin, known.id, ''))
       }
@@ -227,21 +357,8 @@ Deno.serve(async (request) => {
         )
       }
 
-      let paymentId = known?.id
-      if (!paymentId) {
-        const { data: inserted, error } = await auth.admin.from('payments').insert({
-          user_id: auth.user.id,
-          provider: 'bazaar',
-          product_price_id: price.id,
-          amount_minor: price.amount_minor,
-          currency: 'IRR',
-          provider_reference: purchaseToken,
-        }).select('id').single()
-        if (error || !inserted) {
-          throw new HttpError(503, 'payment_not_recorded', 'The purchase could not be recorded.')
-        }
-        paymentId = (inserted as { id: string }).id
-      }
+      const paymentId = known?.id ??
+        await startPayment(auth.admin, auth.user.id, 'bazaar', purchaseToken)
       return jsonResponse(request, await grant(auth.admin, paymentId, validation.orderReference))
     }
 

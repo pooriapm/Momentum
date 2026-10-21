@@ -106,6 +106,18 @@ export const demoPlan: MomentumPlanView = {
       { key: 'breathing-cooldown', name: { fa: 'سردکردن تنفسی', en: 'Breathing cooldown' }, sets: 1, reps: '4 min', restSeconds: 0, substitution: null },
     ],
   },
+  water: { goalMl: 2500, loggedMl: 1000 },
+  restaurantGuide: [
+    {
+      title: { fa: 'جوجه‌کباب با برنج و سالاد', en: 'Chicken kebab with rice and salad' },
+      orderInstructions: [
+        { fa: 'نصف برنج را بخور یا برنج کم بخواه.', en: 'Eat half the rice, or ask for a smaller portion.' },
+        { fa: 'سالاد را بدون سس یا با سس کنار بخواه.', en: 'Ask for the salad without dressing, or with it on the side.' },
+      ],
+      calories: 680,
+      protein: 48,
+    },
+  ],
   shoppingGroups: [
     { id: 'protein', name: { fa: 'پروتئین', en: 'Protein' }, items: [
       { fa: 'سینه مرغ · ۷۰۰ گرم', en: 'Chicken breast · 700 g' }, { fa: 'سالمون · ۳۲۰ گرم', en: 'Salmon · 320 g' }, { fa: 'تخم‌مرغ · ۱۲ عدد', en: 'Eggs · 12' }, { fa: 'ماست یونانی · ۹۰۰ گرم', en: 'Greek yogurt · 900 g' },
@@ -128,6 +140,8 @@ export const demoPlan: MomentumPlanView = {
     ],
     entitlementLabel: { fa: 'عضویت Momentum', en: 'Momentum membership' },
     entitlementStatus: 'active',
+    entitlementPeriodStart: `${demoIsoDate(-12)}T12:00:00Z`,
+    entitlementPeriodEnd: `${demoIsoDate(18)}T12:00:00Z`,
     productRegion: 'intl',
     recentCheckIns: [
       { date: { fa: 'امروز', en: 'Today' }, score: 82, note: { fa: 'انرژی خوب', en: 'Good energy' }, weight: 72.8 },

@@ -1,8 +1,10 @@
-import { Clock3, Dumbbell, ListRestart, X } from 'lucide-react'
+import { BookOpen, Clock3, Dumbbell, ListRestart, X } from 'lucide-react'
+import { useState } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { localize, type WorkoutBlock } from '../data/types'
 import { formatNumber, formatReps } from '../lib/format'
 import { Button, StatusPill } from '../ui/primitives'
+import { ExerciseGuide } from './ExerciseGuide'
 import { ModalShell } from './ModalShell'
 import { useModalDismiss } from './use-modal-dismiss'
 
@@ -21,6 +23,7 @@ export function WorkoutDetailSheet({
 }) {
   const { modalRef, onClose } = useModalDismiss(onDismiss)
   const fa = locale === 'fa'
+  const [guideKey, setGuideKey] = useState('')
   const equipment = workout.equipment?.length
     ? workout.equipment.map((item) => localize(item, locale)).join(' · ')
     : (fa ? 'بدون وسیله اجباری' : 'No required equipment')
@@ -44,7 +47,7 @@ export function WorkoutDetailSheet({
         {workout.cooldown?.length ? <p>{fa ? 'سردکردن: ' : 'Cool-down: '}{workout.cooldown.map((item) => localize(item, locale)).join(' · ')}</p> : null}
         <ul className="meal-detail-sheet__ingredients">
           {workout.exerciseDetails.map((exercise) => (
-            <li key={exercise.key}>
+            <li className="workout-detail-sheet__exercise" key={exercise.key}>
               <span>
                 <strong>{localize(exercise.name, locale)}</strong>
                 <small className="metric-run" dir={fa ? 'rtl' : 'ltr'}>{` · ${formatNumber(exercise.sets, locale)} × ${formatReps(exercise.reps, locale)} · ${formatNumber(exercise.restSeconds, locale)}${fa ? ' ثانیه استراحت' : 's rest'}`}</small>
@@ -57,6 +60,19 @@ export function WorkoutDetailSheet({
                 >
                   <ListRestart size={15} />{fa ? 'جایگزین' : 'Substitute'}
                 </Button>
+              ) : null}
+              <Button
+                aria-controls={`exercise-guide-${exercise.key}`}
+                aria-expanded={guideKey === exercise.key}
+                onClick={() => setGuideKey((current) => (current === exercise.key ? '' : exercise.key))}
+                variant="ghost"
+              >
+                <BookOpen size={15} />{fa ? 'آموزش' : 'How to'}
+              </Button>
+              {guideKey === exercise.key ? (
+                <div className="workout-detail-sheet__guide" id={`exercise-guide-${exercise.key}`}>
+                  <ExerciseGuide exercise={exercise} locale={locale} />
+                </div>
               ) : null}
             </li>
           ))}

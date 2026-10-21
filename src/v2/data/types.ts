@@ -21,7 +21,7 @@ export interface MealChoice {
   confidenceLevel?: 'low' | 'medium' | 'high'
   nutritionSource?: 'model_estimate' | 'catalog_reference' | 'food_label' | 'verified_database' | 'user_provided'
   cookingMinutes: number
-  ingredients?: Array<{ name: LocalizedText; amount: number; unit: string; note?: LocalizedText }>
+  ingredients?: Array<{ id?: string; name: LocalizedText; amount: number; unit: string; note?: LocalizedText }>
   recipe?: {
     prepMinutes: number
     cookMinutes: number
@@ -112,6 +112,13 @@ export interface WeeklyProgressPoint {
   weightKg?: number | null
 }
 
+export interface RestaurantTip {
+  title: LocalizedText
+  orderInstructions: LocalizedText[]
+  calories: number
+  protein: number
+}
+
 export interface MomentumPlanView {
   localDate?: string
   timezone?: string
@@ -126,6 +133,9 @@ export interface MomentumPlanView {
   meals: MealSlot[]
   workout: WorkoutBlock | null
   shoppingGroups: ShoppingGroup[]
+  /** Today's water: the plan's goal and what the server has logged for the profile-local day. */
+  water?: { goalMl: number; loggedMl: number }
+  restaurantGuide?: RestaurantTip[]
   days?: MomentumPlanDayView[]
   version?: PlanVersionMeta
   history?: PlanVersionMeta[]
@@ -143,6 +153,7 @@ export interface MomentumPlanView {
     energyScore: number
     entitlementLabel?: LocalizedText
     entitlementStatus?: 'gift' | 'active' | 'pending' | 'cancelled' | 'expired' | 'none'
+    entitlementPeriodStart?: string
     entitlementPeriodEnd?: string
     productRegion?: 'ir' | 'intl'
     cycleEnding?: boolean

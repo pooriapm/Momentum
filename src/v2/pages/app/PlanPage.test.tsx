@@ -64,11 +64,22 @@ describe('PlanPage inventory states', () => {
     expect(screen.getByText(/12 kg dumbbell/i)).toBeInTheDocument()
   })
 
-  it('PLAN-04 groups the grocery list and keeps checks offline-safe', () => {
+  it('PLAN-04 shows what to buy this week and ticks a purchase', async () => {
     renderPlan({ initialSegment: 'grocery' })
+    expect(screen.getByRole('button', { name: 'This week' })).toHaveAttribute('aria-pressed', 'true')
+    const chicken = screen.getByRole('button', { name: /chicken breast/i })
+    expect(chicken).toHaveTextContent('1,120 g')
+    fireEvent.click(chicken)
+    expect(await screen.findByRole('button', { name: /chicken breast.*enough until/i })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Whole plan' }))
+    expect(screen.getByRole('button', { name: /chicken breast/i })).toHaveTextContent('3,680 g')
+  })
+
+  it('PLAN-04 keeps the device-only checklist when the plan has no ingredients', () => {
+    const days = demoPlan.days?.map((day) => ({ ...day, meals: day.meals.map((slot) => ({ ...slot, options: slot.options.map((option) => ({ ...option, ingredients: [] })) })) }))
+    renderPlan({ initialSegment: 'grocery', plan: planFixture({ days }) })
     expect(screen.getByText(/checkmarks stay on this device and are not sent to the server/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /chicken breast/i }))
-    expect(screen.getByRole('button', { name: /chicken breast/i })).toHaveAttribute('aria-pressed', 'true')
     expect(localStorage.getItem(PLAN_SHOPPING_KEY)).toContain('protein-0')
   })
 

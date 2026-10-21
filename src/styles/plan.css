@@ -608,3 +608,90 @@
   .plan-calendar { gap: .15rem; }
   .plan-calendar__cell { min-width: 0; min-height: 2.75rem; padding-inline: 0; }
 }
+
+.shopping-ledger__head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1rem;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.shopping-ledger__scope {
+  background: var(--color-surface-muted, rgba(0, 0, 0, .05));
+  border-radius: 999px;
+  display: inline-flex;
+  padding: .2rem;
+}
+
+.shopping-ledger__scope button {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  min-height: 2.25rem;
+  padding: .35rem .9rem;
+}
+
+.shopping-ledger__scope button[aria-pressed="true"] {
+  background: var(--color-surface, #fff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+  color: var(--color-text);
+}
+
+.shopping-ledger__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.shopping-ledger__list li { border-top: 1px solid var(--color-border); }
+
+.shopping-ledger__list button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: .65rem;
+  min-height: 3rem;
+  padding: .55rem 0;
+  text-align: start;
+  width: 100%;
+}
+
+.shopping-ledger__list button:disabled { cursor: default; opacity: .7; }
+.shopping-ledger__list strong { flex: 1; font-size: .92rem; min-width: 0; }
+.shopping-ledger__list small { color: var(--color-text-muted); font-size: .82rem; white-space: nowrap; }
+.shopping-ledger__list li:not(.is-checked) small { color: var(--color-text); font-weight: 600; }
+.shopping-ledger__list li.is-checked strong { color: var(--color-text-muted); }
+
+.shopping-ledger__list button > span.plan-check {
+  align-items: center;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: .4rem;
+  display: flex;
+  flex: none;
+  height: 1.15rem;
+  justify-content: center;
+  width: 1.15rem;
+}
+
+.shopping-ledger__list li.is-checked button > span.plan-check {
+  animation: plan-check-pop .28s cubic-bezier(.2, 1.35, .36, 1);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-on-brand, #fff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shopping-ledger__list li.is-checked button > span.plan-check { animation: none; }
+}

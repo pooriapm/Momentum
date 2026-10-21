@@ -22,6 +22,7 @@ interface CheckInBody {
   week_start?: unknown
   timezone?: unknown
   checkin?: unknown
+  water_ml?: unknown
 }
 
 function parseIsoDate(value: unknown, field: string): string {
@@ -31,6 +32,13 @@ function parseIsoDate(value: unknown, field: string): string {
   const parsed = new Date(`${value}T00:00:00Z`)
   if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
     throw new HttpError(400, `invalid_${field}`, `${field} is invalid.`)
+  }
+  return value
+}
+
+function parseWaterMl(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 20_000) {
+    throw new HttpError(400, 'invalid_water_ml', 'water_ml must be an integer from 0 to 20000.')
   }
   return value
 }
@@ -104,6 +112,46 @@ Deno.serve(async (request) => {
           throw new HttpError(409, 'timezone_mismatch', 'Use the timezone saved in your profile.')
         }
         throw new HttpError(503, 'checkin_save_failed', 'Daily check-in could not be saved.')
+      }
+      return jsonResponse(request, data)
+    }
+
+    if (body.action === 'save-water') {
+      const localDate = parseIsoDate(body.local_date, 'local_date')
+      const waterMl = parseWaterMl(body.water_ml)
+      const requestInput = {
+        action: body.action,
+        local_date: localDate,
+        timezone,
+        water_ml: waterMl,
+      }
+      const { data, error } = await auth.admin.rpc('save_daily_water', {
+        p_user_id: auth.user.id,
+        p_local_date: localDate,
+        p_timezone: timezone,
+        p_water_ml: waterMl,
+        p_idempotency_key: idempotencyKey,
+        p_request_sha256: await sha256(canonicalJson(requestInput)),
+      })
+      if (error) {
+        if (error.message.includes('idempotency_key_reused')) {
+          throw new HttpError(
+            409,
+            'idempotency_key_reused',
+            'Idempotency key was used for different input.',
+          )
+        }
+        if (error.message.includes('checkin_date_not_current')) {
+          throw new HttpError(
+            409,
+            'local_date_mismatch',
+            'Water can only be logged for the current profile date.',
+          )
+        }
+        if (error.message.includes('profile_timezone_mismatch')) {
+          throw new HttpError(409, 'timezone_mismatch', 'Use the timezone saved in your profile.')
+        }
+        throw new HttpError(503, 'water_save_failed', 'Water could not be saved.')
       }
       return jsonResponse(request, data)
     }

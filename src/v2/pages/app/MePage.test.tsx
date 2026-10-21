@@ -1,11 +1,14 @@
 import type { User } from '@supabase/supabase-js'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import i18n from 'i18next'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '../../../platform/auth/auth-context'
 import { I18nProvider } from '../../../platform/i18n/I18nProvider'
 import { demoPlan } from '../../data/demo'
+import { loadIsAdmin } from '../../data/admin'
 import { MePage } from './MePage'
+
+vi.mock('../../data/admin', () => ({ loadIsAdmin: vi.fn(async () => false) }))
 
 const runtimeMock = vi.hoisted(() => ({
   runtimeConfig: {
@@ -72,8 +75,25 @@ describe('MePage inventory states', () => {
     expect(screen.queryByText(/private/i)).not.toBeInTheDocument()
   })
 
+  it('shows the admin panel link only to admins', async () => {
+    runtimeMock.runtimeConfig.hasSupabase = true
+    vi.mocked(loadIsAdmin).mockResolvedValueOnce(true)
+    renderMe()
+    expect(await screen.findByRole('link', { name: /admin panel/i })).toHaveAttribute('href', '/en/app/admin')
+    runtimeMock.runtimeConfig.hasSupabase = false
+  })
+
+  it('hides the admin panel link from everyone else', async () => {
+    runtimeMock.runtimeConfig.hasSupabase = true
+    renderMe()
+    await waitFor(() => expect(loadIsAdmin).toHaveBeenCalled())
+    expect(screen.queryByRole('link', { name: /admin panel/i })).not.toBeInTheDocument()
+    runtimeMock.runtimeConfig.hasSupabase = false
+  })
+
   it('ME-05 shows one Momentum membership and immutable history', () => {
-    renderMe({ panel: 'subscription', membershipStatus: 'active' })
+    const progress = { ...demoPlan.progress, entitlementPeriodStart: undefined, entitlementPeriodEnd: undefined }
+    renderMe({ panel: 'subscription', membershipStatus: 'active', plan: { ...demoPlan, progress } })
     expect(screen.getAllByRole('heading', { name: 'Momentum membership' }).length).toBeGreaterThan(0)
     expect(screen.getByText(/there is one momentum membership/i)).toBeInTheDocument()
     expect(screen.getByText(/dual plans are not offered/i)).toBeInTheDocument()
@@ -83,13 +103,25 @@ describe('MePage inventory states', () => {
   it('LIFE-08 and LIFE-10 keep a single offer and block generation while pending', () => {
     renderMe({ panel: 'subscription', membershipStatus: 'pending' })
     expect(screen.getAllByText(/a new plan will not start/i).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: /recover payment/i })).toHaveAttribute('href', '/en/pricing')
+    // The demo member is outside Iran, where payment is not open yet: they can ask to hear later.
+    expect(screen.getByRole('button', { name: /notify me when it opens/i })).toBeInTheDocument()
+  })
+
+  it('shows the days left in an active membership and reminds near the end', () => {
+    const now = Date.now()
+    const progress = { ...demoPlan.progress, entitlementPeriodStart: new Date(now - 27 * 86_400_000).toISOString(), entitlementPeriodEnd: new Date(now + 2.5 * 86_400_000).toISOString() }
+    renderMe({ panel: 'subscription', membershipStatus: 'active', plan: { ...demoPlan, progress } })
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getByText(/days left/)).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Period remaining' })).toHaveAttribute('aria-valuenow', '10')
+    expect(screen.getByText(/renew now so your plan is not interrupted/i)).toBeInTheDocument()
+    expect(screen.queryByText(/there is one momentum membership/i)).not.toBeInTheDocument()
   })
 
   it('keeps cancelled membership terminal instead of presenting it as active', () => {
     renderMe({ panel: 'subscription', membershipStatus: 'cancelled' })
     expect(screen.getAllByText(/cancelled or expired/i).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/pricing')
+    expect(screen.getByRole('button', { name: /notify me when it opens/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /renewal is active/i })).not.toBeInTheDocument()
   })
 

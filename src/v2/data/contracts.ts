@@ -99,6 +99,17 @@ export const planHistoryItemSchema = z.object({
   })).min(1).max(8),
 })
 
+const restaurantGuideItemSchema = z.object({
+  title: z.string().min(1).max(160),
+  order_instructions: z.array(z.string().min(1).max(300)).min(1).max(8),
+  estimated_nutrition: z.object({
+    calories: z.number().finite().nonnegative(),
+    protein_g: z.number().finite().nonnegative(),
+    carbs_g: z.number().finite().nonnegative(),
+    fat_g: z.number().finite().nonnegative(),
+  }).passthrough(),
+})
+
 export const dashboardPlanSchema = z.object({
   id: z.string().uuid(),
   version_id: z.string().uuid(),
@@ -131,6 +142,7 @@ export const dashboardPlanSchema = z.object({
     })
   }),
   history: z.array(planHistoryItemSchema).max(24).optional(),
+  restaurant_guide: z.array(restaurantGuideItemSchema).max(8).default([]),
 })
 
 const checkinSchema = z.object({
@@ -198,6 +210,7 @@ export const dashboardResponseSchema = z.object({
       status: z.string(),
     }).nullable(),
     checkin: checkinSchema.nullable(),
+    water_today: z.object({ local_date: isoDate, water_ml: z.number().int().nonnegative() }).nullable().optional(),
     recent_checkins: z.array(checkinSchema).max(31),
     latest_body_weight: z.object({
       id: z.string().uuid(),
