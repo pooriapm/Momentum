@@ -140,6 +140,8 @@ export const demoPlan: MomentumPlanView = {
     ],
     entitlementLabel: { fa: 'عضویت Momentum', en: 'Momentum membership' },
     entitlementStatus: 'active',
+    entitlementPeriodStart: `${demoIsoDate(-12)}T12:00:00Z`,
+    entitlementPeriodEnd: `${demoIsoDate(18)}T12:00:00Z`,
     productRegion: 'intl',
     recentCheckIns: [
       { date: { fa: 'امروز', en: 'Today' }, score: 82, note: { fa: 'انرژی خوب', en: 'Good energy' }, weight: 72.8 },

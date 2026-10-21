@@ -16,9 +16,11 @@ import { PAYMENTS_LIVE } from '../../entitlement'
 import { type MomentumPlanView, localize } from '../../data/types'
 import { localizedPath, switchLocalePath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
+import { formatNumber } from '../../lib/format'
 import {
   deriveMembershipStatus,
   membershipCopy,
+  membershipDays,
   SUPPORT_ISSUE_CODES,
   supportMailtoHref,
   type MePanel,
@@ -62,7 +64,7 @@ export function MePage({
   }
 
   if (view === 'subscription') {
-    return <MembershipPanel locale={locale} onBack={() => setView('hub')} paymentResult={paymentResult} periodEnd={plan?.progress.entitlementPeriodEnd} preview={preview} productRegion={plan?.progress.productRegion} status={status} />
+    return <MembershipPanel locale={locale} onBack={() => setView('hub')} paymentResult={paymentResult} periodEnd={plan?.progress.entitlementPeriodEnd} periodStart={plan?.progress.entitlementPeriodStart} preview={preview} productRegion={plan?.progress.productRegion} status={status} />
   }
 
   if (view === 'help') {
@@ -134,6 +136,7 @@ function MembershipPanel({
   onBack,
   paymentResult,
   periodEnd,
+  periodStart,
   preview,
   productRegion,
   status,
@@ -142,6 +145,7 @@ function MembershipPanel({
   onBack: () => void
   paymentResult?: PaymentResult | null
   periodEnd?: string
+  periodStart?: string
   preview: boolean
   productRegion?: 'ir' | 'intl'
   status: MembershipStatus
@@ -175,6 +179,7 @@ function MembershipPanel({
     }
   }
   const copy = membershipCopy(status, locale)
+  const days = membershipDays(periodStart, periodEnd)
   const query = preview ? '?preview=1' : ''
   const checkout = status === 'gift' || status === 'none' || status === 'cancelled' || status === 'expired' || status === 'pending'
   const tone = status === 'active' ? 'success' : status === 'pending' ? 'energy' : status === 'gift' ? 'brand' : 'neutral'
@@ -191,9 +196,11 @@ function MembershipPanel({
       <ContentCard className="me-panel-card">
         <StatusPill tone={tone}>{status === 'active' ? (fa ? 'فعال' : 'Active') : copy.label}</StatusPill>
         <h2>{tMembershipTitle(status, fa)}</h2>
-        <p>{periodEnd
-          ? (fa ? `مرز بعدی واجد شرایط: ${periodEnd}` : `Next eligible boundary: ${periodEnd}`)
-          : (fa ? 'فقط یک اشتراک Momentum وجود دارد؛ نردبان چندسطحی نیست.' : 'There is one Momentum membership. Dual plans are not offered.')}</p>
+        {days && (status === 'active' || status === 'gift') ? (
+          <MembershipDaysLeft days={days} locale={locale} renewable={cardTransfer} />
+        ) : (
+          <p>{fa ? 'فقط یک اشتراک Momentum وجود دارد؛ نردبان چندسطحی نیست.' : 'There is one Momentum membership. Dual plans are not offered.'}</p>
+        )}
         {status === 'pending' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت در انتظار است. ساخت برنامه جدید شروع نمی‌شود.' : 'Payment is pending. A new plan will not start.'}</div> : null}
         {paymentResult === 'success' ? <div className="inline-notice inline-notice--success" role="status">{fa ? 'پرداخت تأیید شد و عضویت ۳۰ روزه فعال شد.' : 'Payment confirmed. Your 30-day membership is active.'}</div> : null}
         {paymentResult === 'cancelled' ? <div className="inline-notice" role="status">{fa ? 'پرداخت لغو شد و مبلغی کم نشد.' : 'Payment was cancelled. You were not charged.'}</div> : null}
@@ -229,6 +236,33 @@ function MembershipPanel({
         </ul>
       </ContentCard>
     </main>
+  )
+}
+
+function MembershipDaysLeft({
+  days,
+  locale,
+  renewable,
+}: {
+  days: NonNullable<ReturnType<typeof membershipDays>>
+  locale: AppLocale
+  renewable: boolean
+}) {
+  const fa = locale === 'fa'
+  const date = (value: Date) => new Intl.DateTimeFormat(fa ? 'fa-IR' : 'en', { day: 'numeric', month: 'long', year: 'numeric' }).format(value)
+  const renewFrom = new Date(days.end.getTime() - 5 * 86_400_000)
+  const remaining = Math.min(100, Math.max(0, Math.round((days.daysLeft / days.totalDays) * 100)))
+  return (
+    <div className={`me-days-left${days.endingSoon ? ' is-ending' : ''}`}>
+      <p className="me-days-left__count"><strong>{formatNumber(days.daysLeft, locale)}</strong> {fa ? 'روز مانده' : days.daysLeft === 1 ? 'day left' : 'days left'}</p>
+      <div aria-label={fa ? 'باقی‌مانده دوره' : 'Period remaining'} aria-valuemax={100} aria-valuemin={0} aria-valuenow={remaining} className="me-days-left__bar" role="progressbar">
+        <span style={{ width: `${remaining}%` }} />
+      </div>
+      <p>{fa ? `پایان: ${date(days.end)}` : `Ends ${date(days.end)}`}{' · '}{days.endingSoon
+        ? (fa ? 'برای اینکه برنامه‌ات قطع نشود همین حالا تمدید کن.' : 'Renew now so your plan is not interrupted.')
+        : (fa ? `زمان تمدید: از ${date(renewFrom)}` : `Renew from ${date(renewFrom)}`)}</p>
+      {renewable ? <small>{fa ? 'پرداخت زودتر چیزی را هدر نمی‌دهد: ۳۰ روز به انتهای عضویت فعلی اضافه می‌شود.' : 'Paying early wastes nothing: 30 days are added to the end of your current membership.'}</small> : null}
+    </div>
   )
 }
 

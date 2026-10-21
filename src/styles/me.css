@@ -545,3 +545,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+.me-days-left { display: grid; gap: .5rem; }
+.me-days-left p { margin: 0; }
+.me-days-left small { color: var(--color-text-muted); }
+.me-days-left__count { color: var(--color-text-muted); font-weight: 600; }
+.me-days-left__count strong { color: var(--color-text); font-size: 2.25rem; font-variant-numeric: tabular-nums; line-height: 1; }
+.me-days-left.is-ending .me-days-left__count strong { color: var(--color-energy, var(--color-brand)); }
+
+.me-days-left__bar {
+  background: var(--color-surface-muted);
+  border-radius: 999px;
+  height: .5rem;
+  overflow: hidden;
+}
+
+.me-days-left__bar > span {
+  background: var(--color-brand);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.me-days-left.is-ending .me-days-left__bar > span { background: var(--color-energy, var(--color-brand)); }

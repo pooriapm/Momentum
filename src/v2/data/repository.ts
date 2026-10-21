@@ -315,6 +315,7 @@ function mapDashboardToPlan(dashboard: Dashboard, locale: AppLocale): MomentumPl
         ? { fa: 'هدیه برنامه اول', en: 'First-plan gift' }
         : { fa: 'عضویت Momentum', en: 'Momentum membership' },
       entitlementStatus: planEntitlementStatus(dashboard.entitlement_usage),
+      entitlementPeriodStart: dashboard.entitlement_usage?.entitlement.period_start,
       entitlementPeriodEnd: dashboard.entitlement_usage?.entitlement.period_end,
       productRegion: dashboard.profile.product_region,
       recentCheckIns: dashboard.recent_checkins.slice(0, 7).map((item) => ({

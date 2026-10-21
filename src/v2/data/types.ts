@@ -153,6 +153,7 @@ export interface MomentumPlanView {
     energyScore: number
     entitlementLabel?: LocalizedText
     entitlementStatus?: 'gift' | 'active' | 'pending' | 'cancelled' | 'expired' | 'none'
+    entitlementPeriodStart?: string
     entitlementPeriodEnd?: string
     productRegion?: 'ir' | 'intl'
     cycleEnding?: boolean
