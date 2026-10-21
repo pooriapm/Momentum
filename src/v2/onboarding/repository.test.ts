@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { assertOnline } from '../../platform/pwa/network'
-import { discardBodyReport, saveOnboardingBodyMeasurements } from './repository'
+import { discardBodyReport, requestPlanGeneration, saveOnboardingBodyMeasurements } from './repository'
 
 const mocks = vi.hoisted(() => {
   const select = vi.fn()
@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => {
   return {
     client: {
       from,
+      functions: { invoke: vi.fn() },
       storage: { from: vi.fn(() => ({ remove })) },
     },
     deleteRow,
@@ -160,5 +161,41 @@ describe('private body-report deletion', () => {
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/body-report.pdf',
     )).rejects.toThrow('body_report_path_not_owned')
     expect(mocks.remove).not.toHaveBeenCalled()
+  })
+})
+
+describe('plan generation request', () => {
+  const jobId = '3f02a069-5294-4dee-92dc-2ecfe077902b'
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+  })
+
+  it('starts the job once and follows it with GET status polls', async () => {
+    mocks.client.functions.invoke
+      .mockResolvedValueOnce({ data: { job: { id: jobId, status: 'in_progress' }, idempotent_replay: true }, error: null })
+      .mockResolvedValueOnce({ data: { job: { id: jobId, status: 'validating' }, idempotent_replay: true }, error: null })
+      .mockResolvedValueOnce({ data: { job: { id: jobId, status: 'ready' }, idempotent_replay: true }, error: null })
+    const pending = requestPlanGeneration('fa', 'key-12345678')
+    await vi.runAllTimersAsync()
+    await expect(pending).resolves.toMatchObject({ job: { status: 'ready' } })
+    const calls = mocks.client.functions.invoke.mock.calls as unknown as Array<[string, Record<string, unknown>]>
+    expect(calls).toHaveLength(3)
+    expect(calls[0]![1]).toMatchObject({ body: { locale: 'fa-IR' }, headers: { 'Idempotency-Key': 'key-12345678' } })
+    expect(calls[0]![1].method).toBeUndefined()
+    expect(calls.slice(1).map((call) => call[1].method)).toEqual(['GET', 'GET'])
+    vi.useRealTimers()
+  })
+
+  it('surfaces a failed job as the error from the status poll', async () => {
+    const failure = Object.assign(new Error('busy'), { code: 'AI_PROVIDER_UNAVAILABLE' })
+    mocks.client.functions.invoke
+      .mockResolvedValueOnce({ data: { job: { id: jobId, status: 'in_progress' }, idempotent_replay: true }, error: null })
+      .mockResolvedValueOnce({ data: null, error: failure })
+    const pending = requestPlanGeneration('en', 'key-12345678')
+    const assertion = expect(pending).rejects.toBe(failure)
+    await vi.runAllTimersAsync()
+    await assertion
+    vi.useRealTimers()
   })
 })

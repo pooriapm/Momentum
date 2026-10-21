@@ -65,6 +65,19 @@ export const ALLERGEN_CATALOG = [
 
 export const UNMAPPED_ALLERGEN = 'other'
 
+/** Body areas the plan generator avoids loading; stored as injury:<area> codes. Optional. */
+export const INJURY_AREAS = ['knee', 'ankle', 'hip', 'lower_back', 'shoulder', 'elbow', 'wrist', 'neck'] as const
+const INJURY_AREA_OPTIONS = [
+  { value: 'knee', labelKey: 'onboarding.injuryKnee' },
+  { value: 'ankle', labelKey: 'onboarding.injuryAnkle' },
+  { value: 'hip', labelKey: 'onboarding.injuryHip' },
+  { value: 'lower_back', labelKey: 'onboarding.injuryLowerBack' },
+  { value: 'shoulder', labelKey: 'onboarding.injuryShoulder' },
+  { value: 'elbow', labelKey: 'onboarding.injuryElbow' },
+  { value: 'wrist', labelKey: 'onboarding.injuryWrist' },
+  { value: 'neck', labelKey: 'onboarding.injuryNeck' },
+] as const
+
 export const TRAINING_DURATION_PRESETS = ['30', '45', '60', '75', '90', '120'] as const
 
 const weekdayOptions = [
@@ -104,6 +117,7 @@ export const onboardingSections: readonly OnboardingSection[] = [
       { key: 'highRiskCondition', labelKey: 'onboarding.highRisk', kind: 'select', required: true, options: yesNoOptions },
       { key: 'urgentSymptoms', labelKey: 'onboarding.urgentSymptoms', kind: 'select', required: true, options: yesNoOptions },
       { key: 'injuryLimitation', labelKey: 'onboarding.injury', kind: 'select', required: true, options: yesNoOptions },
+      { key: 'injuryAreas', labelKey: 'onboarding.injuryAreas', kind: 'multiselect', options: INJURY_AREA_OPTIONS, visibleWhen: { field: 'injuryLimitation', equals: 'yes' } },
       { key: 'medications', labelKey: 'onboarding.medications', kind: 'textarea' },
       { key: 'medicalNotes', labelKey: 'onboarding.medicalNotes', kind: 'textarea' },
       { key: 'supplements', labelKey: 'onboarding.supplements', kind: 'textarea' },

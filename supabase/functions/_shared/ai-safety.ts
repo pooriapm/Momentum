@@ -1,4 +1,3 @@
-import { integerEnv, optionalEnv, requiredEnv } from './config.ts'
 import { HttpError } from './http.ts'
 
 export type AiSafetyReason =
@@ -11,26 +10,13 @@ export type AiSafetyReason =
   | 'medical_boundary'
   | 'prompt_injection'
   | 'geo_circumvention'
-  | 'provider_harassment'
-  | 'provider_hate'
-  | 'provider_sexual'
-  | 'provider_violence'
-  | 'provider_illicit'
-  | 'provider_self_harm'
 
 export interface AiSafetyDecision {
   allowed: false
   level: 'blocked' | 'urgent'
   reason: AiSafetyReason
-  source: 'deterministic' | 'openai_moderation'
+  source: 'deterministic'
 }
-
-export type ModerationInput =
-  | string
-  | Array<
-    | { type: 'text'; text: string }
-    | { type: 'image_url'; image_url: { url: string } }
-  >
 
 const PATTERNS: Array<{
   reason: AiSafetyReason
@@ -112,165 +98,6 @@ export function deterministicSafetyDecision(text: string): AiSafetyDecision | nu
     }
   }
   return null
-}
-
-interface ModerationResult {
-  flagged?: unknown
-  categories?: Record<string, unknown>
-}
-
-function providerDecision(result: ModerationResult): AiSafetyDecision | null {
-  if (result.flagged !== true || !result.categories || typeof result.categories !== 'object') {
-    return null
-  }
-  const categories = result.categories
-  const flagged = (name: string) => categories[name] === true
-  if (flagged('self-harm/intent')) {
-    return {
-      allowed: false,
-      level: 'urgent',
-      reason: 'self_harm_intent',
-      source: 'openai_moderation',
-    }
-  }
-  if (flagged('self-harm/instructions')) {
-    return {
-      allowed: false,
-      level: 'urgent',
-      reason: 'self_harm_instructions',
-      source: 'openai_moderation',
-    }
-  }
-  if (flagged('self-harm')) {
-    return {
-      allowed: false,
-      level: 'blocked',
-      reason: 'provider_self_harm',
-      source: 'openai_moderation',
-    }
-  }
-  if (flagged('hate') || flagged('hate/threatening')) {
-    return {
-      allowed: false,
-      level: 'blocked',
-      reason: 'provider_hate',
-      source: 'openai_moderation',
-    }
-  }
-  if (flagged('harassment') || flagged('harassment/threatening')) {
-    return {
-      allowed: false,
-      level: 'blocked',
-      reason: 'provider_harassment',
-      source: 'openai_moderation',
-    }
-  }
-  if (flagged('sexual') || flagged('sexual/minors')) {
-    return {
-      allowed: false,
-      level: 'blocked',
-      reason: 'provider_sexual',
-      source: 'openai_moderation',
-    }
-  }
-  if (flagged('violence') || flagged('violence/graphic')) {
-    return {
-      allowed: false,
-      level: 'blocked',
-      reason: 'provider_violence',
-      source: 'openai_moderation',
-    }
-  }
-  if (flagged('illicit') || flagged('illicit/violent')) {
-    return {
-      allowed: false,
-      level: 'blocked',
-      reason: 'provider_illicit',
-      source: 'openai_moderation',
-    }
-  }
-  return {
-    allowed: false,
-    level: 'blocked',
-    reason: 'provider_harassment',
-    source: 'openai_moderation',
-  }
-}
-
-export async function moderateWithOpenAI(
-  input: ModerationInput,
-  fetcher: typeof fetch = fetch,
-): Promise<AiSafetyDecision | null> {
-  const controller = new AbortController()
-  const timeout = setTimeout(
-    () => controller.abort(),
-    integerEnv('OPENAI_MODERATION_TIMEOUT_MS', 10_000, { min: 2_000, max: 30_000 }),
-  )
-  let response: Response
-  try {
-    const baseUrl = optionalEnv('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1'
-    response = await fetcher(`${baseUrl.replace(/\/$/, '')}/moderations`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${requiredEnv('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-        ...(optionalEnv('OPENAI_ORGANIZATION')
-          ? { 'OpenAI-Organization': requiredEnv('OPENAI_ORGANIZATION') }
-          : {}),
-        ...(optionalEnv('OPENAI_PROJECT')
-          ? { 'OpenAI-Project': requiredEnv('OPENAI_PROJECT') }
-          : {}),
-      },
-      body: JSON.stringify({
-        model: optionalEnv('OPENAI_MODERATION_MODEL') ?? 'omni-moderation-latest',
-        input,
-      }),
-      signal: controller.signal,
-    })
-  } catch {
-    throw new HttpError(
-      503,
-      'moderation_unavailable',
-      'Safety screening is temporarily unavailable.',
-    )
-  } finally {
-    clearTimeout(timeout)
-  }
-  if (!response.ok) {
-    throw new HttpError(
-      503,
-      'moderation_unavailable',
-      'Safety screening is temporarily unavailable.',
-    )
-  }
-  let payload: { results?: unknown }
-  try {
-    payload = await response.json() as { results?: unknown }
-  } catch {
-    throw new HttpError(
-      503,
-      'moderation_unavailable',
-      'Safety screening is temporarily unavailable.',
-    )
-  }
-  if (
-    !Array.isArray(payload.results) || payload.results.length !== 1 || !payload.results[0] ||
-    typeof payload.results[0] !== 'object'
-  ) {
-    throw new HttpError(
-      503,
-      'moderation_unavailable',
-      'Safety screening is temporarily unavailable.',
-    )
-  }
-  return providerDecision(payload.results[0] as ModerationResult)
-}
-
-export async function screenAiText(
-  text: string,
-  fetcher: typeof fetch = fetch,
-): Promise<AiSafetyDecision | null> {
-  return deterministicSafetyDecision(text) ?? await moderateWithOpenAI(text, fetcher)
 }
 
 export function safetyHttpError(phase: 'input' | 'output', decision: AiSafetyDecision): HttpError {

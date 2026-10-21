@@ -220,20 +220,37 @@ export async function completeOnboarding(idempotencyKey: string = crypto.randomU
   return onboardingCompletionSchema.parse(data).onboarding
 }
 
+const GENERATION_POLL_MS = 2_500
+const GENERATION_POLLS = 60
+
+/**
+ * Starts the plan job once (POST), then follows it with status polls (GET, same key) while the
+ * server generates in the background. A failed job comes back as the same error the POST gives.
+ */
 export async function requestPlanGeneration(locale: AppLocale, idempotencyKey: string = crypto.randomUUID()) {
   assertOnline()
   const client = requireSupabase()
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const { data, error } = await client.functions.invoke('generate-monthly-plan', {
-      body: { locale: locale === 'fa' ? 'fa-IR' : 'en-US' },
+  const { data, error } = await client.functions.invoke('generate-monthly-plan', {
+    body: { locale: locale === 'fa' ? 'fa-IR' : 'en-US' },
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+  if (error) throw error
+  let parsed = generationResponseSchema.parse(data)
+  for (let poll = 0; poll < GENERATION_POLLS && !isFinishedJob(parsed.job.status); poll += 1) {
+    await new Promise((resolve) => window.setTimeout(resolve, GENERATION_POLL_MS))
+    const status = await client.functions.invoke('generate-monthly-plan', {
+      method: 'GET',
       headers: { 'Idempotency-Key': idempotencyKey },
     })
-    if (error) throw error
-    const parsed = generationResponseSchema.parse(data)
-    if (parsed.job.status !== 'in_progress') return parsed
-    await new Promise((resolve) => window.setTimeout(resolve, 1_200))
+    if (status.error) throw status.error
+    parsed = generationResponseSchema.parse(status.data)
   }
-  throw new Error('plan_generation_still_processing')
+  if (!isFinishedJob(parsed.job.status)) throw new Error('plan_generation_still_processing')
+  return parsed
+}
+
+function isFinishedJob(status: string) {
+  return status === 'ready' || status === 'completed' || status === 'imported'
 }
 
 export async function createStarterPlan(idempotencyKey: string = crypto.randomUUID()) {

@@ -1,16 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   deterministicSafetyDecision,
   isOutputSafetyDenial,
-  moderateWithOpenAI,
   safetyHttpError,
 } from './ai-safety.ts'
-
-beforeEach(() => {
-  vi.stubGlobal('Deno', {
-    env: { get: (name: string) => name === 'OPENAI_API_KEY' ? 'test-key' : undefined },
-  })
-})
 
 describe('product AI safety rules', () => {
   it.each([
@@ -39,35 +32,9 @@ describe('product AI safety rules', () => {
     )).toBeNull()
   })
 
-  it('maps OpenAI self-harm intent to an urgent reason code', async () => {
-    const fetcher = vi.fn(() =>
-      Promise.resolve(
-        new Response(
-          JSON.stringify({
-            results: [{ flagged: true, categories: { 'self-harm/intent': true } }],
-          }),
-          { status: 200 },
-        ),
-      )
-    ) as unknown as typeof fetch
-    await expect(moderateWithOpenAI('coded phrase', fetcher)).resolves.toMatchObject({
-      reason: 'self_harm_intent',
-      level: 'urgent',
-      source: 'openai_moderation',
-    })
-    expect(fetcher).toHaveBeenCalledWith(
-      expect.stringMatching(/\/moderations$/),
-      expect.objectContaining({ method: 'POST' }),
-    )
-  })
-
-  it('fails closed on an invalid moderation response', async () => {
-    const fetcher = vi.fn(() =>
-      Promise.resolve(new Response('{}', { status: 200 }))
-    ) as unknown as typeof fetch
-    await expect(moderateWithOpenAI('safe text', fetcher)).rejects.toMatchObject({
-      code: 'moderation_unavailable',
-    })
+  it('decides locally, with no provider moderation call', () => {
+    expect(deterministicSafetyDecision('قصد خودکشی دارم')).toMatchObject({ source: 'deterministic' })
+    expect(deterministicSafetyDecision('Three meals and a walk today')).toBeNull()
   })
 
   it('marks output denials so routes release rather than consume quota', () => {

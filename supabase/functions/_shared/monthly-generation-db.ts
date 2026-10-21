@@ -408,6 +408,14 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
       }
     },
 
+    async spentTomanSince(sinceIso) {
+      const { data, error } = await admin.rpc('ai_spend_toman_since', { p_since: sinceIso })
+      if (error || typeof data !== 'number' && typeof data !== 'string') {
+        throw new HttpError(503, 'AI_BUDGET_UNAVAILABLE', 'AI spend protection is unavailable.')
+      }
+      return Number(data)
+    },
+
     async recordAttempt(attempt: ProviderAttemptLedger) {
       const { error } = await admin.from('ai_usage_attempts').upsert({
         id: attempt.attempt_id,
@@ -435,6 +443,9 @@ export function createSupabaseGenerationStore(admin: SupabaseClient): Generation
         cost_notes: attempt.cost_notes,
         reservation_consumed: attempt.reservation_consumed,
         delivery_succeeded: attempt.delivery_succeeded,
+        cost_toman: typeof attempt.pipeline?.cost_toman === 'number'
+          ? Math.round(attempt.pipeline.cost_toman)
+          : null,
         ledger_payload: attempt,
       }, { onConflict: 'id' })
       if (error) {

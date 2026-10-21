@@ -62,6 +62,11 @@ export interface ProviderAttemptLedger {
   reservation_consumed: boolean
   /** True only after quality-approved plan was persisted for the user. */
   delivery_succeeded: boolean
+  /**
+   * Brief pipeline context (call kind, issue codes, fallback reason, versions, targets). Codes
+   * and numbers only: never model output text or user data. Stored in ledger_payload.
+   */
+  pipeline?: Record<string, unknown>
 }
 
 export function buildAttemptLedger(input: {
