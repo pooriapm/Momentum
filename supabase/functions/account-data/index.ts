@@ -21,6 +21,7 @@ import {
 } from '../_shared/plan-catalog.ts'
 import { assertGeneratedPlan, generatedPlanJsonSchema } from '../_shared/plan-contract.ts'
 import { MONTHLY_PLAN_DAYS, PLAN_SCHEMA_VERSION } from '../_shared/plan-provider.ts'
+import { projectRestaurantGuide } from '../_shared/restaurant-guide.ts'
 import {
   buildValidatedDeterministicStarter,
   STARTER_TEMPLATE_VERSION,
@@ -58,6 +59,11 @@ interface AccountDataBody {
   note?: unknown
   event_id?: unknown
   event?: unknown
+  item_key?: unknown
+  unit?: unknown
+  amount?: unknown
+  scope?: unknown
+  purchase_id?: unknown
 }
 
 const EXPORT_TABLES = ACCOUNT_EXPORT_TABLES
@@ -189,16 +195,22 @@ async function latestNextCycleNote(
   admin: Awaited<ReturnType<typeof authenticate>>['admin'],
   userId: string,
 ): Promise<{ period_id: string | null; note: string }> {
-  const { data: period, error: periodError } = await admin
+  // A renewal made in the last days of a plan starts later; until then the
+  // note still belongs to the running cycle.
+  const { data: periods, error: periodError } = await admin
     .from('monthly_plan_periods')
-    .select('id')
+    .select('id,starts_at')
     .eq('user_id', userId)
     .order('cycle_index', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(2)
   if (periodError) {
     throw new HttpError(503, 'next_cycle_note_failed', 'The next-cycle note is unavailable.')
   }
+  const now = Date.now()
+  const period =
+    (periods ?? []).find((item) =>
+      typeof item.starts_at !== 'string' || Date.parse(item.starts_at) <= now
+    ) ?? periods?.[0] ?? null
   if (!period) return { period_id: null, note: '' }
   const { data: input, error: inputError } = await admin
     .from('next_cycle_inputs')
@@ -387,6 +399,88 @@ function parseDashboard(body: AccountDataBody): DashboardRequest {
     action: 'dashboard',
     requestedLocalDate: body.local_date === undefined ? undefined : parseLocalDate(body.local_date),
   }
+}
+
+const SHOPPING_UNITS = new Set(['g', 'ml', 'piece', 'tbsp', 'tsp', 'cup', 'slice', 'serving'])
+const SHOPPING_SCOPES = new Set(['week', 'plan'])
+const SHOPPING_ITEM_KEY_PATTERN = /^(ingredient|name):[^\p{Cc}]*[^\p{Cc}\s][^\p{Cc}]*$/u
+const MAX_SHOPPING_AMOUNT = 100_000
+
+interface ShoppingPurchaseRequest {
+  itemKey: string
+  unit: string
+  amount: number
+  scope: string
+  requestedLocalDate: string
+}
+
+function parseShoppingPurchase(body: AccountDataBody): ShoppingPurchaseRequest {
+  if (
+    typeof body.item_key !== 'string' ||
+    body.item_key.length > 200 ||
+    !SHOPPING_ITEM_KEY_PATTERN.test(body.item_key)
+  ) {
+    throw new HttpError(400, 'invalid_item_key', 'Shopping item key is invalid.')
+  }
+  if (typeof body.unit !== 'string' || !SHOPPING_UNITS.has(body.unit)) {
+    throw new HttpError(400, 'invalid_unit', 'Shopping unit is invalid.')
+  }
+  if (
+    typeof body.amount !== 'number' ||
+    !Number.isFinite(body.amount) ||
+    body.amount <= 0 ||
+    body.amount > MAX_SHOPPING_AMOUNT
+  ) {
+    throw new HttpError(400, 'invalid_amount', 'Shopping amount is invalid.')
+  }
+  if (typeof body.scope !== 'string' || !SHOPPING_SCOPES.has(body.scope)) {
+    throw new HttpError(400, 'invalid_scope', 'Shopping scope is invalid.')
+  }
+  return {
+    itemKey: body.item_key,
+    unit: body.unit,
+    amount: body.amount,
+    scope: body.scope,
+    requestedLocalDate: parseLocalDate(body.local_date),
+  }
+}
+
+function shoppingPurchaseError(error: { message: string }, fallback: string): never {
+  if (error.message.includes('idempotency_key_reused')) {
+    throw new HttpError(
+      409,
+      'idempotency_key_reused',
+      'Idempotency key was used for different input.',
+    )
+  }
+  if (error.message.includes('purchase_date_not_current')) {
+    throw new HttpError(
+      409,
+      'local_date_mismatch',
+      'Purchases are limited to the current date in the saved profile timezone.',
+    )
+  }
+  if (error.message.includes('active_plan_not_found')) {
+    throw new HttpError(404, 'active_plan_not_found', 'There is no active plan.')
+  }
+  if (error.message.includes('shopping_purchase_not_found')) {
+    throw new HttpError(404, 'shopping_purchase_not_found', 'The purchase was not found.')
+  }
+  if (error.message.includes('shopping_purchase_limit_reached')) {
+    throw new HttpError(
+      409,
+      'shopping_purchase_limit_reached',
+      'Too many purchases were recorded for this plan.',
+    )
+  }
+  if (error.message.includes('profile_timezone_unavailable')) {
+    throw new HttpError(
+      409,
+      'profile_timezone_unavailable',
+      'Set a valid profile timezone before using day-based features.',
+    )
+  }
+  throw new HttpError(503, 'account_mutation_failed', fallback)
 }
 
 function isoDateInTimezone(timezone: string): string {
@@ -702,6 +796,7 @@ function projectPlanHistory(options: {
   plans: Array<Record<string, unknown>>
   versions: Array<Record<string, unknown>>
   periods: Array<Record<string, unknown>>
+  currentVersionId: string | null
 }): Array<Record<string, unknown>> {
   const plans = new Map(
     options.plans
@@ -713,11 +808,9 @@ function projectPlanHistory(options: {
     if (typeof period.imported_plan_version_id !== 'string') continue
     periodsByVersion.set(period.imported_plan_version_id, period)
   }
-  const activeVersionIds = new Set(
-    options.plans
-      .filter((plan) => plan.status === 'active' && typeof plan.active_version_id === 'string')
-      .map((plan) => plan.active_version_id as string),
-  )
+  // `active` marks the plan the dashboard shows today. An ended plan or a
+  // renewal that starts tomorrow can also have status 'active'.
+  const activeVersionIds = new Set(options.currentVersionId ? [options.currentVersionId] : [])
 
   return options.versions.flatMap((version) => {
     if (typeof version.id !== 'string' || typeof version.plan_id !== 'string') return []
@@ -848,6 +941,7 @@ function projectPlanDay(options: {
         return [{ category: item.category, level: item.level, note: item.note }]
       })
       : [],
+    restaurant_guide: projectRestaurantGuide(content.restaurant_guide),
     day: {
       local_date: options.localDate,
       day_index: dayOffset,
@@ -879,6 +973,7 @@ async function loadDashboard(
     profileResult,
     goalResult,
     checkinResult,
+    waterResult,
     recentCheckinsResult,
     latestBodyResult,
     entitlementResult,
@@ -911,6 +1006,12 @@ async function loadDashboard(
       .select(
         'local_date,weight_kg,waist_cm,sleep_minutes,hunger_score,mood_score,energy_score,recovery_score,water_ml,steps,adherence_percent',
       )
+      .eq('user_id', userId)
+      .eq('local_date', input.localDate)
+      .maybeSingle(),
+    admin
+      .from('daily_water_logs')
+      .select('local_date,water_ml')
       .eq('user_id', userId)
       .eq('local_date', input.localDate)
       .maybeSingle(),
@@ -987,6 +1088,7 @@ async function loadDashboard(
     profileResult.error ||
     goalResult.error ||
     checkinResult.error ||
+    waterResult.error ||
     recentCheckinsResult.error ||
     latestBodyResult.error ||
     entitlementResult.error ||
@@ -1048,6 +1150,7 @@ async function loadDashboard(
     plans: (ownedPlansResult.data ?? []) as Array<Record<string, unknown>>,
     versions: (versionHistoryResult.data ?? []) as Array<Record<string, unknown>>,
     periods: (periodHistoryResult.data ?? []) as Array<Record<string, unknown>>,
+    currentVersionId: activePlan?.active_version_id ?? null,
   })
   if (planProjection) {
     planProjection = { ...planProjection, history: planHistory }
@@ -1134,6 +1237,10 @@ async function loadDashboard(
       : null,
     active_goal: goalResult.data,
     checkin: checkinResult.data,
+    water_today: {
+      local_date: input.localDate,
+      water_ml: typeof waterResult.data?.water_ml === 'number' ? waterResult.data.water_ml : 0,
+    },
     recent_checkins: recentCheckinsResult.data ?? [],
     latest_body_weight: latestBodyResult.data,
     entitlement_usage: entitlementUsage,
@@ -1306,6 +1413,26 @@ async function importExternalPlan(
   return data
 }
 
+// Mirrors the cycle choice in persist_deterministic_starter_plan so the menu can
+// rotate by cycle. The RPC stays authoritative for the stored cycle number.
+async function nextStarterCycleHint(
+  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
+  userId: string,
+  today: string,
+): Promise<number> {
+  const [latest, activeEnd] = await Promise.all([
+    admin.from('monthly_plan_periods').select('cycle_index,status').eq('user_id', userId)
+      .order('cycle_index', { ascending: false }).limit(1).maybeSingle(),
+    admin.from('plans').select('valid_to').eq('user_id', userId).eq('status', 'active')
+      .order('valid_to', { ascending: false }).limit(1).maybeSingle(),
+  ])
+  if (latest.error || activeEnd.error || !latest.data) return 1
+  const cycle = Number(latest.data.cycle_index) || 1
+  if (latest.data.status !== 'ready') return cycle
+  const end = typeof activeEnd.data?.valid_to === 'string' ? activeEnd.data.valid_to : null
+  return end && differenceInDays(today, end) >= 3 ? cycle : cycle + 1
+}
+
 async function createDeterministicStarterPlan(
   admin: Awaited<ReturnType<typeof authenticate>>['admin'],
   userId: string,
@@ -1329,6 +1456,9 @@ async function createDeterministicStarterPlan(
     )
   }
 
+  const validFrom = isoDateInTimezone(profile.data.timezone || 'UTC')
+  const validTo = addIsoDays(validFrom, MONTHLY_PLAN_DAYS - 1)
+  const cycleIndex = await nextStarterCycleHint(admin, userId, validFrom)
   const catalog = await loadPlanCatalog(admin)
   const declaredAllergenIds = resolveDeclaredAllergenIds(
     catalog,
@@ -1353,11 +1483,10 @@ async function createDeterministicStarterPlan(
     catalog,
     declaredAllergenIds,
     consentAdmin: admin,
+    cycleIndex,
   })
   const versions = await loadCurrentLegalVersions(admin)
   const contentSha256 = await sha256(canonicalJson(content))
-  const validFrom = isoDateInTimezone(profile.data.timezone || 'UTC')
-  const validTo = addIsoDays(validFrom, MONTHLY_PLAN_DAYS - 1)
   const { data, error } = await admin.rpc('persist_deterministic_starter_plan', {
     p_user_id: userId,
     p_idempotency_key: idempotencyKey,
@@ -1388,6 +1517,34 @@ async function createDeterministicStarterPlan(
         409,
         'starter_plan_gate_failed',
         'Starter-plan eligibility changed before activation.',
+      )
+    }
+    if (error.message.includes('subscription_inactive')) {
+      throw new HttpError(
+        402,
+        'SUBSCRIPTION_INACTIVE',
+        'An active membership is required for the next monthly plan.',
+      )
+    }
+    if (error.message.includes('payment_method_required')) {
+      throw new HttpError(
+        402,
+        'PAYMENT_METHOD_REQUIRED',
+        'Add a payment method before generating a plan.',
+      )
+    }
+    if (error.message.includes('plan_already_active')) {
+      throw new HttpError(
+        409,
+        'plan_already_active',
+        'The current plan has more than three days left.',
+      )
+    }
+    if (error.message.includes('generation_in_progress')) {
+      throw new HttpError(
+        409,
+        'JOB_IN_PROGRESS',
+        'A monthly generation job is already in progress.',
       )
     }
     throw new HttpError(
@@ -1509,6 +1666,14 @@ Deno.serve(async (request) => {
       return jsonResponse(request, {
         next_cycle_note: await latestNextCycleNote(auth.admin, auth.user.id),
       })
+    }
+
+    if (body.action === 'shopping-purchases') {
+      const { data, error } = await auth.admin.rpc('list_shopping_purchases', {
+        p_user_id: auth.user.id,
+      })
+      if (error) shoppingPurchaseError(error, 'Shopping purchases could not be loaded.')
+      return jsonResponse(request, { purchases: Array.isArray(data) ? data : [] })
     }
 
     const idempotencyKey = requireIdempotencyKey(request)
@@ -1700,6 +1865,53 @@ Deno.serve(async (request) => {
         )
       }
       return jsonResponse(request, { body_composition: data })
+    }
+
+    if (body.action === 'record-shopping-purchase') {
+      const purchase = parseShoppingPurchase(body)
+      const localDate = await resolveCurrentLocalDate(
+        auth.admin,
+        auth.user.id,
+        purchase.requestedLocalDate,
+      )
+      const input = {
+        action: 'record-shopping-purchase',
+        itemKey: purchase.itemKey,
+        unit: purchase.unit,
+        amount: purchase.amount,
+        scope: purchase.scope,
+        localDate,
+      }
+      const { data, error } = await auth.admin.rpc('record_shopping_purchase', {
+        p_user_id: auth.user.id,
+        p_item_key: input.itemKey,
+        p_unit: input.unit,
+        p_amount: input.amount,
+        p_scope: input.scope,
+        p_local_date: input.localDate,
+        p_idempotency_key: idempotencyKey,
+        p_request_sha256: await sha256(canonicalJson(input)),
+      })
+      if (error) shoppingPurchaseError(error, 'The purchase could not be saved.')
+      return jsonResponse(request, { purchase: data })
+    }
+
+    if (body.action === 'undo-shopping-purchase') {
+      if (typeof body.purchase_id !== 'string' || !UUID_PATTERN.test(body.purchase_id)) {
+        throw new HttpError(400, 'invalid_purchase_id', 'Purchase identifier is invalid.')
+      }
+      const input = {
+        action: 'undo-shopping-purchase',
+        purchaseId: body.purchase_id.toLowerCase(),
+      }
+      const { data, error } = await auth.admin.rpc('undo_shopping_purchase', {
+        p_user_id: auth.user.id,
+        p_purchase_id: input.purchaseId,
+        p_idempotency_key: idempotencyKey,
+        p_request_sha256: await sha256(canonicalJson(input)),
+      })
+      if (error) shoppingPurchaseError(error, 'The purchase could not be undone.')
+      return jsonResponse(request, { undo: data })
     }
 
     if (

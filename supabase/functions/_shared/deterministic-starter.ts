@@ -47,6 +47,7 @@ export async function buildValidatedDeterministicStarter(input: {
   declaredAllergenIds: ReadonlySet<string>
   consentAdmin?: ConsentAdminClient | null
   today?: Date
+  cycleIndex?: number
 }) {
   const { profile } = input
   if (profile.onboardingStatus !== 'complete') {
@@ -86,16 +87,38 @@ export async function buildValidatedDeterministicStarter(input: {
     health_consent_version: profile.healthConsentVersion,
   }, input.consentAdmin)
   assertCatalogGenerationGate(input.catalog)
+  const cycleIndex = input.cycleIndex ?? 1
+  if (cycleIndex > 1) {
+    // A rotated later-cycle menu that fails validation falls back to the
+    // cycle-1 menu, which is the same plan every new user gets.
+    try {
+      return validatedStarterContent(input, cycleIndex)
+    } catch (error) {
+      if (!(error instanceof HttpError)) throw error
+    }
+  }
+  return validatedStarterContent(input, 1)
+}
+
+function validatedStarterContent(
+  input: {
+    profile: DeterministicStarterProfile
+    catalog: PlanCatalogSnapshot
+    declaredAllergenIds: ReadonlySet<string>
+  },
+  cycleIndex: number,
+) {
   const content = buildStarterPlan(
     input.catalog,
     MONTHLY_PLAN_DAYS,
-    profile.locale,
+    input.profile.locale,
     input.declaredAllergenIds,
+    cycleIndex,
   )
   if (deterministicSafetyDecision(JSON.stringify(content))) {
     throw new HttpError(422, 'PLAN_VALIDATION_FAILED', 'The starter plan could not be validated.')
   }
-  assertGeneratedPlan(content, MONTHLY_PLAN_DAYS, profile.locale, {
+  assertGeneratedPlan(content, MONTHLY_PLAN_DAYS, input.profile.locale, {
     catalog: input.catalog,
     declaredAllergenIds: input.declaredAllergenIds,
     minimumCalories: 1_200,

@@ -193,6 +193,24 @@ function foodForMealType(
   return match
 }
 
+// Later cycles rotate each main meal through the other eligible catalog foods
+// so month 2+ is not a copy of month 1. Cycle 1 keeps the preferred food.
+function foodForCycle(
+  catalog: PlanCatalogSnapshot,
+  mealType: string,
+  preferredId: string | undefined,
+  declaredAllergenIds: ReadonlySet<string>,
+  cycleIndex: number,
+) {
+  const first = foodForMealType(catalog, mealType, preferredId, declaredAllergenIds)
+  if (cycleIndex <= 1) return first
+  const candidates = [
+    first,
+    ...eligibleFoods(catalog, mealType, declaredAllergenIds).filter((food) => food.id !== first.id),
+  ]
+  return candidates[(cycleIndex - 1) % candidates.length]
+}
+
 function exerciseIdsForStub(catalog: PlanCatalogSnapshot): string[] {
   const preferred = starterExerciseIds(catalog).filter((id) => catalog.exercises.has(id))
   const extras = [...catalog.exercises.keys()].filter((id) => !preferred.includes(id))
@@ -208,24 +226,30 @@ export function buildStarterPlan(
   requestedDays: number,
   locale: 'fa-IR' | 'en-US',
   declaredAllergenIds: ReadonlySet<string> = new Set(),
+  cycleIndex = 1,
 ): Record<string, unknown> {
-  return buildMonthlyStubPlan(catalog, requestedDays, locale, { declaredAllergenIds })
+  return buildMonthlyStubPlan(catalog, requestedDays, locale, { declaredAllergenIds, cycleIndex })
 }
 
 export function buildMonthlyStubPlan(
   catalog: PlanCatalogSnapshot,
   requestedDays: number,
   locale: 'fa-IR' | 'en-US',
-  options: { invalidCatalogId?: boolean; declaredAllergenIds?: ReadonlySet<string> } = {},
+  options: {
+    invalidCatalogId?: boolean
+    declaredAllergenIds?: ReadonlySet<string>
+    cycleIndex?: number
+  } = {},
 ): Record<string, unknown> {
   if (requestedDays !== MONTHLY_PLAN_DAYS) {
     throw new HttpError(400, 'invalid_days', 'Monthly plans must cover exactly 30 days.')
   }
   const foods = starterFoodIds(catalog)
   const declaredAllergenIds = options.declaredAllergenIds ?? new Set<string>()
-  const breakfast = foodForMealType(catalog, 'breakfast', foods[0], declaredAllergenIds)
-  const lunch = foodForMealType(catalog, 'lunch', foods[1], declaredAllergenIds)
-  const dinner = foodForMealType(catalog, 'dinner', foods[2], declaredAllergenIds)
+  const cycleIndex = options.cycleIndex ?? 1
+  const breakfast = foodForCycle(catalog, 'breakfast', foods[0], declaredAllergenIds, cycleIndex)
+  const lunch = foodForCycle(catalog, 'lunch', foods[1], declaredAllergenIds, cycleIndex)
+  const dinner = foodForCycle(catalog, 'dinner', foods[2], declaredAllergenIds, cycleIndex)
   const meals: Array<{ type: string; food: CatalogFood }> = [
     { type: 'breakfast', food: breakfast },
     { type: 'lunch', food: lunch },
