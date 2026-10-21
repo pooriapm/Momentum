@@ -82,6 +82,14 @@ describe('stage 1: OpenAI-compatible provider client', () => {
       response_format: { type: 'json_schema', json_schema: { name: 'momentum_plan_lean', strict: true } },
     })
     expect(JSON.stringify(body)).not.toContain(KEY)
+    expect(body).not.toHaveProperty('reasoning_effort')
+  })
+
+  it('sends reasoning_effort only when configured', async () => {
+    const fetchImpl = vi.fn(async () => ok('{"a":1}'))
+    await client(fetchImpl as unknown as typeof fetch, { reasoningEffort: 'low' }).complete(request)
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(String(init.body)).reasoning_effort).toBe('low')
   })
 
   it('retries timeouts and 429/5xx, then gives up as an outage', async () => {
@@ -188,10 +196,16 @@ describe('stage 1: OpenAI-compatible provider client', () => {
     env.LLM_PLAN_MODEL_COMPLEX = 'strong'
     env.LLM_COMPLEX_PRICE_TOMAN_PER_1M_INPUT = '20000'
     env.LLM_COMPLEX_PRICE_TOMAN_PER_1M_OUTPUT = '120000'
+    env.LLM_REASONING_EFFORT = 'low'
     expect(compatibleLlmOptionsFromEnv('complex')).toMatchObject({
       model: 'strong',
       prices: { input: 20_000, cachedInput: 20_000, output: 120_000 },
+      reasoningEffort: null, // the cheap tier's effort doesn't leak into the complex tier
     })
+    expect(compatibleLlmOptionsFromEnv().reasoningEffort).toBe('low')
+    env.LLM_COMPLEX_REASONING_EFFORT = 'extreme'
+    expect(() => compatibleLlmOptionsFromEnv('complex')).toThrow('invalid_env:LLM_COMPLEX_REASONING_EFFORT')
+    delete env.LLM_COMPLEX_REASONING_EFFORT
     expect(resolveComplexPlanLlmClient()?.model).toBe('strong')
     expect(compatibleLlmOptionsFromEnv().model).toBe('cheap')
     // A Toman cap needs prices for the complex model too.

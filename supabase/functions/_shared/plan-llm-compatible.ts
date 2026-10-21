@@ -21,8 +21,11 @@ import type { PlanLlmClient, PlanLlmRequest, PlanLlmResponse } from './plan-llm.
  * - LLM_TOTAL_BUDGET_MS        all attempts of one call, default 120000
  * - LLM_MAX_OUTPUT_TOKENS      default 12000
  * - LLM_PRICE_TOMAN_PER_1M_INPUT / _CACHED_INPUT / _OUTPUT   price list for cost in Toman
+ * - LLM_REASONING_EFFORT       minimal | low | medium | high, sent as reasoning_effort (reasoning
+ *                              models only; unset sends nothing)
  * - LLM_PLAN_MODEL_COMPLEX     stronger model for complex briefs (plan-complexity.ts), with its own
- *                              LLM_COMPLEX_PRICE_TOMAN_PER_1M_INPUT / _CACHED_INPUT / _OUTPUT
+ *                              LLM_COMPLEX_PRICE_TOMAN_PER_1M_INPUT / _CACHED_INPUT / _OUTPUT and
+ *                              LLM_COMPLEX_REASONING_EFFORT
  *
  * Errors: timeouts and outages become LLM_TIMEOUT / LLM_UNAVAILABLE (the pipeline fails the job so
  * the user retries later); a rejected key or model becomes a configuration error (fail closed);
@@ -32,12 +35,14 @@ import type { PlanLlmClient, PlanLlmRequest, PlanLlmResponse } from './plan-llm.
 export const COMPATIBLE_LLM_VERSION = 'momentum-llm-compatible/1.0.0'
 
 export type JsonMode = 'json_schema' | 'json_object' | 'none'
+export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high'
 
 export interface CompatibleLlmOptions {
   baseUrl: string
   apiKey: string
   model: string
   jsonMode: JsonMode
+  reasoningEffort?: ReasoningEffort | null
   timeoutMs: number
   maxRetries: number
   totalBudgetMs: number
@@ -88,6 +93,10 @@ export function compatibleLlmOptionsFromEnv(tier: 'simple' | 'complex' = 'simple
     apiKey: requiredEnv('LLM_API_KEY'),
     model: tier === 'complex' ? complexModel! : requiredEnv('LLM_PLAN_MODEL'),
     jsonMode: enumEnv('LLM_JSON_MODE', ['json_schema', 'json_object', 'none'] as const) ?? 'json_schema',
+    reasoningEffort: enumEnv(
+      tier === 'complex' ? 'LLM_COMPLEX_REASONING_EFFORT' : 'LLM_REASONING_EFFORT',
+      ['minimal', 'low', 'medium', 'high'] as const,
+    ) ?? null,
     timeoutMs: integerEnv('LLM_TIMEOUT_MS', 90_000, { min: 5_000, max: 300_000 }),
     maxRetries: integerEnv('LLM_MAX_RETRIES', 2, { min: 0, max: 5 }),
     totalBudgetMs: integerEnv('LLM_TOTAL_BUDGET_MS', 120_000, { min: 10_000, max: 380_000 }),
@@ -185,6 +194,7 @@ export function createCompatiblePlanLlm(options: CompatibleLlmOptions): PlanLlmC
               temperature: 0.4,
               max_tokens: options.maxOutputTokens,
               stream: false,
+              ...(options.reasoningEffort ? { reasoning_effort: options.reasoningEffort } : {}),
               ...(format ? { response_format: format } : {}),
             }),
           })
