@@ -168,6 +168,10 @@ describe('plan safety and quality evals', () => {
   it('uses deterministic output only for the explicit stub provider and fails closed on live-provider failure', async () => {
     const fetchSpy = forbidLiveHttp()
     const catalog = createPlanCatalogSnapshot(evalCatalogRows())
+    // Without the explicit test-only switch, no member ever receives the stub template.
+    await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'fa-IR' }))
+      .rejects.toMatchObject({ code: 'AI_PROVIDER_NOT_CONFIGURED', status: 503 })
+    stubEnv({ AI_PLAN_ALLOW_STUB: 'true' })
     await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'fa-IR' }))
       .resolves.toMatchObject({ model: 'stub:momentum-monthly@1' })
     await expect(generateMonthlyPlanFromProvider({ catalog, locale: 'en-US' }))

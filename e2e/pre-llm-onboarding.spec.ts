@@ -100,7 +100,7 @@ async function mockRequest(route: Route, state: MockState) {
     const body = request.postDataJSON() as { action?: string }
     if (body.action) state.actions.push(body.action)
     if (body.action === 'dashboard') {
-      return route.fulfill({ status: 200, json: { dashboard: dashboard(state.completed ? 'complete' : 'started', state.draft.payload.planSource) } })
+      return route.fulfill({ status: 200, json: { dashboard: dashboard(state.completed ? 'complete' : 'started') } })
     }
     if (body.action === 'complete-onboarding') {
       state.completed = true
@@ -113,14 +113,14 @@ async function mockRequest(route: Route, state: MockState) {
   return route.fulfill({ status: 503, json: { error: { code: 'AUDIT_BOUNDARY', path: url.pathname } } })
 }
 
-function dashboard(status: 'started' | 'complete', planSource = 'momentum') {
+function dashboard(status: 'started' | 'complete') {
   return {
     local_date: '2026-09-16',
     profile: {
       display_name: 'Audit', date_of_birth: '1990-05-15', sex: 'undisclosed', height_cm: 175,
       locale: 'en-US', timezone: 'UTC', country_code: 'US', pricing_market: 'global', product_region: 'intl',
       unit_system: 'metric', onboarding_status: status, automation_block_reason: null,
-      plan_source_preference: planSource === 'external' ? 'external' : 'momentum',
+      plan_source_preference: 'momentum',
       email_confirmed: true, consent_versions: { terms: null, privacy: null, health: null }, health_data_consent_at: null,
     },
     active_goal: null, checkin: null, recent_checkins: [], latest_body_weight: null,
@@ -169,8 +169,6 @@ async function fillPersianJourney(page: Page) {
   for (const select of await page.locator('select').all()) await select.selectOption('no')
   await continueFa(page, 'consent')
   for (const checkbox of await page.locator('.onboarding-checkbox input').all()) await checkbox.check({ force: true })
-  await continueFa(page, 'plan-source')
-  await page.getByRole('radio', { name: /برنامه خودم را استفاده می‌کنم/ }).check()
   await continueFa(page, 'goal')
   await page.locator('select').selectOption('maintenance')
   await continueFa(page, 'food')
@@ -182,7 +180,7 @@ async function fillPersianJourney(page: Page) {
   await expect(page).toHaveURL(/\/fa\/onboarding\/review$/)
 }
 
-async function fillFullJourney(page: Page, source: 'momentum' | 'external', activeTraining = false) {
+async function fillFullJourney(page: Page, activeTraining = false) {
   await page.goto('/en/onboarding/basics')
   await page.getByLabel('Name', { exact: true }).fill('Audit')
   await page.getByRole('combobox', { name: /Date of birth/ }).click()
@@ -202,8 +200,6 @@ async function fillFullJourney(page: Page, source: 'momentum' | 'external', acti
   ]) await choose(page, label, 'No')
   await continueStep(page, 'consent')
   for (const checkbox of await page.locator('.onboarding-checkbox input').all()) await checkbox.check({ force: true })
-  await continueStep(page, 'plan-source')
-  await page.getByRole('radio', { name: source === 'momentum' ? /create my plan/i : /use my own plan/i }).check()
   await continueStep(page, 'goal')
   await choose(page, 'Primary goal', 'Maintain & perform')
   await continueStep(page, 'food')
@@ -247,18 +243,18 @@ test('sign-up reaches the durable verification page without touching a live back
 })
 
 for (const scenario of [
-  { source: 'momentum' as const, viewport: { width: 390, height: 844 } },
-  { source: 'external' as const, viewport: { width: 1280, height: 900 } },
+  { name: 'phone', activeTraining: true, viewport: { width: 390, height: 844 } },
+  { name: 'desktop', activeTraining: false, viewport: { width: 1280, height: 900 } },
 ]) {
-  test(`full ${scenario.source} journey reaches and completes review`, async ({ context, page }) => {
+  test(`full ${scenario.name} journey reaches and completes review`, async ({ context, page }) => {
     await page.setViewportSize(scenario.viewport)
     const state = await installMocks(context)
     await signIn(page)
-    await fillFullJourney(page, scenario.source, scenario.source === 'momentum')
+    await fillFullJourney(page, scenario.activeTraining)
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()
     expect(axe.violations).toEqual([])
     await page.getByRole('button', { name: 'Confirm and continue' }).click()
-    await expect(page).toHaveURL(scenario.source === 'external' ? /\/en\/app\/import-plan/ : /\/en\/app\/today/)
+    await expect(page).toHaveURL(/\/en\/app\/today/)
     expect(state.actions).toContain('complete-onboarding')
     expect(state.actions).not.toContain('create-starter-plan')
     expectNoProviderTraffic(state)
@@ -268,7 +264,7 @@ for (const scenario of [
 test('refresh resumes at the server-owned current step with saved answers', async ({ context, page }) => {
   const state = await installMocks(context, {
     current_step: 'goal',
-    payload: { ...basicsPayload, ...healthPayload, termsAccepted: 'yes', privacyAccepted: 'yes', healthDataConsent: 'yes', planSource: 'external' },
+    payload: { ...basicsPayload, ...healthPayload, termsAccepted: 'yes', privacyAccepted: 'yes', healthDataConsent: 'yes' },
   })
   await signIn(page)
   await page.goto('/en/onboarding')
@@ -294,7 +290,7 @@ test('urgent answer stops optional collection immediately and offers safety guid
 test('offline review preserves the draft and never attempts completion', async ({ context, page }) => {
   const state = await installMocks(context)
   await signIn(page)
-  await fillFullJourney(page, 'external')
+  await fillFullJourney(page)
   const savesBeforeOffline = state.calls.filter((call) => call.includes('onboarding_drafts')).length
   await context.setOffline(true)
   await expect(page.getByText(/Final review is preserved on this device/)).toBeVisible()
@@ -329,7 +325,7 @@ test('open date, country, and time controls have no axe violations', async ({ co
   await page.getByRole('combobox', { name: 'Country of use' }).click()
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([])
   await page.keyboard.press('Escape')
-  state.draft = { current_step: 'training', payload: { ...basicsPayload, ...healthPayload, termsAccepted: 'yes', privacyAccepted: 'yes', healthDataConsent: 'yes', planSource: 'external', goalType: 'maintenance', dietStyle: 'omnivore', trainingDays: '1', trainingDurationPreset: '45', trainingDuration: '45', primaryActivity: 'strength', trainingExperience: 'beginner', trainingLocation: 'home', trainingWeekdays: '1', trainingStartTime: '18:00', trainingAvailability: 'Evenings' } }
+  state.draft = { current_step: 'training', payload: { ...basicsPayload, ...healthPayload, termsAccepted: 'yes', privacyAccepted: 'yes', healthDataConsent: 'yes', goalType: 'maintenance', dietStyle: 'omnivore', trainingDays: '1', trainingDurationPreset: '45', trainingDuration: '45', primaryActivity: 'strength', trainingExperience: 'beginner', trainingLocation: 'home', trainingWeekdays: '1', trainingStartTime: '18:00', trainingAvailability: 'Evenings' } }
   await page.goto('/en/onboarding/training')
   await page.reload()
   await page.getByRole('combobox', { name: /Usual training start time/ }).click()
@@ -337,7 +333,7 @@ test('open date, country, and time controls have no axe violations', async ({ co
   expectNoProviderTraffic(state)
 })
 
-test('Persian 320px review completes the same external journey before any provider call', async ({ context, page }) => {
+test('Persian 320px review completes the same journey before any provider call', async ({ context, page }) => {
   await page.setViewportSize({ width: 320, height: 700 })
   const state = await installMocks(context)
   await signIn(page)
@@ -347,7 +343,7 @@ test('Persian 320px review completes the same external journey before any provid
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([])
   await page.screenshot({ path: '/tmp/momentum-final-fa-review.png', fullPage: true })
   await page.getByRole('button', { name: 'تأیید و ادامه' }).click()
-  await expect(page).toHaveURL(/\/fa\/app\/import-plan/)
+  await expect(page).toHaveURL(/\/fa\/app\/today/)
   expect(state.actions).toContain('complete-onboarding')
   expectNoProviderTraffic(state)
 })

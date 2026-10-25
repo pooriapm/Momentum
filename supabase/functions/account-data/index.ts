@@ -13,19 +13,7 @@ import {
 } from '../_shared/http.ts'
 import { enforceRateLimit } from '../_shared/limits.ts'
 import { assertMemberFeatureAccess } from '../_shared/membership.ts'
-import { assertCatalogGenerationGate } from '../_shared/catalog-gate.ts'
-import {
-  loadPlanCatalog,
-  planCatalogPromptContext,
-  resolveDeclaredAllergenIds,
-} from '../_shared/plan-catalog.ts'
-import { assertGeneratedPlan, generatedPlanJsonSchema } from '../_shared/plan-contract.ts'
-import { MONTHLY_PLAN_DAYS, PLAN_SCHEMA_VERSION } from '../_shared/plan-provider.ts'
 import { projectRestaurantGuide } from '../_shared/restaurant-guide.ts'
-import {
-  buildValidatedDeterministicStarter,
-  STARTER_TEMPLATE_VERSION,
-} from '../_shared/deterministic-starter.ts'
 import {
   ACCOUNT_EXPORT_TABLES,
   accountHash,
@@ -1251,311 +1239,6 @@ async function loadDashboard(
   }
 }
 
-async function loadExternalPlanContext(
-  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
-  userId: string,
-): Promise<Record<string, unknown>> {
-  const [profile, goal, dietary, health, training] = await Promise.all([
-    admin.from('profiles')
-      .select(
-        'date_of_birth,sex,height_cm,locale,timezone,country_code,onboarding_status,automation_block_reason,plan_source_preference',
-      )
-      .eq('user_id', userId).single(),
-    admin.from('goals')
-      .select('goal_type,start_weight_kg,target_weight_kg,target_date')
-      .eq('user_id', userId).eq('status', 'active').limit(1).maybeSingle(),
-    admin.from('dietary_preferences')
-      .select(
-        'dietary_pattern,favorite_foods,disliked_foods,allergies,requested_meal_pattern,preferred_option_count,cooking_constraints,available_equipment,work_schedule,budget_tier,restaurant_meals_per_week,restaurant_preferences,grocery_preferences,cuisine_region,training_location,training_experience',
-      )
-      .eq('user_id', userId).single(),
-    admin.from('health_context')
-      .select('medical_considerations,medications,supplements,clinician_notes')
-      .eq('user_id', userId).maybeSingle(),
-    admin.from('training_schedule_items')
-      .select('weekday,activity_type,local_start_time,duration_minutes,intensity,notes')
-      .eq('user_id', userId).order('weekday'),
-  ])
-  if (profile.error || goal.error || dietary.error || health.error || training.error) {
-    throw new HttpError(503, 'external_plan_context_unavailable', 'Plan context is unavailable.')
-  }
-  if (profile.data.onboarding_status !== 'complete') {
-    throw new HttpError(
-      409,
-      'onboarding_incomplete',
-      'Complete onboarding before creating an external plan.',
-    )
-  }
-  if (profile.data.plan_source_preference !== 'external') {
-    throw new HttpError(
-      409,
-      'external_plan_path_not_selected',
-      'Select the free external-plan path first.',
-    )
-  }
-  const catalog = await loadPlanCatalog(admin)
-  assertCatalogGenerationGate(catalog)
-  const declaredAllergenIds = resolveDeclaredAllergenIds(
-    catalog,
-    Array.isArray(dietary.data.allergies) ? dietary.data.allergies : [],
-  )
-  const birthDate = new Date(`${profile.data.date_of_birth}T00:00:00Z`)
-  const today = new Date()
-  let age = today.getUTCFullYear() - birthDate.getUTCFullYear()
-  if (
-    today.getUTCMonth() < birthDate.getUTCMonth() ||
-    (today.getUTCMonth() === birthDate.getUTCMonth() && today.getUTCDate() < birthDate.getUTCDate())
-  ) age -= 1
-  const minimizedProfile = {
-    sex: profile.data.sex,
-    height_cm: profile.data.height_cm,
-    locale: profile.data.locale,
-    timezone: profile.data.timezone,
-    country_code: profile.data.country_code,
-  }
-  return {
-    schema_version: PLAN_SCHEMA_VERSION,
-    requested_days: MONTHLY_PLAN_DAYS,
-    output_schema: generatedPlanJsonSchema,
-    catalog: planCatalogPromptContext(catalog),
-    declared_allergen_ids: [...declaredAllergenIds],
-    profile: { ...minimizedProfile, age },
-    goal: goal.data,
-    dietary: dietary.data,
-    health: health.data,
-    training: training.data ?? [],
-  }
-}
-
-async function importExternalPlan(
-  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
-  userId: string,
-  body: AccountDataBody,
-  idempotencyKey: string,
-) {
-  if (!isRecord(body.plan)) {
-    throw new HttpError(
-      400,
-      'invalid_external_plan',
-      'Import a JSON object using the Momentum plan contract.',
-    )
-  }
-  if (body.source_kind !== 'external_ai' && body.source_kind !== 'existing_plan') {
-    throw new HttpError(400, 'invalid_external_source', 'External plan source is invalid.')
-  }
-  const [profile, dietary, goal] = await Promise.all([
-    admin.from('profiles')
-      .select('locale,timezone,onboarding_status,automation_block_reason,plan_source_preference')
-      .eq('user_id', userId).single(),
-    admin.from('dietary_preferences').select('allergies').eq('user_id', userId).single(),
-    admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1).single(),
-  ])
-  if (profile.error || dietary.error || goal.error) {
-    throw new HttpError(
-      503,
-      'external_plan_import_unavailable',
-      'External plan import is unavailable.',
-    )
-  }
-  if (profile.data.onboarding_status !== 'complete' || profile.data.automation_block_reason) {
-    throw new HttpError(
-      409,
-      'external_plan_safety_blocked',
-      'This profile is not eligible for automated plan import.',
-    )
-  }
-  if (profile.data.plan_source_preference !== 'external') {
-    throw new HttpError(
-      409,
-      'external_plan_path_not_selected',
-      'Select the free external-plan path first.',
-    )
-  }
-  const locale = profile.data.locale === 'fa-IR' ? 'fa-IR' : 'en-US'
-  const catalog = await loadPlanCatalog(admin)
-  assertCatalogGenerationGate(catalog)
-  const declaredAllergenIds = resolveDeclaredAllergenIds(
-    catalog,
-    Array.isArray(dietary.data.allergies) ? dietary.data.allergies : [],
-  )
-  assertGeneratedPlan(body.plan, MONTHLY_PLAN_DAYS, locale, { catalog, declaredAllergenIds })
-  const contentSha256 = await sha256(canonicalJson(body.plan))
-  const validFrom = isoDateInTimezone(profile.data.timezone || 'UTC')
-  const validTo = addIsoDays(validFrom, MONTHLY_PLAN_DAYS - 1)
-  const { data, error } = await admin.rpc('persist_external_plan', {
-    p_user_id: userId,
-    p_idempotency_key: idempotencyKey,
-    p_goal_id: goal.data.id,
-    p_plan_name: String(body.plan.plan_name),
-    p_valid_from: validFrom,
-    p_valid_to: validTo,
-    p_locale: locale,
-    p_schema_version: PLAN_SCHEMA_VERSION,
-    p_catalog_release: catalog.releaseId,
-    p_source_kind: body.source_kind,
-    p_content: body.plan,
-    p_content_sha256: contentSha256,
-  })
-  if (error) {
-    if (error.message.includes('idempotency_key_reused')) {
-      throw new HttpError(
-        409,
-        'idempotency_key_reused',
-        'Idempotency key was used for a different plan.',
-      )
-    }
-    throw new HttpError(
-      503,
-      'external_plan_import_failed',
-      'The validated plan could not be saved.',
-    )
-  }
-  return data
-}
-
-// Mirrors the cycle choice in persist_deterministic_starter_plan so the menu can
-// rotate by cycle. The RPC stays authoritative for the stored cycle number.
-async function nextStarterCycleHint(
-  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
-  userId: string,
-  today: string,
-): Promise<number> {
-  const [latest, activeEnd] = await Promise.all([
-    admin.from('monthly_plan_periods').select('cycle_index,status').eq('user_id', userId)
-      .order('cycle_index', { ascending: false }).limit(1).maybeSingle(),
-    admin.from('plans').select('valid_to').eq('user_id', userId).eq('status', 'active')
-      .order('valid_to', { ascending: false }).limit(1).maybeSingle(),
-  ])
-  if (latest.error || activeEnd.error || !latest.data) return 1
-  const cycle = Number(latest.data.cycle_index) || 1
-  if (latest.data.status !== 'ready') return cycle
-  const end = typeof activeEnd.data?.valid_to === 'string' ? activeEnd.data.valid_to : null
-  return end && differenceInDays(today, end) >= 3 ? cycle : cycle + 1
-}
-
-async function createDeterministicStarterPlan(
-  admin: Awaited<ReturnType<typeof authenticate>>['admin'],
-  userId: string,
-  idempotencyKey: string,
-) {
-  const [profile, dietary, goal] = await Promise.all([
-    admin.from('profiles').select(
-      'date_of_birth,locale,timezone,country_code,product_region,onboarding_status,automation_block_reason,plan_source_preference,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,health_data_consent_at,health_consent_version',
-    ).eq('user_id', userId).single(),
-    admin.from('dietary_preferences').select('allergies').eq('user_id', userId).single(),
-    admin.from('goals').select('id').eq('user_id', userId).eq('status', 'active').limit(1).single(),
-  ])
-  if (
-    profile.error || dietary.error || goal.error || !profile.data.date_of_birth ||
-    !profile.data.country_code
-  ) {
-    throw new HttpError(
-      409,
-      'starter_plan_profile_incomplete',
-      'Complete onboarding before creating a plan.',
-    )
-  }
-
-  const validFrom = isoDateInTimezone(profile.data.timezone || 'UTC')
-  const validTo = addIsoDays(validFrom, MONTHLY_PLAN_DAYS - 1)
-  const cycleIndex = await nextStarterCycleHint(admin, userId, validFrom)
-  const catalog = await loadPlanCatalog(admin)
-  const declaredAllergenIds = resolveDeclaredAllergenIds(
-    catalog,
-    Array.isArray(dietary.data.allergies) ? dietary.data.allergies : [],
-  )
-  const content = await buildValidatedDeterministicStarter({
-    profile: {
-      dateOfBirth: profile.data.date_of_birth,
-      locale: profile.data.locale === 'fa-IR' ? 'fa-IR' : 'en-US',
-      countryCode: profile.data.country_code,
-      productRegion: profile.data.product_region === 'ir' ? 'ir' : 'intl',
-      onboardingStatus: profile.data.onboarding_status,
-      automationBlockReason: profile.data.automation_block_reason,
-      planSourcePreference: profile.data.plan_source_preference,
-      termsAcceptedAt: profile.data.terms_accepted_at,
-      termsVersion: profile.data.terms_version,
-      privacyAcceptedAt: profile.data.privacy_accepted_at,
-      privacyVersion: profile.data.privacy_version,
-      healthDataConsentAt: profile.data.health_data_consent_at,
-      healthConsentVersion: profile.data.health_consent_version,
-    },
-    catalog,
-    declaredAllergenIds,
-    consentAdmin: admin,
-    cycleIndex,
-  })
-  const versions = await loadCurrentLegalVersions(admin)
-  const contentSha256 = await sha256(canonicalJson(content))
-  const { data, error } = await admin.rpc('persist_deterministic_starter_plan', {
-    p_user_id: userId,
-    p_idempotency_key: idempotencyKey,
-    p_goal_id: goal.data.id,
-    p_plan_name: String(content.plan_name),
-    p_valid_from: validFrom,
-    p_valid_to: validTo,
-    p_locale: profile.data.locale === 'fa-IR' ? 'fa-IR' : 'en-US',
-    p_schema_version: PLAN_SCHEMA_VERSION,
-    p_catalog_release: catalog.releaseId,
-    p_template_version: STARTER_TEMPLATE_VERSION,
-    p_terms_version: versions.terms,
-    p_privacy_version: versions.privacy,
-    p_health_consent_version: versions.health,
-    p_content: content,
-    p_content_sha256: contentSha256,
-  })
-  if (error) {
-    if (error.message.includes('idempotency_key_reused')) {
-      throw new HttpError(
-        409,
-        'idempotency_key_reused',
-        'Idempotency key was used for a different plan.',
-      )
-    }
-    if (error.message.includes('starter_plan_gate_failed')) {
-      throw new HttpError(
-        409,
-        'starter_plan_gate_failed',
-        'Starter-plan eligibility changed before activation.',
-      )
-    }
-    if (error.message.includes('subscription_inactive')) {
-      throw new HttpError(
-        402,
-        'SUBSCRIPTION_INACTIVE',
-        'An active membership is required for the next monthly plan.',
-      )
-    }
-    if (error.message.includes('payment_method_required')) {
-      throw new HttpError(
-        402,
-        'PAYMENT_METHOD_REQUIRED',
-        'Add a payment method before generating a plan.',
-      )
-    }
-    if (error.message.includes('plan_already_active')) {
-      throw new HttpError(
-        409,
-        'plan_already_active',
-        'The current plan has more than three days left.',
-      )
-    }
-    if (error.message.includes('generation_in_progress')) {
-      throw new HttpError(
-        409,
-        'JOB_IN_PROGRESS',
-        'A monthly generation job is already in progress.',
-      )
-    }
-    throw new HttpError(
-      503,
-      'starter_plan_persist_failed',
-      'The validated starter plan could not be saved.',
-    )
-  }
-  return data
-}
-
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return optionsResponse(request)
 
@@ -1598,10 +1281,13 @@ Deno.serve(async (request) => {
       })
     }
 
-    if (body.action === 'external-plan-context') {
-      return jsonResponse(request, {
-        external_plan_context: await loadExternalPlanContext(auth.admin, auth.user.id),
-      })
+    // Bring-your-own-plan is retired: every plan comes from Momentum. Nothing is read or written.
+    if (body.action === 'external-plan-context' || body.action === 'import-external-plan') {
+      throw new HttpError(
+        410,
+        'EXTERNAL_PLAN_PATH_RETIRED',
+        'Plans come from Momentum only.',
+      )
     }
 
     if (body.action === 'export-status') {
@@ -1701,16 +1387,6 @@ Deno.serve(async (request) => {
       }
       return jsonResponse(request, { analytics: data })
     }
-    if (body.action === 'import-external-plan') {
-      return jsonResponse(request, {
-        external_plan_import: await importExternalPlan(
-          auth.admin,
-          auth.user.id,
-          body,
-          idempotencyKey,
-        ),
-      })
-    }
     if (body.action === 'save-next-cycle-note') {
       return jsonResponse(request, {
         next_cycle_note: await saveNextCycleNote(auth.admin, auth.user.id, body.note),
@@ -1808,14 +1484,14 @@ Deno.serve(async (request) => {
       return jsonResponse(request, { onboarding })
     }
 
+    // Every plan, the free first month included, comes from the AI generator
+    // (generate-monthly-plan). The catalog template is no longer handed out as a plan.
     if (body.action === 'create-starter-plan') {
-      return jsonResponse(request, {
-        starter_plan: await createDeterministicStarterPlan(
-          auth.admin,
-          auth.user.id,
-          idempotencyKey,
-        ),
-      }, 201)
+      throw new HttpError(
+        410,
+        'starter_plan_retired',
+        'Plans are created by generate-monthly-plan only.',
+      )
     }
 
     if (body.action === 'confirm-body-composition') {

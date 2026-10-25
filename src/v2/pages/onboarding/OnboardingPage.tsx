@@ -5,15 +5,12 @@ import {
   ArrowRight,
   Check,
   FileCheck2,
-  FileUp,
   Gift,
   HeartPulse,
-  Import,
   LockKeyhole,
   ShieldCheck,
   Sparkles,
   UploadCloud,
-  WandSparkles,
   WifiOff,
 } from 'lucide-react'
 import { type ChangeEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
@@ -403,16 +400,9 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           : 'Your account was saved, but automated planning is not appropriate for the selected health context.'))
         return
       }
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['active-plan'] }),
-        queryClient.invalidateQueries({ queryKey: ['external-plan-context'] }),
-      ])
-      trackProductEvent({ ...eventContext(locale, productRegion, values.planSource === 'external' ? 'external' : 'momentum'), event_name: 'onboarding_completed', surface: 'onboarding', action_kind: null, outcome: 'completed' })
-      if (values.planSource === 'external') {
-        navigate(localizedPath(locale, '/app/import-plan'))
-      } else {
-        navigate(postOnboardingPath(locale))
-      }
+      await queryClient.invalidateQueries({ queryKey: ['active-plan'] })
+      trackProductEvent({ ...eventContext(locale, productRegion, 'momentum'), event_name: 'onboarding_completed', surface: 'onboarding', action_kind: null, outcome: 'completed' })
+      navigate(postOnboardingPath(locale))
     } catch {
       setPageError(t('onboarding.saveConflict'))
     } finally {
@@ -422,7 +412,6 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
 
   const healthStopped = section.key === 'health' && isHealthCollectingStopped(values)
   const showContinue = section.key !== 'review' && !healthStopped
-  const planSourceMissing = section.key === 'plan-source' && !values.planSource
   const productRegion = values.country
     ? values.country === 'IR' ? 'ir' : 'intl'
     : geoQuery.data?.suggested_product_region
@@ -454,17 +443,8 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           {!online && section.key !== 'review' ? <div className="inline-notice inline-notice--warning" role="status"><WifiOff size={18} />{locale === 'fa' ? 'آفلاین هستید. پاسخ‌هایتان در این صفحه باقی می‌ماند؛ برای ذخیره و ادامه دوباره وصل شوید.' : 'You’re offline. Your answers remain on this page; reconnect to save and continue.'}</div> : null}
           {section.key === 'basics' ? <div className="inline-notice"><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</div> : null}
           {section.key === 'consent' ? <div className="inline-notice onboarding-lead-note"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</div> : null}
-          {section.key === 'plan-source' ? (
-            <PlanSourceChoice
-              error={errors.planSource}
-              giftCampaign={giftCampaign}
-              locale={locale}
-              onChange={(value) => updateValue(section.fields[0], value)}
-              value={values.planSource ?? ''}
-            />
-          ) : null}
           {section.key === 'food' ? <div className="inline-notice inline-notice--success onboarding-lead-note"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</div> : null}
-          {visibleFields.length > 0 && section.key !== 'plan-source' && section.key !== 'body' ? (
+          {visibleFields.length > 0 && section.key !== 'body' ? (
             <div className="onboarding-fields">
               <OnboardingFields
                 fields={section.fields}
@@ -535,20 +515,11 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
             />
           ) : null}
           {section.key === 'review' ? (
-            <div className="onboarding-review" data-inventory={values.planSource === 'external' ? 'ONB-29 LIFE-21' : reviewIds.join(' ')}>
+            <div className="onboarding-review" data-inventory={reviewIds.join(' ')}>
               <span className="onboarding-review__mark"><Sparkles size={28} /></span>
               <h3>{t('onboarding.review')}</h3>
-              <p>{values.planSource === 'external'
-                ? (locale === 'fa' ? 'پس از تأیید، پرامپت محلی و مسیر واردکردن برنامه باز می‌شود. اشتراک لازم نیست.' : 'After confirmation, your local prompt and secure import path will open. No subscription is required.')
-                : (locale === 'fa' ? 'پاسخ‌هایت را بررسی کن. تأیید، اطلاعات را ذخیره می‌کند؛ ساخت برنامه را در مرحلهٔ بعد خودت آغاز می‌کنی.' : 'Review your answers. Confirmation saves them; you will start plan creation explicitly in the next step.')}</p>
-              {values.planSource === 'external' ? (
-                <article className="onboarding-gift content-card">
-                  <span className="onboarding-gift__icon" aria-hidden="true"><Import size={26} /></span>
-                  <p className="orbit-eyebrow">{locale === 'fa' ? 'مسیر رایگان' : 'Free path'}</p>
-                  <h4>{locale === 'fa' ? 'ساخت بیرونی، پیگیری در Momentum' : 'Create externally, track in Momentum'}</h4>
-                  <p>{locale === 'fa' ? 'پرامپت فقط روی دستگاهت ساخته می‌شود. پیش از کپی، خروج اطلاعات سلامت را تأیید می‌کنی و فایل قبل از ذخیره اعتبارسنجی می‌شود.' : 'The prompt is built only on your device. You confirm health-data transfer before copying, and the file is validated before saving.'}</p>
-                </article>
-              ) : giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? (
+              <p>{locale === 'fa' ? 'پاسخ‌هایت را بررسی کن. تأیید، اطلاعات را ذخیره می‌کند؛ ساخت برنامه را در مرحلهٔ بعد خودت آغاز می‌کنی.' : 'Review your answers. Confirmation saves them; you will start plan creation explicitly in the next step.'}</p>
+              {giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? (
                 <div className="inline-notice inline-notice--warning" role="status">{t('entitlement.giftExhausted')}</div>
               ) : giftCampaign === 'available' ? (
                 <article aria-labelledby="onboarding-gift-title" className="onboarding-gift content-card">
@@ -588,13 +559,13 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               <FieldReveal className="onboarding-reveal" key="health-actions-continue" open>
                 <div className="onboarding-actions">
                   <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
-                  <Button disabled={!online || planSourceMissing} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
+                  <Button disabled={!online} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
                 </div>
               </FieldReveal>
             ) : (
               <div className="onboarding-actions">
                 <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
-                <Button disabled={!online || planSourceMissing} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
+                <Button disabled={!online} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
               </div>
             )
           ) : (
@@ -616,72 +587,6 @@ function completionFingerprint(values: Record<string, string>) {
     second = Math.imul(second ^ code, 0x85ebca6b)
   }
   return `${(first >>> 0).toString(36)}${(second >>> 0).toString(36)}`
-}
-
-function PlanSourceChoice({
-  error,
-  giftCampaign,
-  locale,
-  value,
-  onChange,
-}: {
-  error?: string
-  giftCampaign: ReturnType<typeof giftCampaignFromUnknown>
-  locale: AppLocale
-  value: string
-  onChange: (value: string) => void
-}) {
-  const { t } = useTranslation()
-  const selectedLabel = value === 'external'
-    ? t('onboarding.planSourceExternal')
-    : value === 'momentum'
-      ? t('onboarding.planSourceMomentum')
-      : ''
-  const momentumFoot = giftCampaign === 'available'
-    ? t('onboarding.planSourceMomentumGiftFoot')
-    : giftCampaign === 'exhausted' || giftCampaign === 'disabled'
-      ? t('onboarding.planSourceMomentumMembershipFoot')
-      : locale === 'fa' ? 'واجد شرایط بودن در مرحلهٔ بعد بررسی می‌شود.' : 'Eligibility is checked in the next step.'
-
-  return (
-    <fieldset className={`plan-source-choice${error ? ' has-error' : ''}`} data-inventory="ONB-29">
-      <legend>{t('onboarding.planSourceChoose')}</legend>
-      <p className="plan-source-choice__intro">{t('onboarding.planSourceIntro')}</p>
-      <div className="plan-source-choice__grid">
-        <label className={`plan-source-choice__option${value === 'external' ? ' is-selected' : ''}`}>
-          <input checked={value === 'external'} name="plan-source" onChange={() => onChange('external')} required type="radio" value="external" />
-          <span className="plan-source-choice__top" aria-hidden="true">
-            <span className="plan-source-choice__icon"><FileUp size={23} /></span>
-            <span className="plan-source-choice__indicator">{value === 'external' ? <Check size={15} strokeWidth={3} /> : null}</span>
-          </span>
-          <span className="plan-source-choice__copy">
-            <span className="plan-source-choice__kicker">{t('onboarding.planSourceExternalKicker')}</span>
-            <strong>{t('onboarding.planSourceExternal')}</strong>
-            <span>{t('onboarding.planSourceExternalBody')}</span>
-          </span>
-          <small>{t('onboarding.planSourceExternalFoot')}</small>
-        </label>
-        <label className={`plan-source-choice__option${value === 'momentum' ? ' is-selected' : ''}`}>
-          <input checked={value === 'momentum'} name="plan-source" onChange={() => onChange('momentum')} required type="radio" value="momentum" />
-          <span className="plan-source-choice__top" aria-hidden="true">
-            <span className="plan-source-choice__icon"><WandSparkles size={23} /></span>
-            <span className="plan-source-choice__indicator">{value === 'momentum' ? <Check size={15} strokeWidth={3} /> : null}</span>
-          </span>
-          <span className="plan-source-choice__copy">
-            <span className="plan-source-choice__kicker">{t('onboarding.planSourceMomentumKicker')}</span>
-            <strong>{t('onboarding.planSourceMomentum')}</strong>
-            <span>{t('onboarding.planSourceMomentumBody')}</span>
-          </span>
-          <small>{momentumFoot}</small>
-        </label>
-      </div>
-      <p className={`plan-source-choice__guidance${value ? ' is-selected' : ''}`} aria-live="polite">
-        {value ? <Check aria-hidden="true" size={16} strokeWidth={3} /> : null}
-        {value ? t('onboarding.planSourceGuidanceSelected', { label: selectedLabel }) : t('onboarding.planSourceGuidanceChoose')}
-      </p>
-      {error ? <span className="orbit-field__error" role="alert">{error}</span> : null}
-    </fieldset>
-  )
 }
 
 function fieldPlaceholder(fieldKey: string, trainingLocation: string | undefined, translate: (key: string) => string) {
@@ -1099,7 +1004,6 @@ function ReviewGrid({
       : values.requestedMealPattern
 
   const items = [
-    { step: 'plan-source' as const, label: t('onboarding.planSource'), value: optionLabel('planSource', values.planSource) },
     { step: 'basics' as const, label: locale === 'fa' ? 'مشخصات و اندازه‌ها' : 'Identity and measurements', value: joinDetails(values.firstName, optionLabel('sex', values.sex), values.birthDate ? formatLocalizedDate(values.birthDate, locale) : '—', values.country ? countryName(values.country, locale) : '—', Number.isFinite(weight) && values.weightKg ? `${formatNumber(weight, locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'کیلوگرم' : 'kg'}` : '—', values.heightCm ? `${formatNumber(Number(values.heightCm), locale, { maximumFractionDigits: 1 })} ${locale === 'fa' ? 'سانتی‌متر' : 'cm'}` : '—') },
     { step: 'goal' as const, label: locale === 'fa' ? 'هدف' : 'Goal', value: joinDetails(optionLabel('goalType', values.goalType), values.targetWeightKg ? `${values.targetWeightKg} kg` : undefined) },
     { step: 'health' as const, label: locale === 'fa' ? 'غربالگری سلامت' : 'Health screening', value: joinDetails(healthScreeningOutcome(values) === 'eligible' ? (locale === 'fa' ? 'مانع ایمنی ثبت نشده' : 'No safety block') : (locale === 'fa' ? 'نیاز به مسیر انسانی' : 'Human path required'), `${locale === 'fa' ? 'علائم فوری' : 'Urgent symptoms'}: ${yesNo(values.urgentSymptoms)}`, values.medications, values.medicalNotes) },

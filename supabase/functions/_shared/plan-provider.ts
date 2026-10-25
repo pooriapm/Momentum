@@ -229,6 +229,11 @@ async function generatePlan(
     }
   }
 
+  // The stub is a fixed catalog template for local runs and CI. It is never a member's plan:
+  // without AI_PLAN_ALLOW_STUB the server refuses instead of handing it out.
+  if (optionalEnv('AI_PLAN_ALLOW_STUB')?.toLowerCase() !== 'true') {
+    throw new HttpError(503, 'AI_PROVIDER_NOT_CONFIGURED', 'The plan provider is unavailable.')
+  }
   return buildDeterministicResult(input)
 }
 

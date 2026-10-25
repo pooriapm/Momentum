@@ -42,9 +42,9 @@ const completeBasics = {
 }
 
 describe('D11 onboarding schema', () => {
-  it('keeps Basics → Health → Consent → Plan source → Goal → Food → Training → Body → Review', () => {
+  it('keeps Basics → Health → Consent → Goal → Food → Training → Body → Review', () => {
     expect(onboardingSections.map((item) => item.key)).toEqual([
-      'basics', 'health', 'consent', 'plan-source', 'goal', 'food', 'training', 'body', 'review',
+      'basics', 'health', 'consent', 'goal', 'food', 'training', 'body', 'review',
     ])
     expect(D11_STEP_ORDER).toEqual(onboardingSections.map((item) => item.key))
     expect(Object.keys(resources.fa.translation.onboarding).sort()).toEqual(Object.keys(resources.en.translation.onboarding).sort())
@@ -210,7 +210,7 @@ describe('D11 onboarding schema', () => {
       termsAccepted: 'yes',
       privacyAccepted: 'yes',
       healthDataConsent: 'yes',
-    })).toBe('plan-source')
+    })).toBe('goal')
   })
 
   it('rejects impossible report dates and removes stale hidden completion values', () => {

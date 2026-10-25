@@ -97,24 +97,6 @@ export function PricingPage({
       ? ['موجودی وقتی «ساخت برنامه» را می‌زنی بررسی می‌شود، قبل از اینکه برنامه‌ای ساخته شود.', 'هدیه فقط بعد از رزرو موفق قطعی است.']
       : ['Availability is checked when you select Generate, before plan creation.', 'The gift is confirmed only after a successful reservation.'])
   const offers = [
-    {
-      key: 'free',
-      tone: 'free',
-      image: '/landing/continue.jpg',
-      alt: fa ? 'ادامه راه در نور صبح' : 'Walking on into the morning light',
-      kicker: fa ? 'رایگان، همیشه' : 'Free, and it stays free',
-      title: fa ? 'برنامه خودت را بیاور' : 'Bring your own plan',
-      price: fa ? 'بدون هزینه' : 'No charge',
-      body: fa
-        ? 'اگر غذا و تمرین را جای دیگری چیده‌ای، برای Momentum اشتراک لازم نیست. پرامپت آماده را در ابزاری که خودت انتخاب می‌کنی اجرا کن، یا فایل برنامه‌ات را وارد کن. کاتالوگ، حساسیت و ایمنی همین‌جا بررسی می‌شود، و Momentum آن متن را خودش به ابزار دیگری نمی‌فرستد.'
-        : 'If you already built the food and the training somewhere else, Momentum does not need a subscription. Run the ready prompt in a tool you choose, or import the plan you have. Catalog, allergy, and safety checks happen here, and Momentum does not send that text on to another tool by itself.',
-      features: fa
-        ? ['برنامه‌ات را وارد کن و هر روز دنبالش کن: امروز، ثبت وعده و تمرین، چک‌این روزانه و هفتگی.', 'بررسی کاتالوگ، حساسیت و ایمنی قبل از اینکه برنامه فعال شود.', 'جایگزینی وعده، فهرست خرید و روند پیشرفت با عضویت می‌آیند.']
-        : ['Import your plan and follow it every day: Today, meal and workout logging, daily and weekly check-ins.', 'Catalog, allergy, and safety checks before the plan goes live.', 'Meal swaps, the shopping list, and progress trends come with membership.'],
-      href: localizedPath(locale, authenticated ? '/onboarding/plan-source' : '/auth/sign-up'),
-      label: fa ? 'انتخاب مسیر رایگان' : 'Choose the free path',
-      primary: false,
-    },
     ...(showPaid ? [
       {
         key: 'membership',

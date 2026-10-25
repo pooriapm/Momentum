@@ -20,7 +20,6 @@ import {
 import type { OnboardingStepKey } from '../../onboarding/schema'
 import { OnboardingPage } from './OnboardingPage'
 import { OnboardingResumePage } from './OnboardingResumePage'
-import { momentumEvidence } from '../../../stories/product/coverage'
 import '../public/public-pages.stories.css'
 import './onboarding-page.stories.css'
 
@@ -83,7 +82,6 @@ const completeDraft: Record<string, string> = {
   medicalNotes: '',
   medications: '',
   onboardingFlowId: 'storybook-onboarding-flow',
-  planSource: 'momentum',
   pregnancyOrBreastfeeding: 'no',
   preferredOptionCount: '3',
   primaryActivity: 'strength',
@@ -228,26 +226,6 @@ export const HealthUrgent: Story = {
 
 export const Consent: Story = { beforeEach: beforeEachWithDraft(), render: renderStep('consent') }
 
-export const PlanSource: Story = { beforeEach: beforeEachWithDraft({ planSource: '' }), parameters: momentumEvidence(['ONB-29'], '/[locale]/onboarding/plan-source'), render: renderStep('plan-source') }
-
-export const PlanSourceExternalSelected: Story = { beforeEach: beforeEachWithDraft({ planSource: 'external' }), render: renderStep('plan-source') }
-
-export const PlanSourceMomentumSelected: Story = { beforeEach: beforeEachWithDraft({ planSource: 'momentum' }), render: renderStep('plan-source') }
-
-export const PlanSourceGiftExhausted: Story = {
-  beforeEach: async (context) => {
-    const cleanup = await beforeEachWithDraft({ planSource: '' })(context)
-    mocked(loadPricingContext).mockResolvedValue({
-      ...pricingFixture,
-      country: 'IR',
-      gift_campaign: { status: 'exhausted' },
-      suggested_product_region: 'ir',
-    })
-    return cleanup
-  },
-  render: renderStep('plan-source'),
-}
-
 export const Goal: Story = { beforeEach: beforeEachWithDraft(), render: renderStep('goal') }
 
 export const GoalMaintenance: Story = {
@@ -313,11 +291,6 @@ export const BodyReportUploaded: Story = {
 
 export const ReviewReady: Story = {
   beforeEach: beforeEachWithDraft({ bodyReportId: '', bodyReportPath: '', bodySkipped: 'yes' }),
-  render: renderStep('review'),
-}
-
-export const ReviewExternalFreePath: Story = {
-  beforeEach: beforeEachWithDraft({ bodyReportId: '', bodyReportPath: '', bodySkipped: 'yes', planSource: 'external' }),
   render: renderStep('review'),
 }
 

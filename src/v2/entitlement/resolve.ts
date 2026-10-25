@@ -55,8 +55,7 @@ export function canReadSavedPlan(snapshot: EntitlementSnapshot) {
 export function appContentSurface(tab: string, snapshot: EntitlementSnapshot): AppContentSurface {
   if (isSetupAllowedTab(tab)) return 'children'
   if (snapshot.hasSavedPlan) return 'children'
-  if (snapshot.planSourcePreference === 'external' && snapshot.onboardingStatus === 'complete') return 'preplan'
-  if (snapshot.planSourcePreference === 'momentum' && snapshot.onboardingStatus === 'complete' && snapshot.membership === 'none') return 'preplan'
+  if (snapshot.onboardingStatus === 'complete' && snapshot.membership === 'none') return 'preplan'
   if (snapshot.onboardingStatus === 'started' || snapshot.onboardingStatus === 'profile_complete') return 'preplan'
   if (snapshot.automationBlocked || snapshot.onboardingStatus === 'automation_blocked' || snapshot.aiPlanState === 'safety_blocked') {
     return 'preplan'

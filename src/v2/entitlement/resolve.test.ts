@@ -26,11 +26,11 @@ describe('entitlement routing', () => {
     expect(postOnboardingPath('fa')).toBe('/fa/app/today')
   })
 
-  it('shows the paywall on membership-required tabs when onboarding is done and there is no plan', () => {
+  it('sends a finished, unentitled account to the plan start on membership-required tabs', () => {
     const none = entitlementFixture({ membership: 'none' })
-    expect(appContentSurface('today', none)).toBe('entitlement')
-    expect(appContentSurface('plan', none)).toBe('entitlement')
-    expect(appContentSurface('progress', none)).toBe('entitlement')
+    expect(appContentSurface('today', none)).toBe('preplan')
+    expect(appContentSurface('plan', none)).toBe('preplan')
+    expect(appContentSurface('progress', none)).toBe('preplan')
     expect(appContentSurface('me', none)).toBe('children')
   })
 

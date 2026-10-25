@@ -425,6 +425,19 @@ describe('cost optimization foundations', () => {
     vi.unstubAllGlobals()
   })
 
+  it('gives the free first plan the same model as every paid month', () => {
+    for (const env of [{}, { OPENAI_PLAN_MODEL: 'gpt-5.6-terra' }] as Array<Record<string, string>>) {
+      vi.stubGlobal('Deno', { env: { get: (name: string) => env[name] } })
+      const free = resolvePlanModelRoute({ cycleIndex: 1, isRenewal: false })
+      const paid = resolvePlanModelRoute({ cycleIndex: 2, isRenewal: true })
+      const later = resolvePlanModelRoute({ cycleIndex: 7, isRenewal: true })
+      expect(paid.modelId).toBe(free.modelId)
+      expect(later.modelId).toBe(free.modelId)
+      expect(paid.route).toBe(free.route)
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('applies deterministic nutrition repair and revalidates', () => {
     const catalog = createPlanCatalogSnapshot(catalogRows())
     const plan = stripExpansionMetadata(expandCompactPlan(compactFixture(), catalog, 'en-US'))

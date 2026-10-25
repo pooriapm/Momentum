@@ -19,7 +19,6 @@ const MePage = lazy(async () => ({ default: (await import('../pages/app/MePage')
 const AccountDataPage = lazy(async () => ({ default: (await import('../pages/app/AccountDataPage')).AccountDataPage }))
 const AccountSettingsPage = lazy(async () => ({ default: (await import('../pages/app/AccountSettingsPage')).AccountSettingsPage }))
 const AdminPage = lazy(async () => ({ default: (await import('../pages/app/AdminPage')).AdminPage }))
-const ExternalPlanImportPage = lazy(async () => ({ default: (await import('../pages/app/ExternalPlanImportPage')).ExternalPlanImportPage }))
 const AuthPage = lazy(async () => ({ default: (await import('../pages/auth/AuthPage')).AuthPage }))
 const OnboardingPage = lazy(async () => ({ default: (await import('../pages/onboarding/OnboardingPage')).OnboardingPage }))
 const OnboardingResumePage = lazy(async () => ({ default: (await import('../pages/onboarding/OnboardingResumePage')).OnboardingResumePage }))
@@ -114,10 +113,9 @@ export function MomentumRouter() {
           </AppFrame></AccountBoundary>
         ))}
       </Route>
+      {/* Bring-your-own-plan is retired; old links land on Today and the Momentum plan path. */}
       <Route path="/:locale/app/import-plan">
-        {(params) => withLocale(params.locale, (locale) => (
-          <AccountBoundary><ExternalPlanImportPage locale={locale} /></AccountBoundary>
-        ))}
+        {(params) => withLocale(params.locale, (locale) => <Redirect replace to={localizedPath(locale, '/app/today')} />)}
       </Route>
       <Route path="/:locale/app/admin">
         {(params) => withLocale(params.locale, (locale) => (

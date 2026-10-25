@@ -92,14 +92,8 @@ describe('PrePlanState generation wait', () => {
     expect(generate.mock.calls[1]?.[1]).toBe(key)
   })
 
-  it('blocks generation until gift or paid membership is present', () => {
-    render(<PrePlanState account={{ ...readyAccount, entitlementStatus: 'none' }} locale="en" />)
-    expect(screen.queryByRole('button', { name: /generate plan/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /start membership/i })).toHaveAttribute('href', '/en/app/me')
-  })
-
   it('lets a managed no-entitlement user explicitly request gift reservation without auto-starting', () => {
-    render(<PrePlanState account={{ ...readyAccount, entitlementStatus: 'none', planSourcePreference: 'momentum' }} locale="en" />)
+    render(<PrePlanState account={{ ...readyAccount, entitlementStatus: 'none' }} locale="en" />)
     expect(screen.getByText(/gift eligibility and availability are checked/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /generate plan/i })).toBeEnabled()
     expect(screen.queryByRole('link', { name: /start membership/i })).not.toBeInTheDocument()

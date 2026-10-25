@@ -40,6 +40,7 @@ function stubEnv(extra: Record<string, string | undefined> = {}) {
         const values: Record<string, string | undefined> = {
           AI_MASTER_ENABLED: 'true',
           AI_PLAN_ENABLED: 'true',
+          AI_PLAN_ALLOW_STUB: 'true',
           CURRENT_TERMS_VERSION: CONSENT_VERSION,
           CURRENT_PRIVACY_VERSION: CONSENT_VERSION,
           CURRENT_HEALTH_CONSENT_VERSION: CONSENT_VERSION,

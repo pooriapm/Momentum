@@ -92,7 +92,6 @@ const completeDraft: Record<string, string> = {
   highRiskCondition: 'no',
   injuryLimitation: 'no',
   pregnancyOrBreastfeeding: 'no',
-  planSource: 'momentum',
   preferredOptionCount: '3',
   primaryActivity: 'strength',
   privacyAccepted: 'yes',
@@ -256,82 +255,9 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.queryByText(/other is not mapped to the catalog/i)).not.toBeInTheDocument()
   })
 
-  it('ONB-29 requires one clearly selected plan path before continuing', async () => {
-    renderStep('plan-source', { ...completeDraft, planSource: '' })
-    const external = await screen.findByRole('radio', { name: /use my own plan/i })
-    const managed = screen.getByRole('radio', { name: /create my plan/i })
-    const continueButton = screen.getByRole('button', { name: 'Continue' })
-
-    expect(external).not.toBeChecked()
-    expect(managed).not.toBeChecked()
-    expect(continueButton).toBeDisabled()
-    expect(screen.getByText('Choose one option to continue.')).toBeInTheDocument()
-    expect(screen.getByText(/First-plan gift when campaign budget remains/i)).toBeInTheDocument()
-
-    fireEvent.click(external)
-    expect(external).toBeChecked()
-    expect(managed).not.toBeChecked()
-    expect(continueButton).toBeEnabled()
-    expect(screen.getByText('Selected: Use my own plan')).toBeInTheDocument()
-
-    fireEvent.click(managed)
-    expect(external).not.toBeChecked()
-    expect(managed).toBeChecked()
-    expect(screen.getByText('Selected: Create my plan')).toBeInTheDocument()
-
-    fireEvent.click(continueButton)
-    await waitFor(() => {
-      expect(saveDraft).toHaveBeenCalledWith(
-        user.id,
-        'goal',
-        expect.objectContaining({ planSource: 'momentum' }),
-      )
-    })
-  })
-
-  it('ONB-29 persists plan source on Back and shows membership copy when gift is exhausted', async () => {
-    pricing.mockResolvedValue({
-      ai_service_available: true,
-      authoritative_for_checkout: false,
-      country: 'IR',
-      gift_campaign: { status: 'exhausted' },
-      prices: [],
-      source: 'fallback',
-      suggested_cuisine_region: 'iran',
-      suggested_currency: 'IRR',
-      suggested_locale: 'fa-IR',
-      suggested_market: 'ir',
-      suggested_product_region: 'ir',
-    })
-    renderStep('plan-source', { ...completeDraft, planSource: 'external' })
-    expect(await screen.findByText(/Gift unavailable · Membership required/i)).toBeInTheDocument()
-    expect(screen.getByText(/change it with Back before you finish setup/i)).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
-    await waitFor(() => {
-      expect(saveDraft).toHaveBeenCalledWith(
-        user.id,
-        'consent',
-        expect.objectContaining({ planSource: 'external' }),
-      )
-    })
-  })
-
-  it('ONB-29 resumes a saved plan-source selection from the draft', async () => {
-    renderStep('plan-source', { ...completeDraft, planSource: 'momentum' })
-    const managed = await screen.findByRole('radio', { name: /create my plan/i })
-    expect(managed).toBeChecked()
-    expect(screen.getByRole('radio', { name: /use my own plan/i })).not.toBeChecked()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled()
-    expect(screen.getByText('Selected: Create my plan')).toBeInTheDocument()
-  })
-
-  it('review edit links include plan source', async () => {
+  it('review lists the answers without a plan-source choice', async () => {
     renderStep('review', { ...completeDraft, bodySkipped: 'yes', bodyReportPath: '' })
-    expect(await screen.findByText('How your plan is created')).toBeInTheDocument()
-    expect(screen.getByText('Create my plan')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Edit How your plan is created' })).toHaveAttribute('href', '/en/onboarding/plan-source')
-    expect(screen.getByText(/Sara · Female · May 18, 1992 · Iran/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Sara · Female · May 18, 1992 · Iran/i)).toBeInTheDocument()
     expect(screen.getByText(/Allergies: Peanut/i)).toBeInTheDocument()
     expect(screen.getByText(/3 days · Strength training · Intermediate · Home/i)).toBeInTheDocument()
     expect(screen.getByText(/3 meals \/ 3 options/i)).toBeInTheDocument()
@@ -484,11 +410,10 @@ describe('OnboardingPage inventory states', () => {
     expect(screen.getByRole('button', { name: 'Start over' })).toBeInTheDocument()
   })
   it('updates the shared draft before the next keyed step mounts', async () => {
-    const { client } = renderStep('plan-source', { ...completeDraft, planSource: '' })
-    fireEvent.click(await screen.findByRole('radio', { name: /use my own plan/i }))
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    const { client } = renderStep('consent', completeDraft)
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }))
     await waitFor(() => expect(client.getQueryData(['onboarding-draft', user.id])).toMatchObject({
-      currentStep: 'goal', values: { planSource: 'external' },
+      currentStep: 'goal', values: { healthDataConsent: 'yes' },
     }))
   })
 

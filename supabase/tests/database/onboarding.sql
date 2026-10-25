@@ -98,8 +98,8 @@ select extensions.is(
 
 select extensions.is(
   (select plan_source_preference from public.profiles where user_id = '11111111-1111-4111-8111-111111111111'),
-  'external',
-  'the selected external plan path is persisted on the account'
+  'momentum',
+  'a stale external plan choice in the draft cannot route the account off the Momentum plan'
 );
 
 select extensions.is(
