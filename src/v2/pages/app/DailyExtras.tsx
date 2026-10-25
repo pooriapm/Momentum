@@ -20,11 +20,13 @@ export function WaterCard({
   plan,
   preview,
   locked,
+  onLoggedChange,
 }: {
   locale: AppLocale
   plan: MomentumPlanView
   preview: boolean
   locked: boolean
+  onLoggedChange?: (ml: number) => void
 }) {
   const fa = locale === 'fa'
   const goalMl = plan.water?.goalMl ?? 2500
@@ -34,6 +36,7 @@ export function WaterCard({
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
+  useEffect(() => { onLoggedChange?.(ml) }, [ml, onLoggedChange])
 
   function change(glasses: number) {
     const next = Math.min(MAX_WATER_ML, Math.max(0, ml + glasses * GLASS_ML))

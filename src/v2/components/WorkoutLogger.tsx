@@ -74,9 +74,11 @@ export function WorkoutLogger({
   locale: AppLocale
   preview: boolean
   enabled: boolean
-  onStatusChange?: (status: WorkoutRunStatus) => void
+  /** `known` is false until the saved session has loaded, so no caller reads "not started" from a loading state. */
+  onStatusChange?: (status: WorkoutRunStatus, known: boolean) => void
 }) {
   const [session, setSession] = useState<WorkoutSession | null>(null)
+  const [loaded, setLoaded] = useState(false)
   const [drafts, setDrafts] = useState<Record<string, SetDraft>>({})
   const [notes, setNotes] = useState('')
   const [painArea, setPainArea] = useState('')
@@ -93,14 +95,14 @@ export function WorkoutLogger({
     let active = true
     if (preview || !enabled) return () => { active = false }
     void loadWorkoutSession(localDate, workout.id)
-      .then((value) => { if (active) { setSession(value); setNotes(value?.notes ?? '') } })
+      .then((value) => { if (active) { setSession(value); setNotes(value?.notes ?? ''); setLoaded(true) } })
       .catch(() => { if (active) setError(locale === 'fa' ? 'وضعیت تمرین بارگیری نشد.' : 'Workout status could not be loaded.') })
     return () => { active = false }
   }, [enabled, localDate, locale, preview, workout.id])
 
   useEffect(() => {
-    onStatusChange?.(session?.status ?? 'idle')
-  }, [onStatusChange, session])
+    onStatusChange?.(session?.status ?? 'idle', preview || loaded || session !== null)
+  }, [loaded, onStatusChange, preview, session])
 
   const finishedExercises = useMemo(
     () => session?.exercises.filter((item) => item.status === 'completed' || item.status === 'skipped').length ?? 0,

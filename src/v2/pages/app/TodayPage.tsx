@@ -30,12 +30,15 @@ import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { EmptyPlanState } from './EmptyPlanState'
 import { RecoveryValue } from './RecoveryValue'
 import { EatingOutCard, WaterCard } from './DailyExtras'
+import { mealsRing, waterRing, workoutRing } from './orbit-rings'
+import { TodayOrbit } from './TodayOrbit'
 import { MemberFeatureLock } from './MemberFeatureLock'
 import { deriveMembershipStatus } from './me-state'
 import { hasMemberFeatures } from '../../entitlement'
 import { GenerationWait } from './GenerationWait'
 import { useGenerationWait } from './use-generation-wait'
 import {
+  completedMealCount,
   deriveTodaySurface,
   formatLastSync,
   mealIsSettled,
@@ -133,6 +136,8 @@ export function TodayPage({
   const [checkInSaved, setCheckInSaved] = useState(false)
   const [safety, setSafety] = useState<CheckInSafety | null>(null)
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutRunStatus>('idle')
+  const [workoutKnown, setWorkoutKnown] = useState(false)
+  const [waterMl, setWaterMl] = useState<number | null>(null)
   const [mealDetail, setMealDetail] = useState<{ choice: MealChoice; label: string } | null>(null)
   const mutationAttempts = useRef<Record<string, { signature: string; idempotencyKey: string }>>({})
   const dailyCheckInAttempt = useRef<{ signature: string; idempotencyKey: string } | null>(null)
@@ -404,16 +409,13 @@ export function TodayPage({
         </div>
       </ContentCard>
 
-      <ContentCard className="daily-brief-card today-targets">
-          <div className="macro-row">
-            <span><strong>{formatNumber(plan.targets.calories, locale)}</strong><small>{t('app.calories')}</small></span>
-            <span><strong>{formatNumber(plan.targets.protein, locale)}g</strong><small>{t('app.protein')}</small></span>
-            <span><strong>{formatNumber(plan.targets.carbs, locale)}g</strong><small>{t('app.carbs')}</small></span>
-            <span><strong>{formatNumber(plan.targets.fat, locale)}g</strong><small>{t('app.fat')}</small></span>
-          </div>
-          <div className="target-track"><i style={{ width: `${Math.min(100, (plan.progress.loggedCalories / plan.targets.calories) * 100)}%` }} /></div>
-          <div className="target-track-labels"><span>{fa ? 'ثبت‌شده' : 'Logged'} · {formatNumber(plan.progress.loggedCalories, locale)}</span><strong>{formatNumber(Math.round((plan.progress.loggedCalories / Math.max(plan.targets.calories, 1)) * 100), locale)}%</strong></div>
-        </ContentCard>
+      <TodayOrbit
+        calories={{ logged: plan.progress.loggedCalories, target: plan.targets.calories }}
+        locale={locale}
+        meals={mealsRing(completedMealCount(plan.meals, mealOverrides), plan.meals.length)}
+        water={waterRing(plan.water, waterMl ?? plan.water?.loggedMl ?? null)}
+        workout={workoutRing(Boolean(plan.workout), workoutStatus, preview || workoutKnown)}
+      />
 
       <section className="today-main-grid">
         <div className="today-timeline" id="today-meal">
@@ -497,7 +499,7 @@ export function TodayPage({
         </div>
 
         <aside className="today-side-stack">
-          <WaterCard locale={locale} locked={mutationsLocked} plan={plan} preview={preview} />
+          <WaterCard locale={locale} locked={mutationsLocked} onLoggedChange={setWaterMl} plan={plan} preview={preview} />
           <EatingOutCard locale={locale} plan={plan} />
           {plan.workout ? (
             <ContentCard className="workout-card" id="today-workout">
@@ -516,8 +518,9 @@ export function TodayPage({
                 enabled={!mutationsLocked}
                 locale={locale}
                 localDate={plan.localDate ?? today}
-                onStatusChange={(status) => {
+                onStatusChange={(status, known) => {
                   setWorkoutStatus(status)
+                  setWorkoutKnown(known)
                   if (!preview && status === 'completed' && !workoutTracked.current) {
                     workoutTracked.current = true
                     trackProductEvent({ ...eventContext(locale, plan.progress.productRegion), event_name: 'meaningful_action_completed', surface: 'today', action_kind: 'workout', outcome: 'completed' })

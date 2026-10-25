@@ -55,6 +55,7 @@
   --color-food-soft: var(--color-brand-soft);
   --color-training: var(--color-energy);
   --color-training-soft: var(--color-energy-soft);
+  --color-water: #6cb6e8;
 
   --color-success: #4cc38a;
   --color-success-soft: #112a1c;
@@ -177,6 +178,7 @@
   --color-energy: #b5441a;
   --color-energy-soft: #fdeee7;
 
+  --color-water: #1d6b9a;
   --color-success: #2b7a4b;
   --color-success-soft: #e3f2e8;
   --color-danger: #c02942;

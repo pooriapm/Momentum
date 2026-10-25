@@ -676,3 +676,109 @@
 @media (prefers-reduced-motion: reduce) {
   .water-card__track i { transition: none; }
 }
+
+/* Orbit: one ring per part of the day. Unknown data keeps a dashed track and no arc. */
+.today-page .today-orbit {
+  align-items: center;
+  display: grid;
+  gap: .6rem 1.25rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  margin-bottom: 0;
+  padding: .9rem 1rem;
+}
+
+.today-orbit__rings {
+  height: auto;
+  max-width: 7.5rem;
+  transform: rotate(-90deg);
+  width: 100%;
+}
+
+[dir="rtl"] .today-orbit__rings {
+  transform: rotate(-90deg) scaleY(-1);
+}
+
+.today-orbit__track,
+.today-orbit__arc {
+  fill: none;
+  stroke-width: 10;
+}
+
+.today-orbit__track {
+  stroke: var(--color-surface-muted, var(--color-border));
+}
+
+.today-orbit__track.is-unknown {
+  stroke: var(--color-border-strong);
+  stroke-dasharray: 3 6;
+  stroke-width: 2;
+}
+
+.today-orbit__arc {
+  stroke-linecap: round;
+}
+
+.today-orbit__ring--food .today-orbit__arc { stroke: var(--color-food); }
+.today-orbit__ring--training .today-orbit__arc { stroke: var(--color-training); }
+.today-orbit__ring--water .today-orbit__arc { stroke: var(--color-water); }
+
+.today-orbit__legend {
+  display: grid;
+  gap: .45rem;
+  margin: 0;
+}
+
+.today-orbit__item {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .15rem .6rem;
+  justify-content: space-between;
+}
+
+.today-orbit__item dt {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  font-size: var(--text-caption, .8rem);
+  gap: .4rem;
+}
+
+.today-orbit__item dt i {
+  border-radius: 999px;
+  display: inline-block;
+  height: .55rem;
+  width: .55rem;
+}
+
+.today-orbit__item--food dt i { background: var(--color-food); }
+.today-orbit__item--training dt i { background: var(--color-training); }
+.today-orbit__item--water dt i { background: var(--color-water); }
+.today-orbit__item.is-unknown dt i { background: transparent; border: 1px dashed var(--color-border-strong); }
+
+.today-orbit__item dd {
+  font: 600 .95rem var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.today-orbit__item.is-unknown dd {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.today-orbit__intake {
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: var(--text-caption, .8rem);
+  gap: .5rem;
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: .55rem;
+}
+
+@media (max-width: 22rem) {
+  .today-page .today-orbit { grid-template-columns: 1fr; justify-items: center; }
+  .today-orbit__legend { width: 100%; }
+}
