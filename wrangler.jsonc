@@ -3,6 +3,7 @@
   "name": "momentum",
   "compatibility_date": "2026-08-03",
   "main": "workers/ops.ts",
+  "workers_dev": true,
   "routes": [
     { "pattern": "momentumfit.ir", "custom_domain": true }
   ],
