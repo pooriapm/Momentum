@@ -215,16 +215,19 @@ legend {
   box-shadow: none;
 }
 
-.glass-chrome {
+/* Liquid Glass (src/v2/ui/liquid-glass.ts): clear like the Android app. A 30% tint, a 2px frost and
+   vibrancy; Chromium adds edge refraction. Reduced transparency and more contrast make it solid. */
+.glass-chrome,
+.liquid-glass {
   isolation: isolate;
   position: relative;
-  border: 1px solid color-mix(in srgb, var(--glass-highlight) 55%, var(--color-border));
+  border: 1px solid color-mix(in srgb, var(--glass-highlight) 70%, transparent);
   background:
-    linear-gradient(160deg, var(--glass-highlight), transparent 42%),
-    color-mix(in srgb, var(--glass-core) 92%, transparent);
-  box-shadow: var(--shadow-chrome), inset 0 1px 0 var(--glass-highlight);
-  backdrop-filter: saturate(180%) blur(var(--material-blur, 20px));
-  -webkit-backdrop-filter: saturate(180%) blur(var(--material-blur, 20px));
+    linear-gradient(160deg, color-mix(in srgb, var(--glass-highlight) 55%, transparent), transparent 38%),
+    var(--glass-clear);
+  box-shadow: var(--shadow-chrome), inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-lowlight);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   transition:
     transform var(--motion-glass-release) var(--motion-ease-out),
     box-shadow var(--motion-glass-release) ease,
@@ -236,7 +239,35 @@ legend {
   display: none;
 }
 
-.glass-chrome > * { position: relative; z-index: 1; }
+.glass-chrome > *, .liquid-glass > * { position: relative; z-index: 1; }
+
+.liquid-selector { position: relative; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.liquid-selector > :not(.liquid-selector__lens) { position: relative; z-index: 1; }
+.liquid-selector__lens {
+  --lens-dir: 1;
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--glass-highlight) 70%, transparent), transparent 45%),
+    var(--glass-selection);
+  border-radius: var(--radius-control);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-lowlight);
+  inset-block: var(--lens-inset-block, var(--space-1));
+  inset-inline-start: var(--lens-inset-inline, var(--space-1));
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(calc(var(--lens-position) * (100% + var(--lens-gap, 0px)) * var(--lens-dir))) scale(var(--lens-scale-x), var(--lens-scale-y));
+  transition: transform 420ms cubic-bezier(.34, 1.36, .64, 1), background var(--motion-fast), box-shadow var(--motion-fast);
+  width: calc((100% - 2 * var(--lens-inset-inline, var(--space-1)) - (var(--lens-count) - 1) * var(--lens-gap, 0px)) / var(--lens-count));
+  z-index: 0;
+}
+.liquid-selector__lens:dir(rtl) { --lens-dir: -1; }
+.liquid-selector.is-dragging .liquid-selector__lens { transition: background var(--motion-fast), box-shadow var(--motion-fast); }
+/* Held: the saffron tint thins and the lens becomes a refracting glass bead. */
+.liquid-selector.is-pressed .liquid-selector__lens {
+  background:
+    linear-gradient(150deg, var(--glass-highlight), transparent 50%),
+    color-mix(in srgb, var(--glass-selection) 35%, transparent);
+  box-shadow: var(--shadow-1), inset 0 1px 0 var(--glass-highlight), inset 0 0 12px var(--glass-lowlight);
+}
 
 .glass-chrome--prominent {
   background: var(--color-chrome-strong);
@@ -599,13 +630,12 @@ legend {
 
 .glass-menu {
   animation: orbit-glass-popover-in var(--motion-glass-morph) var(--motion-ease-out);
-  backdrop-filter: saturate(140%) blur(var(--material-blur, 20px));
-  -webkit-backdrop-filter: saturate(140%) blur(var(--material-blur, 20px));
+  backdrop-filter: blur(var(--glass-blur-frost)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur-frost)) saturate(var(--glass-saturation));
   background:
-    linear-gradient(145deg, var(--glass-highlight), transparent 26%),
-    radial-gradient(circle at 82% 8%, var(--glass-tint), transparent 46%),
-    var(--glass-core);
-  border: 1px solid color-mix(in srgb, var(--glass-highlight) 72%, var(--color-border));
+    linear-gradient(145deg, color-mix(in srgb, var(--glass-highlight) 55%, transparent), transparent 30%),
+    var(--glass-frost);
+  border: 1px solid color-mix(in srgb, var(--glass-highlight) 70%, transparent);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-chrome), inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-lowlight);
   display: flex;
@@ -733,8 +763,14 @@ legend {
 }
 
 .inline-notice {
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--glass-highlight) 45%, transparent), transparent 40%),
+    var(--glass-clear);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
   align-items: flex-start;
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--glass-highlight) 60%, var(--color-border));
   border-radius: var(--radius-inset);
   display: flex;
   font-size: var(--text-footnote);
@@ -745,10 +781,10 @@ legend {
   padding: var(--space-3) var(--space-3);
 }
 
-.inline-notice--warning { color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 25%, transparent); background: var(--color-warning-soft); }
-.inline-notice--error { color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 25%, transparent); background: var(--color-danger-soft); }
-.inline-notice--success { color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 25%, transparent); background: var(--color-success-soft); }
-.inline-notice--info { color: var(--color-info); border-color: color-mix(in srgb, var(--color-info) 25%, transparent); background: var(--color-info-soft); }
+.inline-notice--warning { color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 25%, transparent); background: linear-gradient(160deg, color-mix(in srgb, var(--glass-highlight) 45%, transparent), transparent 40%), color-mix(in srgb, var(--color-warning-soft) 72%, transparent); }
+.inline-notice--error { color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 25%, transparent); background: linear-gradient(160deg, color-mix(in srgb, var(--glass-highlight) 45%, transparent), transparent 40%), color-mix(in srgb, var(--color-danger-soft) 72%, transparent); }
+.inline-notice--success { color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 25%, transparent); background: linear-gradient(160deg, color-mix(in srgb, var(--glass-highlight) 45%, transparent), transparent 40%), color-mix(in srgb, var(--color-success-soft) 72%, transparent); }
+.inline-notice--info { color: var(--color-info); border-color: color-mix(in srgb, var(--color-info) 25%, transparent); background: linear-gradient(160deg, color-mix(in srgb, var(--glass-highlight) 45%, transparent), transparent 40%), color-mix(in srgb, var(--color-info-soft) 72%, transparent); }
 .inline-notice__body { display: grid; flex: 1; gap: var(--space-1); min-width: 0; }
 .inline-notice__body > strong { font-weight: var(--weight-bold); }
 .inline-notice__body > span { color: var(--color-text-secondary); }
@@ -884,8 +920,7 @@ legend {
   opacity: .42;
 }
 
-.app-sidebar.glass-chrome,
-.app-bottom-nav.glass-chrome {
+.app-sidebar.glass-chrome {
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -897,8 +932,7 @@ legend {
   isolation: isolate;
 }
 
-.app-sidebar.glass-chrome::before,
-.app-bottom-nav.glass-chrome::before {
+.app-sidebar.glass-chrome::before {
   background: color-mix(in srgb, var(--color-surface) 72%, transparent);
   backdrop-filter: blur(44px) saturate(190%);
   -webkit-backdrop-filter: blur(44px) saturate(190%);
@@ -911,8 +945,7 @@ legend {
   z-index: 0;
 }
 
-.app-sidebar.glass-chrome::after,
-.app-bottom-nav.glass-chrome::after {
+.app-sidebar.glass-chrome::after {
   background:
     linear-gradient(180deg, rgb(255 255 255 / 42%) 0%, rgb(255 255 255 / 10%) 26%, transparent 58%),
     linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 18%) 72%, transparent);
@@ -925,13 +958,11 @@ legend {
   z-index: 0;
 }
 
-:root:not(.light):not([data-theme="light"]) .app-sidebar.glass-chrome::before,
-:root:not(.light):not([data-theme="light"]) .app-bottom-nav.glass-chrome::before {
+:root:not(.light):not([data-theme="light"]) .app-sidebar.glass-chrome::before {
   background: color-mix(in srgb, var(--color-surface) 78%, transparent);
 }
 
-:root:not(.light):not([data-theme="light"]) .app-sidebar.glass-chrome::after,
-:root:not(.light):not([data-theme="light"]) .app-bottom-nav.glass-chrome::after {
+:root:not(.light):not([data-theme="light"]) .app-sidebar.glass-chrome::after {
   opacity: .42;
 }
 
@@ -1881,7 +1912,6 @@ legend {
 .modal-drag-handle > span { background: currentColor; border-radius: var(--radius-pill); height: .25rem; width: 2.5rem; }
 .modal-drag-handle:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus); outline-offset: var(--focus-ring-inset-offset); }
 .app-sidebar { --material-blur: 24px; }
-.glass-menu { --material-blur: 16px; }
 .modal-surface.glass-chrome--content {
   max-height: calc(100dvh - 1.5rem);
 }
@@ -1957,15 +1987,10 @@ legend {
 
 /* Plan */
 .segmented-control {
-  margin-bottom: var(--space-5);
-  backdrop-filter: saturate(160%) blur(20px);
-  -webkit-backdrop-filter: saturate(160%) blur(20px);
-  background:
-    linear-gradient(145deg, var(--glass-highlight), transparent 30%),
-    var(--glass-core);
-  border: 1px solid color-mix(in srgb, var(--glass-highlight) 72%, var(--color-border));
+  --lens-inset-block: var(--space-1_5);
+  --lens-inset-inline: var(--space-1_5);
+  --lens-gap: var(--space-1_5);
   border-radius: var(--radius-inset);
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
   display: grid;
   gap: var(--space-1_5);
   grid-template-columns: repeat(3, 1fr);
@@ -1979,7 +2004,7 @@ legend {
   background: transparent;
   border: 0;
   border-radius: var(--radius-control);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   cursor: pointer;
   display: flex;
   font-size: var(--text-caption);
@@ -2008,7 +2033,7 @@ legend {
   z-index: -1;
 }
 .segmented-control button.is-active { color: var(--color-brand); }
-.segmented-control button.is-active::before { opacity: 1; transform: scale(1); }
+.liquid-selector.segmented-control button::before { display: none; }
 .segmented-control button:active { transform: scale(.985); }
 [role="tabpanel"] { margin-top: var(--space-1); }
 .plan-day-strip { display: flex; gap: var(--space-3); margin: -.25rem 0 var(--space-4); overflow-x: auto; padding: var(--space-1) .1rem var(--space-3); scrollbar-width: thin; }
@@ -2373,6 +2398,8 @@ legend {
   .app-sidebar { display: none; }
   .app-workspace { flex: 1 1 auto; min-height: 0; overflow-x: clip; overflow-y: auto; overscroll-behavior: contain; padding-top: env(safe-area-inset-top); }
   .app-bottom-nav {
+    --lens-inset-block: var(--space-1_5);
+    --lens-inset-inline: var(--space-1_5);
     align-items: center;
     border-radius: var(--radius-panel);
     bottom: max(.65rem, env(safe-area-inset-bottom));
@@ -2390,7 +2417,7 @@ legend {
   .app-bottom-nav a {
     align-items: center;
     border-radius: var(--radius-inset);
-    color: var(--color-text-muted);
+    color: var(--color-text);
     display: flex;
     flex-direction: column;
     font-size: var(--text-caption);
@@ -2429,13 +2456,16 @@ legend {
   .app-bottom-nav a:active { transform: scale(.985); }
   .app-bottom-nav a:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus); outline-offset: var(--focus-ring-inset-offset); }
   .app-bottom-nav a.is-active { color: var(--color-brand); background: transparent; }
-  .app-bottom-nav a.is-active::before { opacity: 1; transform: scale(1); }
+  .app-bottom-nav a::before { display: none; }
   .app-bottom-nav.is-minimized {
     border-radius: var(--radius-pill);
     bottom: max(.4rem, env(safe-area-inset-bottom));
     inset-inline: 16%;
     padding: var(--space-0_5) var(--space-1_5);
   }
+  .app-bottom-nav .liquid-selector__lens { border-radius: var(--radius-inset); }
+  .app-bottom-nav.is-minimized { --lens-inset-block: var(--space-0_5); }
+  .app-bottom-nav.is-minimized .liquid-selector__lens { border-radius: var(--radius-pill); }
   .app-bottom-nav.is-minimized a { gap: 0; min-height: 2.75rem; }
   .app-bottom-nav.is-minimized a span { max-height: 0; opacity: 0; }
   .app-content { padding-bottom: calc(7.5rem + env(safe-area-inset-bottom)); }
@@ -2517,6 +2547,8 @@ legend {
 }
 
 @media (prefers-reduced-transparency: reduce) {
+  .liquid-glass,
+  .inline-notice,
   .glass-chrome,
   .glass-menu,
   .public-header__links--open,
@@ -2539,6 +2571,8 @@ legend {
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .liquid-glass,
+  .inline-notice,
   .glass-chrome,
   .glass-menu,
   .public-header__links--open,
@@ -2825,7 +2859,7 @@ svg { flex-shrink: 0; }
 
 @media (prefers-contrast: more) {
   :root:root { --color-text-muted: var(--color-text); --color-text-secondary: var(--color-text); --color-border: var(--color-border-strong); }
-  .glass-chrome, .glass-menu, .app-bottom-nav, .public-header.glass-chrome, .public-header__links--open {
+  .liquid-glass, .inline-notice, .glass-chrome, .glass-menu, .app-bottom-nav, .public-header.glass-chrome, .public-header__links--open {
     background: var(--color-surface);
     border: 2px solid var(--color-border-strong);
     backdrop-filter: none;

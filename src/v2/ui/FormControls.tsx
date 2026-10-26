@@ -15,6 +15,7 @@ import {
   type TextareaHTMLAttributes,
 } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
+import { useLiquidGlass } from './liquid-glass'
 import { formatNumber } from '../lib/format'
 
 export function RequiredMark() {
@@ -107,6 +108,10 @@ export function NumberStepper({
   const count = clampStepperValue(value, min, max, fallback ?? min)
   const atMin = count <= min
   const atMax = count >= max
+  const decreaseRef = useRef<HTMLButtonElement>(null)
+  const increaseRef = useRef<HTMLButtonElement>(null)
+  useLiquidGlass(decreaseRef, { refraction: 8, bezel: 12 })
+  useLiquidGlass(increaseRef, { refraction: 8, bezel: 12 })
 
   useEffect(() => {
     if (value !== String(count)) onChange(String(count))
@@ -145,6 +150,7 @@ export function NumberStepper({
           className="orbit-stepper__button glass-chrome glass-interactive"
           disabled={atMin}
           onClick={() => setCount(count - step)}
+          ref={decreaseRef}
           type="button"
         >
           <Minus size={18} />
@@ -171,6 +177,7 @@ export function NumberStepper({
           className="orbit-stepper__button glass-chrome glass-interactive"
           disabled={atMax}
           onClick={() => setCount(count + step)}
+          ref={increaseRef}
           type="button"
         >
           <Plus size={18} />
@@ -232,6 +239,8 @@ export function Select({
   const descriptionId = error || hint ? `${controlId}-description` : undefined
   const rootRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(defaultOpen)
+  const menuRef = useRef<HTMLDivElement>(null)
+  useLiquidGlass(menuRef, { frost: 'frost', enabled: open })
   const options = useMemo(() => readSelectOptions(children), [children])
   const selectedValue = value == null ? '' : String(value)
   const selected = options.find((option) => option.value === selectedValue)
@@ -321,7 +330,7 @@ export function Select({
           <ChevronDown aria-hidden="true" size={17} />
         </button>
         {open ? (
-          <div className="glass-menu">
+          <div className="glass-menu" ref={menuRef}>
             <div aria-label={label} className="glass-menu__scroller" id={listboxId} role="listbox">
               {options.map((option) => {
                 const isSelected = option.value === selectedValue

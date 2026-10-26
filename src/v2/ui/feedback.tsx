@@ -1,4 +1,5 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import { useRef, type HTMLAttributes, type ReactNode } from 'react'
+import { useLiquidGlass } from './liquid-glass'
 import { ContentCard } from './primitives'
 
 export type NoticeTone = 'neutral' | 'info' | 'success' | 'warning' | 'error'
@@ -21,8 +22,10 @@ interface NoticeProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
 // that caused it; the app has no global toast queue, only the connectivity toast.
 export function Notice({ tone = 'neutral', icon, title, action, live = true, className = '', children, ...props }: NoticeProps) {
   const toneClass = tone === 'neutral' ? '' : ` inline-notice--${tone}`
+  const ref = useRef<HTMLDivElement>(null)
+  useLiquidGlass(ref, { refraction: 12, bezel: 16 })
   return (
-    <div className={`inline-notice${toneClass} ${className}`.trim()} role={!live ? 'note' : tone === 'error' ? 'alert' : 'status'} {...props}>
+    <div className={`inline-notice${toneClass} ${className}`.trim()} ref={ref} role={!live ? 'note' : tone === 'error' ? 'alert' : 'status'} {...props}>
       {icon}
       {title || action ? (
         <div className="inline-notice__body">

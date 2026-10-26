@@ -160,6 +160,7 @@ ${decls(blocks.compact, '    ')}
 
   const z = Object.fromEntries(Object.entries(source.zIndex).map(([k, v]) => [k, v.value]))
   const duration = Object.fromEntries(Object.entries(source.motion.duration).map(([k, v]) => [k, v.value]))
+  const glass = Object.fromEntries(Object.entries(source.glass).map(([k, v]) => [k, v.value]))
   const ts = (obj) => ['{', ...Object.entries(obj).map(([k, v]) => `  ${k}: ${typeof v === 'string' ? `'${v}'` : v},`), '}'].join('\n')
   const tsText = `// Generated from ${SOURCE} by scripts/design/build-css-tokens.mjs. Do not edit.
 
@@ -170,6 +171,9 @@ export const zIndex = ${ts(z)} as const
 
 /** Milliseconds. */
 export const duration = ${ts(duration)} as const
+
+/** Liquid Glass material: blur in px, refraction and bezel in px. */
+export const glass = ${ts(glass)} as const
 `
   return { cssText, tsText, media }
 }

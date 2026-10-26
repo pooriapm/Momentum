@@ -33,3 +33,13 @@ export const duration = {
   glassRelease: 260,
   glassMorph: 320,
 } as const
+
+/** Liquid Glass material: blur in px, refraction and bezel in px. */
+export const glass = {
+  blur: 2,
+  blurFrost: 12,
+  saturation: 1.5,
+  refraction: 24,
+  bezel: 24,
+  lensRefraction: 14,
+} as const

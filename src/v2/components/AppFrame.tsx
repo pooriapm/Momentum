@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Sparkles, WifiOff } from 'lucide-react'
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearch } from 'wouter'
+import { Link, useLocation, useSearch } from 'wouter'
 import { evaluateConsentMigration } from '../../config/consent-migration'
 import { FALLBACK_LEGAL_DOCUMENT_VERSIONS, loadLegalDocumentVersions } from '../../config/legal'
 import type { AppLocale } from '../../platform/i18n/catalog'
@@ -13,6 +13,7 @@ import { localize, type MomentumPlanView } from '../data/types'
 import { localizedPath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
 import { conceptIcons } from '../ui/icons'
+import { LiquidSelector } from '../ui/LiquidSelector'
 import { GlassChrome, PageSkeleton } from '../ui/primitives'
 import { appContentSurface, isMembershipRequiredTab, type EntitlementSnapshot } from '../entitlement'
 import { EntitlementGate } from '../pages/app/EntitlementGate'
@@ -105,6 +106,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   const { t } = useTranslation()
   const { status, user } = useAuth()
   const search = useSearch()
+  const [, navigate] = useLocation()
   const preview = new URLSearchParams(search).get('preview') === '1'
   const planQuery = useQuery({
     queryKey: ['active-plan', user?.id, locale],
@@ -232,13 +234,22 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
               ? <PrePlanState account={account} locale={locale} />
               : children(pageContext)}</div>
       </div>
-      <GlassChrome aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Primary navigation'} className={`app-bottom-nav${chromeMinimized ? ' is-minimized' : ''}`} role="navigation">
-        {navItems.map(({ key, icon: Icon }) => (
-          <Link aria-current={key === tab ? 'page' : undefined} className={key === tab ? 'is-active' : ''} href={`${localizedPath(locale, `/app/${key}`)}${navQuery}`} key={key}>
-            <Icon size={20} /><span>{t(`nav.${key}`)}</span>
-          </Link>
-        ))}
-      </GlassChrome>
+      <LiquidSelector
+        aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Primary navigation'}
+        as="nav"
+        className={`app-bottom-nav${chromeMinimized ? ' is-minimized' : ''}`}
+        count={navItems.length}
+        onSelect={(index) => navigate(`${localizedPath(locale, `/app/${navItems[index].key}`)}${navQuery}`)}
+        renderItem={(index, active) => {
+          const { key, icon: Icon } = navItems[index]
+          return (
+            <Link aria-current={active ? 'page' : undefined} className={active ? 'is-active' : ''} href={`${localizedPath(locale, `/app/${key}`)}${navQuery}`} key={key}>
+              <Icon size={20} /><span>{t(`nav.${key}`)}</span>
+            </Link>
+          )
+        }}
+        selected={navItems.findIndex(({ key }) => key === tab)}
+      />
     </div>
   )
 }

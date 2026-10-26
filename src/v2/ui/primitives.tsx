@@ -1,5 +1,6 @@
-import { Children, isValidElement, type ButtonHTMLAttributes, type HTMLAttributes, type PropsWithChildren, type ReactNode } from 'react'
+import { Children, isValidElement, useRef, type ButtonHTMLAttributes, type HTMLAttributes, type PropsWithChildren, type ReactNode } from 'react'
 import { LoaderCircle } from 'lucide-react'
+import { useLiquidGlass } from './liquid-glass'
 import { Reveal } from './Reveal'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -49,7 +50,9 @@ export function ContentCard({ className = '', ...props }: HTMLAttributes<HTMLDiv
 }
 
 export function GlassChrome({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={`glass-chrome ${className}`} {...props} />
+  const ref = useRef<HTMLDivElement>(null)
+  useLiquidGlass(ref)
+  return <div className={`glass-chrome ${className}`} ref={ref} {...props} />
 }
 
 export function Eyebrow({ children }: PropsWithChildren) {
