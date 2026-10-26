@@ -829,7 +829,12 @@ describe('pipeline end-to-end with the stub provider', () => {
     await expect(resolvePlanLlmClient({
       userId: USER_ID, cycleIndex: 1, isRenewal: false, catalogReleaseId: 'momentum-core@v2',
     })).rejects.toMatchObject({ code: 'AI_PROVIDER_INVALID' })
+    // The stub is never a member's plan: without the test-only switch it is refused.
     env = { AI_PLAN_STUB_MODE: 'invalid' }
+    await expect(resolvePlanLlmClient({
+      userId: USER_ID, cycleIndex: 1, isRenewal: false, catalogReleaseId: 'momentum-core@v2',
+    })).rejects.toMatchObject({ code: 'AI_PROVIDER_NOT_CONFIGURED', status: 503 })
+    env = { AI_PLAN_STUB_MODE: 'invalid', AI_PLAN_ALLOW_STUB: 'true' }
     const stub = await resolvePlanLlmClient({
       userId: USER_ID, cycleIndex: 1, isRenewal: false, catalogReleaseId: 'momentum-core@v2',
     })

@@ -272,6 +272,11 @@ export async function resolvePlanLlmClient(input: {
 }): Promise<PlanLlmClient> {
   const provider = optionalEnv('AI_PLAN_PROVIDER')?.toLowerCase() ?? 'stub'
   if (provider === 'stub') {
+    // The stub answers with a fixed template for local runs and CI. It is never a member's plan:
+    // without AI_PLAN_ALLOW_STUB the server refuses instead of handing it out.
+    if (optionalEnv('AI_PLAN_ALLOW_STUB')?.toLowerCase() !== 'true') {
+      throw new HttpError(503, 'AI_PROVIDER_NOT_CONFIGURED', 'The plan provider is unavailable.')
+    }
     const configured = optionalEnv('AI_PLAN_STUB_MODE') as StubMode | undefined
     const mode = input.invalidStub
       ? 'invalid_always'
