@@ -21,7 +21,7 @@ describe('hosted auth proof helpers', () => {
     }, 'signup')).toBe('abc123')
     expect(hashedTokenFromGenerateLink({
       properties: {
-        action_link: 'https://momentum.pooria-pm.workers.dev/en/auth/verify?token=from-link&type=signup',
+        action_link: 'https://momentumfit.ir/en/auth/verify?token=from-link&type=signup',
       },
     }, 'signup')).toBe('from-link')
   })

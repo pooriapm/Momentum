@@ -170,7 +170,7 @@ try {
   const recoveryLink = await admin.auth.admin.generateLink({
     type: 'recovery',
     email: lifecycleEmail,
-    options: { redirectTo: 'https://momentum.pooria-pm.workers.dev/en/auth/update-password' },
+    options: { redirectTo: 'https://momentumfit.ir/en/auth/update-password' },
   })
   if (recoveryLink.error) throw new Error(`Hosted generateLink(recovery) failed: ${recoveryLink.error.message}`)
   const recoveryClient = authClient(credentials.url, credentials.anon)

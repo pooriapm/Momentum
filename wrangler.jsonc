@@ -3,6 +3,9 @@
   "name": "momentum",
   "compatibility_date": "2026-08-03",
   "main": "workers/ops.ts",
+  "routes": [
+    { "pattern": "momentumfit.ir", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

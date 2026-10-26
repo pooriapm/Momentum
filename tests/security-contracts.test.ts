@@ -47,7 +47,7 @@ describe('privacy-safe Edge response contracts', () => {
     vi.stubGlobal('Deno', {
       env: {
         get: (name: string) => name === 'ALLOWED_ORIGINS'
-          ? 'https://momentum.pooria-pm.workers.dev,http://localhost:5173'
+          ? 'https://momentumfit.ir,http://localhost:5173'
           : undefined,
       },
     })
@@ -57,15 +57,15 @@ describe('privacy-safe Edge response contracts', () => {
 
   it('allows only exact configured browser origins', () => {
     const allowed = new Request('https://api.example.test', {
-      headers: { Origin: 'https://momentum.pooria-pm.workers.dev' },
+      headers: { Origin: 'https://momentumfit.ir' },
     })
     const lookalike = new Request('https://api.example.test', {
-      headers: { Origin: 'https://momentum.pooria-pm.workers.dev.attacker.test' },
+      headers: { Origin: 'https://momentumfit.ir.attacker.test' },
     })
 
     expect(() => assertAllowedOrigin(allowed)).not.toThrow()
     expect(corsHeaders(allowed)).toMatchObject({
-      'Access-Control-Allow-Origin': 'https://momentum.pooria-pm.workers.dev',
+      'Access-Control-Allow-Origin': 'https://momentumfit.ir',
       Vary: 'Origin',
     })
     expect(() => assertAllowedOrigin(lookalike)).toThrow(expect.objectContaining({

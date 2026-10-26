@@ -7,7 +7,7 @@ const root = path.resolve(import.meta.dirname ?? process.cwd(), import.meta.dirn
 const supabaseCli = path.join(root, 'node_modules/.bin/supabase')
 export const HOSTED_PROJECT_REF = 'osyvvzglvyonevkhdzpu'
 export const HOSTED_API_URL = `https://${HOSTED_PROJECT_REF}.supabase.co`
-export const HOSTED_REDIRECT = 'https://momentum.pooria-pm.workers.dev/en/auth/verify'
+export const HOSTED_REDIRECT = 'https://momentumfit.ir/en/auth/verify'
 
 export function assert(condition, message) {
   if (!condition) throw new Error(message)

@@ -118,9 +118,50 @@ async function handleClientError(request: Request): Promise<Response> {
   return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } })
 }
 
+export const CANONICAL_ORIGIN = 'https://momentumfit.ir'
+const LEGACY_HOSTS = ['momentum.pooria-pm.workers.dev']
+
+// The old service worker would keep serving the cached app on the legacy host,
+// and a redirected sw.js is rejected by the browser, so it gets a script that
+// unregisters itself and sends open tabs to the canonical origin.
+const LEGACY_SERVICE_WORKER = `self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    for (const key of await caches.keys()) await caches.delete(key)
+    await self.registration.unregister()
+    for (const client of await self.clients.matchAll({ type: 'window' })) {
+      const url = new URL(client.url)
+      client.navigate('${CANONICAL_ORIGIN}' + url.pathname + url.search + url.hash)
+    }
+  })())
+})
+`
+
+function legacyHostResponse(url: URL): Response {
+  if (url.pathname === '/sw.js') {
+    return new Response(LEGACY_SERVICE_WORKER, {
+      headers: {
+        'content-type': 'text/javascript; charset=utf-8',
+        'cache-control': 'no-store',
+      },
+    })
+  }
+  return new Response(null, {
+    status: 301,
+    headers: {
+      location: `${CANONICAL_ORIGIN}${url.pathname}${url.search}`,
+      'cache-control': 'public, max-age=3600',
+    },
+  })
+}
+
 export default {
   async fetch(request: Request, env: AssetsEnv): Promise<Response> {
     const url = new URL(request.url)
+
+    if (LEGACY_HOSTS.includes(url.hostname)) {
+      return legacyHostResponse(url)
+    }
 
     if (url.pathname === '/ops/health') {
       if (request.method !== 'GET' && request.method !== 'HEAD') {

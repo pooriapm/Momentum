@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import worker, { OPS_ALLOWED_ERROR_CODES } from '../workers/ops'
+import worker, { CANONICAL_ORIGIN, OPS_ALLOWED_ERROR_CODES } from '../workers/ops'
 
 const assets = {
   fetch: vi.fn(async () => new Response('spa', { status: 200 })),
 }
 
 function request(path: string, init?: RequestInit) {
-  return new Request(`https://momentum.pooria-pm.workers.dev${path}`, init)
+  return new Request(`https://momentumfit.ir${path}`, init)
 }
 
 function env() {
@@ -112,5 +112,30 @@ describe('ops worker', () => {
       'unhandled_rejection',
       'auth_rate_limited',
     ])
+  })
+
+  it('redirects the legacy workers.dev host to the canonical origin', async () => {
+    const response = await worker.fetch(
+      new Request('https://momentum.pooria-pm.workers.dev/fa/app/plan?tab=week'),
+      env(),
+    )
+    expect(response.status).toBe(301)
+    expect(response.headers.get('location')).toBe(`${CANONICAL_ORIGIN}/fa/app/plan?tab=week`)
+    expect(assets.fetch).not.toHaveBeenCalled()
+  })
+
+  it('serves a self-unregistering service worker on the legacy host', async () => {
+    const response = await worker.fetch(new Request('https://momentum.pooria-pm.workers.dev/sw.js'), env())
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toContain('javascript')
+    const body = await response.text()
+    expect(body).toContain('registration.unregister()')
+    expect(body).toContain(CANONICAL_ORIGIN)
+  })
+
+  it('leaves the staging host alone', async () => {
+    const response = await worker.fetch(new Request('https://momentum-staging.pooria-pm.workers.dev/en/app'), env())
+    expect(response.status).toBe(200)
+    expect(assets.fetch).toHaveBeenCalledTimes(1)
   })
 })

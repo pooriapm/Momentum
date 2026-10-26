@@ -6,7 +6,7 @@ const root = path.resolve(import.meta.dirname, '../..')
 const read = (relative) => fs.readFileSync(path.join(root, relative), 'utf8')
 const environment = JSON.parse(read('supabase/environments.json'))
 const expectedRef = 'osyvvzglvyonevkhdzpu'
-const expectedOrigin = 'https://momentum.pooria-pm.workers.dev'
+const expectedOrigin = 'https://momentumfit.ir'
 const expectedFunctions = [
   'account-data',
   'account-settings',

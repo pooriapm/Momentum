@@ -17,7 +17,7 @@
   "production": {
     "status": "active",
     "project_ref": "osyvvzglvyonevkhdzpu",
-    "web_origin": "https://momentum.pooria-pm.workers.dev"
+    "web_origin": "https://momentumfit.ir"
   },
   "edge_functions": [
     "account-data",

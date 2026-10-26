@@ -9,7 +9,7 @@ boundaries. It contains identifiers and secret names only, never secret values.
 | --- | --- | --- | --- |
 | Local | Supabase project ID `momentum`; `127.0.0.1:54321` | Available | Clean reset, auth-email, RLS, Storage and Edge proofs |
 | Staging | No project or branch provisioned | Blocked | Must exist before a hosted R1 acceptance run |
-| Production | Project ref `osyvvzglvyonevkhdzpu`; web origin `https://momentum.pooria-pm.workers.dev` | Active | Owner-authorized R1 deployment; AI and payments remain fail-closed |
+| Production | Project ref `osyvvzglvyonevkhdzpu`; web origin `https://momentumfit.ir` | Active | Owner-authorized R1 deployment; AI and payments remain fail-closed |
 
 Do not reuse the unrelated `english-vocabulary` or `termledger` Supabase
 projects. Do not call production "staging" and do not create a paid project or
@@ -26,7 +26,7 @@ an explicitly approved production change after a staging smoke test and an
 export of their remote metadata; deletion is not an automatic cleanup step.
 
 Browser CORS is an exact allowlist. Production must set `ALLOWED_ORIGINS` to
-`https://momentum.pooria-pm.workers.dev` (plus another exact HTTPS origin only
+`https://momentumfit.ir` (plus another exact HTTPS origin only
 when that origin is intentionally deployed). Subdomain lookalikes and wildcard
 origins are forbidden. Native clients normally omit `Origin`.
 

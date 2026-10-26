@@ -17,10 +17,10 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "https://momentum.pooria-pm.workers.dev"
+site_url = "https://momentumfit.ir"
 additional_redirect_urls = [
   "http://localhost:5173/**",
-  "https://momentum.pooria-pm.workers.dev/**",
+  "https://momentumfit.ir/**",
 ]
 jwt_expiry = 3600
 enable_signup = true
