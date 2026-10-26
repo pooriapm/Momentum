@@ -41,8 +41,8 @@ describe('design tokens', () => {
   it('maps the canonical Saffron & Ink colors into both themes', () => {
     const dark = block(tokensCss, ':root')
     const light = block(tokensCss, ':root[data-theme="light"]')
-    expect(dark).toContain('--color-action: #f4f1ea;')
-    expect(light).toContain('--color-action: #1c1a17;')
+    expect(dark).toContain('--color-action: #f0a93b;')
+    expect(light).toContain('--color-action: #a35e00;')
     expect(dark).toContain('--color-brand: #f0a93b;')
     expect(light).toContain('--color-brand: #a35e00;')
     expect(dark).toContain('--color-energy: #ff8a5c;')

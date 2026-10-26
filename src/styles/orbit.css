@@ -240,6 +240,13 @@ legend {
 }
 
 .glass-chrome > *, .liquid-glass > * { position: relative; z-index: 1; }
+/* Vibrancy on clear glass: a soft halo behind text and icons. Light theme only (transparent in dark),
+   so labels stay legible over busy content without thickening the glass. */
+.glass-chrome,
+.liquid-glass { text-shadow: 0 0 1px var(--glass-halo), 0 0 10px var(--glass-halo); }
+:is(.glass-chrome, .liquid-glass) svg { filter: drop-shadow(0 0 1px var(--glass-halo)) drop-shadow(0 0 6px var(--glass-halo)); }
+/* Options inside a menu draw their focus ring inside, never across the menu edge. */
+.glass-menu :is(.glass-menu__item, [role="option"]):focus-visible { outline-offset: var(--focus-ring-inset-offset); }
 
 .liquid-selector { position: relative; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .liquid-selector > :not(.liquid-selector__lens) { position: relative; z-index: 1; }
@@ -303,52 +310,77 @@ legend {
   transition-duration: var(--motion-glass-press);
 }
 
+/* Button: a pill, as on Android. Primary is lit saffron with a soft glow; secondary is clear glass. */
 .orbit-button {
   align-items: center;
   border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
   cursor: pointer;
   display: inline-flex;
   font-size: var(--text-label);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   gap: var(--space-2);
   justify-content: center;
   line-height: 1;
   min-height: 3rem;
   padding: var(--space-3) var(--space-5);
   text-align: center;
-  transition: transform var(--motion-glass-release) var(--motion-ease-out), background var(--motion-fast), border-color var(--motion-fast), box-shadow var(--motion-fast);
+  transition: transform var(--motion-glass-release) var(--motion-ease-out), background-color var(--motion-fast), border-color var(--motion-fast), box-shadow var(--motion-fast), color var(--motion-fast);
 }
 
 .orbit-button:active:not(:disabled) {
-  transform: scale(.985);
+  transform: scale(.97);
   transition-duration: var(--motion-glass-press);
 }
 
+/* Disabled reads as unavailable without fading the label into the page. */
 .orbit-button:disabled {
+  background: var(--color-surface-raised);
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--color-text-disabled);
   cursor: not-allowed;
-  opacity: .48;
 }
 
-.orbit-button--primary {
+.orbit-button--ghost:disabled { background: transparent; }
+
+.orbit-button--primary:not(:disabled) {
   color: var(--color-on-action);
-  background: var(--color-action);
-  box-shadow: none;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 22%, transparent), transparent 55%),
+    var(--color-action);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 38%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, black 14%, transparent),
+    0 6px 18px -8px color-mix(in srgb, var(--color-action) 70%, transparent);
 }
 
 .orbit-button--primary:hover:not(:disabled) {
-  background: var(--color-action-strong);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 26%, transparent), transparent 55%),
+    var(--color-action-strong);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 42%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, black 14%, transparent),
+    0 10px 24px -10px color-mix(in srgb, var(--color-action) 80%, transparent);
 }
+
+.orbit-button--primary:active:not(:disabled) { background-color: var(--color-action-pressed); }
 
 .orbit-button--primary > span,
 .orbit-button--primary svg {
   color: inherit;
 }
 
-.orbit-button--secondary {
+.orbit-button--secondary:not(:disabled) {
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--glass-highlight) 60%, transparent), transparent 60%),
+    var(--glass-clear);
   border-color: var(--color-border-strong);
-  background: transparent;
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  color: var(--color-text);
 }
 
 .orbit-button--secondary:hover:not(:disabled),
@@ -361,11 +393,13 @@ legend {
   background: transparent;
 }
 
-.orbit-button--danger {
+.orbit-button--danger:not(:disabled) {
   color: var(--color-danger);
   border-color: color-mix(in srgb, var(--color-danger) 35%, transparent);
   background: var(--color-danger-soft);
 }
+
+.orbit-button--danger:hover:not(:disabled) { border-color: var(--color-danger); }
 
 .orbit-button--block {
   display: flex;
@@ -534,6 +568,13 @@ legend {
   border-color: var(--color-brand);
   box-shadow: 0 0 0 3px var(--color-brand-soft);
 }
+
+.orbit-stepper__value { overflow: hidden; }
+.orbit-stepper__digit { display: inline-block; }
+.orbit-stepper__digit.is-up { animation: orbit-stepper-up 180ms var(--motion-ease-out) both; }
+.orbit-stepper__digit.is-down { animation: orbit-stepper-down 180ms var(--motion-ease-out) both; }
+@keyframes orbit-stepper-up { from { opacity: 0; transform: translateY(35%); } to { opacity: 1; transform: none; } }
+@keyframes orbit-stepper-down { from { opacity: 0; transform: translateY(-35%); } to { opacity: 1; transform: none; } }
 
 .orbit-stepper__button:disabled {
   cursor: default;
@@ -2032,7 +2073,7 @@ legend {
   transition: opacity var(--motion-normal) ease, transform var(--motion-glass-morph) var(--motion-ease-out);
   z-index: -1;
 }
-.segmented-control button.is-active { color: var(--color-brand); }
+.segmented-control button.is-active { color: var(--color-brand-strong); }
 .liquid-selector.segmented-control button::before { display: none; }
 .segmented-control button:active { transform: scale(.985); }
 [role="tabpanel"] { margin-top: var(--space-1); }
@@ -2455,7 +2496,7 @@ legend {
   }
   .app-bottom-nav a:active { transform: scale(.985); }
   .app-bottom-nav a:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus); outline-offset: var(--focus-ring-inset-offset); }
-  .app-bottom-nav a.is-active { color: var(--color-brand); background: transparent; }
+  .app-bottom-nav a.is-active { color: var(--color-brand-strong); background: transparent; }
   .app-bottom-nav a::before { display: none; }
   .app-bottom-nav.is-minimized {
     border-radius: var(--radius-pill);
@@ -2607,7 +2648,7 @@ svg { flex-shrink: 0; }
   gap: var(--space-2);
   min-height: 3rem;
   padding-block: var(--space-3);
-  padding-inline: var(--space-4);
+  padding-inline: var(--space-5);
 }
 
 .orbit-button > svg,

@@ -101,7 +101,7 @@ export function PricingPage({
       {
         key: 'membership',
         tone: 'membership',
-        image: '/landing/training.jpg',
+        image: '/landing/training.webp',
         alt: fa ? 'تمرین قدرتی با دمبل در خانه' : 'A strength session with a dumbbell at home',
         kicker: t('pricing.membership'),
         title: t('pricing.membership'),

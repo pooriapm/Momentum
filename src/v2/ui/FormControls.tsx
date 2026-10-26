@@ -106,6 +106,9 @@ export function NumberStepper({
   const controlId = `stepper-${generatedId}`
   const descriptionId = error ? `${controlId}-description` : undefined
   const count = clampStepperValue(value, min, max, fallback ?? min)
+  // The new number slides in from the side it came from; nothing moves on first render.
+  const [shown, setShown] = useState<{ value: number; direction: 'up' | 'down' | null }>({ value: count, direction: null })
+  if (shown.value !== count) setShown({ value: count, direction: count > shown.value ? 'up' : 'down' })
   const atMin = count <= min
   const atMax = count >= max
   const decreaseRef = useRef<HTMLButtonElement>(null)
@@ -170,7 +173,7 @@ export function NumberStepper({
           role="spinbutton"
           tabIndex={0}
         >
-          {formatNumber(count, locale)}
+          <span className={`orbit-stepper__digit${shown.direction ? ` is-${shown.direction}` : ''}`} key={count}>{formatNumber(count, locale)}</span>
         </div>
         <button
           aria-label={increaseLabel}

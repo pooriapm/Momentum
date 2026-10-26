@@ -60,13 +60,13 @@ const copy = {
       {
         title: 'برنامه سی‌روزه‌ات را بگیر',
         body: 'همه وعده‌ها، همه تمرین‌ها و فهرست خرید، برای کل ماه و در یک جا.',
-        image: '/landing/training.jpg',
+        image: '/landing/training.webp',
         alt: 'تمرین قدرتی با دمبل، در نور پنجره خانه',
       },
       {
         title: 'هر روز دنبالش کن',
         body: 'امروز را باز کن و وعده و تمرین بعدی را ببین. یک روز جا ماند؟ بقیه ماه سر جایش است.',
-        image: '/landing/continue.jpg',
+        image: '/landing/continue.webp',
         alt: 'ادامه راه در نور صبح',
       },
     ],
@@ -132,13 +132,13 @@ const copy = {
       {
         title: 'Get your thirty-day plan',
         body: 'Every meal, every workout, and the shopping list for the whole month, in one place.',
-        image: '/landing/training.jpg',
+        image: '/landing/training.webp',
         alt: 'A strength session with a dumbbell, in window light at home',
       },
       {
         title: 'Follow it day by day',
         body: 'Open Today for the next meal and session. Missed a day? The rest of the month is still there.',
-        image: '/landing/continue.jpg',
+        image: '/landing/continue.webp',
         alt: 'Walking on into the morning light',
       },
     ],
