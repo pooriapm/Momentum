@@ -29,7 +29,7 @@ export const PLAN_BUILD_STAGES: readonly PlanBuildStage[] = [
   {
     id: 'profile',
     title: {
-      fa: 'داریم شرایط شخصی‌ت رو بررسی می‌کنیم',
+      fa: 'شرایط شخصی‌ات بررسی می‌شود',
       en: "We're looking through what works for you",
     },
     label: { fa: 'شرایط تو', en: 'Your setup' },
@@ -41,10 +41,10 @@ export const PLAN_BUILD_STAGES: readonly PlanBuildStage[] = [
   {
     id: 'favorites',
     title: {
-      fa: 'داریم با توجه به غذاهای مورد علاقه‌ت رژیم غذایی درست می‌کنیم',
+      fa: 'رژیم غذایی از غذاهای مورد علاقه‌ات ساخته می‌شود',
       en: "We're building meals around food you actually like",
     },
-    label: { fa: 'غذاهای مورد علاقه‌ت', en: 'Food you like' },
+    label: { fa: 'غذاهای مورد علاقه‌ات', en: 'Food you like' },
     details: {
       fa: ['غذاهایی که دوست داری می‌مونن', 'چیزهایی که نمی‌خوای کنار گذاشته می‌شن', 'الگوی وعده‌هات همون‌طور که گفتی می‌مونه'],
       en: ['The foods you like stay in', 'The ones you skip stay out', 'Your meal pattern stays the way you described it'],
@@ -53,7 +53,7 @@ export const PLAN_BUILD_STAGES: readonly PlanBuildStage[] = [
   {
     id: 'meals',
     title: {
-      fa: 'داریم وعده‌های این ماه رو کنار هم می‌چینیم',
+      fa: 'وعده‌های این ماه کنار هم چیده می‌شوند',
       en: "We're lining up this month's meals",
     },
     label: { fa: 'وعده‌های ماه', en: "This month's meals" },
@@ -65,7 +65,7 @@ export const PLAN_BUILD_STAGES: readonly PlanBuildStage[] = [
   {
     id: 'training',
     title: {
-      fa: 'داریم تمرین‌ها رو با وقت و وسایلت تنظیم می‌کنیم',
+      fa: 'تمرین‌ها با وقت و وسایلت تنظیم می‌شوند',
       en: "We're fitting the workouts to your time and gear",
     },
     label: { fa: 'تمرین‌ها', en: 'Workouts' },
@@ -77,7 +77,7 @@ export const PLAN_BUILD_STAGES: readonly PlanBuildStage[] = [
   {
     id: 'week',
     title: {
-      fa: 'داریم روزهای تمرین و استراحت رو تو هفته‌ت جا می‌دیم',
+      fa: 'روزهای تمرین و استراحت در هفته‌ات جا داده می‌شوند',
       en: "We're placing training and rest on your week",
     },
     label: { fa: 'چیدمان هفته', en: 'Your week' },
@@ -89,10 +89,10 @@ export const PLAN_BUILD_STAGES: readonly PlanBuildStage[] = [
   {
     id: 'grocery',
     title: {
-      fa: 'داریم لیست خرید رو از همون غذاها درمیاریم',
+      fa: 'فهرست خرید از همین غذاها ساخته می‌شود',
       en: "We're turning those meals into a shopping list",
     },
-    label: { fa: 'لیست خرید', en: 'Shopping list' },
+    label: { fa: 'فهرست خرید', en: 'Grocery list' },
     details: {
       fa: ['خرید از روی همون وعده‌هاست', 'لازم نیست خودت حساب کنی چی کم داری', 'چیزهای تکراری جمع می‌شن'],
       en: ['The list comes straight from the meals', "You don't have to work out what's missing", 'Repeated items get grouped'],
@@ -101,10 +101,10 @@ export const PLAN_BUILD_STAGES: readonly PlanBuildStage[] = [
   {
     id: 'safety',
     title: {
-      fa: 'داریم یه بار دیگه با حساسیت‌ها و محدودیت‌هات چک می‌کنیم',
+      fa: 'برنامه یک بار دیگر با حساسیت‌ها و محدودیت‌هایت بررسی می‌شود',
       en: "We're checking it once more against your limits",
     },
-    label: { fa: 'چک محدودیت‌ها', en: 'Your limits' },
+    label: { fa: 'بررسی محدودیت‌ها', en: 'Your limits' },
     details: {
       fa: ['حساسیت‌ها خط قرمز هستن', 'حرکت نامناسب جایگزین می‌شه', 'این چک، توصیه پزشکی نیست'],
       en: ['Allergies are a hard line', 'A move that doesn’t fit gets swapped', 'This check is not medical advice'],
@@ -113,7 +113,7 @@ export const PLAN_BUILD_STAGES: readonly PlanBuildStage[] = [
   {
     id: 'almost',
     title: {
-      fa: 'برنامه اختصاصی‌ت تقریباً آماده‌ست',
+      fa: 'برنامهٔ اختصاصی‌ات تقریباً آماده است',
       en: 'Your plan is almost ready',
     },
     label: { fa: 'تقریباً آماده', en: 'Almost ready' },

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Check, Copy, ExternalLink, RefreshCw, Search, X } from 'lucide-react'
+import { Check, ChevronLeft, Copy, ExternalLink, RefreshCw, Search, X } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
@@ -22,6 +22,8 @@ import {
 import { formatNumber } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
+import { Page, PageHeader } from '../../ui/layout'
+import { Notice } from '../../ui/feedback'
 import './card-transfer.css'
 import './admin.css'
 
@@ -83,17 +85,13 @@ export function AdminPage({ locale, initialTab = 'overview' }: { locale: AppLoca
   const whoami = useQuery({ queryKey: ['admin', 'whoami'], queryFn: loadIsAdmin, staleTime: 10 * 60_000, retry: false })
 
   return (
-    <main className="app-page admin-page screen-enter">
-      <section className="page-heading">
-        <div>
-          <p className="orbit-eyebrow">{fa ? 'مدیریت' : 'Admin'}</p>
-          <h1>{fa ? 'پنل مدیریت' : 'Admin panel'}</h1>
-          <p>{fa ? 'رسیدها، اعضا و فهرست انتظار. هر تغییر با نام تو ثبت می‌شود.' : 'Receipts, members and the waitlist. Every change is logged under your account.'}</p>
-        </div>
-        <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/me')}>
-          <ArrowLeft className="directional-icon" size={16} />{fa ? 'بازگشت به برنامه' : 'Back to the app'}
-        </Link>
-      </section>
+    <Page name="admin">
+      <PageHeader
+        eyebrow={fa ? 'مدیریت' : 'Admin'}
+        title={fa ? 'پنل مدیریت' : 'Admin panel'}
+        description={fa ? 'رسیدها، اعضا و فهرست انتظار. هر تغییر با نام تو ثبت می‌شود.' : 'Receipts, members and the waitlist. Every change is logged under your account.'}
+        actions={<><Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/me')}><ChevronLeft className="directional-icon" size={16} />{fa ? 'بازگشت به برنامه' : 'Back to the app'}</Link></>}
+      />
 
       {whoami.isPending ? <ContentCard aria-busy="true"><p>{fa ? 'در حال بررسی دسترسی…' : 'Checking access…'}</p></ContentCard> : null}
       {whoami.isError ? <Problem error={whoami.error} locale={locale} what={{ fa: 'دسترسی', en: 'Access' }} /> : null}
@@ -125,7 +123,7 @@ export function AdminPage({ locale, initialTab = 'overview' }: { locale: AppLoca
           </div>
         </>
       ) : null}
-    </main>
+    </Page>
   )
 }
 
@@ -195,7 +193,7 @@ function ReceiptsTab({ locale }: { locale: AppLocale }) {
         <Button onClick={() => { void pending.refetch(); void history.refetch() }} variant="secondary"><RefreshCw size={16} />{fa ? 'تازه‌سازی' : 'Refresh'}</Button>
       </div>
       <p className="admin-hint">{fa ? 'هر رسید را با واریزی حسابت مقایسه کن (مبلغ، زمان و چهار رقم آخر کارت)، بعد تأیید یا رد کن.' : 'Match each receipt against your bank account (amount, time and the last four card digits), then approve or reject it.'}</p>
-      {message ? <div className="inline-notice" role="status">{message}</div> : null}
+      {message ? <Notice>{message}</Notice> : null}
       {pending.isError ? <Problem error={pending.error} locale={locale} what={{ fa: 'رسیدها', en: 'Receipts' }} /> : null}
       {pending.isPending ? <ContentCard aria-busy="true"><p>{fa ? 'در حال بارگذاری…' : 'Loading…'}</p></ContentCard> : null}
       {pending.data?.length === 0 ? <ContentCard><p>{fa ? 'رسیدی در انتظار بررسی نیست.' : 'No receipts are waiting for review.'}</p></ContentCard> : null}
@@ -416,7 +414,7 @@ function MemberCard({ locale, onBack, userId }: { locale: AppLocale; onBack: () 
           <span>{fa ? 'یادداشت (چرا؟)' : 'Note (why?)'}</span>
           <input maxLength={200} onChange={(event) => setNote(event.target.value)} type="text" value={note} />
         </label>
-        {message ? <div className="inline-notice" role="status">{message}</div> : null}
+        {message ? <Notice>{message}</Notice> : null}
         <Button disabled={!validGrant} loading={grant.isPending} type="submit">{fa ? 'افزودن روزها' : 'Add days'}</Button>
       </form>
     </ContentCard>

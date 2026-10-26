@@ -28,6 +28,8 @@ import {
   type MembershipStatus,
   type SignOutScope,
 } from './me-state'
+import { Page, PageHeader, SectionHeader } from '../../ui/layout'
+import { Notice } from '../../ui/feedback'
 import '../../../styles/me.css'
 
 export function MePage({
@@ -83,11 +85,11 @@ export function MePage({
   }
 
   return (
-    <main className="app-page me-page screen-enter">
+    <Page name="me">
       {plan?.progress.safetyPaused ? (
-        <div className="inline-notice me-safety-note" role="status">
+        <Notice className="me-safety-note">
           {locale === 'fa' ? 'تمرین فعلاً متوقف است. هیچ فشاری برای حفظ روند متوالی نیست.' : 'Training is paused for now. There is no pressure to keep a streak.'}
-        </div>
+        </Notice>
       ) : null}
       <header className="me-identity">
         <div aria-hidden="true" className="me-identity__avatar">{preview ? 'A' : (user?.email?.slice(0, 1).toUpperCase() ?? 'M')}</div>
@@ -145,7 +147,7 @@ export function MePage({
           : <Link className="orbit-button orbit-button--ghost" href={localizedPath(locale, '/auth/sign-up')}>{t('common.signUp')}</Link>}
       </div>
       {signOutOpen ? <SignOutDialog locale={locale} onClose={() => setSignOutOpen(false)} onSignOut={(scope) => signOut({ scope })} /> : null}
-    </main>
+    </Page>
   )
 }
 
@@ -202,34 +204,32 @@ function MembershipPanel({
   const checkout = status === 'gift' || status === 'none' || status === 'cancelled' || status === 'expired' || status === 'pending'
   const tone = status === 'active' ? 'success' : status === 'pending' ? 'energy' : status === 'gift' ? 'brand' : 'neutral'
   return (
-    <main className="app-page me-page screen-enter">
-      <section className="page-heading">
-        <div>
-          <p className="orbit-eyebrow"><WalletCards size={15} />{fa ? 'یک اشتراک' : 'One membership'}</p>
-          <h1>{copy.label}</h1>
-          <p>{copy.detail}</p>
-        </div>
-        <Button onClick={onBack} variant="secondary">{fa ? 'بازگشت' : 'Back to Me'}</Button>
-      </section>
+    <Page name="me">
+      <PageHeader
+        eyebrow={<><WalletCards size={15} />{fa ? 'یک عضویت' : 'One membership'}</>}
+        title={copy.label}
+        description={copy.detail}
+        actions={<><Button onClick={onBack} variant="secondary">{fa ? 'بازگشت' : 'Back to Me'}</Button></>}
+      />
       <ContentCard className="me-panel-card">
         <StatusPill tone={tone}>{status === 'active' ? (fa ? 'فعال' : 'Active') : copy.label}</StatusPill>
         <h2>{tMembershipTitle(status, fa)}</h2>
         {days && (status === 'active' || status === 'gift') ? (
           <MembershipDaysLeft days={days} locale={locale} renewable={cardTransfer} />
         ) : (
-          <p>{fa ? 'فقط یک اشتراک Momentum وجود دارد؛ نردبان چندسطحی نیست.' : 'There is one Momentum membership. Dual plans are not offered.'}</p>
+          <p>{fa ? 'فقط یک عضویت Momentum وجود دارد؛ نردبان چندسطحی نیست.' : 'There is one Momentum membership. Dual plans are not offered.'}</p>
         )}
-        {status === 'pending' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت در انتظار است. ساخت برنامه جدید شروع نمی‌شود.' : 'Payment is pending. A new plan will not start.'}</div> : null}
-        {paymentResult === 'success' ? <div className="inline-notice inline-notice--success" role="status">{fa ? 'پرداخت تأیید شد و عضویت ۳۰ روزه فعال شد.' : 'Payment confirmed. Your 30-day membership is active.'}</div> : null}
-        {paymentResult === 'cancelled' ? <div className="inline-notice" role="status">{fa ? 'پرداخت لغو شد و مبلغی کم نشد.' : 'Payment was cancelled. You were not charged.'}</div> : null}
-        {paymentResult === 'failed' ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'پرداخت تأیید نشد. اگر مبلغی کم شده باشد، بانک آن را حداکثر تا ۷۲ ساعت برمی‌گرداند.' : 'The payment was not confirmed. If money was taken, the bank returns it within 72 hours.'}</div> : null}
-        {receiptInReview ? <div className="inline-notice" role="status">{fa ? 'رسید کارت به کارتت دریافت شد و در حال بررسی است. حداکثر تا ۲۴ ساعت عضویتت فعال می‌شود.' : 'We received your card transfer receipt and are reviewing it. Your membership starts within 24 hours.'}</div> : null}
-        {latestCard?.status === 'failed' && latestCard.failure_code?.startsWith('card_') ? <div className="inline-notice inline-notice--warning" role="status">{rejectionNotice(latestCard.failure_code, fa)}</div> : null}
-        {notifyAbroad ? <div className="inline-notice" role="status">{interest === 'saved'
+        {status === 'pending' ? <Notice tone="warning">{fa ? 'پرداخت در انتظار است. ساخت برنامه جدید شروع نمی‌شود.' : 'Payment is pending. A new plan will not start.'}</Notice> : null}
+        {paymentResult === 'success' ? <Notice tone="success">{fa ? 'پرداخت تأیید شد و عضویت ۳۰ روزه فعال شد.' : 'Payment confirmed. Your 30-day membership is active.'}</Notice> : null}
+        {paymentResult === 'cancelled' ? <Notice>{fa ? 'پرداخت لغو شد و مبلغی کم نشد.' : 'Payment was cancelled. You were not charged.'}</Notice> : null}
+        {paymentResult === 'failed' ? <Notice tone="warning">{fa ? 'پرداخت تأیید نشد. اگر مبلغی کم شده باشد، بانک آن را حداکثر تا ۷۲ ساعت برمی‌گرداند.' : 'The payment was not confirmed. If money was taken, the bank returns it within 72 hours.'}</Notice> : null}
+        {receiptInReview ? <Notice>{fa ? 'رسید کارت به کارتت دریافت شد و در حال بررسی است. حداکثر تا ۲۴ ساعت عضویتت فعال می‌شود.' : 'We received your card transfer receipt and are reviewing it. Your membership starts within 24 hours.'}</Notice> : null}
+        {latestCard?.status === 'failed' && latestCard.failure_code?.startsWith('card_') ? <Notice tone="warning">{rejectionNotice(latestCard.failure_code, fa)}</Notice> : null}
+        {notifyAbroad ? <Notice>{interest === 'saved'
           ? (fa ? 'ثبت شد. وقتی عضویت برای کشورت باز شد خبرت می‌کنیم.' : 'Saved. We will let you know when membership opens in your country.')
-          : (fa ? 'پرداخت عضویت برای کشورت هنوز باز نشده. مسیر رایگان در دسترس است.' : 'Membership payment is not open in your country yet. The free path is available.')}</div> : null}
-        {interest === 'failed' ? <div className="inline-notice inline-notice--error" role="alert">{fa ? 'درخواست ثبت نشد. دوباره تلاش کن.' : 'Your request was not saved. Try again.'}</div> : null}
-        {status === 'cancelled' || status === 'expired' ? <div className="inline-notice" role="status">{fa ? 'برنامه‌های قبلی خواندنی می‌مانند. چرخه بعد ساخته نمی‌شود.' : 'Previous plans stay readable. The next cycle is blocked.'}</div> : null}
+          : (fa ? 'پرداخت عضویت برای کشورت هنوز باز نشده. مسیر رایگان در دسترس است.' : 'Membership payment is not open in your country yet. The free path is available.')}</Notice> : null}
+        {interest === 'failed' ? <Notice tone="error">{fa ? 'درخواست ثبت نشد. دوباره تلاش کن.' : 'Your request was not saved. Try again.'}</Notice> : null}
+        {status === 'cancelled' || status === 'expired' ? <Notice>{fa ? 'برنامه‌های قبلی خواندنی می‌مانند. چرخه بعد ساخته نمی‌شود.' : 'Previous plans stay readable. The next cycle is blocked.'}</Notice> : null}
         <div className="me-panel-card__actions">
           {cardTransfer && !receiptInReview && !cardOpen ? <Button disabled={preview} onClick={() => setCardOpen(true)}>{status === 'active' ? (fa ? 'تمدید ۳۰ روز با کارت به کارت' : 'Extend 30 days by card transfer') : (fa ? 'پرداخت کارت به کارت' : 'Pay by card transfer')}</Button> : notifyAbroad ? <Button disabled={preview || interest === 'saved'} loading={interest === 'saving'} onClick={() => void askToHear()}>{interest === 'saved' ? (fa ? 'خبرت می‌کنیم' : 'We will let you know') : (fa ? 'وقتی باز شد خبرم کن' : 'Notify me when it opens')}</Button> : cardTransfer ? null : checkout ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{status === 'pending' ? (fa ? 'بازیابی پرداخت' : 'Recover payment') : (fa ? 'شروع عضویت' : 'Start membership')}</Link> : <StatusPill tone="success">{fa ? 'عضویت فعال' : 'Membership active'}</StatusPill>}
           <Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, '/app/account')}${query}`}>{fa ? 'خروجی یا حذف' : 'Export or delete'}</Link>
@@ -248,12 +248,12 @@ function MembershipPanel({
         ) : null}
       </ContentCard>
       <ContentCard className="me-panel-card">
-        <div className="section-title-row"><h2>{fa ? 'تاریخچه برنامه‌ها' : 'Plan history'}</h2><FileClock size={18} /></div>
+        <SectionHeader meta={<FileClock size={18} />} title={fa ? 'تاریخچه برنامه‌ها' : 'Plan history'} />
         <ul className="me-help-list">
           <li className="me-row me-row--static"><span className="me-row__icon"><FileClock size={18} /></span><span className="me-row__copy"><span className="me-row__label">{fa ? 'دوره جاری' : 'Current period'}</span><small>{fa ? 'نسخه فعال · فقط‌خواندنی پس از پایان' : 'Active version · read-only after it ends'}</small></span><span className="me-row__meta">{fa ? 'فعال' : 'Active'}</span></li>
         </ul>
       </ContentCard>
-    </main>
+    </Page>
   )
 }
 
@@ -314,15 +314,13 @@ function HelpPanel({ locale, onBack }: { locale: AppLocale; onBack: () => void }
   const supportEmail = runtimeConfig.supportEmail
   const supportMailto = supportEmail ? supportMailtoHref(supportEmail, locale) : ''
   return (
-    <main className="app-page me-page screen-enter">
-      <section className="page-heading">
-        <div>
-          <p className="orbit-eyebrow"><LifeBuoy size={15} />{fa ? 'پشتیبانی' : 'Support'}</p>
-          <h1>{fa ? 'راهنما، ایمنی و قوانین' : 'Help, safety & legal'}</h1>
-          <p>{fa ? 'مرز سلامت عمومی، حریم خصوصی و شرایط استفاده از همین‌جا در دسترس است.' : 'The general-wellness boundary, privacy, and terms stay reachable from here.'}</p>
-        </div>
-        <Button onClick={onBack} variant="secondary">{fa ? 'بازگشت' : 'Back to Me'}</Button>
-      </section>
+    <Page name="me">
+      <PageHeader
+        eyebrow={<><LifeBuoy size={15} />{fa ? 'پشتیبانی' : 'Support'}</>}
+        title={fa ? 'راهنما، ایمنی و قوانین' : 'Help, safety & legal'}
+        description={fa ? 'مرز سلامت عمومی، حریم خصوصی و شرایط استفاده از همین‌جا در دسترس است.' : 'The general-wellness boundary, privacy, and terms stay reachable from here.'}
+        actions={<><Button onClick={onBack} variant="secondary">{fa ? 'بازگشت' : 'Back to Me'}</Button></>}
+      />
       <nav aria-label={fa ? 'راهنما' : 'Help'} className="me-group">
         <Link className="me-row" href={localizedPath(locale, '/safety')}><span className="me-row__icon"><ShieldAlert size={18} /></span><span className="me-row__copy"><span className="me-row__label">{fa ? 'راهنمای ایمنی' : 'Safety guidance'}</span><small>{fa ? 'چه زمانی تمرین را متوقف کنی' : 'When to stop exercising'}</small></span><ChevronRight className="directional-icon" size={18} /></Link>
         <Link className="me-row" href={localizedPath(locale, '/privacy')}><span className="me-row__icon"><LockKeyhole size={18} /></span><span className="me-row__copy"><span className="me-row__label">{fa ? 'حریم خصوصی' : 'Privacy'}</span><small>{fa ? 'خروجی، حذف و نگه‌داری داده' : 'Export, deletion, and retention'}</small></span><ChevronRight className="directional-icon" size={18} /></Link>
@@ -354,10 +352,10 @@ function HelpPanel({ locale, onBack }: { locale: AppLocale; onBack: () => void }
         </ul>
       </section>
       {supportEmail
-        ? <div className="inline-notice" role="note">{fa ? 'جزئیات سلامت، رمز عبور یا JSON برنامه را در ایمیل نفرستید.' : 'Do not send health details, passwords, or plan JSON.'}</div>
-        : <div className="inline-notice" role="status">{fa ? 'دعوت عمومی تا وقتی اپراتور نشانی پشتیبانی را تنظیم کند در انتظار می‌ماند.' : 'Public invite waits until the operator sets the support address.'}</div>}
-      <div className="inline-notice inline-notice--warning" role="note">{fa ? 'Momentum سرویس اورژانسی نیست. اگر علائم شدید یا ناگهانی داری با اورژانس محلی یا متخصص واجد صلاحیت تماس بگیر.' : 'Momentum is not an emergency service. If symptoms are severe or sudden, contact local emergency services or a qualified clinician.'}</div>
-    </main>
+        ? <Notice role="note">{fa ? 'جزئیات سلامت، رمز عبور یا JSON برنامه را در ایمیل نفرستید.' : 'Do not send health details, passwords, or plan JSON.'}</Notice>
+        : <Notice>{fa ? 'دعوت عمومی تا وقتی اپراتور نشانی پشتیبانی را تنظیم کند در انتظار می‌ماند.' : 'Public invite waits until the operator sets the support address.'}</Notice>}
+      <Notice tone="warning" role="note">{fa ? 'Momentum سرویس اورژانسی نیست. اگر علائم شدید یا ناگهانی داری با اورژانس محلی یا متخصص واجد صلاحیت تماس بگیر.' : 'Momentum is not an emergency service. If symptoms are severe or sudden, contact local emergency services or a qualified clinician.'}</Notice>
+    </Page>
   )
 }
 
@@ -407,7 +405,7 @@ function SignOutDialog({
           <small>{fa ? 'تمام نشست‌های فعال باطل می‌شوند' : 'Every active session is revoked'}</small>
         </button>
       </div>
-      {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
+      {error ? <Notice tone="error">{error}</Notice> : null}
       <div className="me-panel-card__actions">
         <Button onClick={onClose} variant="secondary">{fa ? 'انصراف' : 'Cancel'}</Button>
         <Button loading={saving} onClick={() => void confirm()} variant="danger">{fa ? 'خروج از دستگاه انتخابی' : 'Sign out selected devices'}</Button>

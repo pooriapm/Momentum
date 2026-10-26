@@ -1,0 +1,293 @@
+/* Generated from docs/design/tokens.json by scripts/design/build-css-tokens.mjs. Do not edit: change the JSON and run npm run design:tokens. */
+
+/* Dark is the default theme. */
+:root {
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-0_5: 0.125rem;
+  --space-1_5: 0.375rem;
+  --radius-none: 0;
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-control: 0.75rem;
+  --radius-inset: 1rem;
+  --radius-card: 1.25rem;
+  --radius-panel: 1.5rem;
+  --radius-chrome: 1.75rem;
+  --radius-pill: 999px;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --font-numeric: Vazirmatn, Tahoma, sans-serif;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+  --weight-black: 900;
+  --tracking-display: 0;
+  --tracking-label: 0;
+  --motion-instant: 0ms;
+  --motion-fast: 160ms;
+  --motion-normal: 260ms;
+  --motion-emphasis: 400ms;
+  --motion-slow: 600ms;
+  --motion-glass-press: 80ms;
+  --motion-glass-release: 260ms;
+  --motion-glass-morph: 320ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-ease-out: cubic-bezier(0.22, 0.78, 0.24, 1);
+  --layout-gutter: var(--space-8);
+  --control-height-sm: 2.5rem;
+  --control-height-md: 3rem;
+  --control-height-lg: 3.5rem;
+  --size-field: 3rem;
+  --card-padding: var(--space-5);
+  --focus-ring-width: 0.1875rem;
+  --focus-ring-offset: 0.1875rem;
+  --focus-ring-inset-offset: -0.1875rem;
+  --panel-padding: var(--space-8);
+  --icon-slot-sm: 1.25rem;
+  --icon-slot-md: 2.5rem;
+  --icon-slot-lg: 4rem;
+  --shadow-card: var(--shadow-1);
+  --shadow-panel: var(--shadow-2);
+  --shadow-dialog: var(--shadow-3);
+  --z-sticky: 10;
+  --z-nav: 20;
+  --z-banner: 25;
+  --z-dropdown: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-splash: 100;
+  --text-display: 2.5rem;
+  --leading-display: 1.3;
+  --text-title1: 2rem;
+  --leading-title1: 1.375;
+  --text-metric: 1.75rem;
+  --leading-metric: 1.214;
+  --text-title2: 1.5rem;
+  --leading-title2: 1.417;
+  --text-title3: 1.25rem;
+  --leading-title3: 1.5;
+  --text-headline: 1.125rem;
+  --leading-headline: 1.556;
+  --text-body: 1rem;
+  --leading-body: 1.625;
+  --text-body-strong: 1rem;
+  --leading-body-strong: 1.625;
+  --text-label: 0.875rem;
+  --leading-label: 1.429;
+  --text-footnote: 0.8125rem;
+  --leading-footnote: 1.538;
+  --text-caption: 0.75rem;
+  --leading-caption: 1.5;
+  --text-lead: clamp(1rem, 0.9464rem + 0.2381vw, 1.125rem);
+  --text-heading: clamp(1.5rem, 1.2857rem + 0.9524vw, 2rem);
+  --text-title: clamp(1.75rem, 1.4286rem + 1.4286vw, 2.5rem);
+  --text-section: clamp(2rem, 1.5714rem + 1.9048vw, 3rem);
+  --text-hero: clamp(2.5rem, 1.8571rem + 2.8571vw, 4rem);
+  --font-app: "Vazirmatn Digits", Vazirmatn, Tahoma, "Segoe UI", Arial, sans-serif;
+  --font-latin: "Vazirmatn Digits", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --color-background: #0e0d0b;
+  --color-background-glow-accent: #f0a93b12;
+  --color-background-glow-highlight: #ff8a5c0d;
+  --color-splash-glow: #f0a93b14;
+  --color-surface: #1a1916;
+  --color-surface-raised: #24221f;
+  --color-surface-muted: #161512;
+  --color-chrome: #1c1a17b8;
+  --color-chrome-strong: #24221fe0;
+  --color-overlay: #000000b8;
+  --color-surface-hover: #2a2824;
+  --glass-highlight: #ffffff1a;
+  --glass-lowlight: #00000052;
+  --glass-core: var(--color-chrome);
+  --glass-tint: #00000000;
+  --color-text: #f4f1ea;
+  --color-text-secondary: #b3ac9f;
+  --color-text-muted: #958f84;
+  --color-text-disabled: #8a847a;
+  --color-action: #f4f1ea;
+  --color-action-strong: #ffffff;
+  --color-action-pressed: #e3dfd7;
+  --color-on-action: #1c1a17;
+  --color-link: #f0a93b;
+  --color-brand: #f0a93b;
+  --color-brand-soft: #33270f;
+  --color-brand-strong: #f6c26d;
+  --color-on-brand: #1c1a17;
+  --color-energy: #ff8a5c;
+  --color-energy-soft: #36190f;
+  --color-success: #4cc38a;
+  --color-success-soft: #112a1c;
+  --color-warning: #f5d35c;
+  --color-warning-soft: #332a0c;
+  --color-danger: #ff6f80;
+  --color-danger-soft: #3a161c;
+  --color-info: #7db7ff;
+  --color-info-soft: #1b3048;
+  --color-border: #ffffff1a;
+  --color-border-strong: #7a746a;
+  --color-input-inner-border: #ffffff2e;
+  --color-focus: #f0a93b;
+  --color-data-1: #f0a93b;
+  --color-data-2: #ff8a5c;
+  --color-data-3: #7db7ff;
+  --color-data-4: #4cc38a;
+  --color-data-5: #f5d35c;
+  --color-data-6: #ff6f80;
+  --color-data-grid: #ffffff1a;
+  --color-data-reference: #a8a196;
+  --color-data-target: #f0a93b;
+  --color-data-unknown: #8a847a;
+  --color-food: var(--color-brand);
+  --color-food-soft: var(--color-brand-soft);
+  --color-training: var(--color-energy);
+  --color-training-soft: var(--color-energy-soft);
+  --color-water: #6cb6e8;
+  --color-selection: #f0a93b;
+  --color-on-selection: #1c1a17;
+  --color-logo-background-start: #24221f;
+  --color-logo-background-end: #0e0d0b;
+  --color-logo-border: #ffffff2e;
+  --color-logo-orbit-track: #ffffff1a;
+  --color-logo-accent-start: #f6c26d;
+  --color-logo-accent-end: #e0901f;
+  --color-logo-letter: #f4f1ea;
+  --color-logo-dot-start: #ff9d76;
+  --color-logo-dot-end: #d9592a;
+  --color-logo-dot-halo: #ff8a5c1a;
+  --orbit-logo-surface: #1a1916;
+  --color-print-background: #ffffff;
+  --color-print-text: #111111;
+  --color-print-text-secondary: #333333;
+  --color-print-text-muted: #555555;
+  --color-print-border: #d3d3d3;
+  --shadow-1: 0px 10px 28px -14px #00000052;
+  --shadow-2: 0px 18px 48px -18px #0000007a;
+  --shadow-3: 0px 28px 80px -22px #000000a3;
+  --shadow-glow-plan: 0px 22px 60px 0px #f0a93b1f;
+  --shadow-chrome: 0px 14px 40px 0px #0000005c, inset 0px 1px 0px 0px #ffffff1a;
+  color-scheme: dark;
+}
+
+:root.light,
+:root[data-theme="light"] {
+  --color-background: #f6f4f0;
+  --color-background-glow-accent: #e0901f14;
+  --color-background-glow-highlight: #d9592a0d;
+  --color-splash-glow: #e0901f14;
+  --color-surface: #ffffff;
+  --color-surface-raised: #efece6;
+  --color-surface-muted: #f1eee9;
+  --color-chrome: #ffffffb8;
+  --color-chrome-strong: #ffffffe6;
+  --color-overlay: #1c1a1799;
+  --color-surface-hover: #efece6;
+  --glass-highlight: #ffffffb3;
+  --glass-lowlight: #1c1a170f;
+  --glass-core: var(--color-chrome);
+  --color-text: #1c1a17;
+  --color-text-secondary: #5e5951;
+  --color-text-muted: #6b655c;
+  --color-text-disabled: #8a847a;
+  --color-action: #1c1a17;
+  --color-action-strong: #3a3631;
+  --color-action-pressed: #000000;
+  --color-on-action: #ffffff;
+  --color-link: #a35e00;
+  --color-brand: #a35e00;
+  --color-brand-soft: #fcf2e1;
+  --color-brand-strong: #7f4900;
+  --color-on-brand: #ffffff;
+  --color-energy: #b5441a;
+  --color-energy-soft: #fdeee7;
+  --color-success: #2b7a4b;
+  --color-success-soft: #e3f2e8;
+  --color-warning: #8a6a00;
+  --color-warning-soft: #fbf4da;
+  --color-danger: #c02942;
+  --color-danger-soft: #fce8eb;
+  --color-info: #2368b5;
+  --color-info-soft: #e2efff;
+  --color-border: #e3dfd7;
+  --color-border-strong: #8a847a;
+  --color-input-inner-border: #ffffffb8;
+  --color-focus: #a35e00;
+  --color-data-1: #a35e00;
+  --color-data-2: #8c3414;
+  --color-data-3: #2368b5;
+  --color-data-4: #2b7a4b;
+  --color-data-5: #8a6a00;
+  --color-data-6: #c02942;
+  --color-data-grid: #e3dfd7;
+  --color-data-reference: #5e5951;
+  --color-data-target: #a35e00;
+  --color-data-unknown: #8a847a;
+  --color-food: var(--color-brand);
+  --color-food-soft: var(--color-brand-soft);
+  --color-training: var(--color-energy);
+  --color-training-soft: var(--color-energy-soft);
+  --color-water: #1d6b9a;
+  --color-selection: #f6d9a8;
+  --color-logo-background-start: #ffffff;
+  --color-logo-background-end: #f1eee9;
+  --color-logo-border: #e3dfd7;
+  --color-logo-orbit-track: #e3dfd7;
+  --color-logo-accent-start: #e0901f;
+  --color-logo-accent-end: #a35e00;
+  --color-logo-letter: #1c1a17;
+  --color-logo-dot-halo: #d9592a14;
+  --orbit-logo-surface: #ffffff;
+  --shadow-1: 0px 8px 24px -12px #1c1a171f;
+  --shadow-2: 0px 16px 44px -18px #1c1a173d;
+  --shadow-3: 0px 24px 72px -20px #1c1a1752;
+  --shadow-glow-plan: 0px 22px 60px 0px #a35e001f;
+  --shadow-chrome: 0px 12px 36px 0px #1c1a1714, inset 0px 1px 0px 0px #fffffff2;
+  color-scheme: light;
+}
+
+/* Language modes also apply to isolated story roots. */
+:root:lang(fa),
+[lang="fa"] {
+  --tracking-display: 0;
+  --tracking-label: 0;
+  --font-app: "Vazirmatn Digits", Vazirmatn, Tahoma, "Segoe UI", Arial, sans-serif;
+}
+
+:root:lang(en),
+[lang="en"] {
+  --tracking-display: -0.03em;
+  --tracking-label: 0.02em;
+  --font-app: "Vazirmatn Digits", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+/* Window classes: compact < 600px ≤ medium < 840px ≤ expanded. */
+@media (max-width: 52.49rem) {
+  :root {
+    --layout-gutter: var(--space-6);
+    --card-padding: var(--space-5);
+    --panel-padding: var(--space-5);
+  }
+}
+
+@media (max-width: 37.49rem) {
+  :root {
+    --layout-gutter: var(--space-4);
+    --card-padding: var(--space-4);
+    --panel-padding: var(--space-4);
+  }
+}

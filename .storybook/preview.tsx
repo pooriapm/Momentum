@@ -11,11 +11,14 @@ sb.mock(import('../src/platform/pwa/network.ts'), { spy: true })
 
 type MomentumTheme = 'light' | 'dark'
 type MomentumLocale = 'fa' | 'en'
+type MomentumMotion = 'full' | 'reduced'
 
 const preview: Preview = {
   initialGlobals: {
     theme: 'light',
     locale: 'fa',
+    textScale: '100',
+    motion: 'full',
   },
   globalTypes: {
     theme: {
@@ -38,6 +41,28 @@ const preview: Preview = {
         ],
       },
     },
+    textScale: {
+      description: 'Browser text size; every state must survive 200%',
+      toolbar: {
+        icon: 'zoom',
+        items: [
+          { value: '100', title: 'Text 100%' },
+          { value: '130', title: 'Text 130%' },
+          { value: '160', title: 'Text 160%' },
+          { value: '200', title: 'Text 200%' },
+        ],
+      },
+    },
+    motion: {
+      description: 'Stops animation like prefers-reduced-motion; use DevTools rendering emulation for the real media query',
+      toolbar: {
+        icon: 'play',
+        items: [
+          { value: 'full', title: 'Motion on' },
+          { value: 'reduced', title: 'Reduced motion' },
+        ],
+      },
+    },
   },
   decorators: [
     (Story, context) => {
@@ -49,6 +74,8 @@ const preview: Preview = {
       document.documentElement.classList.toggle('light', theme === 'light')
       document.documentElement.lang = locale
       document.documentElement.dir = direction
+      document.documentElement.style.fontSize = `${Number(context.globals.textScale ?? 100)}%`
+      document.documentElement.dataset.motion = (context.globals.motion as MomentumMotion) ?? 'full'
 
       return (
         <div className="storybook-canvas" dir={direction} lang={locale}>

@@ -1,9 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertOctagon,
-  ArrowLeft,
   ArrowRight,
-  Check,
+  ChevronLeft,
   FileCheck2,
   Gift,
   HeartPulse,
@@ -28,7 +27,7 @@ import { localizedPath } from '../../router/route-utils'
 import { loadPricingContext } from '../../data/pricing'
 import { eventContext, trackProductEvent } from '../../analytics/events'
 import { giftCampaignFromUnknown, postOnboardingPath, reviewInventoryIds } from '../../entitlement'
-import { Input, NumberStepper, RequiredMark, Select, Textarea } from '../../ui/FormControls'
+import { Checkbox, Input, NumberStepper, RequiredMark, Select, Textarea } from '../../ui/FormControls'
 import { CountryCombobox } from '../../ui/CountryCombobox'
 import { LocalizedDatePicker } from '../../ui/LocalizedDatePicker'
 import { formatLocalizedDate } from '../../ui/localized-date'
@@ -73,6 +72,7 @@ import { formatNumber } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { FieldGuide } from './FieldGuide'
 import { foodGuide } from './food-guides'
+import { Notice } from '../../ui/feedback'
 
 interface OnboardingPageProps {
   locale: AppLocale
@@ -440,10 +440,10 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           <div className="onboarding-card__heading">
             <h2>{t(section.titleKey)}</h2>
           </div>
-          {!online && section.key !== 'review' ? <div className="inline-notice inline-notice--warning" role="status"><WifiOff size={18} />{locale === 'fa' ? 'آفلاین هستید. پاسخ‌هایتان در این صفحه باقی می‌ماند؛ برای ذخیره و ادامه دوباره وصل شوید.' : 'You’re offline. Your answers remain on this page; reconnect to save and continue.'}</div> : null}
-          {section.key === 'basics' ? <div className="inline-notice"><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</div> : null}
-          {section.key === 'consent' ? <div className="inline-notice onboarding-lead-note"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</div> : null}
-          {section.key === 'food' ? <div className="inline-notice inline-notice--success onboarding-lead-note"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</div> : null}
+          {!online && section.key !== 'review' ? <Notice tone="warning"><WifiOff size={18} />{locale === 'fa' ? 'آفلاین هستید. پاسخ‌هایتان در این صفحه باقی می‌ماند؛ برای ذخیره و ادامه دوباره وصل شوید.' : 'You’re offline. Your answers remain on this page; reconnect to save and continue.'}</Notice> : null}
+          {section.key === 'basics' ? <Notice live={false}><ShieldCheck size={18} />{t('onboarding.adultGateCopy')}</Notice> : null}
+          {section.key === 'consent' ? <Notice live={false} className="onboarding-lead-note"><LockKeyhole size={18} />{locale === 'fa' ? 'هر رضایت مستقل و نسخه‌دار است. بازکردن یک سند دو مورد دیگر را تغییر نمی‌دهد.' : 'Each consent is independent and versioned. Opening one document never changes the other two.'}</Notice> : null}
+          {section.key === 'food' ? <Notice live={false} tone="success" className="onboarding-lead-note"><ShieldCheck size={18} />{t('onboarding.allergenCopy')}</Notice> : null}
           {visibleFields.length > 0 && section.key !== 'body' ? (
             <div className="onboarding-fields">
               <OnboardingFields
@@ -476,12 +476,12 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           ) : null}
           {section.key === 'food' ? (
             <FieldReveal className="onboarding-reveal" open={values.allergies?.includes(UNMAPPED_ALLERGEN)}>
-              <div className="inline-notice inline-notice--warning" role="status">{t('onboarding.allergenOtherBlock')}</div>
+              <Notice tone="warning">{t('onboarding.allergenOtherBlock')}</Notice>
             </FieldReveal>
           ) : null}
           {section.key === 'training' ? (
             <FieldReveal className="onboarding-reveal" open={values.trainingLocation === 'outdoor'}>
-              <div className="inline-notice">{t('onboarding.outdoorEquipmentHidden')}</div>
+              <Notice live={false}>{t('onboarding.outdoorEquipmentHidden')}</Notice>
             </FieldReveal>
           ) : null}
           {section.key === 'body' ? (
@@ -520,7 +520,7 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
               <h3>{t('onboarding.review')}</h3>
               <p>{locale === 'fa' ? 'پاسخ‌هایت را بررسی کن. تأیید، اطلاعات را ذخیره می‌کند؛ ساخت برنامه را در مرحلهٔ بعد خودت آغاز می‌کنی.' : 'Review your answers. Confirmation saves them; you will start plan creation explicitly in the next step.'}</p>
               {giftCampaign === 'exhausted' || giftCampaign === 'disabled' ? (
-                <div className="inline-notice inline-notice--warning" role="status">{t('entitlement.giftExhausted')}</div>
+                <Notice tone="warning">{t('entitlement.giftExhausted')}</Notice>
               ) : giftCampaign === 'available' ? (
                 <article aria-labelledby="onboarding-gift-title" className="onboarding-gift content-card">
                   <span className="onboarding-gift__icon" aria-hidden="true"><Gift size={26} /></span>
@@ -534,20 +534,20 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
                   </ul>
                 </article>
               ) : (
-                <div className="inline-notice" role="status">{locale === 'fa' ? 'واجد شرایط بودن برای هدیه در مرحلهٔ بعد بررسی می‌شود.' : 'Gift eligibility will be checked in the next step.'}</div>
+                <Notice>{locale === 'fa' ? 'واجد شرایط بودن برای هدیه در مرحلهٔ بعد بررسی می‌شود.' : 'Gift eligibility will be checked in the next step.'}</Notice>
               )}
               <ReviewGrid locale={locale} values={prepareCompletionValues(values)} />
-              {blockedReason ? <div className="inline-notice inline-notice--warning"><HeartPulse size={18} />{blockedReason}</div> : null}
-              {!online ? <div className="inline-notice"><WifiOff size={18} />{t('onboarding.offlineReview')}</div> : null}
+              {blockedReason ? <Notice live={false} tone="warning"><HeartPulse size={18} />{blockedReason}</Notice> : null}
+              {!online ? <Notice live={false}><WifiOff size={18} />{t('onboarding.offlineReview')}</Notice> : null}
               <Button block disabled={!online || Boolean(blockedReason) || saving} loading={saving} onClick={finishSetup}>{t('onboarding.reviewFinish')}</Button>
               <Link className="orbit-button orbit-button--ghost orbit-button--block" href={localizedPath(locale, '/app/today?preview=1')}>{t('common.preview')}</Link>
             </div>
           ) : null}
-          {pageError ? <div className="inline-notice inline-notice--error" role="alert">{pageError}</div> : null}
+          {pageError ? <Notice tone="error">{pageError}</Notice> : null}
           {healthStopped ? (
             <FieldReveal className="onboarding-reveal" key={`health-actions-${healthOutcome}`} open>
               <div className="onboarding-actions">
-                <Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
+                <Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ChevronLeft className="directional-icon" size={18} />{t('common.back')}</Button>
                 <div className="onboarding-actions__stop">
                   <Button disabled={!online || saving} onClick={() => void saveAndExitHealth()} variant="secondary">{t('onboarding.saveAndExit')}</Button>
                   <Link className="orbit-button orbit-button--danger" href={localizedPath(locale, '/safety')}>{t('onboarding.safetyGuidance')}</Link>
@@ -558,18 +558,18 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
             section.key === 'health' ? (
               <FieldReveal className="onboarding-reveal" key="health-actions-continue" open>
                 <div className="onboarding-actions">
-                  <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
+                  <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ChevronLeft className="directional-icon" size={18} />{t('common.back')}</Button>
                   <Button disabled={!online} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
                 </div>
               </FieldReveal>
             ) : (
               <div className="onboarding-actions">
-                <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button>
+                <Button disabled={currentIndex === 0 || !online} loading={saving} onClick={previous} variant="ghost"><ChevronLeft className="directional-icon" size={18} />{t('common.back')}</Button>
                 <Button disabled={!online} loading={saving} onClick={next}>{t('common.continue')}<ArrowRight className="directional-icon" size={18} /></Button>
               </div>
             )
           ) : (
-            <div className="onboarding-actions"><Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ArrowLeft className="directional-icon" size={18} />{t('common.back')}</Button></div>
+            <div className="onboarding-actions"><Button disabled={!online} loading={saving} onClick={previous} variant="ghost"><ChevronLeft className="directional-icon" size={18} />{t('common.back')}</Button></div>
           )}
         </div>
       </main>
@@ -633,7 +633,7 @@ function OnboardingProgress({
 function HealthOutcome({ outcome }: { outcome: ReturnType<typeof healthScreeningOutcome> }) {
   const { t } = useTranslation()
   if (outcome === 'eligible') {
-    return <div className="inline-notice inline-notice--success" role="status"><ShieldCheck size={18} /><span><strong>{t('onboarding.healthEligible')}</strong><br />{t('onboarding.healthEligibleCopy')}</span></div>
+    return <Notice tone="success"><ShieldCheck size={18} /><span><strong>{t('onboarding.healthEligible')}</strong><br />{t('onboarding.healthEligibleCopy')}</span></Notice>
   }
   if (outcome === 'blocked') {
     return (
@@ -714,7 +714,7 @@ function BodyStep({
       <StatusPill tone="neutral">{t('onboarding.bodyOptional')}</StatusPill>
       <h3>{t('onboarding.upload')}</h3>
       <p>{t('onboarding.bodyManualCopy')}</p>
-      {skipped ? <div className="inline-notice">{t('onboarding.bodySkipConfirm')}</div> : null}
+      {skipped ? <Notice live={false}>{t('onboarding.bodySkipConfirm')}</Notice> : null}
       <div className="body-path body-path--sub" role="group" aria-label={fa ? 'روش ثبت ترکیب بدن' : 'How to record body composition'}>
         <button aria-pressed={source === 'manual'} className={`body-path__choice${source === 'manual' ? ' is-selected' : ''}`} onClick={() => onSource('manual')} type="button">
           <strong>{t('onboarding.sourceManual')}</strong>
@@ -757,16 +757,16 @@ function BodyStep({
       <FieldReveal className="onboarding-reveal" open={source === 'report'}>
         <div className="body-report">
           {uploadState === 'uploading' ? (
-            <div className="inline-notice" role="status">
+            <Notice>
               {t('onboarding.uploadProgress')}
               <Button disabled={!online} onClick={onCancelUpload} variant="ghost">{t('onboarding.uploadCancel')}</Button>
-            </div>
+            </Notice>
           ) : null}
           {uploadState === 'error' ? (
-            <div className="inline-notice inline-notice--error" role="alert">
+            <Notice tone="error">
               {t('onboarding.uploadError')}
               <Button onClick={onRemove} variant="ghost">{t('onboarding.removeFile')}</Button>
-            </div>
+            </Notice>
           ) : null}
           <label className={`body-upload body-upload--bold${uploadState === 'success' ? ' body-upload--success' : ''}`}>
             {uploadState === 'success' ? <FileCheck2 size={22} /> : <UploadCloud size={22} />}
@@ -883,17 +883,17 @@ function DynamicField({
   if (field.kind === 'checkbox') {
     const policyPath = field.key === 'termsAccepted' ? '/terms' : '/privacy'
     return (
-      <label className={`onboarding-checkbox ${error ? 'has-error' : ''}`}>
-        <input aria-invalid={Boolean(error)} aria-required={required || undefined} checked={value === 'yes'} onChange={(event) => onChange(event.target.checked ? 'yes' : '')} required={required} type="checkbox" />
-        <span><Check size={16} /></span>
-        <div className="onboarding-checkbox__heading">
-          <strong>{t(field.labelKey)}</strong>
-          {required ? <RequiredMark /> : null}
-        </div>
-        <small className="onboarding-checkbox__version">{consentVersionForField(field.key, legalVersions)}</small>
-        <Link className="onboarding-checkbox__policy" href={localizedPath(locale, policyPath)} onClick={(event) => event.stopPropagation()} target="_blank">{locale === 'fa' ? 'مطالعه متن' : 'Read notice'}</Link>
-        {error ? <small>{error}</small> : null}
-      </label>
+      <Checkbox
+        checked={value === 'yes'}
+        className="onboarding-checkbox"
+        error={error}
+        label={<>{t(field.labelKey)}{required ? <RequiredMark /> : null}</>}
+        onChange={(event) => onChange(event.target.checked ? 'yes' : '')}
+        required={required}
+      >
+        <small className="orbit-check__meta">{consentVersionForField(field.key, legalVersions)}</small>
+        <Link className="orbit-check__link" href={localizedPath(locale, policyPath)} onClick={(event) => event.stopPropagation()} target="_blank">{locale === 'fa' ? 'مطالعه متن' : 'Read notice'}</Link>
+      </Checkbox>
     )
   }
   if (field.kind === 'multiselect') {

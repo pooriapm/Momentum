@@ -17,6 +17,7 @@
     "storybook": "STORYBOOK=true storybook dev -p 6006",
     "build-storybook": "STORYBOOK=true storybook build",
     "design:penpot-tokens": "node scripts/design/build-penpot-tokens.mjs",
+    "design:tokens": "node scripts/design/build-css-tokens.mjs",
     "design:reconcile-inventory": "node scripts/design/reconcile-inventory.mjs",
     "test": "vitest run",
     "release:readiness": "node scripts/ops/release-readiness.mjs",

@@ -9,9 +9,10 @@ import { classifyAuthError } from '../../../platform/auth/auth-errors'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { PublicHeader } from '../../components/PublicChrome'
 import { localizedPath } from '../../router/route-utils'
-import { Input } from '../../ui/FormControls'
+import { Checkbox, Input } from '../../ui/FormControls'
 import { OrbitMark } from '../../ui/OrbitMark'
 import { Button, GlassChrome } from '../../ui/primitives'
+import { Notice } from '../../ui/feedback'
 import './auth.css'
 
 const PENDING_EMAIL_KEY = 'momentum.pendingVerificationEmail'
@@ -178,14 +179,14 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
           <OrbitMark animated size={58} />
           <h1>{isVerify ? (fa ? 'تأیید ایمیل' : 'Verify your email') : isRecover ? (fa ? 'بازیابی حساب' : 'Recover your account') : isUpdatePassword ? (fa ? 'رمز تازه بساز' : 'Create a new password') : isSignUp ? t('auth.titleUp') : t('auth.titleIn')}</h1>
           <p className="auth-lead">{lead}</p>
-          {!isConfigured ? <div className="inline-notice inline-notice--warning">{t('auth.cloudMissing')}</div> : null}
-          {!online ? <div className="inline-notice inline-notice--warning" role="status">{t('auth.offline')}</div> : null}
+          {!isConfigured ? <Notice live={false} tone="warning">{t('auth.cloudMissing')}</Notice> : null}
+          {!online ? <Notice tone="warning">{t('auth.offline')}</Notice> : null}
           {isVerify ? (
             <div className="auth-verification-state">
               <p>{verified ? t('auth.verifyComplete') : t('auth.verifyWaiting')}</p>
               {pendingEmail ? <p><bdi>{pendingEmail}</bdi></p> : null}
-              {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
-              {message ? <div className="inline-notice inline-notice--success" role="status">{message}</div> : null}
+              {error ? <Notice tone="error">{error}</Notice> : null}
+              {message ? <Notice tone="success">{message}</Notice> : null}
               <Link className="orbit-button orbit-button--primary orbit-button--block" href={localizedPath(locale, verified ? '/onboarding' : '/auth/sign-in')}>
                 {verified ? t('auth.continueOnboarding') : t('common.signIn')}
               </Link>
@@ -258,28 +259,34 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
               ) : null}
               {isSignUp ? (
                 <div className="auth-legal-stack">
-                  <label className={`auth-legal${fieldErrors.terms ? ' has-error' : ''}`}>
-                    <input aria-invalid={Boolean(fieldErrors.terms)} aria-describedby={fieldErrors.terms ? 'auth-terms-error' : undefined} aria-required="true" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} required type="checkbox" />
-                    <span>
-                      {t('onboarding.termsConsent')}{' '}
-                      <Link href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')}</Link>
-                      <bdi className="auth-legal__version" dir="ltr">{legalVersions.terms}</bdi>
-                    </span>
-                    {fieldErrors.terms ? <small id="auth-terms-error">{fieldErrors.terms}</small> : null}
-                  </label>
-                  <label className={`auth-legal${fieldErrors.privacy ? ' has-error' : ''}`}>
-                    <input aria-invalid={Boolean(fieldErrors.privacy)} aria-describedby={fieldErrors.privacy ? 'auth-privacy-error' : undefined} aria-required="true" checked={acceptedPrivacy} onChange={(event) => setAcceptedPrivacy(event.target.checked)} required type="checkbox" />
-                    <span>
-                      {t('onboarding.privacyConsent')}{' '}
-                      <Link href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')}</Link>
-                      <bdi className="auth-legal__version" dir="ltr">{legalVersions.privacy}</bdi>
-                    </span>
-                    {fieldErrors.privacy ? <small id="auth-privacy-error">{fieldErrors.privacy}</small> : null}
-                  </label>
+                  <Checkbox
+                    appearance="plain"
+                    checked={acceptedTerms}
+                    error={fieldErrors.terms}
+                    id="auth-terms"
+                    label={t('onboarding.termsConsent')}
+                    onChange={(event) => setAcceptedTerms(event.target.checked)}
+                    required
+                  >
+                    <Link href={localizedPath(locale, '/terms')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')}</Link>
+                    <bdi className="orbit-check__meta" dir="ltr">{legalVersions.terms}</bdi>
+                  </Checkbox>
+                  <Checkbox
+                    appearance="plain"
+                    checked={acceptedPrivacy}
+                    error={fieldErrors.privacy}
+                    id="auth-privacy"
+                    label={t('onboarding.privacyConsent')}
+                    onChange={(event) => setAcceptedPrivacy(event.target.checked)}
+                    required
+                  >
+                    <Link href={localizedPath(locale, '/privacy')} onClick={(event) => event.stopPropagation()} target="_blank">{t('auth.readDocument')}</Link>
+                    <bdi className="orbit-check__meta" dir="ltr">{legalVersions.privacy}</bdi>
+                  </Checkbox>
                 </div>
               ) : null}
-              {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
-              {message ? <div className="inline-notice inline-notice--success" role="status">{message}</div> : null}
+              {error ? <Notice tone="error">{error}</Notice> : null}
+              {message ? <Notice tone="success">{message}</Notice> : null}
               {needsResend ? (
                 <Button
                   block

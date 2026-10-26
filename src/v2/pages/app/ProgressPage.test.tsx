@@ -61,9 +61,9 @@ describe('ProgressPage inventory states', () => {
 
   it('PROG-02 keeps chart, text, and table alternatives of the same data', () => {
     renderProgress()
-    fireEvent.click(screen.getByRole('button', { name: /text chart summary/i }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Text summary' }))
     expect(screen.getByText(/adherence is week 1 62%/i)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /view data table/i }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Table' }))
     expect(screen.getByText(/this table contains exactly the chart data/i)).toBeInTheDocument()
     expect(screen.getByText(/week 4 · partial/i)).toBeInTheDocument()
     expect(screen.getByRole('row', { name: /week 4 · partial 1 \/ 3 5 \/ 28 7 18%/i })).toBeInTheDocument()
@@ -110,10 +110,11 @@ describe('ProgressPage inventory states', () => {
   it('distinguishes weight loss and announces the selected chart view', () => {
     renderProgress()
     expect(screen.getByText('3.4 kg down')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Chart' })).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(screen.getByRole('button', { name: /view data table/i }))
-    expect(screen.getByRole('button', { name: 'Chart' })).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByRole('button', { name: /view data table/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('tab', { name: 'Chart' })).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(screen.getByRole('tab', { name: 'Table' }))
+    expect(screen.getByRole('tab', { name: 'Chart' })).toHaveAttribute('aria-selected', 'false')
+    expect(screen.getByRole('tab', { name: 'Table' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'progress-chart-tab-table')
   })
 
 })

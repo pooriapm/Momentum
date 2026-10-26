@@ -1,13 +1,13 @@
 .exercise-guide {
   background: var(--color-surface-muted);
-  border-radius: 1rem;
+  border-radius: var(--radius-inset);
   color: var(--color-text);
   display: grid;
-  font-size: .88rem;
-  gap: .9rem;
+  font-size: var(--text-label);
+  gap: var(--space-4);
   grid-template-columns: minmax(0, 1fr);
   line-height: 1.6;
-  padding: .9rem 1rem;
+  padding: var(--space-4) var(--space-4);
   width: 100%;
 }
 
@@ -16,20 +16,20 @@
 .exercise-guide__animation {
   aspect-ratio: 1;
   background: var(--color-surface);
-  border-radius: .8rem;
+  border-radius: var(--radius-control);
   justify-self: center;
   max-width: 12rem;
   width: 100%;
 }
 
-.exercise-guide__body { display: grid; gap: .6rem; min-width: 0; }
+.exercise-guide__body { display: grid; gap: var(--space-2); min-width: 0; }
 .exercise-guide__meta { color: var(--color-text-muted); margin: 0; }
 .exercise-guide__meta strong, .exercise-guide__tip strong { color: var(--color-text); }
 
 .exercise-guide__steps {
   counter-reset: none;
   display: grid;
-  gap: .45rem;
+  gap: var(--space-2);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -38,18 +38,18 @@
 .exercise-guide__steps li {
   align-items: flex-start;
   display: flex;
-  gap: .6rem;
+  gap: var(--space-2);
 }
 
 .exercise-guide__steps li > span {
   align-items: center;
   background: var(--color-brand);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--color-on-brand, #fff);
   display: inline-flex;
   flex: none;
-  font-size: .75rem;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
   height: 1.4rem;
   justify-content: center;
   margin-top: .1rem;
@@ -64,18 +64,18 @@
   color: var(--color-brand);
   cursor: pointer;
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   justify-self: start;
   padding: 0;
 }
 
-@media (min-width: 40rem) {
+@media (min-width: 37.5rem) {
   .exercise-guide:has(.exercise-guide__animation) {
     align-items: start;
     grid-template-columns: 11rem minmax(0, 1fr);
   }
 }
 
-.meal-detail-sheet__ingredients li.workout-detail-sheet__exercise { flex-wrap: wrap; gap: .25rem .5rem; }
+.meal-detail-sheet__ingredients li.workout-detail-sheet__exercise { flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
 .workout-detail-sheet__exercise > span { flex: 1 1 12rem; min-width: 0; }
-.workout-detail-sheet__guide { flex-basis: 100%; padding-bottom: .75rem; }
+.workout-detail-sheet__guide { flex-basis: 100%; padding-bottom: var(--space-3); }

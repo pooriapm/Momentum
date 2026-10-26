@@ -6,6 +6,7 @@ import { Link, useLocation } from 'wouter'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import { localizedPath, switchLocalePath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
+import { media } from '../../design/tokens'
 
 function closeMenu(
   setMenuPath: (value: string | null) => void,
@@ -56,7 +57,7 @@ export function PublicHeader({ locale }: { locale: AppLocale }) {
         }
       }
     }
-    const desktop = window.matchMedia('(min-width: 58.001rem)')
+    const desktop = window.matchMedia(media.expandedUp)
     const onResize = () => {
       if (desktop.matches) {
         setMenuPath(null)

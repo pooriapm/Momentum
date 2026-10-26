@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState, type ReactNode } from "react";
-import { AlertOctagon, AlertTriangle, BadgeCheck, CircleHelp, Check, ChevronLeft, Clock3, Dumbbell, FileCheck2, FileUp, Gift, Globe2, HeartPulse, Home, LoaderCircle, LockKeyhole, RefreshCw, Salad, Save, ShieldCheck, Sparkles, WalletCards, WifiOff } from "lucide-react";
+import { AlertOctagon, TriangleAlert, BadgeCheck, CircleHelp, Check, ChevronLeft, Clock3, Dumbbell, FileCheck2, FileUp, Gift, Globe2, HeartPulse, Home, LoaderCircle, LockKeyhole, RefreshCw, Salad, Save, ShieldCheck, Sparkles, WalletCards, WifiOff } from "lucide-react";
 import { momentumEvidence, momentumSupportingVariant } from "./coverage";
 import { CountryCombobox } from "../../v2/ui/CountryCombobox";
 import { localeFromStory, ProductFrame, PublicFrame, SpecBadge, SpecButton, SpecCallout, SpecCard, SpecChips, SpecConsentOption, SpecField, SpecHeader, SpecList, SpecOverlay, SpecProgress, SpecSelect, SpecTable, SpecTabs, Timeline, tx, type SpecLocale } from "./ProductSpec";
@@ -216,7 +216,7 @@ function PublicStateScreen({ locale, state }: { locale: SpecLocale; state: Publi
     <PublicFrame locale={locale}>
       <SpecHeader eyebrow={region ? tx(locale, "مسیر پرداخت ایران", "Iran payment route") : pricingError ? tx(locale, "قیمت", "Pricing") : tx(locale, "پیشنهاد اولیه", "Initial suggestion")} title={region ? tx(locale, "درگاه ایرانی با قیمت تومانی", "Iranian gateway with toman prices") : pricingError ? tx(locale, "قیمت معتبر دریافت نشد", "Authoritative pricing is unavailable") : tx(locale, "در حال پیشنهاد زبان و پرداخت…", "Suggesting language and payment route…")} body={region ? tx(locale, "حساب، هدیه و ساخت برنامه بدون محدودیت منطقه‌ای در دسترس‌اند. زبان مستقل است و هر زمان قابل تغییر است.", "Account access, the gift, and plan generation are not region-gated. Language is independent and always editable.") : pricingError ? tx(locale, "تا دریافت قیمت معتبر، ارز یا مبلغ حدس نمی‌زنیم و پرداخت را شروع نمی‌کنیم.", "We do not guess currency or amount, and checkout cannot start until trusted pricing loads.") : tx(locale, "IP فقط زبان اولیه و مسیر پرداخت را پیشنهاد می‌کند. محدودیت منطقه‌ای اعمال نمی‌شود.", "IP only suggests the initial language and payment route. It never limits access.")} />
       <SpecCard className="mo-spec__state-card">
-        <span className={`mo-spec__state-icon mo-spec__state-icon--${region ? "brand" : pricingError ? "danger" : "info"}`}>{region ? <Globe2 /> : pricingError ? <AlertTriangle /> : <LoaderCircle className="orbit-spin" />}</span>
+        <span className={`mo-spec__state-icon mo-spec__state-icon--${region ? "brand" : pricingError ? "danger" : "info"}`}>{region ? <Globe2 /> : pricingError ? <TriangleAlert /> : <LoaderCircle className="orbit-spin" />}</span>
         <div className="mo-spec__actions">
           {pricingError ? (
             <SpecButton>
@@ -376,7 +376,7 @@ function OnboardingBody({ locale, state }: { locale: SpecLocale; state: Exclude<
           <SpecConsentOption checked description={tx(locale, "این انتخاب قبلی حفظ شده است.", "Your previous choice is preserved.")} label={tx(locale, "سیاست حریم خصوصی", "Privacy Policy")} version="v1.0 · 2026-08-14" />
           <SpecConsentOption checked={false} description={tx(locale, "برای ساخت برنامه لازم است و هر زمان از حساب قابل پس‌گرفتن است.", "Required for plan creation and withdrawable from your account.")} error={tx(locale, "رضایت پردازش داده سلامت لازم است.", "Health-data consent is required.")} label={tx(locale, "پردازش داده‌های سلامت", "Health-data processing")} version="v1.0 · 2026-08-14" />
         </div>
-        <SpecCallout icon={<AlertTriangle />} title={tx(locale, "دو انتخاب ضروری باقی مانده", "Two required choices remain")} tone="warning" />
+        <SpecCallout icon={<TriangleAlert />} title={tx(locale, "دو انتخاب ضروری باقی مانده", "Two required choices remain")} tone="warning" />
         <StepActions locale={locale} />
       </SpecCard>
     );
@@ -587,7 +587,7 @@ function OnboardingBody({ locale, state }: { locale: SpecLocale; state: Exclude<
     );
   return (
     <SpecCard>
-      <SpecCallout icon={<AlertTriangle />} title={tx(locale, "بازبینی نهایی ذخیره نشد", "Final review could not be saved")} tone="danger">
+      <SpecCallout icon={<TriangleAlert />} title={tx(locale, "بازبینی نهایی ذخیره نشد", "Final review could not be saved")} tone="danger">
         {tx(locale, "همه پاسخ‌ها و رضایت‌های انتخاب‌شده روی صفحه باقی مانده‌اند. درخواست ساخت برنامه آغاز نشده و سهم ماهانه مصرف نشده است.", "All answers and selected consents remain on screen. Generation has not started and the monthly request is still unused.")}
       </SpecCallout>
       <SpecList
@@ -692,7 +692,7 @@ function AdditionalOnboardingScreen({ locale, state }: { locale: SpecLocale; sta
             </>
           ) : state === "body-error" ? (
             <>
-              <SpecCallout icon={<AlertTriangle />} title={tx(locale, "فایل بارگذاری نشد", "Upload failed")} tone="danger">
+              <SpecCallout icon={<TriangleAlert />} title={tx(locale, "فایل بارگذاری نشد", "Upload failed")} tone="danger">
                 {tx(locale, "مقادیر دستی حفظ شده‌اند. فایل را حذف یا دوباره امتحان کن.", "Manual values are preserved. Remove the file or try again.")}
               </SpecCallout>
               <div className="mo-spec__actions">

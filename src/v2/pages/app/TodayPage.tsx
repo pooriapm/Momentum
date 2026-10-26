@@ -1,6 +1,5 @@
 import {
   AlertOctagon,
-  AlertTriangle,
   Check,
   ChevronRight,
   CircleMinus,
@@ -9,6 +8,7 @@ import {
   Eye,
   Flame,
   Salad,
+  TriangleAlert,
   WifiOff,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -23,7 +23,7 @@ import { CheckInSheet, MealDetailSheet, LazyOverlay } from '../../components/Laz
 import { WorkoutLogger } from '../../components/WorkoutLogger'
 import { completeMeal, currentLocalDate, logMealSelection, skipMeal, undoMeal } from '../../data/repository'
 import { localize, type MealChoice, type MealSlot, type MomentumPlanView } from '../../data/types'
-import { formatClock, formatNumber } from '../../lib/format'
+import { formatClock, formatNumber, formatPercent } from '../../lib/format'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
@@ -49,6 +49,8 @@ import {
   type TodaySurface,
   type WorkoutRunStatus,
 } from './today-state'
+import { Page, SectionHeader } from '../../ui/layout'
+import { Notice } from '../../ui/feedback'
 import '../../../styles/today.css'
 
 function currentTimeInZone(timezone?: string) {
@@ -187,22 +189,22 @@ export function TodayPage({
   if (view === 'preparing') return <GenerationWait locale={locale} onRetry={onRetry} online={online} />
   if (view === 'load-error' && !plan) {
     return (
-      <main className="app-page today-page screen-enter">
+      <Page name="today">
         <ContentCard className="today-status-card">
-          <span className="today-status-card__icon is-warning"><AlertTriangle size={28} /></span>
+          <span className="today-status-card__icon is-warning"><TriangleAlert size={28} /></span>
           <p className="orbit-eyebrow">{fa ? 'خطای قابل بازیابی' : 'Recoverable error'}</p>
           <h1>{fa ? 'برنامه امروز دریافت نشد' : 'Today’s plan could not be loaded'}</h1>
           <p>{plan
             ? (fa ? 'نسخه فعال روی دستگاه حذف یا جایگزین نشده است. می‌توانی برنامه ذخیره‌شده را بخوانی و بعداً برای تازه‌سازی دوباره تلاش کنی.' : 'The active on-device plan was not deleted or replaced. You can read the saved plan and retry the refresh later.')
             : (fa ? 'حسابت حذف نشده است. اتصال را بررسی کن و دوباره تلاش کن.' : 'Your account is safe. Check the connection and try again.')}</p>
-          <div className="inline-notice" role="status">{plan
+          <Notice>{plan
             ? (fa ? `نسخه ذخیره‌شده امن است · همگام‌سازی ${formatLastSync(syncedAt, locale)}` : `Saved plan is safe · synced ${formatLastSync(syncedAt, locale)}`)
-            : (fa ? 'اطلاعات حساب محفوظ است' : 'Account data was not replaced')}</div>
+            : (fa ? 'اطلاعات حساب محفوظ است' : 'Account data was not replaced')}</Notice>
           <div className="today-status-actions">
             <Button onClick={() => (onRetry ? onRetry() : window.location.reload())}>{fa ? 'تلاش دوباره' : 'Try again'}</Button>
           </div>
         </ContentCard>
-      </main>
+      </Page>
     )
   }
   if (view === 'no-plan' || !plan) return <EmptyPlanState locale={locale} />
@@ -331,7 +333,7 @@ export function TodayPage({
   })
 
   return (
-    <main className="app-page today-page screen-enter">
+    <Page name="today">
       <section className="page-heading today-heading">
         <div>
           <p className="orbit-eyebrow">{localize(plan.dateLabel, locale)}</p>
@@ -341,34 +343,34 @@ export function TodayPage({
       </section>
 
       {view === 'load-error' ? (
-        <div className="today-banner inline-notice inline-notice--warning" role="status">
-          <AlertTriangle size={16} />
+        <Notice tone="warning" className="today-banner">
+          <TriangleAlert size={16} />
           <span>{fa ? 'تازه‌سازی انجام نشد. برنامه و مقدارهای واردشده حفظ شده‌اند؛ ثبت تا تازه‌سازی دوباره غیرفعال است.' : 'Refresh failed. Your plan and entered values are kept; saving is disabled until the plan refreshes.'}</span>
           <Button onClick={onRetry} variant="secondary">{fa ? 'تلاش دوباره' : 'Try again'}</Button>
-        </div>
+        </Notice>
       ) : null}
       {view === 'offline' ? (
-        <div className="today-banner inline-notice" role="status">
+        <Notice className="today-banner">
           <WifiOff size={16} />
           <span>{fa ? `آفلاین هستی. آخرین همگام‌سازی: ${formatLastSync(syncedAt, locale)}. تا برگشت اتصال ثبت غیرفعال است و هیچ داده سلامتی روی دستگاه صف نمی‌شود.` : `You’re offline. Last synced ${formatLastSync(syncedAt, locale)}. Saving is disabled until you reconnect, and no health data is queued on this device.`}</span>
-        </div>
+        </Notice>
       ) : null}
       {view === 'stale' ? (
-        <div className="today-banner inline-notice inline-notice--warning" role="status">
-          <AlertTriangle size={16} />
+        <Notice tone="warning" className="today-banner">
+          <TriangleAlert size={16} />
           <span>{fa ? 'این نسخه ممکن است تازه نباشد. ثبت تمرین و وعده تا همگام‌سازی دوباره غیرفعال است. برنامه ذخیره‌شده حذف نشده است.' : 'This copy may be out of date. Logging is disabled until the plan refreshes. The stored plan was not deleted.'}</span>
-        </div>
+        </Notice>
       ) : null}
       {view === 'safety' ? (
-        <div className="today-banner inline-notice inline-notice--error" role="alert">
+        <Notice tone="error" className="today-banner">
           <AlertOctagon size={16} />
           <span>{fa ? 'تمرین امروز متوقف شده است. هیچ فشاری برای حفظ تداوم نیست. اگر علامت شدید یا ناگهانی است کمک فوری بگیر.' : 'Today’s workout is paused. There is no pressure to keep a streak. Seek urgent help if symptoms are severe or sudden.'}</span>
-        </div>
+        </Notice>
       ) : null}
       {checkInSaved ? (
-        <div className="today-banner inline-notice inline-notice--success" role="status">
+        <Notice tone="success" className="today-banner">
           {fa ? 'چک‌این ذخیره شد. هوش مصنوعی صدا زده نشد و برنامه ماه جاری عوض نشد.' : 'Check-in saved. No AI was called, and this month’s plan is unchanged.'}
-        </div>
+        </Notice>
       ) : null}
 
       <ContentCard className="today-board">
@@ -404,7 +406,7 @@ export function TodayPage({
           )}
           <div className="today-fact">
             <span className="today-fact__label">{t('app.readiness')}</span>
-            <strong><bdi dir="ltr">{formatNumber(plan.progress.readiness, locale)}%</bdi></strong>
+            <strong><bdi dir="ltr">{formatPercent(plan.progress.readiness, locale)}</bdi></strong>
           </div>
         </div>
       </ContentCard>
@@ -419,10 +421,10 @@ export function TodayPage({
 
       <section className="today-main-grid">
         <div className="today-timeline" id="today-meal">
-          <div className="section-title-row">
-            <h2>{allMealsCompleted ? (fa ? 'همه وعده‌ها ثبت شدند' : 'All meals logged') : t('app.nextMeal')}</h2>
-            <span><Clock3 size={16} />{nextMeal ? <bdi dir="ltr">{formatClock(nextMeal.time, locale)}</bdi> : (allMealsCompleted ? (fa ? 'کامل' : 'Done') : '—')}</span>
-          </div>
+          <SectionHeader
+            meta={<span><Clock3 size={16} />{nextMeal ? <bdi dir="ltr">{formatClock(nextMeal.time, locale)}</bdi> : (allMealsCompleted ? (fa ? 'کامل' : 'Done') : '—')}</span>}
+            title={allMealsCompleted ? (fa ? 'همه وعده‌ها ثبت شدند' : 'All meals logged') : t('app.nextMeal')}
+          />
 
           {nextMeal && nextChoice ? (
             <ContentCard className="next-meal-card">
@@ -452,8 +454,8 @@ export function TodayPage({
                 ))}
               </div>
               {swapLocked ? <MemberFeatureLock compact feature="meal-swaps" locale={locale} /> : null}
-              {substituteNotice ? <div className="inline-notice inline-notice--success" role="status">{substituteNotice}</div> : null}
-              {mealError ? <div className="inline-notice inline-notice--error" role="alert">{mealError}</div> : null}
+              {substituteNotice ? <Notice tone="success">{substituteNotice}</Notice> : null}
+              {mealError ? <Notice tone="error">{mealError}</Notice> : null}
               <div className="next-meal-card__footer">
                 <span><Flame size={16} /><bdi dir={fa ? 'rtl' : 'ltr'}>{formatNumber(nextChoice.nutrition.calories, locale)} kcal</bdi></span>
                 <span><bdi dir={fa ? 'rtl' : 'ltr'}><span>{formatNumber(nextChoice.nutrition.protein, locale)}</span><span>g</span></bdi> {t('app.protein')}</span>
@@ -575,7 +577,7 @@ export function TodayPage({
         />
         </LazyOverlay>
       ) : null}
-    </main>
+    </Page>
   )
 }
 
@@ -609,7 +611,7 @@ function nextActionCopy({
   }
   if (view === 'completed') {
     return {
-      title: fa ? 'آفرین، برنامه امروز کامل شد' : 'You completed today’s plan',
+      title: fa ? 'برنامه امروز کامل شد' : 'Today’s plan is complete',
       body: fa ? 'تمرین و وعده‌های برنامه‌ریزی‌شده ثبت شدند. می‌توانی آخرین ثبت را برگردانی.' : 'Your workout and planned meals are logged. You can undo the latest log.',
       action: fa ? 'بازکردن ثبت‌های امروز' : 'Open today’s logs',
       targetId: 'today-meal',
@@ -650,7 +652,7 @@ function nextActionCopy({
 function TodayLoadingSkeleton({ locale }: { locale: AppLocale }) {
   const fa = locale === 'fa'
   return (
-    <main aria-busy="true" aria-label={fa ? 'در حال بارگذاری امروز' : 'Loading today'} className="app-page today-page today-skeleton screen-enter">
+    <Page name="today" busyLabel={fa ? 'در حال بارگذاری امروز' : 'Loading today'} className="today-skeleton">
       <div className="today-skeleton__heading">
         <div className="today-skeleton__block today-skeleton__line today-skeleton__line--short" />
         <div className="today-skeleton__block today-skeleton__line today-skeleton__line--title" />
@@ -666,6 +668,6 @@ function TodayLoadingSkeleton({ locale }: { locale: AppLocale }) {
         <div className="today-skeleton__block today-skeleton__side" />
       </div>
       <p className="today-skeleton__note">{fa ? 'در حال چیدن امروز…' : 'Setting up today…'}</p>
-    </main>
+    </Page>
   )
 }

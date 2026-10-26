@@ -17,6 +17,8 @@ import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { ModalShell } from '../../components/ModalShell'
 import { useOnlineStatus } from '../../../platform/pwa/network'
 import { EXPORT_TTL_MS, type DeleteStatus, type ExportStatus } from './me-state'
+import { Page, PageHeader } from '../../ui/layout'
+import { Notice } from '../../ui/feedback'
 import '../../../styles/me.css'
 
 function exportStatusFromRequest(result: AccountExportResponse | { export_request: AccountExportResponse['export_request'] | null }): ExportStatus {
@@ -163,26 +165,24 @@ export function AccountDataPage({
 
   if (deleteStatus === 'complete') {
     return (
-      <main className="app-page account-data-page screen-enter">
+      <Page name="account-data">
         <ContentCard className="account-state-card">
           <StatusPill tone="success">{fa ? 'حذف کامل شد' : 'Deletion complete'}</StatusPill>
           <h1>{fa ? 'حساب دیگر قابل ورود یا بازیابی نیست.' : 'The account can no longer be accessed or recovered.'}</h1>
           <Link className="orbit-button orbit-button--primary" href={localizedPath(locale)}>{fa ? 'بازگشت به صفحه اصلی' : 'Back to home'}</Link>
         </ContentCard>
-      </main>
+      </Page>
     )
   }
 
   return (
-    <main className="app-page account-data-page screen-enter">
-      <section className="page-heading">
-        <div>
-          <p className="orbit-eyebrow"><LockKeyhole size={15} />{fa ? 'کنترل داده' : 'Data controls'}</p>
-          <h1>{fa ? 'حریم خصوصی و حساب' : 'Privacy & account'}</h1>
-          <p>{fa ? 'خروجی قابل‌حمل بگیر یا حساب و داده‌های وابسته را برای همیشه حذف کن.' : 'Download a portable export or permanently remove your account and associated data.'}</p>
-        </div>
-        <Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, '/app/me')}${preview ? '?preview=1' : ''}`}><ChevronLeft className="directional-icon" size={17} />{fa ? 'حساب من' : 'Back to Me'}</Link>
-      </section>
+    <Page name="account-data">
+      <PageHeader
+        eyebrow={<><LockKeyhole size={15} />{fa ? 'کنترل داده' : 'Data controls'}</>}
+        title={fa ? 'حریم خصوصی و حساب' : 'Privacy & account'}
+        description={fa ? 'خروجی قابل‌حمل بگیر یا حساب و داده‌های وابسته را برای همیشه حذف کن.' : 'Download a portable export or permanently remove your account and associated data.'}
+        actions={<><Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, '/app/me')}${preview ? '?preview=1' : ''}`}><ChevronLeft className="directional-icon" size={17} />{fa ? 'حساب من' : 'Back to Me'}</Link></>}
+      />
       <div className="account-data-grid">
         <ContentCard>
           <span className="account-data-card__icon"><Download size={23} /></span>
@@ -209,15 +209,15 @@ export function AccountDataPage({
         {exportStatus === 'expired' ? <ContentCard className="account-state-card"><StatusPill tone="neutral">{fa ? 'منقضی شده' : 'Expired'}</StatusPill><p>{fa ? 'لینک قبلی دیگر کار نمی‌کند؛ درخواست تازه داده تکراری ایجاد نمی‌کند.' : 'The old link no longer works; a new request does not duplicate account data.'}</p><Button onClick={() => void requestExport()} variant="secondary">{fa ? 'ساخت لینک تازه' : 'Create a new link'}</Button></ContentCard> : null}
         {exportStatus === 'failed' ? <ContentCard className="account-state-card"><StatusPill tone="neutral">{fa ? 'ناموفق' : 'Failed'}</StatusPill><p>{error}</p><Button onClick={() => void requestExport()} variant="secondary">{fa ? 'تلاش دوباره' : 'Try again'}</Button></ContentCard> : null}
       </div>
-      {deleteStatus === 'pending' ? <div className="inline-notice" role="status">{fa ? 'درخواست حذف ثبت شد و ورود جدید مسدود می‌شود.' : 'Deletion is pending and new sign-in will be blocked.'}</div> : null}
-      {deleteStatus === 'failed' ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
-      {preview ? <div className="inline-notice inline-notice--warning">{fa ? 'در Preview خروجی و حذف شبیه‌سازی می‌شوند و به سرور نمی‌روند.' : 'Export and deletion are simulated in preview and do not reach the server.'}</div> : null}
+      {deleteStatus === 'pending' ? <Notice>{fa ? 'درخواست حذف ثبت شد و ورود جدید مسدود می‌شود.' : 'Deletion is pending and new sign-in will be blocked.'}</Notice> : null}
+      {deleteStatus === 'failed' ? <Notice tone="error">{error}</Notice> : null}
+      {preview ? <Notice live={false} tone="warning">{fa ? 'در Preview خروجی و حذف شبیه‌سازی می‌شوند و به سرور نمی‌روند.' : 'Export and deletion are simulated in preview and do not reach the server.'}</Notice> : null}
       {deleteOpen ? <ModalShell className="delete-account-dialog" labelId="delete-account-title" material="content" onClose={dismissDelete} ref={modalRef}>
         <header><div><ShieldAlert size={22} /><h2 id="delete-account-title">{fa ? 'حذف حساب برگشت‌پذیر نیست' : 'Account deletion cannot be undone'}</h2></div><button aria-label={fa ? 'بستن' : 'Close'} onClick={closeDelete} type="button"><X size={20} /></button></header>
         <p>{fa ? 'عضویت لغو می‌شود. برای تأیید، عبارت انگلیسی DELETE را وارد کن. می‌توانی اول خروجی بگیری.' : 'Membership is cancelled. Type DELETE to confirm. You can export a copy first.'}</p>
         <Input autoComplete="off" label="DELETE" onChange={(event) => setConfirmation(event.target.value)} value={confirmation} />
         <div className="delete-account-dialog__actions"><Button onClick={closeDelete} variant="secondary">{fa ? 'انصراف' : 'Cancel'}</Button><Button disabled={confirmation !== 'DELETE'} loading={deleteStatus === 'pending'} onClick={() => void removeAccount()} variant="danger"><Trash2 size={17} />{fa ? 'حذف دائمی' : 'Delete permanently'}</Button></div>
       </ModalShell> : null}
-    </main>
+    </Page>
   )
 }

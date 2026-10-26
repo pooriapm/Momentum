@@ -1,7 +1,7 @@
 .pricing-page main {
   margin: 0;
   max-width: none;
-  padding: 0 0 4rem;
+  padding: 0 0 var(--space-16);
 }
 
 .pricing-hero {
@@ -14,7 +14,7 @@
   justify-items: center;
   min-height: 100vh;
   overflow: hidden;
-  padding: 8rem 1.5rem 4rem;
+  padding: 8rem var(--space-6) var(--space-16);
   position: relative;
   text-align: center;
 }
@@ -55,8 +55,8 @@
 
 .pricing-kicker {
   color: var(--color-energy);
-  font-size: 1rem;
-  font-weight: 760;
+  font-size: var(--text-body);
+  font-weight: var(--weight-heavy);
   letter-spacing: .14em;
   margin: 0;
   text-transform: uppercase;
@@ -65,11 +65,11 @@
 [dir="rtl"] .pricing-kicker { letter-spacing: 0; text-transform: none; }
 
 .pricing-hero h1 {
-  font-size: 2.7rem;
-  font-weight: 760;
+  font-size: var(--text-hero);
+  font-weight: var(--weight-heavy);
   letter-spacing: -.04em;
   line-height: 1.2;
-  margin: .8rem 0 0;
+  margin: var(--space-3) 0 0;
   max-width: 16em;
   text-wrap: balance;
 }
@@ -78,33 +78,33 @@
 
 .pricing-lead {
   color: var(--color-text-secondary);
-  font-size: 1.08rem;
+  font-size: var(--text-headline);
   line-height: 1.9;
-  margin: 1.2rem 0 0;
+  margin: var(--space-5) 0 0;
   max-width: 40rem;
 }
 
-.pricing-lead--next { margin-top: .6rem; }
+.pricing-lead--next { margin-top: var(--space-2); }
 
 .pricing-region {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: flex;
   flex-wrap: wrap;
-  gap: .3rem;
+  gap: var(--space-1);
   justify-content: center;
-  margin-top: 1.6rem;
-  padding: .35rem;
+  margin-top: var(--space-6);
+  padding: var(--space-1_5);
 }
 
 .pricing-region button {
   background: transparent;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--color-text-secondary);
   cursor: pointer;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   min-height: 2.75rem;
-  padding: .45rem .9rem;
+  padding: var(--space-2) var(--space-4);
 }
 
 .pricing-region button.is-active {
@@ -114,7 +114,7 @@
 
 .pricing-status {
   line-height: 1.8;
-  margin: 1rem 0 0;
+  margin: var(--space-4) 0 0;
   max-width: 36rem;
 }
 
@@ -137,31 +137,31 @@
   background: var(--frame);
   color: inherit;
   display: grid;
-  gap: .75rem;
+  gap: var(--space-3);
   justify-items: start;
   padding-block: 6.5rem 3.2rem;
-  padding-inline: 5.2rem 2.4rem;
+  padding-inline: 5.2rem var(--space-10);
   text-align: start;
 }
 
 .pricing-frame__index {
   color: var(--color-energy);
-  font-size: 2.4rem;
-  font-weight: 760;
+  font-size: var(--text-display);
+  font-weight: var(--weight-heavy);
   line-height: 1;
   margin: 0;
 }
 
 .pricing-frame__kicker {
   color: color-mix(in srgb, currentColor 72%, transparent);
-  font-size: .92rem;
-  font-weight: 700;
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
   margin: 0;
 }
 
 .pricing-frame__copy h2 {
-  font-size: 2.3rem;
-  font-weight: 740;
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
   letter-spacing: -.03em;
   line-height: 1.25;
   margin: 0;
@@ -171,12 +171,12 @@
 [dir="rtl"] .pricing-frame__copy h2 { letter-spacing: 0; line-height: 1.45; }
 
 .pricing-frame__copy > strong {
-  font-size: 1.65rem;
-  font-weight: 760;
+  font-size: var(--text-title2);
+  font-weight: var(--weight-heavy);
 }
 
 .pricing-frame__body {
-  font-size: 1.05rem;
+  font-size: var(--text-body);
   line-height: 1.9;
   margin: 0;
   max-width: 36rem;
@@ -185,23 +185,23 @@
 
 .pricing-frame__copy ul {
   display: grid;
-  gap: .7rem;
+  gap: var(--space-3);
   list-style: none;
-  margin: .2rem 0 .4rem;
+  margin: var(--space-1) 0 var(--space-1_5);
   padding: 0;
 }
 
 .pricing-frame__copy li {
   align-items: flex-start;
   display: flex;
-  gap: .55rem;
+  gap: var(--space-2);
   line-height: 1.7;
 }
 
 .pricing-frame__copy li svg {
   color: var(--color-energy);
   flex: none;
-  margin-top: .2rem;
+  margin-top: var(--space-1);
 }
 
 .pricing-frame__photo {
@@ -235,20 +235,20 @@
 
 .pricing-notes {
   display: grid;
-  gap: .8rem;
+  gap: var(--space-3);
   margin: 0 auto;
   max-width: 46rem;
-  padding: 3rem 1.5rem 0;
+  padding: var(--space-12) var(--space-6) 0;
   text-align: center;
 }
 
 .pricing-notes p {
   background: var(--color-surface-raised);
-  border-radius: 1.4rem;
+  border-radius: var(--radius-panel);
   color: var(--color-text-secondary);
   line-height: 1.85;
   margin: 0;
-  padding: 1.1rem 1.2rem;
+  padding: var(--space-4) var(--space-5);
 }
 
 .pricing-meter { display: none; }
@@ -256,8 +256,8 @@
 :root.light .pricing-orb--a,
 :root[data-theme="light"] .pricing-orb--a { opacity: .28; }
 
-@media (min-width: 900px) {
-  .pricing-hero h1 { font-size: 4rem; }
+@media (min-width: 52.5rem) {
+  .pricing-hero h1 { font-size: var(--text-hero); }
   .pricing-meter {
     display: block;
     inset-inline-start: 1.15rem;
@@ -266,12 +266,12 @@
     position: fixed;
     top: 38vh;
     width: 2.4rem;
-    z-index: 26;
+    z-index: var(--z-sticky);
   }
   .pricing-meter.is-on { opacity: 1; }
   .pricing-meter > i {
     background: linear-gradient(var(--color-brand), var(--color-energy));
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     height: 100%;
     inset-inline-start: .42rem;
     position: absolute;
@@ -281,16 +281,16 @@
   }
   .pricing-meter ol {
     display: grid;
-    gap: 1rem;
+    gap: var(--space-4);
     list-style: none;
     margin: 0;
-    padding: .2rem 0;
+    padding: var(--space-1) 0;
     position: relative;
   }
   .pricing-meter li {
     color: var(--color-text-muted);
-    font-size: .82rem;
-    font-weight: 760;
+    font-size: var(--text-footnote);
+    font-weight: var(--weight-heavy);
     opacity: .4;
     position: relative;
   }
@@ -298,8 +298,8 @@
   .pricing-meter li.is-active { color: var(--color-energy); opacity: 1; }
 }
 
-@media (max-width: 760px) {
-  .pricing-hero h1 { font-size: 2.1rem; }
+@media (max-width: 52.49rem) {
+  .pricing-hero h1 { font-size: var(--text-title1); }
   .pricing-frame { grid-template-columns: 1fr; }
   .pricing-frame__photo {
     height: 42vh;
@@ -307,10 +307,10 @@
     order: -1;
   }
   .pricing-frame__copy {
-    padding-block: 1.6rem 4.5rem;
-    padding-inline: 1.35rem;
+    padding-block: var(--space-6) 4.5rem;
+    padding-inline: var(--space-5);
   }
-  .pricing-frame__copy h2 { font-size: 1.85rem; }
+  .pricing-frame__copy h2 { font-size: var(--text-title1); }
   .pricing-frame__photo::after,
   [dir="rtl"] .pricing-frame__photo::after {
     background: linear-gradient(to top, var(--frame) 0%, transparent 46%);

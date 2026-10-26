@@ -2,45 +2,45 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-4);
   justify-content: center;
-  margin-top: 1rem;
-  padding: clamp(1rem, 3vw, 1.35rem);
+  margin-top: var(--space-4);
+  padding: clamp(var(--space-4), 3vw, var(--space-5));
   text-align: center;
 }
 .workout-start-card > div:first-child { flex: 1 1 12rem; min-width: 0; }
 .workout-start-card > .orbit-button { flex: 0 0 auto; }
 .workout-start-card h3, .workout-start-card p { margin: 0; }
-.workout-start-card p { color: var(--color-text-secondary); font-size: .78rem; margin-top: .3rem; }
+.workout-start-card p { color: var(--color-text-secondary); font-size: var(--text-caption); margin-top: var(--space-1); }
 .workout-start-card .inline-notice { flex-basis: 100%; margin: 0; }
-.workout-logger { display: grid; gap: 1rem; margin-top: 1rem; }
+.workout-logger { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
 .workout-logger__status { align-items: center; display: flex; justify-content: space-between; }
-.workout-logger__status > span { color: var(--color-text-secondary); font-size: .78rem; }
-.workout-exercise-log { padding: 1.2rem; }
+.workout-logger__status > span { color: var(--color-text-secondary); font-size: var(--text-caption); }
+.workout-exercise-log { padding: var(--space-5); }
 .workout-exercise-log.is-completed { border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border)); }
 .workout-exercise-log.is-skipped { opacity: .72; }
 .workout-exercise-log > header { align-items: flex-start; display: flex; justify-content: space-between; }
-.workout-exercise-log > header h3, .workout-exercise-log > header p { margin: .15rem 0 0; }
-.workout-exercise-log > header small, .workout-exercise-log > header p { color: var(--color-text-secondary); font-size: .7rem; }
-.workout-set-grid { display: grid; gap: .55rem; margin-top: 1rem; }
+.workout-exercise-log > header h3, .workout-exercise-log > header p { margin: var(--space-0_5) 0 0; }
+.workout-exercise-log > header small, .workout-exercise-log > header p { color: var(--color-text-secondary); font-size: var(--text-caption); }
+.workout-set-grid { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
 .workout-set-row {
   align-items: end;
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
-  border-radius: 1rem;
+  border-radius: var(--radius-inset);
   display: grid;
-  gap: .55rem;
+  gap: var(--space-2);
   grid-template-columns: auto repeat(4, minmax(4rem, 1fr)) auto;
-  padding: .7rem;
+  padding: var(--space-3);
 }
 .workout-set-row.is-complete { border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-border)); }
 .workout-set-row > strong { align-self: center; min-width: 3rem; }
-.workout-set-row label, .workout-session-notes label, .workout-safety-log label { display: grid; gap: .3rem; }
-.workout-set-row label span, .workout-safety-log label span { color: var(--color-text-muted); font-size: .62rem; }
+.workout-set-row label, .workout-session-notes label, .workout-safety-log label { display: grid; gap: var(--space-1); }
+.workout-set-row label span, .workout-safety-log label span { color: var(--color-text-muted); font-size: var(--text-caption); }
 .workout-set-row input, .workout-safety-log input, .workout-session-notes textarea {
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
-  border-radius: .65rem;
+  border-radius: var(--radius-control);
   color: var(--color-text);
   min-width: 0;
   width: 100%;
@@ -49,58 +49,58 @@
   height: var(--size-field);
   max-height: var(--size-field);
   min-height: var(--size-field);
-  padding: 0 .55rem;
+  padding: 0 var(--space-2);
 }
 .workout-exercise-log__actions {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: .55rem;
-  margin-top: .8rem;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
 }
-.workout-exercise-log__actions .orbit-button { min-height: 2.65rem; padding: .55rem .85rem; }
+.workout-exercise-log__actions .orbit-button { min-height: 2.65rem; padding: var(--space-2) var(--space-3); }
 .workout-session-notes {
   align-items: stretch;
   display: grid;
-  gap: .8rem;
+  gap: var(--space-3);
   grid-template-columns: minmax(0, 1fr) auto;
-  padding: clamp(1rem, 3vw, 1.35rem);
+  padding: clamp(var(--space-4), 3vw, var(--space-5));
 }
 .workout-session-notes label { min-width: 0; }
-.workout-session-notes label strong { display: block; font-size: .85rem; margin-bottom: .35rem; }
-.workout-session-notes textarea { min-height: calc(var(--size-field) * 2); padding: .55rem; resize: vertical; }
+.workout-session-notes label strong { display: block; font-size: var(--text-label); margin-bottom: var(--space-1_5); }
+.workout-session-notes textarea { min-height: calc(var(--size-field) * 2); padding: var(--space-2); resize: vertical; }
 .workout-session-notes > .orbit-button { align-self: end; min-height: 2.75rem; white-space: nowrap; }
 .workout-safety-log {
   border-color: color-mix(in srgb, var(--color-danger) 30%, var(--color-border));
-  padding: clamp(1rem, 3vw, 1.35rem);
+  padding: clamp(var(--space-4), 3vw, var(--space-5));
 }
-.workout-safety-log > div:first-child { align-items: flex-start; display: flex; gap: .7rem; }
+.workout-safety-log > div:first-child { align-items: flex-start; display: flex; gap: var(--space-3); }
 .workout-safety-log h3, .workout-safety-log p { margin: 0; }
-.workout-safety-log p { color: var(--color-text-secondary); font-size: .72rem; margin-top: .25rem; }
+.workout-safety-log p { color: var(--color-text-secondary); font-size: var(--text-caption); margin-top: var(--space-1); }
 .workout-safety-log > div:first-child > svg { color: var(--color-danger); flex: none; margin-top: .1rem; }
 .workout-safety-log__fields {
   align-items: end;
   display: grid;
-  gap: .65rem;
+  gap: var(--space-3);
   grid-template-columns: minmax(0, 1fr) 7rem auto;
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 }
 .workout-safety-log__fields label { min-width: 0; }
 .workout-safety-log__fields .orbit-button { min-height: 2.75rem; white-space: nowrap; }
-.workout-finish-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .55rem; justify-content: space-between; margin-top: 0; }
+.workout-finish-actions { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: space-between; margin-top: 0; }
 .workout-finish-actions .orbit-button { min-height: 2.85rem; }
 .workout-substitute-panel {
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
-  border-radius: 1rem;
+  border-radius: var(--radius-inset);
   display: grid;
-  gap: .65rem;
-  margin-top: .85rem;
-  padding: .85rem;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
 }
-.workout-substitute-panel p { color: var(--color-text-secondary); font-size: .78rem; margin: 0; }
+.workout-substitute-panel p { color: var(--color-text-secondary); font-size: var(--text-caption); margin: 0; }
 
-@media (max-width: 760px) {
+@media (max-width: 52.49rem) {
   .workout-start-card { align-items: stretch; flex-direction: column; }
   .workout-start-card > .orbit-button { width: 100%; }
   .workout-set-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }

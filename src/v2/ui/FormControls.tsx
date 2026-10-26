@@ -365,3 +365,59 @@ export function Textarea({ label, hint, error, required, guide, ...props }: Text
     </FieldShell>
   )
 }
+
+interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'children'> {
+  label: ReactNode
+  /** Secondary line under the label. */
+  description?: ReactNode
+  error?: string
+  /** Extra content after the label, such as a policy link and its version. */
+  children?: ReactNode
+  /** row: a bordered row for settings and consent; plain: inline, for dense legal lines. */
+  appearance?: 'row' | 'plain'
+}
+
+// A choice inside a form that is submitted. For a setting that applies the moment it changes, use Switch.
+export function Checkbox({ label, description, error, children, appearance = 'row', className = '', id, required, ...props }: CheckboxProps) {
+  const generatedId = useId()
+  const errorId = error ? `${id ?? `check-${generatedId}`}-error` : undefined
+  return (
+    <label className={`orbit-check orbit-check--${appearance}${error ? ' has-error' : ''} ${className}`.trim()}>
+      <input
+        {...props}
+        aria-describedby={errorId}
+        aria-invalid={Boolean(error) || undefined}
+        aria-required={required || undefined}
+        id={id}
+        required={required}
+        type="checkbox"
+      />
+      <span aria-hidden="true" className="orbit-check__box"><Check size={appearance === 'plain' ? 12 : 16} /></span>
+      <span className="orbit-check__text">
+        <strong>{label}</strong>
+        {children ? <>{' '}{children}</> : null}
+        {description ? <small className="orbit-check__description">{description}</small> : null}
+      </span>
+      {error ? <small className="orbit-check__error" id={errorId}>{error}</small> : null}
+    </label>
+  )
+}
+
+interface SwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'children'> {
+  label: ReactNode
+  description?: ReactNode
+}
+
+// A setting that takes effect immediately, with no Save button. Announced as on/off.
+export function Switch({ label, description, className = '', ...props }: SwitchProps) {
+  return (
+    <label className={`orbit-switch ${className}`.trim()}>
+      <span className="orbit-switch__text">
+        <strong>{label}</strong>
+        {description ? <small>{description}</small> : null}
+      </span>
+      <input {...props} role="switch" type="checkbox" />
+      <span aria-hidden="true" className="orbit-switch__track"><span /></span>
+    </label>
+  )
+}

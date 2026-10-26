@@ -2,10 +2,10 @@ import {
   ArrowRight,
   ArrowUp,
   CalendarDays,
+  ChartLine,
   Check,
   ChevronDown,
   Dumbbell,
-  LineChart,
   Repeat,
   ShieldCheck,
   ShoppingBasket,
@@ -170,7 +170,7 @@ const copy = {
   },
 } as const
 
-const featureIcons: readonly LucideIcon[] = [Sun, CalendarDays, Dumbbell, ShoppingBasket, LineChart, Repeat]
+const featureIcons: readonly LucideIcon[] = [Sun, CalendarDays, Dumbbell, ShoppingBasket, ChartLine, Repeat]
 
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false

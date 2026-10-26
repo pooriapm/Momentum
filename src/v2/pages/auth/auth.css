@@ -5,7 +5,7 @@
   justify-items: center;
   min-height: 100vh;
   overflow: hidden;
-  padding: 6.75rem 1.25rem 3rem;
+  padding: 6.75rem var(--space-5) var(--space-12);
   position: relative;
 }
 
@@ -38,12 +38,12 @@
 }
 
 .auth-sheet {
-  border-radius: 1.75rem;
+  border-radius: var(--radius-chrome);
   display: grid;
-  gap: .85rem;
+  gap: var(--space-3);
   justify-items: center;
   max-width: 26rem;
-  padding: 1.7rem 1.35rem 1.25rem;
+  padding: var(--space-7) var(--space-5) var(--space-5);
   position: relative;
   text-align: center;
   width: 100%;
@@ -52,18 +52,18 @@
 }
 
 .auth-sheet h1 {
-  font-size: 2rem;
-  font-weight: 720;
+  font-size: var(--text-title1);
+  font-weight: var(--weight-bold);
   letter-spacing: -.03em;
   line-height: 1.2;
-  margin: .35rem 0 0;
+  margin: var(--space-1_5) 0 0;
 }
 
 [dir="rtl"] .auth-sheet h1 { letter-spacing: 0; }
 
 .auth-lead {
   color: var(--color-text-secondary);
-  font-size: .92rem;
+  font-size: var(--text-label);
   line-height: 1.7;
   margin: 0;
   max-width: 22rem;
@@ -72,7 +72,7 @@
 .auth-sheet form,
 .auth-verification-state {
   display: grid;
-  gap: .85rem;
+  gap: var(--space-3);
   text-align: start;
   width: 100%;
 }
@@ -93,56 +93,17 @@
 
 .auth-legal-stack {
   display: grid;
-  gap: .45rem;
-  margin-top: .15rem;
+  gap: var(--space-2);
+  margin-top: var(--space-0_5);
 }
 
-.auth-legal {
-  align-items: start;
-  color: var(--color-text-muted);
-  display: grid;
-  font-size: .68rem;
-  gap: .15rem .5rem;
-  grid-template-columns: auto minmax(0, 1fr);
-  line-height: 1.45;
-  text-align: start;
-}
-
-.auth-legal input {
-  accent-color: var(--color-brand);
-  height: .95rem;
-  margin-top: .15rem;
-  width: .95rem;
-}
-
-.auth-legal a {
-  color: var(--color-text-secondary);
-  font-size: inherit;
-  text-decoration: underline;
-  text-underline-offset: .15em;
-}
-
-.auth-legal__version {
-  color: var(--color-text-muted);
-  font-size: .6rem;
-  margin-inline-start: .35rem;
-  opacity: .8;
-}
-
-.auth-legal small {
-  color: var(--color-danger);
-  display: block;
-  grid-column: 2;
-}
-
-.auth-legal.has-error span { color: var(--color-danger); }
 
 .auth-page .auth-switch {
   color: var(--color-text-secondary);
   display: block;
-  font-size: .78rem;
-  font-weight: 650;
-  margin: .15rem 0 0;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  margin: var(--space-0_5) 0 0;
   min-height: 2.4rem;
   text-align: center;
   width: 100%;

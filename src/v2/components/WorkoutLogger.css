@@ -7,9 +7,9 @@
 
 .workout-reason-sheet {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
   max-width: 28rem;
-  padding: 1.2rem;
+  padding: var(--space-5);
   width: 100%;
 }
 
@@ -19,19 +19,19 @@
   display: flex;
   justify-content: space-between;
   margin: 0;
-  padding-bottom: 1rem;
+  padding-bottom: var(--space-4);
 }
 
 .workout-reason-sheet h2 {
-  font-size: 1.25rem;
-  margin: .2rem 0 0;
+  font-size: var(--text-title3);
+  margin: var(--space-1) 0 0;
 }
 
 .workout-reason-sheet header > button {
   align-items: center;
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
-  border-radius: .75rem;
+  border-radius: var(--radius-control);
   color: var(--color-text);
   cursor: pointer;
   display: flex;
@@ -43,13 +43,13 @@
 
 .workout-reason-sheet form {
   display: grid;
-  gap: .9rem;
+  gap: var(--space-4);
 }
 
 .workout-reason-sheet__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: .6rem;
+  gap: var(--space-2);
 }
 
 .workout-reason-sheet__actions .orbit-button {

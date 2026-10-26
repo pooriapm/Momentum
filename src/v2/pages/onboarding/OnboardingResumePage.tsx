@@ -10,6 +10,7 @@ import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, PageSkeleton } from '../../ui/primitives'
 import { BrandLockup } from '../../ui/OrbitMark'
 import { useTranslation } from 'react-i18next'
+import { Notice } from '../../ui/feedback'
 import './onboarding.css'
 
 export function OnboardingResumePage({ locale }: { locale: AppLocale }) {
@@ -78,7 +79,7 @@ export function OnboardingResumePage({ locale }: { locale: AppLocale }) {
           <li><Save size={16} />{fa ? 'هر مرحله ذخیره می‌شود' : 'Each step is saved'}</li>
           <li><ShieldCheck size={16} />{t('onboarding.noMedicalClaim')}</li>
         </ul>
-        {restartError ? <div className="inline-notice inline-notice--error" role="alert">{restartError}</div> : null}
+        {restartError ? <Notice tone="error">{restartError}</Notice> : null}
         <div className="onboarding-actions">
           <Button loading={restarting} onClick={() => void restart()} variant="ghost">{t('onboarding.restart')}</Button>
           <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, `/onboarding/${resumeStep}`)}>{t('onboarding.continueSetup')}</Link>

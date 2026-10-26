@@ -13,6 +13,8 @@ import {
 import { PlanBuildShow } from './PlanBuildShow'
 import { rememberPlanBuildDuration } from './plan-build-show'
 import { TODAY_GENERATION_WAIT_MS } from './today-state'
+import { Page } from '../../ui/layout'
+import { Notice } from '../../ui/feedback'
 import '../../../styles/today.css'
 
 const phaseEyebrow = {
@@ -137,7 +139,7 @@ export function GenerationWait({
     : (fa ? 'تلاش دوباره' : 'Try again')
 
   return (
-    <main className="app-page today-page today-wait screen-enter" data-inventory={inventory} data-today="TODAY-04">
+    <Page name="today" className="today-wait" data-inventory={inventory} data-today="TODAY-04">
       <ContentCard className={`today-wait-card glass-chrome${waiting ? ' plan-build' : ''}`}>
         {waiting ? null : (
           <span className={`today-wait-card__icon${activeFailure ? ' is-warning' : phase === 'ready' ? ' is-success' : ''}`} aria-hidden="true">
@@ -164,17 +166,17 @@ export function GenerationWait({
             </p>
           </>
         )}
-        {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
+        {error ? <Notice tone="error">{error}</Notice> : null}
         {waiting ? <p>{fa ? 'می‌تونی این صفحه رو ببندی و بعداً برگردی. همون کار ادامه پیدا می‌کنه و برنامه دوم ساخته نمی‌شه.' : 'You can leave this page and come back. We’ll keep going, and a second plan is not started.'}</p> : null}
         {hasPriorPlan && phase !== 'ready' ? (
-          <div className="inline-notice" role="status">
+          <Notice>
             {fa ? 'برنامه قبلی تا ورود موفق فعال می‌ماند. فشار برای حفظ زنجیره وجود ندارد.' : 'The previous plan stays active until import succeeds. There is no pressure to keep a streak.'}
-          </div>
+          </Notice>
         ) : null}
         {!online && waiting ? (
-          <div className="inline-notice" role="status">
+          <Notice>
             {fa ? 'آفلاین هستی؛ وقتی برگشتی همان کار خوانده می‌شود.' : 'You are offline; the same job will be read when you return.'}
-          </div>
+          </Notice>
         ) : null}
         {phase === 'ready' ? (
           <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/app/today')}>
@@ -206,6 +208,6 @@ export function GenerationWait({
           </div>
         ) : null}
       </ContentCard>
-    </main>
+    </Page>
   )
 }

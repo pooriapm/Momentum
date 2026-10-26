@@ -52,7 +52,7 @@ describe('AccountSettingsPage inventory states', () => {
 
   it('keeps optional analytics off by default and explains the filtered payload', () => {
     renderSettings()
-    expect(screen.getByRole('checkbox', { name: /help improve activation and adherence/i })).not.toBeChecked()
+    expect(screen.getByRole('switch', { name: /help improve activation and adherence/i })).not.toBeChecked()
     expect(screen.getByText(/never raw health values, free text, email, or account identifiers/i)).toBeInTheDocument()
     expect(screen.getByText(/required operational and security records remain independent/i)).toBeInTheDocument()
   })

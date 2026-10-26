@@ -13,6 +13,8 @@ if (JSON.stringify(modes) !== JSON.stringify(['light', 'dark'])) {
 const isToken = (value) => value && typeof value === 'object' && 'type' in value && 'value' in value
 
 const normalizeValue = (type, value) => {
+  // Window-class values export their expanded size; Penpot has no breakpoint modes.
+  if (value && typeof value === 'object' && 'expanded' in value) value = value.expanded
   if (typeof value === 'string' && value.startsWith('{')) return value
   if (type === 'dimension' && typeof value === 'number') return `${value}px`
   if (type === 'duration' && typeof value === 'number') return `${value}ms`

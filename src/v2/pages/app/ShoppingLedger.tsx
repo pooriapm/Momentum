@@ -18,6 +18,7 @@ import {
 } from '../../data/shopping'
 import { localize, type MomentumPlanView } from '../../data/types'
 import { Button, ContentCard } from '../../ui/primitives'
+import { Notice } from '../../ui/feedback'
 
 const SHOPPING_PURCHASES_QUERY = ['shopping-purchases'] as const
 
@@ -139,12 +140,12 @@ export function ShoppingLedger({
             : `${range.days} days, until ${shortDate(range.end, locale)} · ${remaining} left to buy`}</p>
         </div>
         {loadFailed ? (
-          <div className="inline-notice" role="alert">
+          <Notice>
             {fa ? 'خریدهای قبلی بارگیری نشد.' : 'Your earlier purchases could not be loaded.'}
             <Button onClick={() => void purchasesQuery.refetch()} variant="secondary">{fa ? 'دوباره' : 'Retry'}</Button>
-          </div>
+          </Notice>
         ) : null}
-        {error ? <div className="inline-notice" role="alert">{error}</div> : null}
+        {error ? <Notice>{error}</Notice> : null}
         <ul aria-busy={loading} className="shopping-ledger__list">
           {lines.map((line) => {
             const tickable = line.covered ? Boolean(lastPurchaseFor(line, purchases)) : PURCHASABLE_UNITS.has(line.unit)

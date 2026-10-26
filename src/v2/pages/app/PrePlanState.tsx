@@ -8,6 +8,7 @@ import { Button, ContentCard } from '../../ui/primitives'
 import { GenerationWait } from './GenerationWait'
 import { useGenerationWait } from './use-generation-wait'
 import { useOnlineStatus } from '../../../platform/pwa/network'
+import { Notice } from '../../ui/feedback'
 import '../../../styles/today.css'
 
 export function PrePlanState({ account, locale }: { account: AccountDashboardView; locale: AppLocale }) {
@@ -51,14 +52,14 @@ export function PrePlanState({ account, locale }: { account: AccountDashboardVie
         {started ? <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/onboarding')}>{fa ? 'ادامه آنبوردینگ' : 'Continue onboarding'}</Link> : null}
         {ready ? (
           <>
-            <div className="inline-notice" role="status">
+            <Notice>
               {account.entitlementStatus === 'gift'
                 ? (fa ? 'هدیه برنامه برای حسابت رزرو شده است و برای این دوره اطلاعات پرداخت لازم نیست.' : 'A plan gift is reserved for your account. No payment details are required for this cycle.')
                 : giftCandidate
                 ? (fa ? 'واجد شرایط بودن و موجودی هدیه هنگام شروع بررسی می‌شود؛ هدیه فقط پس از رزرو موفق قطعی است.' : 'Gift eligibility and availability are checked when you start. The gift is confirmed only after a successful reservation.')
                 : `${copy.paymentRequiredBody} ${copy.paymentRequiredNote}`}
-            </div>
-            {!online ? <div className="inline-notice inline-notice--warning" role="status">{fa ? 'برای ساخت برنامه دوباره آنلاین شو.' : 'Reconnect to generate your plan.'}</div> : null}
+            </Notice>
+            {!online ? <Notice tone="warning">{fa ? 'برای ساخت برنامه دوباره آنلاین شو.' : 'Reconnect to generate your plan.'}</Notice> : null}
             <Button disabled={!online} onClick={() => wait.start()}><Sparkles size={18} />{fa ? 'ساخت برنامه' : 'Generate plan'}</Button>
             <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/onboarding/review')}>{fa ? 'بازبینی پاسخ‌ها' : 'Review answers'}</Link>
             {account.entitlementStatus !== 'gift' ? <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/me')}>{copy.openMembership}</Link> : null}

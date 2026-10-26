@@ -1,12 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-  CircleUserRound,
-  House,
-  LineChart,
-  Salad,
-  Sparkles,
-  WifiOff,
-} from 'lucide-react'
+import { Sparkles, WifiOff } from 'lucide-react'
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearch } from 'wouter'
@@ -19,11 +12,13 @@ import { loadAccountDashboard } from '../data/repository'
 import { localize, type MomentumPlanView } from '../data/types'
 import { localizedPath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
+import { conceptIcons } from '../ui/icons'
 import { GlassChrome, PageSkeleton } from '../ui/primitives'
 import { appContentSurface, isMembershipRequiredTab, type EntitlementSnapshot } from '../entitlement'
 import { EntitlementGate } from '../pages/app/EntitlementGate'
 import { PrePlanState } from '../pages/app/PrePlanState'
 import { useOfflineBanner } from './useOfflineBanner'
+import { Notice } from '../ui/feedback'
 
 export type AppTab = 'today' | 'plan' | 'progress' | 'me'
 
@@ -43,10 +38,10 @@ interface AppFrameProps {
 }
 
 const navItems = [
-  { key: 'today', icon: House },
-  { key: 'plan', icon: Salad },
-  { key: 'progress', icon: LineChart },
-  { key: 'me', icon: CircleUserRound },
+  { key: 'today', icon: conceptIcons.today },
+  { key: 'plan', icon: conceptIcons.plan },
+  { key: 'progress', icon: conceptIcons.progress },
+  { key: 'me', icon: conceptIcons.account },
 ] as const
 
 function lastSyncedAtFromDashboard(account: unknown) {
@@ -207,13 +202,13 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
       </aside>
       <div className="app-workspace">
         {offlineBanner.showBanner ? (
-          <div className="app-offline-banner inline-notice" role="status">
+          <Notice className="app-offline-banner">
             <WifiOff size={16} />
             <span>{locale === 'fa' ? 'Momentum آفلاین اجرا می‌شود' : 'Momentum is running offline'}</span>
-          </div>
+          </Notice>
         ) : null}
         {consentMigration?.required ? (
-          <div className="app-consent-banner inline-notice inline-notice--warning" role="status">
+          <Notice tone="warning" className="app-consent-banner">
             <span>
               {locale === 'fa'
                 ? 'نسخهٔ جدید اسناد حقوقی فعال است. برای ادامهٔ شخصی‌سازی خودکار، رضایت‌ها را دوباره تأیید کن.'
@@ -222,7 +217,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
             <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/settings')}>
               {locale === 'fa' ? 'باز کردن تنظیمات' : 'Open settings'}
             </Link>
-          </div>
+          </Notice>
         ) : null}
         {preview ? <GlassChrome className="preview-notice"><Sparkles size={16} /><span>{t('app.previewNotice')}</span></GlassChrome> : null}
         {planQuery.isError && planQuery.data ? <div className="app-error-banner">{locale === 'fa' ? 'به‌روزرسانی برنامه انجام نشد؛ آخرین اطلاعات موجود نمایش داده می‌شود.' : 'The plan could not refresh. Showing the latest available data.'}</div> : null}

@@ -1,5 +1,5 @@
 import { useModalDismiss } from './use-modal-dismiss'
-import { AlertTriangle, Check, CircleStop, Dumbbell, Pause, Play, Save, SkipForward, X } from 'lucide-react'
+import { Check, CircleStop, Dumbbell, Pause, Play, Save, SkipForward, TriangleAlert, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { resources, type AppLocale } from '../../platform/i18n/catalog'
 import {
@@ -16,6 +16,7 @@ import type { WorkoutRunStatus } from '../pages/app/today-state'
 import { Input } from '../ui/FormControls'
 import { Button, ContentCard, StatusPill } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
+import { Notice } from '../ui/feedback'
 import './WorkoutLogger.css'
 
 type ReasonIntent =
@@ -163,8 +164,8 @@ export function WorkoutLogger({
     <ContentCard className="workout-start-card">
       <div><h3>{locale === 'fa' ? 'اجرای تمرین' : 'Run this workout'}</h3><p>{locale === 'fa' ? 'ست‌ها، وزنه، تکرار، RPE و استراحت را حین تمرین ثبت کن.' : 'Log sets, weight, reps, RPE, and rest as you train.'}</p></div>
       <Button disabled={!enabled} loading={busy === 'start'} onClick={() => void begin()}><Play size={17} />{locale === 'fa' ? 'شروع تمرین' : 'Start workout'}</Button>
-      {!enabled ? <p className="inline-notice">{locale === 'fa' ? 'ثبت تمرین فقط در روز برنامه فعال است.' : 'Workout logging unlocks on the scheduled day.'}</p> : null}
-      {error ? <p className="inline-notice inline-notice--error" role="alert">{error}</p> : null}
+      {!enabled ? <Notice live={false}>{locale === 'fa' ? 'ثبت تمرین فقط در روز برنامه فعال است.' : 'Workout logging unlocks on the scheduled day.'}</Notice> : null}
+      {error ? <Notice tone="error">{error}</Notice> : null}
     </ContentCard>
   )
 
@@ -180,19 +181,19 @@ export function WorkoutLogger({
         <span>{finishedExercises}/{session.exercises.length} {locale === 'fa' ? 'حرکت' : 'exercises'}</span>
       </div>
       {paused && !finished ? (
-        <div className="inline-notice" role="status">
+        <Notice>
           <Pause size={16} />
           <span>{locale === 'fa' ? 'تمرین موقتاً متوقف است. پیشرفت از بین نمی‌رود.' : 'Workout is paused. Progress is kept.'}</span>
           <Button onClick={() => void mutate('resume', { action: 'resume' })} variant="secondary"><Play size={16} />{locale === 'fa' ? 'ادامه' : 'Resume'}</Button>
-        </div>
+        </Notice>
       ) : null}
       {painCaution && !finished ? (
-        <div className="inline-notice inline-notice--warning" role="alert">
-          <AlertTriangle size={16} />
+        <Notice tone="warning">
+          <TriangleAlert size={16} />
           <span>{locale === 'fa' ? 'درد ثبت شد. شدت را کم کن یا متوقف شو. Momentum تشخیص پزشکی نمی‌دهد.' : 'Pain is logged. Reduce intensity or stop. Momentum does not diagnose.'}</span>
           <Button onClick={() => setPainCaution(false)} variant="secondary">{locale === 'fa' ? 'ادامه با سازگاری' : 'Continue with adaptation'}</Button>
           <Button onClick={() => void mutate('stop', { action: 'stop', values: { reason: 'pain_caution' } })} variant="danger">{locale === 'fa' ? 'توقف ایمن' : 'Stop safely'}</Button>
-        </div>
+        </Notice>
       ) : null}
 
       {session.exercises.map((exercise) => {
@@ -226,11 +227,11 @@ export function WorkoutLogger({
         {!closed ? <Button loading={busy === 'notes'} onClick={() => void mutate('notes', { action: 'session_notes', values: { notes } })} variant="secondary"><Save size={16} />{locale === 'fa' ? 'ذخیره یادداشت' : 'Save notes'}</Button> : null}
       </ContentCard>
 
-      {!closed ? <ContentCard className="workout-safety-log"><div><AlertTriangle size={20} /><div><h3>{locale === 'fa' ? 'درد یا ناراحتی' : 'Pain or discomfort'}</h3><p>{locale === 'fa' ? 'درد شدید (۴ یا ۵) تمرین را برای ایمنی متوقف می‌کند.' : 'Severe pain (4 or 5) stops the workout for safety.'}</p></div></div><div className="workout-safety-log__fields"><label><span>{locale === 'fa' ? 'محل درد' : 'Pain area'}</span><input maxLength={160} onChange={(event) => setPainArea(event.target.value)} value={painArea} /></label><label><span>{locale === 'fa' ? 'شدت ۱ تا ۵' : 'Severity 1–5'}</span><input max={5} min={1} onChange={(event) => setPainSeverity(event.target.value)} type="number" value={painSeverity} /></label><Button disabled={!painArea.trim()} onClick={() => void mutate('pain', { action: 'report_pain', values: { area: painArea.trim(), severity: Number(painSeverity) } })} variant="danger">{locale === 'fa' ? 'ثبت درد' : 'Log pain'}</Button></div></ContentCard> : null}
+      {!closed ? <ContentCard className="workout-safety-log"><div><TriangleAlert size={20} /><div><h3>{locale === 'fa' ? 'درد یا ناراحتی' : 'Pain or discomfort'}</h3><p>{locale === 'fa' ? 'درد شدید (۴ یا ۵) تمرین را برای ایمنی متوقف می‌کند.' : 'Severe pain (4 or 5) stops the workout for safety.'}</p></div></div><div className="workout-safety-log__fields"><label><span>{locale === 'fa' ? 'محل درد' : 'Pain area'}</span><input maxLength={160} onChange={(event) => setPainArea(event.target.value)} value={painArea} /></label><label><span>{locale === 'fa' ? 'شدت ۱ تا ۵' : 'Severity 1–5'}</span><input max={5} min={1} onChange={(event) => setPainSeverity(event.target.value)} type="number" value={painSeverity} /></label><Button disabled={!painArea.trim()} onClick={() => void mutate('pain', { action: 'report_pain', values: { area: painArea.trim(), severity: Number(painSeverity) } })} variant="danger">{locale === 'fa' ? 'ثبت درد' : 'Log pain'}</Button></div></ContentCard> : null}
 
       {!finished ? <div className="workout-finish-actions"><Button disabled={paused || finishedExercises !== session.exercises.length} loading={busy === 'finish'} onClick={() => void mutate('finish', { action: 'finish' })}><Check size={17} />{locale === 'fa' ? 'پایان تمرین' : 'Finish workout'}</Button>{paused ? null : <Button onClick={() => void mutate('pause', { action: 'pause' })} variant="secondary"><Pause size={17} />{locale === 'fa' ? 'مکث' : 'Pause'}</Button>}<Button onClick={() => { setReasonText(''); setReasonIntent({ kind: 'stop' }) }} variant="danger"><CircleStop size={17} />{locale === 'fa' ? 'توقف تمرین' : 'Stop workout'}</Button></div> : null}
-      {closed && session.stop_reason ? <p className="inline-notice"><Dumbbell size={15} />{locale === 'fa' ? 'دلیل توقف: ' : 'Stop reason: '}{session.stop_reason}</p> : null}
-      {error ? <p className="inline-notice inline-notice--error" role="alert">{error}</p> : null}
+      {closed && session.stop_reason ? <Notice live={false}><Dumbbell size={15} />{locale === 'fa' ? 'دلیل توقف: ' : 'Stop reason: '}{session.stop_reason}</Notice> : null}
+      {error ? <Notice tone="error">{error}</Notice> : null}
       {reasonIntent ? (
         <WorkoutReasonSheet
           disabled={!enabled || Boolean(busy)}
