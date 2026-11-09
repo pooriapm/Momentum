@@ -11,7 +11,9 @@ import { PublicHeader } from '../../components/PublicChrome'
 import { localizedPath } from '../../router/route-utils'
 import { Checkbox, Input } from '../../ui/FormControls'
 import { OrbitMark } from '../../ui/OrbitMark'
-import { Button, GlassChrome } from '../../ui/primitives'
+import { Button } from '../../ui/primitives'
+import { MonthDial } from '../../ui/MonthDial'
+import { formatNumber } from '../../lib/format'
 import { Notice } from '../../ui/feedback'
 import './auth.css'
 
@@ -173,10 +175,17 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
     <div className="public-page auth-page">
       <PublicHeader locale={locale} />
       <main className="auth-layout">
-        <div aria-hidden="true" className="auth-glow auth-glow--a" />
-        <div aria-hidden="true" className="auth-glow auth-glow--b" />
-        <GlassChrome className="auth-sheet" key={mode}>
-          <OrbitMark animated size={58} />
+        <aside aria-hidden="true" className="auth-aside">
+          <MonthDial animated className="auth-aside__dial" day={isSignUp ? 1 : 12} trainingDays={[2, 4, 6, 9, 11, 13, 16, 18, 20, 23, 25, 27, 30]}>
+            <span className="auth-aside__day">{formatNumber(isSignUp ? 1 : 12, locale)}</span>
+            <span className="auth-aside__of">{fa ? 'از ۳۰' : 'of 30'}</span>
+          </MonthDial>
+          <p className="auth-aside__line">{isSignUp
+            ? (fa ? 'روز اول ماه از همین‌جا شروع می‌شود.' : 'Day one of the month starts here.')
+            : (fa ? 'ماه سر جایش است. از همان روزی که ماندی ادامه بده.' : 'The month is where you left it. Carry on from today.')}</p>
+        </aside>
+        <div className="auth-sheet" key={mode}>
+          <OrbitMark animated size={48} />
           <h1>{isVerify ? (fa ? 'تأیید ایمیل' : 'Verify your email') : isRecover ? (fa ? 'بازیابی حساب' : 'Recover your account') : isUpdatePassword ? (fa ? 'رمز تازه بساز' : 'Create a new password') : isSignUp ? t('auth.titleUp') : t('auth.titleIn')}</h1>
           <p className="auth-lead">{lead}</p>
           {!isConfigured ? <Notice live={false} tone="warning">{t('auth.cloudMissing')}</Notice> : null}
@@ -313,7 +322,7 @@ export function AuthPage({ locale, mode }: { locale: AppLocale; mode: 'sign-in' 
               {t('common.preview')} <ArrowRight className="directional-icon" size={17} />
             </Link>
           ) : null}
-        </GlassChrome>
+        </div>
       </main>
     </div>
   )

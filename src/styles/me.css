@@ -50,7 +50,7 @@
 }
 
 .progress-chart-content {
-  animation: chart-view-enter .3s cubic-bezier(.22, 1, .36, 1) both;
+  animation: chart-view-enter var(--motion-glass-morph) var(--motion-ease-enter) both;
 }
 
 @keyframes chart-view-enter {
@@ -87,7 +87,7 @@
   display: block;
   height: 100%;
   transform-origin: left center;
-  animation: progress-bar-in .9s cubic-bezier(.22, 1, .36, 1) both;
+  animation: progress-bar-in .9s var(--motion-ease-enter) both;
 }
 
 [dir="rtl"] .progress-week-bars__fill { transform-origin: right center; }
@@ -282,7 +282,7 @@
   display: grid;
   gap: var(--space-1);
   padding: var(--space-4) var(--space-3) var(--space-4);
-  animation: chart-view-enter .55s cubic-bezier(.22, 1, .36, 1) both;
+  animation: chart-view-enter var(--motion-slow) var(--motion-ease-enter) both;
 }
 
 .progress-compare__tile small,
@@ -368,7 +368,7 @@
   display: block;
   transform-origin: bottom center;
   width: 100%;
-  animation: progress-col-in .9s cubic-bezier(.22, 1, .36, 1) both;
+  animation: progress-col-in .9s var(--motion-ease-enter) both;
 }
 
 .progress-weight svg { display: block; height: 9rem; width: 100%; }
@@ -380,7 +380,7 @@
   stroke-width: 3;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: progress-draw 1.15s cubic-bezier(.22, 1, .36, 1) forwards;
+  animation: progress-draw 1.15s var(--motion-ease-enter) forwards;
 }
 
 .progress-weight__dot { fill: var(--color-text); }

@@ -1160,9 +1160,9 @@
             "$description": "More separated translucent tint for prominent functional Liquid Glass"
           },
           "glassClear": {
-            "$value": "#FFFFFF52",
+            "$value": "#FFFFFF4D",
             "$type": "color",
-            "$description": "Minimal-tint Clear glass for a bounded media or aura backdrop with an explicit local legibility treatment"
+            "$description": "Clear Liquid Glass tint (30%, as on Android): the tab bar, segmented controls, stepper buttons, chrome bars and notices. Content behind stays visible."
           },
           "glassInteractionPrimary": {
             "$value": "#1C1A171F",
@@ -1208,6 +1208,21 @@
             "$value": "#00000000",
             "$type": "color",
             "$description": "Optional colored sheen inside glass gradients; transparent by default"
+          },
+          "glassFrost": {
+            "$value": "#FFFFFF99",
+            "$type": "color",
+            "$description": "Denser glass (60%) for menus and popovers that open over text, so their own labels stay legible."
+          },
+          "glassSelection": {
+            "$value": "#A35E0024",
+            "$type": "color",
+            "$description": "Saffron tint of the selection lens in a LiquidSelector (14% light, 22% dark, as on Android)."
+          },
+          "glassHalo": {
+            "$value": "#FFFFFFE6",
+            "$type": "color",
+            "$description": "Light halo behind text and icons on clear glass in light theme, so labels stay legible over busy content without thickening the glass; none in dark"
           }
         },
         "text": {
@@ -1239,24 +1254,24 @@
         },
         "action": {
           "primary": {
-            "$value": "#1C1A17",
+            "$value": "{color.primitive.saffron.700}",
             "$type": "color",
-            "$description": "Ink fill for the one primary action per view"
+            "$description": "Saffron fill of the one primary action per view, as on Android. Coral is never a CTA."
           },
           "primaryHover": {
-            "$value": "#3A3631",
+            "$value": "{color.primitive.saffron.800}",
             "$type": "color",
             "$description": "Pointer hover fill for the primary action"
           },
           "primaryPressed": {
-            "$value": "#000000",
+            "$value": "{color.primitive.saffron.900}",
             "$type": "color",
             "$description": "Pressed fill for the primary action"
           },
           "onPrimary": {
             "$value": "{color.primitive.neutral.0}",
             "$type": "color",
-            "$description": "Foreground over all primary action states"
+            "$description": "Label and icon on the saffron primary action (white light, deep brown dark, as on Android)"
           },
           "secondary": {
             "$value": "{color.primitive.saffron.100}",
@@ -1649,9 +1664,9 @@
             "$description": "More separated translucent tint for prominent functional Liquid Glass"
           },
           "glassClear": {
-            "$value": "#FFFFFF1A",
+            "$value": "#1D1B184D",
             "$type": "color",
-            "$description": "Minimal-tint Clear glass for a bounded media or aura backdrop with an explicit local legibility treatment"
+            "$description": "Clear Liquid Glass tint (30%, as on Android): the tab bar, segmented controls, stepper buttons, chrome bars and notices. Content behind stays visible."
           },
           "glassInteractionPrimary": {
             "$value": "#F4F1EA29",
@@ -1697,6 +1712,21 @@
             "$value": "#00000000",
             "$type": "color",
             "$description": "Optional colored sheen inside glass gradients; transparent by default"
+          },
+          "glassFrost": {
+            "$value": "#1D1B1899",
+            "$type": "color",
+            "$description": "Denser glass (60%) for menus and popovers that open over text, so their own labels stay legible."
+          },
+          "glassSelection": {
+            "$value": "#F0A93B38",
+            "$type": "color",
+            "$description": "Saffron tint of the selection lens in a LiquidSelector (14% light, 22% dark, as on Android)."
+          },
+          "glassHalo": {
+            "$value": "#00000000",
+            "$type": "color",
+            "$description": "Light halo behind text and icons on clear glass in light theme, so labels stay legible over busy content without thickening the glass; none in dark"
           }
         },
         "text": {
@@ -1728,24 +1758,24 @@
         },
         "action": {
           "primary": {
-            "$value": "#F4F1EA",
+            "$value": "{color.primitive.saffron.400}",
             "$type": "color",
-            "$description": "Ink fill for the one primary action per view"
+            "$description": "Saffron fill of the one primary action per view, as on Android. Coral is never a CTA."
           },
           "primaryHover": {
-            "$value": "#FFFFFF",
+            "$value": "{color.primitive.saffron.300}",
             "$type": "color",
             "$description": "Pointer hover fill for the primary action"
           },
           "primaryPressed": {
-            "$value": "#E3DFD7",
+            "$value": "{color.primitive.saffron.500}",
             "$type": "color",
             "$description": "Pressed fill for the primary action"
           },
           "onPrimary": {
-            "$value": "#1C1A17",
+            "$value": "#2A1A00",
             "$type": "color",
-            "$description": "Foreground over all primary action states"
+            "$description": "Label and icon on the saffron primary action (white light, deep brown dark, as on Android)"
           },
           "secondary": {
             "$value": "{color.primitive.saffron.950}",

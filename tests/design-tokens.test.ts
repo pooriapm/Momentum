@@ -120,6 +120,20 @@ describe('design tokens', () => {
     expect(offenders).toEqual([])
   })
 
+  it('keeps interface motion on the duration tokens', () => {
+    // Loops and choreographed reveals longer than --motion-slow keep their own timing.
+    const offenders = productionCss.flatMap((path) =>
+      declarations(read(path), /transition|animation(?:-duration)?/)
+        .filter(({ value }) => !/infinite/.test(value))
+        .filter(({ value }) => [...value.matchAll(/(?<![\w.(-])(\d*\.?\d+)(ms|s)\b/g)].some((match) => {
+          const ms = match[2] === 's' ? Number(match[1]) * 1000 : Number(match[1])
+          return ms >= 2 && ms <= 700
+        }))
+        .map(({ property, value }) => `${path}: ${property} ${value}`),
+    )
+    expect(offenders).toEqual([])
+  })
+
   it('draws each concept with one icon: superseded Lucide names are not imported', () => {
     const offenders = sourceFiles.filter((path) => path.endsWith('.tsx')).flatMap((path) => {
       const imports = [...read(path).matchAll(/import \{([^}]+)\} from ['"]lucide-react['"]/g)].flatMap((match) => match[1].split(',').map((name) => name.trim()))

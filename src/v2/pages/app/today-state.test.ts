@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { demoPlan } from '../../data/demo'
-import { completedMealCount, deriveTodaySurface, formatLastSync, mealIsCompleted, mealIsSettled, type MealStatus } from './today-state'
+import { completedMealCount, deriveTodaySurface, formatLastSync, mealIsCompleted, mealIsSettled, periodPosition, type MealStatus } from './today-state'
 
 const today = demoPlan.localDate ?? '2026-08-17'
 
@@ -48,5 +48,27 @@ describe('Today surface derivation', () => {
   it('formats a last-sync timestamp for both locales', () => {
     expect(formatLastSync('2026-08-17T08:42:00.000Z', 'en')).not.toBe('unknown')
     expect(formatLastSync(undefined, 'en')).toBe('unknown')
+  })
+})
+
+describe('periodPosition', () => {
+  const base = { ...demoPlan, days: [], localDate: '2026-08-12', version: { ...demoPlan.version!, validFrom: '2026-08-01', validTo: '2026-08-30' } }
+
+  it('places today inside the thirty-day period', () => {
+    expect(periodPosition(base, '2026-08-12')).toEqual({ day: 12, days: 30, trainingDays: [] })
+  })
+
+  it('lists the period days that carry a workout', () => {
+    const plan = { ...base, days: [
+      { ...demoPlan.days![0], localDate: '2026-08-02', workout: demoPlan.workout },
+      { ...demoPlan.days![0], localDate: '2026-08-03', workout: null },
+      { ...demoPlan.days![0], localDate: '2026-09-02', workout: demoPlan.workout },
+    ] }
+    expect(periodPosition(plan, '2026-08-12')?.trainingDays).toEqual([2])
+  })
+
+  it('says nothing when the period is unknown or today is outside it', () => {
+    expect(periodPosition({ ...base, version: undefined }, '2026-08-12')).toBeNull()
+    expect(periodPosition({ ...base, localDate: '2026-09-04' }, '2026-09-04')).toBeNull()
   })
 })

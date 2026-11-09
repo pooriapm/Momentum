@@ -93,3 +93,34 @@ export function writeStoredLastSync(iso = new Date().toISOString()) {
     /* private mode */
   }
 }
+
+export interface PeriodPosition {
+  /** 1-based day of the plan period that `today` falls on. */
+  day: number
+  days: number
+  /** 1-based days of the period that carry a workout, where the plan lists its days. */
+  trainingDays: number[]
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function isoDay(value: string) {
+  const time = Date.parse(`${value.slice(0, 10)}T00:00:00Z`)
+  return Number.isNaN(time) ? null : time / DAY_MS
+}
+
+/** Where today sits in the plan period, or null when the period is unknown or today is outside it. */
+export function periodPosition(plan: MomentumPlanView, today: string): PeriodPosition | null {
+  const from = plan.version?.validFrom ? isoDay(plan.version.validFrom) : null
+  const to = plan.version?.validTo ? isoDay(plan.version.validTo) : null
+  const now = isoDay(plan.localDate ?? today)
+  if (from == null || to == null || now == null || to < from) return null
+  const days = to - from + 1
+  const day = now - from + 1
+  if (day < 1 || day > days) return null
+  const trainingDays = (plan.days ?? []).flatMap((entry) => {
+    const at = isoDay(entry.localDate)
+    return entry.workout && at != null && at >= from && at <= to ? [at - from + 1] : []
+  })
+  return { day, days, trainingDays }
+}

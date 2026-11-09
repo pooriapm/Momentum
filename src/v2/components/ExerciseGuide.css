@@ -45,7 +45,7 @@
   align-items: center;
   background: var(--color-brand);
   border-radius: var(--radius-pill);
-  color: var(--color-on-brand, #fff);
+  color: var(--color-on-brand);
   display: inline-flex;
   flex: none;
   font-size: var(--text-caption);
@@ -59,14 +59,7 @@
 .exercise-guide__tip { margin: 0; }
 
 .exercise-guide__retry {
-  background: transparent;
-  border: 0;
-  color: var(--color-brand);
-  cursor: pointer;
-  font: inherit;
-  font-weight: var(--weight-semibold);
   justify-self: start;
-  padding: 0;
 }
 
 @media (min-width: 37.5rem) {

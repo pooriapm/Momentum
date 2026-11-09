@@ -1,10 +1,29 @@
 .today-page .today-heading {
-  margin-bottom: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
 }
 
 .today-page .today-heading h1 {
+  font-size: var(--text-title);
+  line-height: 1.25;
+}
+
+/* Where today sits in the thirty days: the same orbit as the public pages. */
+.today-heading__dial {
+  flex: none;
+  max-width: 7.5rem;
+}
+
+.today-heading__dial strong {
   font-size: var(--text-title2);
-  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-black);
+  line-height: 1;
+}
+
+.today-heading__dial small {
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
 }
 
 .today-page .today-heading > div > p:not(.orbit-eyebrow) {
@@ -348,7 +367,7 @@
 .plan-build__ring-value {
   stroke: var(--color-brand);
   stroke-linecap: round;
-  transition: stroke-dashoffset .9s cubic-bezier(.22, 1, .36, 1);
+  transition: stroke-dashoffset .9s var(--motion-ease-enter);
 }
 
 .plan-build__orbit strong {
@@ -370,14 +389,14 @@
 }
 
 .plan-build__show h1 {
-  animation: plan-build-in .45s cubic-bezier(.22, 1, .36, 1);
+  animation: plan-build-in var(--motion-emphasis) var(--motion-ease-enter);
   font-size: var(--text-title3);
   line-height: 1.45;
   max-width: 22rem;
 }
 
 .plan-build__detail {
-  animation: plan-build-in .4s cubic-bezier(.22, 1, .36, 1);
+  animation: plan-build-in var(--motion-emphasis) var(--motion-ease-enter);
   min-height: 2.8rem;
   max-width: 24rem;
 }
@@ -427,7 +446,7 @@
 .plan-build__step.is-done .plan-build__mark,
 .plan-build__step.is-current .plan-build__mark {
   background: var(--color-brand);
-  color: var(--color-on-brand, #fff);
+  color: var(--color-on-brand);
 }
 
 .plan-build__step.is-current .plan-build__mark {
@@ -447,7 +466,7 @@
   border-radius: inherit;
   display: block;
   height: 100%;
-  transition: width .9s cubic-bezier(.22, 1, .36, 1);
+  transition: width .9s var(--motion-ease-enter);
 }
 
 .plan-build__pace {
@@ -781,4 +800,12 @@
 @media (max-width: 22.49rem) {
   .today-orbit { grid-template-columns: 1fr; justify-items: center; }
   .today-orbit__legend { width: 100%; }
+}
+
+/* The dial stays beside the greeting on a phone, just smaller. */
+@media (max-width: 52.49rem) {
+  .today-page .today-heading { align-items: center; flex-direction: row; }
+  .today-heading__dial { max-width: 5rem; }
+  .today-heading__dial strong { font-size: var(--text-title3); }
+  .today-heading__dial small { display: none; }
 }

@@ -23,7 +23,9 @@ import { formatNumber } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { Page, PageHeader } from '../../ui/layout'
+import { SegmentedControl } from '../../ui/SegmentedControl'
 import { Notice } from '../../ui/feedback'
+import { Input, Select } from '../../ui/FormControls'
 import './card-transfer.css'
 import './admin.css'
 
@@ -99,22 +101,13 @@ export function AdminPage({ locale, initialTab = 'overview' }: { locale: AppLoca
 
       {whoami.data ? (
         <>
-          <div aria-label={fa ? 'بخش‌های مدیریت' : 'Admin sections'} className="admin-tabs" role="tablist">
-            {TABS.map((item) => (
-              <button
-                aria-controls={`admin-panel-${item.key}`}
-                aria-selected={tab === item.key}
-                className={tab === item.key ? 'is-active' : ''}
-                id={`admin-tab-${item.key}`}
-                key={item.key}
-                onClick={() => setTab(item.key)}
-                role="tab"
-                type="button"
-              >
-                {item[locale]}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            idPrefix="admin"
+            items={TABS.map((item) => ({ value: item.key, label: item[locale] }))}
+            label={fa ? 'بخش‌های مدیریت' : 'Admin sections'}
+            onChange={setTab}
+            value={tab}
+          />
           <div aria-labelledby={`admin-tab-${tab}`} id={`admin-panel-${tab}`} role="tabpanel">
             {tab === 'overview' ? <OverviewTab locale={locale} onOpen={setTab} /> : null}
             {tab === 'receipts' ? <ReceiptsTab locale={locale} /> : null}
@@ -213,12 +206,9 @@ function ReceiptsTab({ locale }: { locale: AppLocale }) {
             ) : <p>{fa ? 'تصویر رسید پیدا نشد.' : 'The receipt image is missing.'}</p>}
             {rejecting === item.payment_id ? (
               <div className="admin-reject">
-                <label>
-                  <span>{fa ? 'دلیل رد' : 'Reason'}</span>
-                  <select onChange={(event) => setReason(event.target.value as RejectionReason)} value={reason}>
-                    {REJECTION_REASONS.map((value) => <option key={value} value={value}>{REASON_LABELS[value][locale]}</option>)}
-                  </select>
-                </label>
+                <Select label={fa ? 'دلیل رد' : 'Reason'} onChange={(event) => setReason(event.target.value as RejectionReason)} value={reason}>
+                  {REJECTION_REASONS.map((value) => <option key={value} value={value}>{REASON_LABELS[value][locale]}</option>)}
+                </Select>
                 <div className="card-transfer__actions">
                   <Button disabled={review.isPending} onClick={() => setRejecting('')} variant="ghost">{fa ? 'انصراف' : 'Cancel'}</Button>
                   <Button loading={review.isPending} onClick={() => review.mutate({ item, approve: false, reason })} variant="secondary"><X size={16} />{fa ? 'رد رسید' : 'Reject receipt'}</Button>
@@ -279,6 +269,7 @@ function MembersTab({ locale }: { locale: AppLocale }) {
         <label className="sr-only" htmlFor="admin-member-search">{fa ? 'جستجوی عضو' : 'Find a member'}</label>
         <input
           autoComplete="off"
+          className="orbit-input"
           dir="ltr"
           id="admin-member-search"
           minLength={3}
@@ -406,14 +397,8 @@ function MemberCard({ locale, onBack, userId }: { locale: AppLocale; onBack: () 
       <form className="admin-grant" onSubmit={submit}>
         <h3>{fa ? 'افزودن روز عضویت' : 'Add membership days'}</h3>
         <p className="admin-hint">{fa ? 'برای اصلاح اشتباه یا جبران؛ بعد از پایان دوره فعلی شروع می‌شود و با یادداشت تو ثبت می‌شود.' : 'For corrections or goodwill. It starts after the current period ends and is logged with your note.'}</p>
-        <label>
-          <span>{fa ? 'تعداد روز (۱ تا ۹۰)' : 'Days (1–90)'}</span>
-          <input inputMode="numeric" max={90} min={1} onChange={(event) => setDays(Number(event.target.value))} type="number" value={Number.isFinite(days) ? days : ''} />
-        </label>
-        <label>
-          <span>{fa ? 'یادداشت (چرا؟)' : 'Note (why?)'}</span>
-          <input maxLength={200} onChange={(event) => setNote(event.target.value)} type="text" value={note} />
-        </label>
+        <Input inputMode="numeric" label={fa ? 'تعداد روز (۱ تا ۹۰)' : 'Days (1–90)'} max={90} min={1} onChange={(event) => setDays(Number(event.target.value))} type="number" value={Number.isFinite(days) ? days : ''} />
+        <Input label={fa ? 'یادداشت (چرا؟)' : 'Note (why?)'} maxLength={200} onChange={(event) => setNote(event.target.value)} type="text" value={note} />
         {message ? <Notice>{message}</Notice> : null}
         <Button disabled={!validGrant} loading={grant.isPending} type="submit">{fa ? 'افزودن روزها' : 'Add days'}</Button>
       </form>

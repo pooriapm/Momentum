@@ -14,7 +14,7 @@ import { localizedPath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
 import { conceptIcons } from '../ui/icons'
 import { LiquidSelector } from '../ui/LiquidSelector'
-import { GlassChrome, PageSkeleton } from '../ui/primitives'
+import { Button, GlassChrome, PageSkeleton } from '../ui/primitives'
 import { appContentSurface, isMembershipRequiredTab, type EntitlementSnapshot } from '../entitlement'
 import { EntitlementGate } from '../pages/app/EntitlementGate'
 import { PrePlanState } from '../pages/app/PrePlanState'
@@ -227,7 +227,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
         <div className="app-content">{pageOwnsPlanQuery
           ? children(pageContext)
           : !preview && planQuery.isError && !planQuery.data
-          ? <div className="app-load-error" role="alert"><strong>{locale === 'fa' ? 'برنامه دریافت نشد' : 'Your plan could not be loaded'}</strong><p>{locale === 'fa' ? 'اتصال را بررسی کن و دوباره تلاش کن. اطلاعات حسابت حذف نشده است.' : 'Check your connection and try again. Your account data is safe.'}</p><button className="orbit-button orbit-button--primary" onClick={() => void planQuery.refetch()} type="button">{locale === 'fa' ? 'تلاش دوباره' : 'Try again'}</button></div>
+          ? <div className="app-load-error" role="alert"><strong>{locale === 'fa' ? 'برنامه دریافت نشد' : 'Your plan could not be loaded'}</strong><p>{locale === 'fa' ? 'اتصال را بررسی کن و دوباره تلاش کن. اطلاعات حسابت حذف نشده است.' : 'Check your connection and try again. Your account data is safe.'}</p><Button onClick={() => void planQuery.refetch()} type="button">{locale === 'fa' ? 'تلاش دوباره' : 'Try again'}</Button></div>
           : contentSurface === 'entitlement'
             ? <EntitlementGate locale={locale} snapshot={entitlement} />
             : contentSurface === 'preplan' && account

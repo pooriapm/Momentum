@@ -1,0 +1,99 @@
+/* The month as one orbit. Shared by marketing, auth and onboarding. */
+
+.month-dial {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: var(--dial-size, 100%);
+}
+
+.month-dial__svg {
+  grid-area: 1 / 1;
+  height: 100%;
+  overflow: visible;
+  width: 100%;
+}
+
+/* Twelve o'clock, then along the reading direction. */
+[dir="rtl"] .month-dial__svg { transform: scaleX(-1); }
+
+.month-dial__track {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.month-dial__arc {
+  fill: none;
+  stroke: var(--color-food);
+  stroke-linecap: round;
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.month-dial__tick {
+  stroke: var(--color-border-strong);
+  stroke-linecap: round;
+  stroke-width: 1.5px;
+  opacity: .55;
+  vector-effect: non-scaling-stroke;
+}
+
+.month-dial__tick--past { stroke: var(--color-food); opacity: .9; }
+.month-dial__tick--training { stroke: var(--color-training); stroke-width: 3px; opacity: .6; }
+.month-dial__tick--training.month-dial__tick--past { opacity: 1; }
+.month-dial__tick--today { stroke: var(--color-text); opacity: 1; stroke-width: 3px; }
+
+.month-dial__halo { fill: var(--color-training); opacity: .18; }
+.month-dial__satellite { fill: var(--color-training); }
+
+.month-dial__core {
+  display: grid;
+  grid-area: 1 / 1;
+  justify-items: center;
+  position: relative;
+  text-align: center;
+}
+
+/* Draw-in: each tick arrives in order, then the satellite settles. */
+.month-dial--animated .month-dial__tick {
+  animation: dial-tick var(--motion-emphasis) var(--motion-ease-enter) both;
+}
+
+.month-dial--animated .month-dial__arc {
+  animation: dial-arc 1.2s var(--motion-ease-out) var(--motion-emphasis) both;
+}
+
+.month-dial--animated :is(.month-dial__satellite, .month-dial__halo) {
+  animation: dial-satellite var(--motion-slow) var(--motion-ease-enter) 1.1s both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.month-dial--animated .month-dial__halo {
+  animation: dial-satellite var(--motion-slow) var(--motion-ease-enter) 1.1s both, dial-pulse 2.8s ease-in-out 1.8s infinite;
+}
+
+@keyframes dial-tick {
+  from { opacity: 0; }
+}
+
+@keyframes dial-arc {
+  from { stroke-dasharray: 0 30; }
+}
+
+@keyframes dial-satellite {
+  from { opacity: 0; transform: scale(0); }
+}
+
+@keyframes dial-pulse {
+  50% { transform: scale(1.6); opacity: .08; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .month-dial--animated :is(.month-dial__tick, .month-dial__arc, .month-dial__satellite, .month-dial__halo) { animation: none; }
+}

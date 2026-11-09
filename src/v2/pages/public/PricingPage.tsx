@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Check } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
@@ -8,6 +8,8 @@ import { useAuth } from '../../../platform/auth/auth-context'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { localizedPath } from '../../router/route-utils'
 import { Button } from '../../ui/primitives'
+import { MonthDial } from '../../ui/MonthDial'
+import { Reveal } from '../../ui/Reveal'
 import { formatNumber } from '../../lib/format'
 import {
   formatPrice,
@@ -35,9 +37,6 @@ export function PricingPage({
   const { t } = useTranslation()
   const { status } = useAuth()
   const [manualCountry, setManualCountry] = useState('')
-  const reelRef = useRef<HTMLElement>(null)
-  const [beat, setBeat] = useState(0)
-  const [meterOn, setMeterOn] = useState(false)
   const useLiveCatalog = catalog === undefined
   const pricingQuery = useQuery({
     queryKey: ['pricing-context', manualCountry],
@@ -135,88 +134,64 @@ export function PricingPage({
     ] : []),
   ]
 
-  useEffect(() => {
-    let frame = 0
-    const update = () => {
-      const section = reelRef.current
-      if (!section) return
-      const rect = section.getBoundingClientRect()
-      const on = offers.length > 1 && rect.top < window.innerHeight * 0.72 && rect.bottom > window.innerHeight * 0.28
-      setMeterOn((current) => current === on ? current : on)
-      let nextBeat = 0
-      section.querySelectorAll<HTMLElement>('.pricing-frame').forEach((panel, index) => {
-        if (panel.getBoundingClientRect().top < window.innerHeight * 0.55) nextBeat = index
-      })
-      setBeat((current) => current === nextBeat ? current : nextBeat)
-    }
-    const onScroll = () => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(update)
-    }
-    update()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
-    return () => {
-      cancelAnimationFrame(frame)
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
-    }
-  }, [offers.length])
-
   return (
     <div className="public-page pricing-page screen-enter" data-inventory={ids.join(' ')}>
       <PublicHeader locale={locale} />
-      {offers.length > 1 ? (
-        <div aria-hidden="true" className={`pricing-meter${meterOn ? ' is-on' : ''}`}>
-          <i style={{ transform: `scaleY(${beat / Math.max(offers.length - 1, 1)})` }} />
-          <ol>
-            {offers.map((offer, index) => (
-              <li className={index === beat ? 'is-active' : index < beat ? 'is-done' : ''} key={offer.key}>
-                {formatNumber(index + 1, locale, { minimumIntegerDigits: 2, useGrouping: false })}
-              </li>
-            ))}
-          </ol>
-        </div>
-      ) : null}
       <main>
         <section className="pricing-hero">
-          <div aria-hidden="true" className="pricing-orb pricing-orb--a" />
-          <div aria-hidden="true" className="pricing-orb pricing-orb--b" />
-          <p className="pricing-kicker">{t('pricing.eyebrow')}</p>
-          <h1>{t('pricing.title')}</h1>
-          <p className="pricing-lead">{t('pricing.subtitle')}</p>
-          <p className="pricing-lead pricing-lead--next">{t('pricing.oneOffer')}</p>
-          {useLiveCatalog ? (
-            <div role="group" className="pricing-region glass-chrome" aria-label={locale === 'fa' ? 'انتخاب منطقه قیمت' : 'Pricing region'}>
-              <button aria-pressed={manualCountry === ''} className={manualCountry === '' ? 'is-active' : ''} onClick={() => setManualCountry('')} type="button">{locale === 'fa' ? 'پیشنهاد خودکار' : 'Automatic'}</button>
-              <button aria-pressed={manualCountry === 'US'} className={manualCountry === 'US' ? 'is-active' : ''} onClick={() => setManualCountry('US')} type="button">Global · USD</button>
-              <button aria-pressed={manualCountry === 'IR'} className={manualCountry === 'IR' ? 'is-active' : ''} onClick={() => setManualCountry('IR')} type="button">ایران · تومان</button>
-            </div>
-          ) : null}
-          {loading ? <p aria-live="polite" className="pricing-status">{locale === 'fa' ? 'داریم قیمت را از کاتالوگ می‌خوانیم…' : 'Reading the price from the catalog…'}</p> : null}
-          {unavailable ? <p className="pricing-status" role="status">{t('pricing.catalogUnavailable')}</p> : null}
-          {unavailable && useLiveCatalog ? <Button variant="secondary" disabled={pricingQuery.isFetching} onClick={() => void pricingQuery.refetch()}>{pricingQuery.isFetching ? (fa ? 'در حال تلاش…' : 'Retrying…') : (fa ? 'تلاش دوباره' : 'Try again')}</Button> : null}
+          <div className="pricing-hero__copy">
+            <p className="pricing-kicker">{t('pricing.eyebrow')}</p>
+            <h1>{t('pricing.title')}</h1>
+          </div>
+          <div className="pricing-hero__aside">
+            <p className="pricing-lead">{t('pricing.subtitle')}</p>
+            <p className="pricing-lead pricing-lead--next">{t('pricing.oneOffer')}</p>
+            {useLiveCatalog ? (
+              <div role="group" className="pricing-region" aria-label={locale === 'fa' ? 'انتخاب منطقه قیمت' : 'Pricing region'}>
+                <button aria-pressed={manualCountry === ''} className={manualCountry === '' ? 'is-active' : ''} onClick={() => setManualCountry('')} type="button">{locale === 'fa' ? 'پیشنهاد خودکار' : 'Automatic'}</button>
+                <button aria-pressed={manualCountry === 'US'} className={manualCountry === 'US' ? 'is-active' : ''} onClick={() => setManualCountry('US')} type="button">Global · USD</button>
+                <button aria-pressed={manualCountry === 'IR'} className={manualCountry === 'IR' ? 'is-active' : ''} onClick={() => setManualCountry('IR')} type="button">ایران · تومان</button>
+              </div>
+            ) : null}
+            {loading ? <p aria-live="polite" className="pricing-status">{locale === 'fa' ? 'داریم قیمت را از کاتالوگ می‌خوانیم…' : 'Reading the price from the catalog…'}</p> : null}
+            {unavailable ? <p className="pricing-status" role="status">{t('pricing.catalogUnavailable')}</p> : null}
+            {unavailable && useLiveCatalog ? <Button variant="secondary" disabled={pricingQuery.isFetching} onClick={() => void pricingQuery.refetch()}>{pricingQuery.isFetching ? (fa ? 'در حال تلاش…' : 'Retrying…') : (fa ? 'تلاش دوباره' : 'Try again')}</Button> : null}
+          </div>
         </section>
 
-        <section aria-label={fa ? 'راه‌های داشتن برنامه' : 'Ways to get a plan'} className="pricing-reel" ref={reelRef}>
-          {offers.map((offer, index) => (
-            <article className={`pricing-frame pricing-frame--${offer.tone}${offer.key === 'gift' && giftUnavailable ? ' is-exhausted' : ''}`} key={offer.key}>
-              <div className="pricing-frame__copy">
-                <p className="pricing-frame__index">{formatNumber(index + 1, locale, { minimumIntegerDigits: 2, useGrouping: false })}</p>
-                <p className="pricing-frame__kicker">{offer.kicker}</p>
-                <h2>{offer.title}</h2>
-                <strong>{offer.price}</strong>
-                <p className="pricing-frame__body">{offer.body}</p>
-                <ul>
-                  {offer.features.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
-                <Link className={`orbit-button ${offer.primary ? 'orbit-button--primary' : 'orbit-button--secondary'}`} href={offer.href}>{offer.label}</Link>
-              </div>
-              <figure className="pricing-frame__photo">
-                <img alt={offer.alt} decoding="async" loading={index === 0 ? 'eager' : 'lazy'} src={offer.image} />
-              </figure>
-            </article>
-          ))}
-        </section>
+        {offers.length ? (
+          <section aria-label={fa ? 'راه‌های داشتن برنامه' : 'Ways to get a plan'} className="pricing-offers">
+            {offers.map((offer, index) => (
+              <Reveal
+                as="article"
+                className={`pricing-offer pricing-offer--${offer.tone}${offer.key === 'gift' && giftUnavailable ? ' is-exhausted' : ''}`}
+                delay={index * 90}
+                key={offer.key}
+              >
+                {offer.tone === 'membership' ? (
+                  <MonthDial className="pricing-offer__dial" day={30} trainingDays={[2, 4, 6, 9, 11, 13, 16, 18, 20, 23, 25, 27, 30]}>
+                    <span className="pricing-offer__dial-num">{formatNumber(30, locale)}</span>
+                    <span className="pricing-offer__dial-unit">{fa ? 'روز' : 'days'}</span>
+                  </MonthDial>
+                ) : (
+                  <figure className="pricing-offer__photo">
+                    <img alt={offer.alt} decoding="async" loading="lazy" src={offer.image} />
+                  </figure>
+                )}
+                <div className="pricing-offer__copy">
+                  <p className="pricing-offer__kicker">{formatNumber(index + 1, locale, { minimumIntegerDigits: 2, useGrouping: false })}</p>
+                  <h2>{offer.title}</h2>
+                  <strong className="pricing-offer__price">{offer.price}</strong>
+                  <p className="pricing-offer__body">{offer.body}</p>
+                  <ul>
+                    {offer.features.map((feature) => <li key={feature}><Check aria-hidden="true" size={16} />{feature}</li>)}
+                  </ul>
+                  <Link className={`orbit-button ${offer.primary ? 'orbit-button--primary' : 'orbit-button--secondary'}`} href={offer.href}>{offer.label}</Link>
+                </div>
+              </Reveal>
+            ))}
+          </section>
+        ) : null}
 
         <section className="pricing-notes">
           <p>

@@ -94,7 +94,7 @@ button {
   justify-items: center;
   width: min(100%, 24rem);
   padding: var(--space-8);
-  animation: orbit-page-enter 500ms cubic-bezier(.22, 1, .36, 1) both;
+  animation: orbit-page-enter var(--motion-emphasis) var(--motion-ease-enter) both;
 }
 
 .boot-splash__logo {
@@ -140,7 +140,7 @@ button {
 
 .boot-splash--exit {
   pointer-events: none;
-  animation: boot-splash-exit 320ms cubic-bezier(.4, 0, 1, 1) both;
+  animation: boot-splash-exit var(--motion-glass-morph) cubic-bezier(.4, 0, 1, 1) both;
 }
 
 @keyframes splash-progress {

@@ -31,7 +31,7 @@
   gap: var(--space-1);
   padding: var(--space-4) var(--space-4);
   text-align: start;
-  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+  transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease, transform var(--motion-fast) ease;
 }
 
 .body-path__choice small {
@@ -122,7 +122,7 @@
 }
 
 .field-guide__toast {
-  animation: field-guide-in 220ms ease-out both;
+  animation: field-guide-in var(--motion-normal) ease-out both;
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-inset);
@@ -466,4 +466,47 @@
   font-size: var(--text-footnote);
   line-height: 1.6;
   margin: 0 0 var(--space-5);
+}
+
+/* The setup path: every step on one line through time, like the day ribbon on the landing page. */
+.onboarding-path {
+  border-inline-start: 1px solid var(--color-border);
+  display: grid;
+  gap: var(--space-1);
+  list-style: none;
+  margin: var(--space-8) 0 0;
+  padding: 0;
+}
+
+.onboarding-path li {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: var(--text-footnote);
+  gap: var(--space-3);
+  margin-inline-start: calc(var(--space-3) * -1);
+  min-height: 2.25rem;
+}
+
+.onboarding-path span {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  display: grid;
+  flex: none;
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  block-size: 1.5rem;
+  inline-size: 1.5rem;
+  place-items: center;
+  transition: background-color var(--motion-normal) ease, color var(--motion-normal) ease;
+}
+
+.onboarding-path li.is-done { color: var(--color-text-secondary); }
+.onboarding-path li.is-done span { background: var(--color-food-soft); border-color: transparent; color: var(--color-food); }
+.onboarding-path li.is-current { color: var(--color-text); font-weight: var(--weight-bold); }
+.onboarding-path li.is-current span { background: var(--color-action); border-color: transparent; box-shadow: 0 0 0 4px var(--color-brand-soft); color: var(--color-on-action); }
+
+@media (max-width: 52.49rem) {
+  .onboarding-path { display: none; }
 }

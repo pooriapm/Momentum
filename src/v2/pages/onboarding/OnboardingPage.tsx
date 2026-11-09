@@ -435,6 +435,18 @@ export function OnboardingPage({ locale, step }: OnboardingPageProps) {
           <h1>{t('onboarding.title')}</h1>
           <p>{t('onboarding.subtitle')}</p>
           <OnboardingProgress locale={locale} percent={onboardingProgressPercent(step)} title={t(section.titleKey)} />
+          <ol aria-label={locale === 'fa' ? 'مسیر راه‌اندازی' : 'Setup path'} className="onboarding-path">
+            {onboardingSections.map((item, index) => (
+              <li
+                aria-current={index === currentIndex ? 'step' : undefined}
+                className={index < currentIndex ? 'is-done' : index === currentIndex ? 'is-current' : undefined}
+                key={item.key}
+              >
+                <span aria-hidden="true">{formatNumber(index + 1, locale)}</span>
+                <bdi>{t(item.titleKey)}</bdi>
+              </li>
+            ))}
+          </ol>
         </aside>
         <div className="content-card onboarding-card" ref={cardRef}>
           <div className="onboarding-card__heading">

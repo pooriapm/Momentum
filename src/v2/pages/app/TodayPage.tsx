@@ -43,6 +43,7 @@ import {
   formatLastSync,
   mealIsSettled,
   mealStatus,
+  periodPosition,
   type MealStatus,
   readStoredLastSync,
   writeStoredLastSync,
@@ -51,6 +52,7 @@ import {
 } from './today-state'
 import { Page, SectionHeader } from '../../ui/layout'
 import { Notice } from '../../ui/feedback'
+import { MonthDial } from '../../ui/MonthDial'
 import '../../../styles/today.css'
 
 function currentTimeInZone(timezone?: string) {
@@ -332,6 +334,8 @@ export function TodayPage({
     allMealsCompleted,
   })
 
+  const period = periodPosition(plan, today)
+
   return (
     <Page name="today">
       <section className="page-heading today-heading">
@@ -340,6 +344,18 @@ export function TodayPage({
           <h1>{t('app.greeting', { name: localize(plan.userName, locale) })}</h1>
           <p>{localize(plan.adjustmentReason, locale)}</p>
         </div>
+        {period ? (
+          <MonthDial
+            className="today-heading__dial"
+            day={period.day}
+            days={period.days}
+            label={fa ? `روز ${formatNumber(period.day, locale)} از ${formatNumber(period.days, locale)} دوره` : `Day ${period.day} of ${period.days} in this period`}
+            trainingDays={period.trainingDays}
+          >
+            <strong>{formatNumber(period.day, locale)}</strong>
+            <small>{fa ? `از ${formatNumber(period.days, locale)}` : `of ${period.days}`}</small>
+          </MonthDial>
+        ) : null}
       </section>
 
       {view === 'load-error' ? (
