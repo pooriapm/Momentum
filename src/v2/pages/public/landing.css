@@ -334,6 +334,9 @@
   max-width: 78rem;
 }
 
+/* The band sits on the muted surface; saffron there needs the stronger step for AA contrast. */
+.land-day .land-eyebrow { color: var(--color-brand-strong); }
+
 .land-day__head h2 {
   font-size: var(--text-section);
   font-weight: var(--weight-black);
