@@ -10,17 +10,17 @@ import type { PlanLlmClient, PlanLlmResponse } from './plan-llm.ts'
 import { assessPlanComplexity, type PlanComplexityDecision } from './plan-complexity.ts'
 import { MONTHLY_PLAN_DAYS } from './plan-period.ts'
 import {
+  type AssembledPrompt,
   assemblePlanPrompt,
   assembleRepairPrompt,
-  type AssembledPrompt,
   LEAN_SCHEMA_VERSION,
   PLAN_PROMPT_VERSION,
 } from './plan-prompt.ts'
 import { TARGETS_VERSION } from './plan-targets.ts'
 import {
+  PLAN_VALIDATOR_VERSION,
   type PlanIssue,
   type PlanQualityReport,
-  PLAN_VALIDATOR_VERSION,
   validateAndBuildPlan,
   type ValidationContext,
 } from './plan-validate.ts'
@@ -150,14 +150,25 @@ function addUsage(total: ProviderUsage, next: ProviderUsage | null): ProviderUsa
 
 function dominantCategory(issues: readonly PlanIssue[]): ValidationFailureCategory {
   const order: Array<Exclude<ValidationFailureCategory, null>> = [
-    'allergen', 'safety', 'catalog_reference', 'equipment', 'nutrition_arithmetic',
-    'day_coverage', 'schema', 'other',
+    'allergen',
+    'safety',
+    'catalog_reference',
+    'equipment',
+    'nutrition_arithmetic',
+    'day_coverage',
+    'schema',
+    'other',
   ]
   return order.find((category) => issues.some((issue) => issue.category === category)) ?? 'other'
 }
 
 type Attempt =
-  | { kind: 'ok'; response: PlanLlmResponse; content: Record<string, unknown>; quality: PlanQualityReport }
+  | {
+    kind: 'ok'
+    response: PlanLlmResponse
+    content: Record<string, unknown>
+    quality: PlanQualityReport
+  }
   | { kind: 'invalid'; response: PlanLlmResponse | null; issues: PlanIssue[] }
   | { kind: 'provider_error'; code: string }
 
@@ -235,7 +246,11 @@ export async function runPlanPipeline(input: {
       const built = parsed === undefined
         ? {
           ok: false as const,
-          issues: [{ code: 'malformed_json', category: 'schema' as const, detail: 'The previous answer was not valid JSON.' }],
+          issues: [{
+            code: 'malformed_json',
+            category: 'schema' as const,
+            detail: 'The previous answer was not valid JSON.',
+          }],
         }
         : validateAndBuildPlan(parsed, ctx)
       attempt = built.ok
@@ -256,7 +271,11 @@ export async function runPlanPipeline(input: {
         attempt = {
           kind: 'invalid',
           response,
-          issues: [{ code: error.code.toLowerCase(), category: 'schema', detail: 'The previous answer was cut off or was not valid JSON.' }],
+          issues: [{
+            code: error.code.toLowerCase(),
+            category: 'schema',
+            detail: 'The previous answer was cut off or was not valid JSON.',
+          }],
         }
       } else {
         attempt = {
@@ -309,17 +328,29 @@ export async function runPlanPipeline(input: {
     return personalFallback(input, ctx, 'repair_skipped:time_budget', calls, usage)
   }
 
-  const repair = await run('repair', assembleRepairPrompt({
-    brief: briefResult.brief,
-    previousOutput: main.response?.text ?? '',
-    issues: main.issues.map((issue) => issue.detail),
-  }))
+  const repair = await run(
+    'repair',
+    assembleRepairPrompt({
+      brief: briefResult.brief,
+      previousOutput: main.response?.text ?? '',
+      issues: main.issues.map((issue) => issue.detail),
+    }),
+  )
   if (repair.kind === 'ok') {
-    return delivered(repair, 'llm_repaired', briefResult, calls, usage, serviceTier, input.declaredAllergenIds)
+    return delivered(
+      repair,
+      'llm_repaired',
+      briefResult,
+      calls,
+      usage,
+      serviceTier,
+      input.declaredAllergenIds,
+    )
   }
   if (repair.kind === 'provider_error') throw providerUnavailable()
-  const reason =
-    `repair_failed:${[...new Set(repair.issues.map((issue) => issue.code))].slice(0, 5).join(',')}`
+  const reason = `repair_failed:${
+    [...new Set(repair.issues.map((issue) => issue.code))].slice(0, 5).join(',')
+  }`
   return personalFallback(input, ctx, reason, calls, usage)
 }
 
@@ -334,7 +365,10 @@ export function totalToman(calls: readonly PipelineCallRecord[]): number | null 
   return total
 }
 
-function meta(brief: PlanBriefResult | null, declaredAllergenIds: ReadonlySet<string>): PipelineResult['meta'] {
+function meta(
+  brief: PlanBriefResult | null,
+  declaredAllergenIds: ReadonlySet<string>,
+): PipelineResult['meta'] {
   return {
     pipeline_version: PIPELINE_VERSION,
     brief_version: brief ? BRIEF_VERSION : null,
@@ -421,7 +455,12 @@ function starterFallback(
 ): PipelineResult {
   let content: Record<string, unknown>
   try {
-    content = buildStarterPlan(input.catalog, MONTHLY_PLAN_DAYS, input.locale, input.declaredAllergenIds)
+    content = buildStarterPlan(
+      input.catalog,
+      MONTHLY_PLAN_DAYS,
+      input.locale,
+      input.declaredAllergenIds,
+    )
     assertGeneratedPlan(content, MONTHLY_PLAN_DAYS, input.locale, {
       catalog: input.catalog,
       declaredAllergenIds: input.declaredAllergenIds,

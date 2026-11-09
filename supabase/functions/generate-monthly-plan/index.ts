@@ -115,7 +115,9 @@ Deno.serve(async (request) => {
     const finished = runInBackground
       ? await Promise.race([
         work.then((result) => ({ result })),
-        new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), waitMs) }),
+        new Promise<null>((resolve) => {
+          timer = setTimeout(() => resolve(null), waitMs)
+        }),
       ])
       : { result: await work }
     clearTimeout(timer)
@@ -131,7 +133,11 @@ Deno.serve(async (request) => {
     const job = await store.findJobByIdempotency(auth.user.id, idempotencyKey)
     return jsonResponse(request, {
       job: job
-        ? { id: job.id, status: job.status === 'ready' ? 'ready' : 'in_progress', period_id: job.periodId }
+        ? {
+          id: job.id,
+          status: job.status === 'ready' ? 'ready' : 'in_progress',
+          period_id: job.periodId,
+        }
         : { status: 'in_progress' },
       idempotent_replay: true,
     }, 202)

@@ -31,7 +31,11 @@ export interface ExerciseProfile {
 }
 
 const LEVEL_RANK: Record<TrainingLevel, number> = { beginner: 0, intermediate: 1, advanced: 2 }
-const LEVEL_CODES: Record<string, TrainingLevel> = { b: 'beginner', i: 'intermediate', a: 'advanced' }
+const LEVEL_CODES: Record<string, TrainingLevel> = {
+  b: 'beginner',
+  i: 'intermediate',
+  a: 'advanced',
+}
 const RISK_CODES: Record<string, ExerciseRiskTag> = {
   I: 'high_impact',
   K: 'high_skill',
@@ -40,20 +44,52 @@ const RISK_CODES: Record<string, ExerciseRiskTag> = {
 
 // Fallback rules for exercises outside the reviewed table.
 const ADVANCED = [
-  /pistol/, /muscle-up/, /handstand/, /(^|-)l-sit/, /toes-to-bar/, /clean-and-jerk/, /power-clean/,
-  /(^|-)snatch/, /ring-dip/, /nordic/, /turkish/, /windmill/, /devil-press/, /man-maker/,
+  /pistol/,
+  /muscle-up/,
+  /handstand/,
+  /(^|-)l-sit/,
+  /toes-to-bar/,
+  /clean-and-jerk/,
+  /power-clean/,
+  /(^|-)snatch/,
+  /ring-dip/,
+  /nordic/,
+  /turkish/,
+  /windmill/,
+  /devil-press/,
+  /man-maker/,
 ]
 const INTERMEDIATE = [
-  /^barbell-/, /deadlift/, /good-morning/, /^pullup/, /^chinup/, /dip/, /swing/, /thruster/,
-  /burpee/, /jump/, /bulgarian/, /ab-wheel/, /renegade/,
+  /^barbell-/,
+  /deadlift/,
+  /good-morning/,
+  /^pullup/,
+  /^chinup/,
+  /dip/,
+  /swing/,
+  /thruster/,
+  /burpee/,
+  /jump/,
+  /bulgarian/,
+  /ab-wheel/,
+  /renegade/,
 ]
 const HIGH_IMPACT = [/jump/, /burpee/, /hop/, /bound/, /skater/, /sprint/, /run/, /skipping/]
-const HEAVY_SPINAL_LOAD = [/^barbell-.*(squat|deadlift|row|press|lunge)/, /deadlift/, /good-morning/, /clean/, /snatch/]
+const HEAVY_SPINAL_LOAD = [
+  /^barbell-.*(squat|deadlift|row|press|lunge)/,
+  /deadlift/,
+  /good-morning/,
+  /clean/,
+  /snatch/,
+]
 const REGION_RULES: Array<[InjuryArea, RegExp]> = [
   ['knee', /squat|lunge|step|jump|leg-press|leg-extension|leg-curl|run|skater|burpee/],
   ['ankle', /jump|run|skip|lunge|skater|calf/],
   ['hip', /hip|sumo|lunge|pigeon|adduction|abduction/],
-  ['lower_back', /deadlift|good-morning|row|swing|carry|crunch|situp|twist|extension|clean|snatch|squat/],
+  [
+    'lower_back',
+    /deadlift|good-morning|row|swing|carry|crunch|situp|twist|extension|clean|snatch|squat/,
+  ],
   ['shoulder', /press|pushup|dip|fly|pull|raise|row|overhead|handstand|plank/],
   ['elbow', /curl|triceps|pushdown|dip|skull/],
   ['wrist', /pushup|plank|handstand|clean|snatch|crawl|dip/],
@@ -71,7 +107,9 @@ export function exerciseProfile(id: string): ExerciseProfile {
     const [level = 'b', flags = '', regions = ''] = row.split('|')
     return {
       level: LEVEL_CODES[level] ?? 'beginner',
-      risks: [...flags].map((code) => RISK_CODES[code]).filter((tag): tag is ExerciseRiskTag => Boolean(tag)),
+      risks: [...flags].map((code) => RISK_CODES[code]).filter((tag): tag is ExerciseRiskTag =>
+        Boolean(tag)
+      ),
       regions: regions.split(' ').filter(Boolean) as InjuryArea[],
       reviewed: true,
     }

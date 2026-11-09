@@ -13,6 +13,7 @@ const expectedFunctions = [
   'checkins',
   'generate-monthly-plan',
   'geo-context',
+  'payments',
 ]
 
 function assert(condition, message) {

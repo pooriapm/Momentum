@@ -200,7 +200,8 @@ export async function runMonthlyGeneration(input: {
   assertAiFeatureEnabled('AI_PLAN_ENABLED')
   // Edge Functions stop at their wall-clock limit (150 s on the free plan, 400 s paid); the whole
   // pipeline must finish inside it, with room left to save the plan.
-  const deadlineAt = Date.now() + integerEnv('PLAN_PIPELINE_BUDGET_MS', 130_000, { min: 30_000, max: 380_000 })
+  const deadlineAt = Date.now() +
+    integerEnv('PLAN_PIPELINE_BUDGET_MS', 130_000, { min: 30_000, max: 380_000 })
   if (!input.emailConfirmed) {
     throw new HttpError(403, 'EMAIL_UNVERIFIED', 'Confirm your email before generating a plan.')
   }

@@ -6,10 +6,7 @@ import {
 } from './compact-plan-contract.ts'
 import { resolveExerciseId } from './exercise-selection.ts'
 import { HttpError } from './http.ts'
-import {
-  aggregateGroceryList,
-  assembleMealOption,
-} from './plan-assembly.ts'
+import { aggregateGroceryList, assembleMealOption } from './plan-assembly.ts'
 import type { MealSlot, PlanBriefResult } from './plan-brief.ts'
 import type { CatalogFood, PlanCatalogSnapshot } from './plan-catalog.ts'
 import { assertGeneratedPlan } from './plan-contract.ts'
@@ -151,7 +148,9 @@ export function parseReps(value: string): { count: string; seconds: number | nul
   if (range) {
     const min = Number(range[1])
     const max = range[2] ? Number(range[2]) : min
-    return min >= 1 && max <= 100 && min <= max ? { count: text.replace(/\s+/g, ''), seconds: null } : null
+    return min >= 1 && max <= 100 && min <= max
+      ? { count: text.replace(/\s+/g, ''), seconds: null }
+      : null
   }
   // Times, single or as a range ("20-30s", "8-10min"); a range is held for its midpoint.
   const time = (max: number, pattern: RegExp) => {
@@ -174,9 +173,33 @@ function termText(value: string): string {
 
 // Meat and fish words a vegetarian recipe must not mention ("تخم مرغ" is egg, removed first).
 const MEAT_TERMS = [
-  'chicken', 'beef', 'lamb', 'veal', 'meat', 'fish', 'tuna', 'salmon', 'shrimp', 'prawn', 'turkey',
-  'sausage', 'ham', 'bacon', 'kebab', 'مرغ', 'گوشت', 'ماهی', 'تن ماهی', 'میگو', 'بوقلمون', 'سوسیس',
-  'کالباس', 'کباب', 'گوساله', 'بره', 'جوجه',
+  'chicken',
+  'beef',
+  'lamb',
+  'veal',
+  'meat',
+  'fish',
+  'tuna',
+  'salmon',
+  'shrimp',
+  'prawn',
+  'turkey',
+  'sausage',
+  'ham',
+  'bacon',
+  'kebab',
+  'مرغ',
+  'گوشت',
+  'ماهی',
+  'تن ماهی',
+  'میگو',
+  'بوقلمون',
+  'سوسیس',
+  'کالباس',
+  'کباب',
+  'گوساله',
+  'بره',
+  'جوجه',
 ]
 const EGG_PHRASES = /تخم[\s‌]*مرغ/g
 
@@ -201,7 +224,14 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
   const brief = briefResult.brief
 
   if (!isRecord(raw)) {
-    return { ok: false, issues: [{ code: 'not_an_object', category: 'schema', detail: 'Output must be one JSON object.' }] }
+    return {
+      ok: false,
+      issues: [{
+        code: 'not_an_object',
+        category: 'schema',
+        detail: 'Output must be one JSON object.',
+      }],
+    }
   }
   if (raw.schema_version !== LEAN_SCHEMA_VERSION) {
     add('schema_version', 'schema', `schema_version must be "${LEAN_SCHEMA_VERSION}".`)
@@ -214,14 +244,24 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
   // Meal definitions.
   const meals = new Map<string, LeanMeal>()
   const rawMeals = Array.isArray(raw.meals) ? raw.meals : []
-  if (rawMeals.length === 0 || rawMeals.length > 48) add('meals', 'schema', 'meals must list 1-48 definitions.')
+  if (rawMeals.length === 0 || rawMeals.length > 48) {
+    add('meals', 'schema', 'meals must list 1-48 definitions.')
+  }
   for (const [index, item] of rawMeals.entries()) {
     const where = `meals[${index}]`
-    if (!isRecord(item) || typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,11}$/.test(item.id)) {
-      add('meal_invalid', 'schema', `${where}: needs an id of 1-12 lowercase letters, digits or dashes.`)
+    if (
+      !isRecord(item) || typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,11}$/.test(item.id)
+    ) {
+      add(
+        'meal_invalid',
+        'schema',
+        `${where}: needs an id of 1-12 lowercase letters, digits or dashes.`,
+      )
       continue
     }
-    if (meals.has(item.id)) add('meal_duplicate', 'schema', `${where}: id "${item.id}" is used twice.`)
+    if (meals.has(item.id)) {
+      add('meal_duplicate', 'schema', `${where}: id "${item.id}" is used twice.`)
+    }
     const slot = item.slot as MealSlot
     if (!brief.meals.slots.includes(slot)) {
       add('meal_slot', 'schema', `${where}: slot must be one of ${brief.meals.slots.join(', ')}.`)
@@ -229,24 +269,44 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     }
     const foodId = resolveFoodId(catalog, item.food)
     if (!foodId) {
-      add('unknown_food', 'catalog_reference', `${where}: food "${String(item.food)}" is not in the catalog.`)
+      add(
+        'unknown_food',
+        'catalog_reference',
+        `${where}: food "${String(item.food)}" is not in the catalog.`,
+      )
       continue
     }
     if (!briefResult.allowedFoodIds.has(foodId)) {
-      add('food_not_allowed', 'catalog_reference', `${where}: food "${slugOf(foodId)}" is not in the brief's foods list.`)
+      add(
+        'food_not_allowed',
+        'catalog_reference',
+        `${where}: food "${slugOf(foodId)}" is not in the brief's foods list.`,
+      )
       continue
     }
     if (!catalog.foods.get(foodId)!.meal_types.includes(slot)) {
-      add('food_wrong_slot', 'catalog_reference', `${where}: food "${slugOf(foodId)}" is not allowed for ${slot}.`)
+      add(
+        'food_wrong_slot',
+        'catalog_reference',
+        `${where}: food "${slugOf(foodId)}" is not allowed for ${slot}.`,
+      )
       continue
     }
     const altIds: string[] = []
     for (const alt of Array.isArray(item.alts) ? item.alts : []) {
       const altId = resolveFoodId(catalog, alt)
       if (!altId || !briefResult.allowedFoodIds.has(altId)) {
-        add('alt_not_allowed', 'catalog_reference', `${where}: alt "${String(alt)}" is not in the brief's foods list.`)
+        add(
+          'alt_not_allowed',
+          'catalog_reference',
+          `${where}: alt "${String(alt)}" is not in the brief's foods list.`,
+        )
       } else if (!catalog.foods.get(altId)!.meal_types.includes(slot)) {
-        add('food_wrong_slot', 'catalog_reference', `${where}: alt "${slugOf(altId)}" is not allowed for ${slot}.`)
+        add(
+          'food_wrong_slot',
+          'catalog_reference',
+          `${where}: alt "${slugOf(altId)}" is not allowed for ${slot}.`,
+        )
       } else if (altId !== foodId && !altIds.includes(altId)) {
         altIds.push(altId)
       }
@@ -256,7 +316,9 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
       autoFixes.push(`${where}: extra alts trimmed`)
     }
     const note = textOf(item.note, 120)
-    if (note === undefined) add('note_invalid', 'schema', `${where}: note must be null or 1-120 characters.`)
+    if (note === undefined) {
+      add('note_invalid', 'schema', `${where}: note must be null or 1-120 characters.`)
+    }
     meals.set(item.id, { id: item.id, slot, foodId, altIds, note: note ?? null })
   }
 
@@ -266,25 +328,48 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
   const injury = brief.training.injury
   for (const [index, item] of (Array.isArray(raw.workouts) ? raw.workouts : []).entries()) {
     const where = `workouts[${index}]`
-    if (!isRecord(item) || typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,11}$/.test(item.id)) {
-      add('workout_invalid', 'schema', `${where}: needs an id of 1-12 lowercase letters, digits or dashes.`)
+    if (
+      !isRecord(item) || typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,11}$/.test(item.id)
+    ) {
+      add(
+        'workout_invalid',
+        'schema',
+        `${where}: needs an id of 1-12 lowercase letters, digits or dashes.`,
+      )
       continue
     }
-    if (workouts.has(item.id)) add('workout_duplicate', 'schema', `${where}: id "${item.id}" is used twice.`)
+    if (workouts.has(item.id)) {
+      add('workout_duplicate', 'schema', `${where}: id "${item.id}" is used twice.`)
+    }
     const type = item.type as LeanWorkout['type']
     const intensity = item.intensity as LeanWorkout['intensity']
     const title = textOf(item.title, 60)
-    if (!WORKOUT_TYPES.includes(type)) add('workout_type', 'schema', `${where}: type must be one of ${WORKOUT_TYPES.join(', ')}.`)
-    if (!INTENSITIES.includes(intensity)) add('workout_intensity', 'schema', `${where}: intensity must be low, moderate or high.`)
+    if (!WORKOUT_TYPES.includes(type)) {
+      add('workout_type', 'schema', `${where}: type must be one of ${WORKOUT_TYPES.join(', ')}.`)
+    }
+    if (!INTENSITIES.includes(intensity)) {
+      add('workout_intensity', 'schema', `${where}: intensity must be low, moderate or high.`)
+    }
     if (!title) add('workout_title', 'schema', `${where}: title must be 1-60 characters.`)
     const light = LIGHT_TYPES.has(type)
     if (intensity === 'high' && (level === 'beginner' || injury || light)) {
-      add('intensity_too_high', 'safety', `${where}: intensity high is not allowed for this user; use low or moderate.`)
+      add(
+        'intensity_too_high',
+        'safety',
+        `${where}: intensity high is not allowed for this user; use low or moderate.`,
+      )
     }
     const minutes = Number(item.minutes)
     const session = brief.training.session_min
-    if (!Number.isInteger(minutes) || minutes < 10 || minutes > 120 || (!light && Math.abs(minutes - session) > 15)) {
-      add('workout_minutes', 'schema', `${where}: minutes must be an integer within 15 of ${session}.`)
+    if (
+      !Number.isInteger(minutes) || minutes < 10 || minutes > 120 ||
+      (!light && Math.abs(minutes - session) > 15)
+    ) {
+      add(
+        'workout_minutes',
+        'schema',
+        `${where}: minutes must be an integer within 15 of ${session}.`,
+      )
     }
     let rawItems = Array.isArray(item.items) ? item.items : []
     const [minItems, maxItems] = light ? [1, 6] : [3, 8]
@@ -305,18 +390,29 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
       }
       const exerciseId = resolveExerciseId(catalog, row.ex)
       if (!exerciseId) {
-        add('unknown_exercise', 'catalog_reference', `${at}: exercise "${String(row.ex)}" is not in the catalog.`)
+        add(
+          'unknown_exercise',
+          'catalog_reference',
+          `${at}: exercise "${String(row.ex)}" is not in the catalog.`,
+        )
         continue
       }
       if (!briefResult.allowedExerciseIds.has(exerciseId)) {
-        add('exercise_not_allowed', 'equipment', `${at}: exercise "${slugOf(exerciseId)}" is not in the brief's exercises list.`)
+        add(
+          'exercise_not_allowed',
+          'equipment',
+          `${at}: exercise "${slugOf(exerciseId)}" is not in the brief's exercises list.`,
+        )
         continue
       }
       // Small numeric slips are clamped in code instead of costing a repair call. Clamping sets
       // happens before the volume cap below, so it can never push a workout past the safe total.
       let sets = Number(row.sets)
       const [minSets, maxSets] = light ? [1, 3] : [2, 5]
-      if (Number.isFinite(sets) && sets > 0 && (!Number.isInteger(sets) || sets < minSets || sets > maxSets)) {
+      if (
+        Number.isFinite(sets) && sets > 0 &&
+        (!Number.isInteger(sets) || sets < minSets || sets > maxSets)
+      ) {
         sets = Math.min(maxSets, Math.max(minSets, Math.round(sets)))
         autoFixes.push(`${at}: sets clamped`)
       }
@@ -327,7 +423,9 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
       let reps = parseReps(repsText)
       if (!reps) {
         // "12 each side", "10-12 per leg", "۱۰ تکرار": keep the leading count or range.
-        const lead = /^\s*([0-9۰-۹٠-٩]{1,3}(?:\s*[-–—]\s*[0-9۰-۹٠-٩]{1,3})?)(?:\s+\S.*)?$/.exec(repsText)
+        const lead = /^\s*([0-9۰-۹٠-٩]{1,3}(?:\s*[-–—]\s*[0-9۰-۹٠-٩]{1,3})?)(?:\s+\S.*)?$/.exec(
+          repsText,
+        )
         const salvaged = lead ? parseReps(lead[1]!) : null
         if (salvaged) {
           reps = salvaged
@@ -335,16 +433,24 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
           autoFixes.push(`${at}: reps trimmed to a count`)
         }
       }
-      if (reps && reps.seconds === null && Number(reps.count.split('-').pop()) <= 3 && HOLD_EXERCISE.test(exerciseId)) {
+      if (
+        reps && reps.seconds === null && Number(reps.count.split('-').pop()) <= 3 &&
+        HOLD_EXERCISE.test(exerciseId)
+      ) {
         // A plank or other hold written as "1" rep: give it a time instead.
         reps = { count: '1', seconds: 30 }
         repsText = '30s'
         autoFixes.push(`${at}: hold given a time`)
       }
-      if (!reps) add('exercise_reps', 'schema', `${at}: reps must be like "10", "8-12", "30s" or "20min".`)
+      if (!reps) {
+        add('exercise_reps', 'schema', `${at}: reps must be like "10", "8-12", "30s" or "20min".`)
+      }
       let rest = Number(row.rest)
       const [minRest, maxRest] = light ? [0, 60] : [45, 180]
-      if (Number.isFinite(rest) && rest >= 0 && (!Number.isInteger(rest) || rest < minRest || rest > maxRest)) {
+      if (
+        Number.isFinite(rest) && rest >= 0 &&
+        (!Number.isInteger(rest) || rest < minRest || rest > maxRest)
+      ) {
         rest = Math.min(maxRest, Math.max(minRest, Math.round(rest)))
         autoFixes.push(`${at}: rest clamped`)
       }
@@ -355,7 +461,11 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
       if (row.sub !== null && row.sub !== undefined) {
         const resolved = resolveExerciseId(catalog, row.sub)
         if (!resolved || !briefResult.allowedExerciseIds.has(resolved)) {
-          add('substitute_not_allowed', 'equipment', `${at}: sub "${String(row.sub)}" is not in the brief's exercises list.`)
+          add(
+            'substitute_not_allowed',
+            'equipment',
+            `${at}: sub "${String(row.sub)}" is not in the brief's exercises list.`,
+          )
         } else if (catalog.exercises.get(exerciseId)?.substitutionIds.has(resolved)) {
           substituteId = resolved
         } else {
@@ -366,10 +476,16 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
       items.push({ exerciseId, sets, reps: repsText, rest, substituteId })
     }
     if (!light && totalSets > SET_CAPS[level]) {
-      add('workout_volume', 'safety', `${where}: ${totalSets} total sets; at most ${SET_CAPS[level]} for a ${level}.`)
+      add(
+        'workout_volume',
+        'safety',
+        `${where}: ${totalSets} total sets; at most ${SET_CAPS[level]} for a ${level}.`,
+      )
     }
     const note = textOf(item.note, 120)
-    if (note === undefined) add('note_invalid', 'schema', `${where}: note must be null or 1-120 characters.`)
+    if (note === undefined) {
+      add('note_invalid', 'schema', `${where}: note must be null or 1-120 characters.`)
+    }
     workouts.set(item.id, {
       id: item.id,
       title: title ?? '',
@@ -389,49 +505,91 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
   const lightDays = new Set(brief.training.light_days)
   for (const [index, item] of rawDays.entries()) {
     const where = `days[${index}]`
-    if (!isRecord(item) || !Number.isInteger(item.d) || Number(item.d) < 0 || Number(item.d) >= MONTHLY_PLAN_DAYS) {
-      add('day_invalid', 'day_coverage', `${where}: d must be an integer 0-${MONTHLY_PLAN_DAYS - 1}.`)
+    if (
+      !isRecord(item) || !Number.isInteger(item.d) || Number(item.d) < 0 ||
+      Number(item.d) >= MONTHLY_PLAN_DAYS
+    ) {
+      add(
+        'day_invalid',
+        'day_coverage',
+        `${where}: d must be an integer 0-${MONTHLY_PLAN_DAYS - 1}.`,
+      )
       continue
     }
     const d = Number(item.d)
     if (seen.has(d)) add('day_duplicate', 'day_coverage', `${where}: day ${d} appears twice.`)
     seen.add(d)
-    const mealIds = Array.isArray(item.meals) ? item.meals.filter((id): id is string => typeof id === 'string') : []
+    const mealIds = Array.isArray(item.meals)
+      ? item.meals.filter((id): id is string => typeof id === 'string')
+      : []
     const slots = mealIds.map((id) => meals.get(id)?.slot)
-    if (mealIds.some((id) => !meals.has(id) && rawMeals.every((meal) => !isRecord(meal) || meal.id !== id))) {
+    if (
+      mealIds.some((id) =>
+        !meals.has(id) && rawMeals.every((meal) => !isRecord(meal) || meal.id !== id)
+      )
+    ) {
       add('day_unknown_meal', 'schema', `day ${d}: meals must reference meal ids defined in meals.`)
     } else if (slots.join(',') !== brief.meals.slots.join(',') && slots.every(Boolean)) {
-      add('day_slots', 'schema', `day ${d}: meals must be one per slot in order: ${brief.meals.slots.join(', ')}.`)
+      add(
+        'day_slots',
+        'schema',
+        `day ${d}: meals must be one per slot in order: ${brief.meals.slots.join(', ')}.`,
+      )
     }
     let workoutId = typeof item.workout === 'string' ? item.workout : null
     // Extra training is never forced on a rest or light day: drop it in code (the safe direction).
-    if (workoutId && !trainDays.has(d) && workouts.has(workoutId) &&
-      !(lightDays.has(d) && LIGHT_TYPES.has(workouts.get(workoutId)!.type))) {
+    if (
+      workoutId && !trainDays.has(d) && workouts.has(workoutId) &&
+      !(lightDays.has(d) && LIGHT_TYPES.has(workouts.get(workoutId)!.type))
+    ) {
       workoutId = null
       autoFixes.push(`day ${d}: workout on a rest day removed`)
     }
     const workout = workoutId ? workouts.get(workoutId) : undefined
-    if (workoutId && !workout && !(Array.isArray(raw.workouts) && raw.workouts.some((w) => isRecord(w) && w.id === workoutId))) {
+    if (
+      workoutId && !workout &&
+      !(Array.isArray(raw.workouts) && raw.workouts.some((w) => isRecord(w) && w.id === workoutId))
+    ) {
       add('day_unknown_workout', 'schema', `day ${d}: workout "${workoutId}" is not defined.`)
     }
     // Someone whose chosen activity is walking or mobility trains with exactly that.
     const lightFocus = brief.training.focus === 'walk' || brief.training.focus === 'mobility'
-    if (trainDays.has(d) && (!workoutId || (workout && LIGHT_TYPES.has(workout.type) && !lightFocus))) {
-      add('training_day_missing', 'schema', lightFocus
-        ? `day ${d} is a training day: it needs a workout.`
-        : `day ${d} is a training day: it needs a non-walk, non-mobility workout.`)
+    if (
+      trainDays.has(d) && (!workoutId || (workout && LIGHT_TYPES.has(workout.type) && !lightFocus))
+    ) {
+      add(
+        'training_day_missing',
+        'schema',
+        lightFocus
+          ? `day ${d} is a training day: it needs a workout.`
+          : `day ${d} is a training day: it needs a non-walk, non-mobility workout.`,
+      )
     } else if (lightDays.has(d) && workout && !LIGHT_TYPES.has(workout.type)) {
-      add('light_day_too_hard', 'safety', `day ${d} is a light day: use a walk or mobility workout or null.`)
+      add(
+        'light_day_too_hard',
+        'safety',
+        `day ${d} is a light day: use a walk or mobility workout or null.`,
+      )
     } else if (!trainDays.has(d) && !lightDays.has(d) && workoutId) {
       add('rest_day_workout', 'safety', `day ${d} is a rest day: workout must be null.`)
     }
     const note = textOf(item.note, 120)
-    if (note === undefined) add('note_invalid', 'schema', `day ${d}: note must be null or 1-120 characters.`)
+    if (note === undefined) {
+      add('note_invalid', 'schema', `day ${d}: note must be null or 1-120 characters.`)
+    }
     days.push({ d, meals: mealIds, workout: workoutId, note: note ?? null })
   }
   if (rawDays.length !== MONTHLY_PLAN_DAYS || seen.size !== MONTHLY_PLAN_DAYS) {
-    const missing = Array.from({ length: MONTHLY_PLAN_DAYS }, (_, d) => d).filter((d) => !seen.has(d))
-    add('day_coverage', 'day_coverage', `days must cover 0-${MONTHLY_PLAN_DAYS - 1} exactly once${missing.length ? `; missing ${missing.join(', ')}` : ''}.`)
+    const missing = Array.from({ length: MONTHLY_PLAN_DAYS }, (_, d) => d).filter((d) =>
+      !seen.has(d)
+    )
+    add(
+      'day_coverage',
+      'day_coverage',
+      `days must cover 0-${MONTHLY_PLAN_DAYS - 1} exactly once${
+        missing.length ? `; missing ${missing.join(', ')}` : ''
+      }.`,
+    )
   }
   days.sort((a, b) => a.d - b.d)
 
@@ -440,25 +598,40 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     const today = days[d]?.workout ? workouts.get(days[d]!.workout!) : undefined
     const yesterday = days[d - 1]?.workout ? workouts.get(days[d - 1]!.workout!) : undefined
     if (today?.intensity === 'high' && yesterday?.intensity === 'high') {
-      add('back_to_back_high', 'safety', `days ${d - 1} and ${d}: no two high-intensity workouts in a row.`)
+      add(
+        'back_to_back_high',
+        'safety',
+        `days ${d - 1} and ${d}: no two high-intensity workouts in a row.`,
+      )
     }
   }
 
   // Variety per slot (only where the allowlist offers enough choice).
   const allowedPerSlot = (slot: MealSlot) =>
-    [...briefResult.allowedFoodIds].filter((id) => catalog.foods.get(id)?.meal_types.includes(slot)).length
+    [...briefResult.allowedFoodIds].filter((id) => catalog.foods.get(id)?.meal_types.includes(slot))
+      .length
   for (const slot of brief.meals.slots) {
-    const sequence = days.map((day) => day.meals.map((id) => meals.get(id)).find((meal) => meal?.slot === slot)?.foodId)
+    const sequence = days.map((day) =>
+      day.meals.map((id) => meals.get(id)).find((meal) => meal?.slot === slot)?.foodId
+    )
     const distinct = new Set(sequence.filter(Boolean)).size
     const wanted = Math.min(4, allowedPerSlot(slot))
     if (distinct < wanted) {
-      add('variety_low', 'other', `${slot}: use at least ${wanted} different foods across the month (now ${distinct}).`)
+      add(
+        'variety_low',
+        'other',
+        `${slot}: use at least ${wanted} different foods across the month (now ${distinct}).`,
+      )
     }
     let run = 1
     for (let i = 1; i < sequence.length; i += 1) {
       run = sequence[i] && sequence[i] === sequence[i - 1] ? run + 1 : 1
       if (run > 3 && allowedPerSlot(slot) > 1) {
-        add('variety_repeat', 'other', `${slot}: the same food appears more than 3 days in a row (around day ${i}).`)
+        add(
+          'variety_repeat',
+          'other',
+          `${slot}: the same food appears more than 3 days in a row (around day ${i}).`,
+        )
         break
       }
     }
@@ -469,14 +642,19 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
       const lunch = foods.find((meal) => meal?.slot === 'lunch')?.foodId
       const dinner = foods.find((meal) => meal?.slot === 'dinner')?.foodId
       if (lunch && lunch === dinner) {
-        add('lunch_equals_dinner', 'other', `day ${day.d}: lunch and dinner must be different foods.`)
+        add(
+          'lunch_equals_dinner',
+          'other',
+          `day ${day.d}: lunch and dinner must be different foods.`,
+        )
       }
     }
   }
 
   // Language and text safety.
   const texts = [
-    planName, summary,
+    planName,
+    summary,
     ...[...meals.values()].map((meal) => meal.note),
     ...[...workouts.values()].flatMap((workout) => [workout.title, workout.note]),
     ...days.map((day) => day.note),
@@ -486,7 +664,9 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     .map((tip) => textOf(tip, 140)).filter((tip): tip is string => Boolean(tip)).slice(0, 3)
   const generalTips = (Array.isArray(tips.general) ? tips.general : [])
     .map((tip) => textOf(tip, 140)).filter((tip): tip is string => Boolean(tip)).slice(0, 3)
-  if (restaurantTips.length === 0) add('tips_restaurant', 'schema', 'tips.restaurant needs 1-3 tips of up to 140 characters.')
+  if (restaurantTips.length === 0) {
+    add('tips_restaurant', 'schema', 'tips.restaurant needs 1-3 tips of up to 140 characters.')
+  }
 
   // Recipes: steps only. Ingredients and amounts always come from the catalog.
   const usedFoodIds = new Set([...meals.values()].flatMap((meal) => [meal.foodId, ...meal.altIds]))
@@ -511,7 +691,10 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     const prep = Number(item.prep_min)
     const cook = Number(item.cook_min)
     const steps = (Array.isArray(item.steps) ? item.steps : []).map((step) => textOf(step, 160))
-    if (!Number.isInteger(prep) || prep < 0 || prep > 120 || !Number.isInteger(cook) || cook < 0 || cook > 240) {
+    if (
+      !Number.isInteger(prep) || prep < 0 || prep > 120 || !Number.isInteger(cook) || cook < 0 ||
+      cook > 240
+    ) {
       add('recipe_minutes', 'schema', `${where}: prep_min must be 0-120 and cook_min 0-240.`)
     }
     if (steps.length < 1 || steps.length > 5 || steps.some((step) => !step)) {
@@ -521,29 +704,53 @@ export function validateLeanPlan(raw: unknown, ctx: ValidationContext): LeanVali
     const corpus = termText(steps.join(' '))
     const allergen = allergenTerms.find((term) => corpus.includes(` ${term} `))
     if (allergen) {
-      add('recipe_allergen', 'allergen', `${where}: the steps mention "${allergen}", which this user is allergic to. Use only the food's listed ingredients.`)
+      add(
+        'recipe_allergen',
+        'allergen',
+        `${where}: the steps mention "${allergen}", which this user is allergic to. Use only the food's listed ingredients.`,
+      )
     }
     if (vegetarian) {
       const meatFree = termText(steps.join(' ').replace(EGG_PHRASES, ' '))
       const meat = MEAT_TERMS.find((term) => meatFree.includes(termText(term)))
-      if (meat) add('recipe_not_vegetarian', 'allergen', `${where}: the user is ${brief.diet.pattern}; the steps mention "${meat}".`)
+      if (meat) {
+        add(
+          'recipe_not_vegetarian',
+          'allergen',
+          `${where}: the user is ${brief.diet.pattern}; the steps mention "${meat}".`,
+        )
+      }
     }
     recipes.set(foodId, { prep_minutes: prep, cook_minutes: cook, steps: steps as string[] })
   }
   const missingRecipes = [...usedFoodIds].filter((id) => !recipes.has(id)).length
   if (missingRecipes > 0) warnings.push(`${missingRecipes} foods have no recipe`)
   const recipeText = [...recipes.values()].flatMap((recipe) => recipe.steps)
-  const allText = [...texts, ...restaurantTips, ...generalTips, ...recipeText].filter((text): text is string => Boolean(text))
+  const allText = [...texts, ...restaurantTips, ...generalTips, ...recipeText].filter((
+    text,
+  ): text is string => Boolean(text))
   const persian = /[؀-ۿ]/
   const heading = `${planName ?? ''} ${summary ?? ''}`
   if (ctx.locale === 'fa-IR' ? !persian.test(heading) : persian.test(heading)) {
-    add('wrong_language', 'other', `plan_name and summary must be written in ${ctx.locale === 'fa-IR' ? 'Persian' : 'English'}.`)
+    add(
+      'wrong_language',
+      'other',
+      `plan_name and summary must be written in ${ctx.locale === 'fa-IR' ? 'Persian' : 'English'}.`,
+    )
   }
   if (allText.some((text) => NUTRITION_NUMBER.test(normalizeDigits(text)))) {
-    add('nutrition_number_in_text', 'safety', 'Text must not contain calorie or gram numbers; the server adds them.')
+    add(
+      'nutrition_number_in_text',
+      'safety',
+      'Text must not contain calorie or gram numbers; the server adds them.',
+    )
   }
   if (deterministicSafetyDecision(allText.join('\n'))) {
-    add('unsafe_text', 'safety', 'Text contains content that is not allowed (medical, self-harm or similar). Rewrite the notes.')
+    add(
+      'unsafe_text',
+      'safety',
+      'Text contains content that is not allowed (medical, self-harm or similar). Rewrite the notes.',
+    )
   }
 
   // Progression: soft check, recorded for review.
@@ -613,7 +820,8 @@ const COPY = {
     light: 'روز سبک: پیاده‌روی یا تحرک آرام',
     restaurant: 'غذا خوردن بیرون',
     stop: 'در صورت درد، سرگیجه یا علائم غیرعادی تمرین را متوقف کنید.',
-    injury: 'به‌خاطر آسیبی که گفتی، حرکاتی که به آن ناحیه فشار می‌آورند حذف شده‌اند. هر حرکتی که درد دارد را کنار بگذار.',
+    injury:
+      'به‌خاطر آسیبی که گفتی، حرکاتی که به آن ناحیه فشار می‌آورند حذف شده‌اند. هر حرکتی که درد دارد را کنار بگذار.',
     seconds: (value: number) => value >= 60 ? `${Math.round(value / 60)} دقیقه` : `${value} ثانیه`,
   },
   'en-US': {
@@ -623,7 +831,8 @@ const COPY = {
     light: 'Light day: a walk or gentle mobility',
     restaurant: 'Eating out',
     stop: 'Stop exercising if pain, dizziness, or unusual symptoms occur.',
-    injury: 'Because of the injury you reported, movements that load that area are left out. Skip any movement that hurts.',
+    injury:
+      'Because of the injury you reported, movements that load that area are left out. Skip any movement that hurts.',
     seconds: (value: number) => value >= 60 ? `${Math.round(value / 60)} min` : `${value} s`,
   },
 } as const
@@ -711,7 +920,9 @@ export function scaleDayPortions(
     }
     multipliers = multipliers.map((value) => Math.round(value * 100) / 100)
     best = { multipliers, totals: evaluate(multipliers) }
-    if (Math.abs(best.totals.calories - targets.calories) <= targets.calories * CALORIE_TOLERANCE) break
+    if (Math.abs(best.totals.calories - targets.calories) <= targets.calories * CALORIE_TOLERANCE) {
+      break
+    }
   }
   return best!
 }
@@ -745,7 +956,10 @@ export function buildPlanFromLean(
   }
   const emergencyFoodIds = [...ctx.brief.allowedFoodIds]
     .map((id) => catalog.foods.get(id)!)
-    .sort((a, b) => Number(b.portable) - Number(a.portable) || b.nutrition.protein_g - a.nutrition.protein_g || (a.id < b.id ? -1 : 1))
+    .sort((a, b) =>
+      Number(b.portable) - Number(a.portable) || b.nutrition.protein_g - a.nutrition.protein_g ||
+      (a.id < b.id ? -1 : 1)
+    )
     .slice(0, 3)
     .map((food) => food.id)
 
@@ -790,8 +1004,16 @@ export function buildPlanFromLean(
       title: `${copy.day} ${day.d + 1}`,
       meal_def_ids: day.meals,
       workout_def_id: day.workout,
-      target_mode: trainDays.has(day.d) ? 'training_day' : lightDays.has(day.d) ? 'recovery_day' : 'rest_day',
-      target_rationale: trainDays.has(day.d) ? copy.training : lightDays.has(day.d) ? copy.light : copy.rest,
+      target_mode: trainDays.has(day.d)
+        ? 'training_day'
+        : lightDays.has(day.d)
+        ? 'recovery_day'
+        : 'rest_day',
+      target_rationale: trainDays.has(day.d)
+        ? copy.training
+        : lightDays.has(day.d)
+        ? copy.light
+        : copy.rest,
       serving_overrides: [],
       progression_note: null,
       notes: day.note ? [day.note] : [],
@@ -804,7 +1026,9 @@ export function buildPlanFromLean(
     }],
     health_safety_notes: [
       { category: 'training', level: 'caution', note: copy.stop },
-      ...(brief.training.injury ? [{ category: 'training', level: 'caution', note: copy.injury }] : []),
+      ...(brief.training.injury
+        ? [{ category: 'training', level: 'caution', note: copy.injury }]
+        : []),
       ...lean.generalTips.map((note) => ({ category: 'general', level: 'info', note })),
     ],
   }
@@ -814,7 +1038,10 @@ export function buildPlanFromLean(
     plan = stripExpansionMetadata(expandCompactPlan(compact, catalog, locale))
   } catch (error) {
     const code = error instanceof HttpError ? error.code : 'expansion_failed'
-    return { ok: false, issues: [{ code, category: 'schema', detail: `The plan could not be expanded (${code}).` }] }
+    return {
+      ok: false,
+      issues: [{ code, category: 'schema', detail: `The plan could not be expanded (${code}).` }],
+    }
   }
 
   // Portions: scale each day's default meals to the computed targets, alternatives to match.
@@ -844,13 +1071,16 @@ export function buildPlanFromLean(
       issues.push({
         code: 'calories_unreachable',
         category: 'nutrition_arithmetic',
-        detail: `day ${dayIndex}: the chosen foods cannot reach ${targets.calories} kcal within 5% at sensible portions; pick more or less energy-dense foods for this day.`,
+        detail:
+          `day ${dayIndex}: the chosen foods cannot reach ${targets.calories} kcal within 5% at sensible portions; pick more or less energy-dense foods for this day.`,
       })
     } else if (totals.protein_g < targets.protein_g * PROTEIN_HARD_FLOOR) {
       issues.push({
         code: 'protein_too_low',
         category: 'nutrition_arithmetic',
-        detail: `day ${dayIndex}: protein reaches only ${Math.round(totals.protein_g)} of ${targets.protein_g} g; choose more protein-dense foods.`,
+        detail: `day ${dayIndex}: protein reaches only ${
+          Math.round(totals.protein_g)
+        } of ${targets.protein_g} g; choose more protein-dense foods.`,
       })
     }
     dayMeals.forEach((meal, index) => {
@@ -858,12 +1088,16 @@ export function buildPlanFromLean(
       const primaryCalories = defaults[index]!.nutrition.calories * multiplier
       const options = meal.options as Record<string, unknown>[]
       // expandCompactPlan keys the primary option "<meal def id>-primary".
-      const mealNote = lean.meals.get(String(options[0]!.option_key).replace(/-primary$/, ''))?.note ?? null
+      const mealNote =
+        lean.meals.get(String(options[0]!.option_key).replace(/-primary$/, ''))?.note ?? null
       meal.options = options.map((option, optionIndex) => {
         const food = catalog.foods.get(String(option.food_id))!
         const optionMultiplier = optionIndex === 0 ? multiplier : Math.min(
           MAX_MULTIPLIER,
-          Math.max(MIN_MULTIPLIER, Math.round((primaryCalories / Math.max(1, food.nutrition.calories)) * 4) / 4),
+          Math.max(
+            MIN_MULTIPLIER,
+            Math.round((primaryCalories / Math.max(1, food.nutrition.calories)) * 4) / 4,
+          ),
         )
         return {
           ...assembleMealOption({
@@ -881,7 +1115,9 @@ export function buildPlanFromLean(
     })
   }
   if (issues.length) return { ok: false, issues: issues.slice(0, 10) }
-  if (minProtein < PROTEIN_SOFT_FLOOR) warnings.push(`protein reaches ${Math.round(minProtein * 100)}% of target on some days`)
+  if (minProtein < PROTEIN_SOFT_FLOOR) {
+    warnings.push(`protein reaches ${Math.round(minProtein * 100)}% of target on some days`)
+  }
 
   plan.default_targets = dayTargets(targets, false)
   for (const option of plan.emergency_options as Record<string, unknown>[]) {
@@ -902,15 +1138,21 @@ export function buildPlanFromLean(
     const code = error instanceof HttpError ? error.code : 'contract_failed'
     return {
       ok: false,
-      issues: [{ code, category: code.includes('allergen') ? 'allergen' : 'schema', detail: `The expanded plan failed the final contract check (${code}).` }],
+      issues: [{
+        code,
+        category: code.includes('allergen') ? 'allergen' : 'schema',
+        detail: `The expanded plan failed the final contract check (${code}).`,
+      }],
     }
   }
 
   const distinct: Record<string, number> = {}
   for (const slot of brief.meals.slots) {
-    distinct[slot] = new Set(lean.days.map((day) =>
-      day.meals.map((id) => lean.meals.get(id)).find((meal) => meal?.slot === slot)?.foodId
-    ).filter(Boolean)).size
+    distinct[slot] = new Set(
+      lean.days.map((day) =>
+        day.meals.map((id) => lean.meals.get(id)).find((meal) => meal?.slot === slot)?.foodId
+      ).filter(Boolean),
+    ).size
   }
   return {
     ok: true,

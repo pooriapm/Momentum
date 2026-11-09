@@ -26,9 +26,13 @@ export function assessPlanComplexity(
   const reasons: string[] = []
   if (brief.training.injury) reasons.push('injury')
   if (declaredAllergenIds.size > 0) reasons.push('allergens')
-  if (brief.diet.pattern === 'vegetarian' || brief.diet.pattern === 'vegan') reasons.push('plant_based')
+  if (brief.diet.pattern === 'vegetarian' || brief.diet.pattern === 'vegan') {
+    reasons.push('plant_based')
+  }
   if (brief.meals.slots.length >= 5) reasons.push('many_meals')
-  if (brief.training.level === 'advanced' || brief.training.days_per_week >= 5) reasons.push('heavy_training')
+  if (brief.training.level === 'advanced' || brief.training.days_per_week >= 5) {
+    reasons.push('heavy_training')
+  }
   if (brief.history && typeof brief.history.note === 'string' && brief.history.note.trim()) {
     reasons.push('user_wish')
   }

@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  deterministicSafetyDecision,
-  isOutputSafetyDenial,
-  safetyHttpError,
-} from './ai-safety.ts'
+import { deterministicSafetyDecision, isOutputSafetyDenial, safetyHttpError } from './ai-safety.ts'
 
 describe('product AI safety rules', () => {
   it.each([
@@ -33,7 +29,9 @@ describe('product AI safety rules', () => {
   })
 
   it('decides locally, with no provider moderation call', () => {
-    expect(deterministicSafetyDecision('قصد خودکشی دارم')).toMatchObject({ source: 'deterministic' })
+    expect(deterministicSafetyDecision('قصد خودکشی دارم')).toMatchObject({
+      source: 'deterministic',
+    })
     expect(deterministicSafetyDecision('Three meals and a walk today')).toBeNull()
   })
 

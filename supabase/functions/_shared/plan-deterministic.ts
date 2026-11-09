@@ -36,12 +36,13 @@ const TEXT = {
     name: 'Your Momentum monthly plan',
     summary: {
       fat_loss: 'A 30-day plan for fat loss with filling meals and regular training.',
-      muscle_gain: 'A 30-day plan for building muscle with enough protein and progressive training.',
+      muscle_gain:
+        'A 30-day plan for building muscle with enough protein and progressive training.',
       maintenance: 'A 30-day plan to hold your weight and keep energy steady.',
     },
     workout: 'Workout',
     walk: 'Easy walk',
-    weekNote: 'Plan this week\'s meals ahead to make it easier.',
+    weekNote: "Plan this week's meals ahead to make it easier.",
     restaurant: [
       'Order grilled or steamed dishes with salad and ask for sauce on the side.',
       'Keep bread or rice to half and add vegetables.',
@@ -54,9 +55,7 @@ function foodsForSlot(brief: PlanBrief, slot: MealSlot): FoodRow[] {
   const code = MEAL_CODES[slot]
   return brief.foods
     .filter((row) => row[1].split(' ').includes(code))
-    .sort((a, b) =>
-      b[3] / Math.max(1, b[2]) - a[3] / Math.max(1, a[2]) || (a[0] < b[0] ? -1 : 1)
-    )
+    .sort((a, b) => b[3] / Math.max(1, b[2]) - a[3] / Math.max(1, a[2]) || (a[0] < b[0] ? -1 : 1))
 }
 
 function pickExercises(
@@ -90,7 +89,10 @@ export function composeDeterministicLeanPlan(brief: PlanBrief): Record<string, u
     const foods = foodsForSlot(brief, slot)
     const defs = foods.slice(0, 6).map((row, index) => {
       const id = `${MEAL_CODES[slot]}${index + 1}`
-      const alts = foods.filter((other) => other[0] !== row[0]).slice(index, index + optionCount - 1)
+      const alts = foods.filter((other) => other[0] !== row[0]).slice(
+        index,
+        index + optionCount - 1,
+      )
       meals.push({ id, slot, food: row[0], alts: alts.map((alt) => alt[0]), note: null })
       return { id, food: row[0] }
     })
@@ -103,8 +105,12 @@ export function composeDeterministicLeanPlan(brief: PlanBrief): Record<string, u
   const reps = level === 'beginner' ? ['8-10', '10-12', '12-15'] : ['8-10', '8-10', '10-12']
   const cardio = brief.training.focus === 'cardio'
   const sessionTypes = [
-    cardio ? ['locomotion', 'core', 'locomotion', 'squat'] : ['squat', 'push', 'hinge', 'pull', 'core'],
-    cardio ? ['locomotion', 'hinge', 'locomotion', 'core'] : ['hinge', 'pull', 'squat', 'push', 'core'],
+    cardio
+      ? ['locomotion', 'core', 'locomotion', 'squat']
+      : ['squat', 'push', 'hinge', 'pull', 'core'],
+    cardio
+      ? ['locomotion', 'hinge', 'locomotion', 'core']
+      : ['hinge', 'pull', 'squat', 'push', 'core'],
   ]
   const blocks: Array<[number, number]> = [[0, 13], [14, 20], [21, 29]]
   const workouts: Record<string, unknown>[] = []

@@ -55,7 +55,9 @@ export async function assertDailyBudget(
   const spent = await spentTomanSince(new Date(now.getTime() - BUDGET_WINDOW_MS).toISOString())
   const state = budgetState(spent, budget)
   if (state === 'ok') return
-  console.warn(JSON.stringify({ event: 'ai_budget', state, spent_toman: spent, budget_toman: budget }))
+  console.warn(
+    JSON.stringify({ event: 'ai_budget', state, spent_toman: spent, budget_toman: budget }),
+  )
   if (state === 'paused') {
     throw new HttpError(
       503,

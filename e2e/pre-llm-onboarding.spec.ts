@@ -235,7 +235,7 @@ test('sign-up reaches the durable verification page without touching a live back
   await page.getByRole('link', { name: 'Build my plan' }).first().click()
   await page.getByLabel('Email', { exact: true }).fill('new.audit@example.test')
   await page.getByLabel('Password', { exact: true }).fill('Audit-only-pass1!')
-  for (const checkbox of await page.locator('.auth-legal input').all()) await checkbox.check({ force: true })
+  for (const checkbox of await page.locator('.auth-legal-stack input').all()) await checkbox.check({ force: true })
   await page.getByRole('button', { name: /create secure account/i }).click()
   await expect(page).toHaveURL(/\/en\/auth\/verify/)
   await expect(page.getByRole('heading', { name: 'Verify your email' })).toBeVisible()

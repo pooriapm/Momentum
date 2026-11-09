@@ -69,30 +69,42 @@ function priceEnv(name: string): number | null {
  */
 export function compatibleLlmOptionsFromEnv(): CompatibleLlmOptions
 export function compatibleLlmOptionsFromEnv(tier: 'complex'): CompatibleLlmOptions | null
-export function compatibleLlmOptionsFromEnv(tier: 'simple' | 'complex' = 'simple'): CompatibleLlmOptions | null {
+export function compatibleLlmOptionsFromEnv(
+  tier: 'simple' | 'complex' = 'simple',
+): CompatibleLlmOptions | null {
   const complexModel = optionalEnv('LLM_PLAN_MODEL_COMPLEX')
-  if (tier === 'complex' && (!complexModel || complexModel === optionalEnv('LLM_PLAN_MODEL'))) return null
-  const pricePrefix = tier === 'complex' ? 'LLM_COMPLEX_PRICE_TOMAN_PER_1M' : 'LLM_PRICE_TOMAN_PER_1M'
+  if (tier === 'complex' && (!complexModel || complexModel === optionalEnv('LLM_PLAN_MODEL'))) {
+    return null
+  }
+  const pricePrefix = tier === 'complex'
+    ? 'LLM_COMPLEX_PRICE_TOMAN_PER_1M'
+    : 'LLM_PRICE_TOMAN_PER_1M'
   if (optionalEnv('AI_PLAN_LIVE_LLM')?.toLowerCase() !== 'true') {
     throw new HttpError(503, 'LIVE_LLM_DISABLED', 'Live plan generation is switched off.')
   }
   const baseUrl = requiredEnv('LLM_API_BASE_URL').replace(/\/+$/, '')
-  if (!/^https:\/\/[^\s/]+/.test(baseUrl) && !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(baseUrl)) {
+  if (
+    !/^https:\/\/[^\s/]+/.test(baseUrl) &&
+    !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(baseUrl)
+  ) {
     throw new Error('invalid_env:LLM_API_BASE_URL')
   }
   const input = priceEnv(`${pricePrefix}_INPUT`)
   const output = priceEnv(`${pricePrefix}_OUTPUT`)
   const cachedInput = priceEnv(`${pricePrefix}_CACHED_INPUT`)
   // A Toman cap can only be enforced when calls are priced in Toman.
-  if ((optionalEnv('AI_DAILY_BUDGET_TOMAN') || optionalEnv('AI_PLAN_MAX_COST_TOMAN')) &&
-    (input === null || output === null)) {
+  if (
+    (optionalEnv('AI_DAILY_BUDGET_TOMAN') || optionalEnv('AI_PLAN_MAX_COST_TOMAN')) &&
+    (input === null || output === null)
+  ) {
     throw new Error(`invalid_env:${pricePrefix}_INPUT`)
   }
   return {
     baseUrl,
     apiKey: requiredEnv('LLM_API_KEY'),
     model: tier === 'complex' ? complexModel! : requiredEnv('LLM_PLAN_MODEL'),
-    jsonMode: enumEnv('LLM_JSON_MODE', ['json_schema', 'json_object', 'none'] as const) ?? 'json_schema',
+    jsonMode: enumEnv('LLM_JSON_MODE', ['json_schema', 'json_object', 'none'] as const) ??
+      'json_schema',
     reasoningEffort: enumEnv(
       tier === 'complex' ? 'LLM_COMPLEX_REASONING_EFFORT' : 'LLM_REASONING_EFFORT',
       ['minimal', 'low', 'medium', 'high'] as const,
@@ -108,11 +120,15 @@ export function compatibleLlmOptionsFromEnv(tier: 'simple' | 'complex' = 'simple
 }
 
 function count(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.floor(value) : undefined
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : undefined
 }
 
 function record(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {}
 }
 
 /** Chat Completions usage (also accepts the Responses-style field names some gateways return). */
@@ -142,7 +158,10 @@ export function costInToman(
 
 function responseFormat(mode: JsonMode, request: PlanLlmRequest): Record<string, unknown> | null {
   if (mode === 'json_schema') {
-    return { type: 'json_schema', json_schema: { name: request.schemaName, schema: request.schema, strict: true } }
+    return {
+      type: 'json_schema',
+      json_schema: { name: request.schemaName, schema: request.schema, strict: true },
+    }
   }
   if (mode === 'json_object') return { type: 'json_object' }
   return null
@@ -173,7 +192,7 @@ export function createCompatiblePlanLlm(options: CompatibleLlmOptions): PlanLlmC
     async complete(request): Promise<PlanLlmResponse> {
       const deadline = Math.min(now() + options.totalBudgetMs, request.deadlineAt ?? Infinity)
       let downgraded = false
-      for (let attempt = 0; ; attempt += 1) {
+      for (let attempt = 0;; attempt += 1) {
         const remaining = deadline - now()
         if (remaining < 2_000) throw outage('LLM_TIMEOUT')
         const format = responseFormat(jsonMode, request)
@@ -214,10 +233,18 @@ export function createCompatiblePlanLlm(options: CompatibleLlmOptions): PlanLlmC
         if (!response.ok) {
           await response.body?.cancel().catch(() => undefined)
           if (response.status === 401 || response.status === 403) {
-            throw new HttpError(503, 'LLM_AUTH_FAILED', 'The plan provider rejected the credentials.')
+            throw new HttpError(
+              503,
+              'LLM_AUTH_FAILED',
+              'The plan provider rejected the credentials.',
+            )
           }
           if (response.status === 404) {
-            throw new HttpError(503, 'LLM_MODEL_NOT_FOUND', 'The configured plan model was not found.')
+            throw new HttpError(
+              503,
+              'LLM_MODEL_NOT_FOUND',
+              'The configured plan model was not found.',
+            )
           }
           // Some providers don't support json_schema: fall back to plain JSON mode once.
           if (response.status === 400 && jsonMode === 'json_schema' && !downgraded) {
@@ -237,7 +264,11 @@ export function createCompatiblePlanLlm(options: CompatibleLlmOptions): PlanLlmC
             }
           }
           if (RETRYABLE.has(response.status)) throw outage('LLM_UNAVAILABLE')
-          throw new HttpError(422, 'LLM_REQUEST_REJECTED', 'The plan provider rejected this request.')
+          throw new HttpError(
+            422,
+            'LLM_REQUEST_REJECTED',
+            'The plan provider rejected this request.',
+          )
         }
 
         let payload: Record<string, unknown>
@@ -248,7 +279,9 @@ export function createCompatiblePlanLlm(options: CompatibleLlmOptions): PlanLlmC
         }
         const usage = chatUsage(payload)
         const metadata = {
-          providerResponseId: typeof payload.id === 'string' ? payload.id : `compatible:${crypto.randomUUID()}`,
+          providerResponseId: typeof payload.id === 'string'
+            ? payload.id
+            : `compatible:${crypto.randomUUID()}`,
           model: typeof payload.model === 'string' ? payload.model.slice(0, 120) : options.model,
           usage,
           serviceTier: 'standard' as const,
@@ -260,13 +293,21 @@ export function createCompatiblePlanLlm(options: CompatibleLlmOptions): PlanLlmC
         // Billable but unusable: keep the cost on the error so the ledger still records it.
         if (choice.finish_reason === 'length') {
           throw Object.assign(
-            new ProviderResponseError('LLM_INCOMPLETE_OUTPUT', 'The plan provider cut its answer off.', metadata),
+            new ProviderResponseError(
+              'LLM_INCOMPLETE_OUTPUT',
+              'The plan provider cut its answer off.',
+              metadata,
+            ),
             { costToman },
           )
         }
         if (!text) {
           throw Object.assign(
-            new ProviderResponseError('LLM_EMPTY_OUTPUT', 'The plan provider returned no answer.', metadata),
+            new ProviderResponseError(
+              'LLM_EMPTY_OUTPUT',
+              'The plan provider returned no answer.',
+              metadata,
+            ),
             { costToman },
           )
         }

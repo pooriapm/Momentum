@@ -14,7 +14,14 @@ export const PLAN_PROMPT_VERSION = 'momentum-plan-prompt/1.3.0'
 export const LEAN_SCHEMA_VERSION = 'momentum-plan-lean/1.1.0'
 export const LEAN_SCHEMA_NAME = 'momentum_plan_lean'
 
-export const WORKOUT_TYPES = ['strength', 'full_body', 'crossfit', 'cardio', 'walk', 'mobility'] as const
+export const WORKOUT_TYPES = [
+  'strength',
+  'full_body',
+  'crossfit',
+  'cardio',
+  'walk',
+  'mobility',
+] as const
 export const INTENSITIES = ['low', 'moderate', 'high'] as const
 const SLOTS = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'pre_sleep']
 const REF = '^[a-z0-9][a-z0-9-]{0,11}$'
@@ -88,7 +95,12 @@ export const leanPlanJsonSchema: Record<string, unknown> = {
         type: 'object',
         properties: {
           d: { type: 'integer', minimum: 0, maximum: MONTHLY_PLAN_DAYS - 1 },
-          meals: { type: 'array', minItems: 1, maxItems: 6, items: { type: 'string', pattern: REF } },
+          meals: {
+            type: 'array',
+            minItems: 1,
+            maxItems: 6,
+            items: { type: 'string', pattern: REF },
+          },
           workout: { type: ['string', 'null'], pattern: REF },
           note: note(120),
         },
@@ -135,11 +147,21 @@ export const leanPlanJsonSchema: Record<string, unknown> = {
       additionalProperties: false,
     },
   },
-  required: ['schema_version', 'plan_name', 'summary', 'meals', 'workouts', 'days', 'recipes', 'tips'],
+  required: [
+    'schema_version',
+    'plan_name',
+    'summary',
+    'meals',
+    'workouts',
+    'days',
+    'recipes',
+    'tips',
+  ],
   additionalProperties: false,
 }
 
-const RULES = `You are Momentum's plan composer. You arrange a ${MONTHLY_PLAN_DAYS}-day nutrition and training plan for a general-wellness app from allowlists in a JSON brief. You never calculate nutrition: the server has computed the calorie, macro and water targets and scales every portion after you answer. Never output portions, grams, calories or other nutrition numbers.
+const RULES =
+  `You are Momentum's plan composer. You arrange a ${MONTHLY_PLAN_DAYS}-day nutrition and training plan for a general-wellness app from allowlists in a JSON brief. You never calculate nutrition: the server has computed the calorie, macro and water targets and scales every portion after you answer. Never output portions, grams, calories or other nutrition numbers.
 
 BRIEF
 - targets: daily goals, already final.

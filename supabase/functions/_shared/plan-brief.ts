@@ -1,9 +1,6 @@
 import { optionalEnv } from './config.ts'
 import { sha256 } from './crypto.ts'
-import {
-  availableEquipmentSlugs,
-  exerciseFitsEquipment,
-} from './exercise-selection.ts'
+import { availableEquipmentSlugs, exerciseFitsEquipment } from './exercise-selection.ts'
 import {
   EXERCISE_PROFILE_VERSION,
   exerciseAllowedFor,
@@ -197,15 +194,17 @@ export function assertBriefPiiFree(
   }
 }
 
-const MEAT_OR_FISH = /chicken|turkey|beef|lamb|veal|meat|kebab|kabab|sausage|ham|bacon|tuna|salmon|fish|shrimp|prawn|seafood/
-const ANIMAL_PRODUCT = /egg|milk|yogh?urt|cheese|feta|cottage|^butter$|^ghee$|cream|whey|honey|kashk/
+const MEAT_OR_FISH =
+  /chicken|turkey|beef|lamb|veal|meat|kebab|kabab|sausage|ham|bacon|tuna|salmon|fish|shrimp|prawn|seafood/
+const ANIMAL_PRODUCT =
+  /egg|milk|yogh?urt|cheese|feta|cottage|^butter$|^ghee$|cream|whey|honey|kashk/
 const PLANT_MILK = /(almond|soy|oat|coconut|rice)-milk/
 
 function isAnimalProduct(slug: string): boolean {
   return ANIMAL_PRODUCT.test(slug) && !PLANT_MILK.test(slug)
 }
 
-function foodIngredientSlugs(catalog: PlanCatalogSnapshot, food: CatalogFood): string[] {
+function foodIngredientSlugs(_catalog: PlanCatalogSnapshot, food: CatalogFood): string[] {
   return [...food.ingredientIds].map((id) => slugOf(id))
 }
 
@@ -228,7 +227,9 @@ function foodHasAllergen(
 ): boolean {
   return [...food.ingredientIds].some((ingredientId) => {
     const ingredient = catalog.ingredients.get(ingredientId)
-    return ingredient ? [...ingredient.allergenIds].some((id) => declaredAllergenIds.has(id)) : false
+    return ingredient
+      ? [...ingredient.allergenIds].some((id) => declaredAllergenIds.has(id))
+      : false
   })
 }
 
@@ -258,11 +259,16 @@ export function capProteinToFoods(
   slots: readonly MealSlot[],
 ): PlanTargets {
   const densities = slots.map((slot) =>
-    Math.max(0, ...foods.filter((food) => food.meal_types.includes(slot) && food.nutrition.calories > 0)
-      .map((food) => food.nutrition.protein_g / food.nutrition.calories))
+    Math.max(
+      0,
+      ...foods.filter((food) => food.meal_types.includes(slot) && food.nutrition.calories > 0)
+        .map((food) => food.nutrition.protein_g / food.nutrition.calories),
+    )
   )
   if (densities.length === 0) return targets
-  const reachable = Math.round(0.9 * targets.calories * densities.reduce((a, b) => a + b, 0) / densities.length)
+  const reachable = Math.round(
+    0.9 * targets.calories * densities.reduce((a, b) => a + b, 0) / densities.length,
+  )
   if (reachable >= targets.protein_g) return targets
   return {
     ...targets,
@@ -357,7 +363,11 @@ function selectExercises(input: {
   const available = availableEquipmentSlugs(catalog, snapshot)
   const eligible = [...catalog.exercises.values()].filter((exercise) =>
     exerciseFitsEquipment(exercise, available) &&
-    exerciseAllowedFor(exercise.id, { level: input.level, injury: input.injury, areas: input.areas })
+    exerciseAllowedFor(exercise.id, {
+      level: input.level,
+      injury: input.injury,
+      areas: input.areas,
+    })
   )
   if (eligible.length === 0) {
     throw new HttpError(
@@ -436,7 +446,9 @@ function priorHistory(snapshot: GenerationProfileSnapshot): PlanBrief['history']
   if (!prior) return null
   const history: Record<string, number | string> = {}
   const add = (key: string, value: number | null) => {
-    if (typeof value === 'number' && Number.isFinite(value)) history[key] = Math.round(value * 10) / 10
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      history[key] = Math.round(value * 10) / 10
+    }
   }
   add('workout_adherence_pct', prior.adherence_workout_pct)
   add('meal_adherence_pct', prior.adherence_meal_pct)
@@ -552,7 +564,9 @@ export function buildPlanBrief(input: {
       slugOf(exercise.id),
       exercise.movementPattern ?? 'other',
       [...exercise.equipmentIds].map(slugOf).join(','),
-      [...exercise.substitutionIds].filter((id) => allowedExerciseIds.has(id)).map(slugOf).join(','),
+      [...exercise.substitutionIds].filter((id) => allowedExerciseIds.has(id)).map(slugOf).join(
+        ',',
+      ),
     ]),
   }
   assertBriefPiiFree(brief)
