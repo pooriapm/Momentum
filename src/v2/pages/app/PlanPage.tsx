@@ -7,7 +7,7 @@ import {
   ShoppingBasket,
   WifiOff,
 } from 'lucide-react'
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { useOnlineStatus } from '../../../platform/pwa/network'
@@ -27,7 +27,6 @@ import {
   derivePlanSurface,
   formatLastSync,
   groceryShareText,
-  PLAN_SEGMENTS,
   planDays,
   readShoppingChecks,
   readStoredLastSync,
@@ -47,6 +46,9 @@ import {
   PlanTrainingView,
   PlanWeekView,
 } from './plan-views'
+import { Page, PageHeader } from '../../ui/layout'
+import { SegmentedControl } from '../../ui/SegmentedControl'
+import { Notice } from '../../ui/feedback'
 import '../../../styles/plan.css'
 
 const segmentMeta: Array<{ key: PlanSegment; icon: typeof Salad; fa: string; en: string }> = [
@@ -141,22 +143,6 @@ export function PlanPage({
   const isToday = !showingNextCycle && selectedDay.localDate === (activePlan.localDate ?? today)
   const inventoryId = view === 'error' ? 'PLAN-10' : view === 'offline' ? 'PLAN-09' : view === 'stale' ? 'PLAN-09' : segment === 'week' ? 'PLAN-01' : segment === 'nutrition' ? 'PLAN-02' : segment === 'training' ? 'PLAN-03' : 'PLAN-04'
 
-  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, current: PlanSegment) {
-    const currentIndex = PLAN_SEGMENTS.indexOf(current)
-    const nextIndex = event.key === 'Home' ? 0
-      : event.key === 'End' ? PLAN_SEGMENTS.length - 1
-        : event.key === (fa ? 'ArrowLeft' : 'ArrowRight') ? (currentIndex + 1) % PLAN_SEGMENTS.length
-          : event.key === (fa ? 'ArrowRight' : 'ArrowLeft') ? (currentIndex - 1 + PLAN_SEGMENTS.length) % PLAN_SEGMENTS.length
-            : null
-    if (nextIndex === null) return
-    event.preventDefault()
-    const next = PLAN_SEGMENTS[nextIndex]
-    setSegment(next)
-    const tab = document.getElementById(`plan-tab-${next}`)
-    tab?.focus({ preventScroll: true })
-    tab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
-  }
-
   async function selectMeal(slotId: string, optionId: string) {
     if (!isToday || mutationsLocked || savingSlot) return
     const meal = selectedDay.meals.find((item) => item.id === slotId)
@@ -229,56 +215,42 @@ export function PlanPage({
   }
 
   return (
-    <main className="app-page plan-page screen-enter" data-inventory={inventoryId}>
-      <section className="page-heading">
-        <div>
-          <p className="orbit-eyebrow">{fa ? 'برنامه شخصی' : 'Personal plan'} · {showingNextCycle ? (fa ? 'دوره بعد' : 'Next period') : localize(selectedDay.dateLabel, locale)}</p>
-          <h1>{t('app.planTitle')}</h1>
-          <p>{localize(activePlan.monthlyPlanBrief, locale)}</p>
-        </div>
-        <div className="plan-heading-aside">
-          <StatusPill tone="success"><Check size={13} />{fa ? 'برنامه فعال' : 'Active plan'}</StatusPill>
-        </div>
-      </section>
+    <Page name="plan" data-inventory={inventoryId}>
+      <PageHeader
+        eyebrow={<>{fa ? 'برنامه شخصی' : 'Personal plan'} · {showingNextCycle ? (fa ? 'دوره بعد' : 'Next period') : localize(selectedDay.dateLabel, locale)}</>}
+        title={t('app.planTitle')}
+        description={localize(activePlan.monthlyPlanBrief, locale)}
+        actions={<><StatusPill tone="success"><Check size={13} />{fa ? 'برنامه فعال' : 'Active plan'}</StatusPill></>}
+      />
 
       {view === 'offline' ? (
-        <div className="inline-notice" role="status">
+        <Notice>
           <WifiOff size={16} />
           {fa
             ? `نسخه ذخیره‌شده برنامه · آخرین همگام‌سازی ${formatLastSync(syncedAt, locale)} · تا برگشت اتصال فقط‌خواندنی می‌ماند.`
             : `Saved plan copy · last synced ${formatLastSync(syncedAt, locale)} · read-only until connection returns.`}
-        </div>
+        </Notice>
       ) : null}
       {view === 'stale' ? (
-        <div className="inline-notice inline-notice--warning" role="status">
+        <Notice tone="warning">
           {fa ? 'این نسخه ممکن است تازه نباشد. ثبت تا همگام‌سازی بعدی غیرفعال است.' : 'This copy may be out of date. Logging stays disabled until the plan refreshes.'}
-        </div>
+        </Notice>
       ) : null}
       {view === 'error' ? (
-        <div className="inline-notice inline-notice--warning" role="status">
+        <Notice tone="warning">
           {fa ? `نسخه تازه دریافت نشد؛ نسخه ذخیره‌شده نمایش داده می‌شود · ${formatLastSync(syncedAt, locale)}` : `The latest plan could not be loaded; showing the cached copy · ${formatLastSync(syncedAt, locale)}`}
           {onRetry ? <Button onClick={onRetry} variant="ghost">{fa ? 'تلاش دوباره' : 'Try again'}</Button> : null}
-        </div>
+        </Notice>
       ) : null}
 
-      <div aria-label={fa ? 'بخش برنامه' : 'Plan section'} className="segmented-control plan-view-switch glass-chrome" role="tablist">
-        {segmentMeta.map(({ key, icon: Icon, fa: faLabel, en }) => (
-          <button
-            aria-controls={`plan-panel-${key}`}
-            aria-selected={segment === key}
-            className={segment === key ? 'is-active' : ''}
-            id={`plan-tab-${key}`}
-            key={key}
-            onClick={() => setSegment(key)}
-            onKeyDown={(event) => handleTabKeyDown(event, key)}
-            role="tab"
-            tabIndex={segment === key ? 0 : -1}
-            type="button"
-          >
-            <Icon size={18} />{locale === 'fa' ? faLabel : en}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        className="plan-view-switch"
+        idPrefix="plan"
+        items={segmentMeta.map(({ key, icon: Icon, fa: faLabel, en }) => ({ value: key, label: fa ? faLabel : en, icon: <Icon size={18} /> }))}
+        label={fa ? 'بخش برنامه' : 'Plan section'}
+        onChange={setSegment}
+        value={segment}
+      />
 
       {segment === 'week' ? (
         <div aria-labelledby="plan-tab-week" className="motion-panel" id="plan-panel-week" role="tabpanel">
@@ -315,7 +287,7 @@ export function PlanPage({
             selectedMeals={selectedMeals}
             today={today}
           />}
-          {mealError ? <div className="inline-notice inline-notice--error" role="alert">{mealError}</div> : null}
+          {mealError ? <Notice tone="error">{mealError}</Notice> : null}
         </div>
       ) : null}
       {segment === 'training' ? (
@@ -358,7 +330,7 @@ export function PlanPage({
       ) : null}
 
       {swapLocked ? <MemberFeatureLock compact feature="meal-swaps" locale={locale} /> : null}
-      {substituteNotice ? <div className="inline-notice" role="status">{substituteNotice}</div> : null}
+      {substituteNotice ? <Notice>{substituteNotice}</Notice> : null}
 
       {mealDetail ? (
         <LazyOverlay>
@@ -415,6 +387,6 @@ export function PlanPage({
         />
         </LazyOverlay>
       ) : null}
-    </main>
+    </Page>
   )
 }

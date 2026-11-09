@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import {
-  AlertTriangle,
   BadgeCheck,
   Clock3,
   KeyRound,
@@ -8,6 +7,7 @@ import {
   MailCheck,
   RefreshCw,
   ShieldX,
+  TriangleAlert,
   WifiOff,
   XCircle,
 } from 'lucide-react'
@@ -218,6 +218,6 @@ export const AuthHelpEscalation: Story = {
   parameters: momentumEvidence(['AUTH-06'], '/[locale]/auth/sign-in'),
   render: (_: unknown, context: { globals: Record<string, unknown> }) => {
     const locale = localeFromStory(context.globals.locale)
-    return <StateScreen body={tx(locale, 'کد خطا و زمان رویداد را همراه درخواستت می‌فرستیم؛ رمز عبور هرگز ارسال نمی‌شود.', 'We include the error code and event time with your request; your password is never sent.')} icon={<AlertTriangle />} locale={locale} note={<SpecCallout title={tx(locale, 'کد پیگیری: AUTH-8F21', 'Reference: AUTH-8F21')} tone="neutral">{tx(locale, 'این کد برای پشتیبانی قابل مشاهده است.', 'Support can use this code to investigate.')}</SpecCallout>} title={tx(locale, 'برای ورود کمک بگیر', 'Get help signing in')} tone="info" />
+    return <StateScreen body={tx(locale, 'کد خطا و زمان رویداد را همراه درخواستت می‌فرستیم؛ رمز عبور هرگز ارسال نمی‌شود.', 'We include the error code and event time with your request; your password is never sent.')} icon={<TriangleAlert />} locale={locale} note={<SpecCallout title={tx(locale, 'کد پیگیری: AUTH-8F21', 'Reference: AUTH-8F21')} tone="neutral">{tx(locale, 'این کد برای پشتیبانی قابل مشاهده است.', 'Support can use this code to investigate.')}</SpecCallout>} title={tx(locale, 'برای ورود کمک بگیر', 'Get help signing in')} tone="info" />
   },
 }

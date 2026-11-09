@@ -10,6 +10,7 @@ import '../src/stories/product/product-spec.css'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const orbitCss = readFileSync(resolve(root, 'src/styles/orbit.css'), 'utf8')
 const appCss = readFileSync(resolve(root, 'src/styles/app.css'), 'utf8')
+const tokensCss = readFileSync(resolve(root, 'src/styles/tokens.css'), 'utf8')
 const specCss = readFileSync(resolve(root, 'src/stories/product/product-spec.css'), 'utf8')
 const handoffPath = resolve(root, 'docs/design/HANDOFF.md')
 const step4Path = resolve(root, 'docs/design/STEP-4-RESPONSIVE-A11Y.md')
@@ -35,8 +36,8 @@ describe('accessibility evidence', () => {
     expect(button).toHaveFocus()
     expect(['48px', '3rem']).toContain(getComputedStyle(button).minHeight)
 
-    expect(appCss).toMatch(/button:focus-visible[\s\S]*outline:\s*3px solid var\(--color-focus\)/)
-    expect(orbitCss).toMatch(/:where\(a, button[\s\S]*\):focus-visible[\s\S]*outline:\s*3px solid var\(--color-focus\)/)
+    expect(appCss).toMatch(/:where\(a, button[\s\S]*\):focus-visible[\s\S]*outline:\s*var\(--focus-ring-width\) solid var\(--color-focus\)/)
+    expect(tokensCss).toMatch(/--focus-ring-width:\s*0\.1875rem;/)
     expect(specCss).toMatch(/\.mo-spec button:focus-visible[\s\S]*outline:\s*3px solid var\(--spec-brand\)/)
   })
 

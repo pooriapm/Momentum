@@ -3,9 +3,9 @@ import { PLAN_BUILD_ESTIMATE_MS, PLAN_BUILD_STAGES, planBuildBar, rememberPlanBu
 
 describe('plan build show', () => {
   it('opens on personal setup and ends on almost ready', () => {
-    expect(PLAN_BUILD_STAGES[0]?.title.fa).toBe('داریم شرایط شخصی‌ت رو بررسی می‌کنیم')
-    expect(PLAN_BUILD_STAGES[1]?.title.fa).toContain('غذاهای مورد علاقه‌ت')
-    expect(PLAN_BUILD_STAGES.at(-1)?.title.fa).toBe('برنامه اختصاصی‌ت تقریباً آماده‌ست')
+    expect(PLAN_BUILD_STAGES[0]?.title.fa).toBe('شرایط شخصی‌ات بررسی می‌شود')
+    expect(PLAN_BUILD_STAGES[1]?.title.fa).toContain('غذاهای مورد علاقه‌ات')
+    expect(PLAN_BUILD_STAGES.at(-1)?.title.fa).toBe('برنامهٔ اختصاصی‌ات تقریباً آماده است')
     expect(PLAN_BUILD_STAGES[0]?.title.en).toBe("We're looking through what works for you")
     expect(PLAN_BUILD_STAGES.at(-1)?.title.en).toBe('Your plan is almost ready')
   })

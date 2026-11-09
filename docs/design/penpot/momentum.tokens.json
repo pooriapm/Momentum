@@ -51,6 +51,10 @@
             "$value": "#1A1916",
             "$type": "color"
           },
+          "925": {
+            "$value": "#161512",
+            "$type": "color"
+          },
           "950": {
             "$value": "#0E0D0B",
             "$type": "color"
@@ -363,6 +367,10 @@
         "$value": "24px",
         "$type": "dimension"
       },
+      "7": {
+        "$value": "28px",
+        "$type": "dimension"
+      },
       "8": {
         "$value": "32px",
         "$type": "dimension"
@@ -382,57 +390,86 @@
       "20": {
         "$value": "80px",
         "$type": "dimension"
+      },
+      "0_5": {
+        "$value": "2px",
+        "$type": "dimension"
+      },
+      "1_5": {
+        "$value": "6px",
+        "$type": "dimension"
       }
     },
     "radius": {
       "none": {
         "$value": "0px",
-        "$type": "dimension"
+        "$type": "dimension",
+        "$description": "Square edges"
+      },
+      "xs": {
+        "$value": "4px",
+        "$type": "dimension",
+        "$description": "Bars, meters, tiny marks"
       },
       "sm": {
         "$value": "8px",
-        "$type": "dimension"
+        "$type": "dimension",
+        "$description": "Chips inside controls, thumbnails"
       },
       "control": {
         "$value": "12px",
-        "$type": "dimension"
+        "$type": "dimension",
+        "$description": "Buttons, inputs, selects, menu items, segments"
       },
-      "field": {
+      "inset": {
         "$value": "16px",
-        "$type": "dimension"
+        "$type": "dimension",
+        "$description": "Notices, segmented controls, menus and containers nested in a card"
       },
       "card": {
         "$value": "20px",
-        "$type": "dimension"
+        "$type": "dimension",
+        "$description": "Content cards"
       },
       "panel": {
         "$value": "24px",
-        "$type": "dimension"
+        "$type": "dimension",
+        "$description": "Panels, dialogs and sheets"
       },
       "chrome": {
         "$value": "28px",
-        "$type": "dimension"
+        "$type": "dimension",
+        "$description": "Navigation bars and large hero media"
       },
       "pill": {
         "$value": "999px",
-        "$type": "dimension"
+        "$type": "dimension",
+        "$description": "Pills, progress bars, round buttons"
       }
     }
   },
   "Core/Layout": {
     "layout": {
       "breakpoint": {
-        "compactMax": {
-          "$value": "599px",
-          "$type": "dimension"
+        "narrow": {
+          "$value": "360px",
+          "$type": "dimension",
+          "$description": "Below this: small phones; stack side-by-side pairs"
         },
-        "mediumMax": {
-          "$value": "1023px",
-          "$type": "dimension"
+        "medium": {
+          "$value": "600px",
+          "$type": "dimension",
+          "$description": "compact < 600 ≤ medium"
         },
-        "expandedMin": {
-          "$value": "1024px",
-          "$type": "dimension"
+        "expanded": {
+          "$value": "840px",
+          "$type": "dimension",
+          "$description": "medium < 840 ≤ expanded: sidebar replaces the bottom bar"
+        },
+        "large": {
+          "$value": "1200px",
+          "$type": "dimension",
+          "$description": "expanded < 1200 ≤ large: two-column dashboards"
         }
       },
       "gutter": {
@@ -462,6 +499,11 @@
           "$value": "760px",
           "$type": "dimension"
         }
+      },
+      "pageGutter": {
+        "$value": "{space.8}",
+        "$type": "dimension",
+        "$description": "Page side gutter per window class"
       }
     }
   },
@@ -469,9 +511,9 @@
     "component": {
       "target": {
         "minimum": {
-          "$value": "44px",
+          "$value": "48px",
           "$type": "dimension",
-          "$description": "Minimum interactive target on web and iOS"
+          "$description": "Touch target on every platform; a small icon never means a small target"
         },
         "android": {
           "$value": "48px",
@@ -520,9 +562,8 @@
           "$description": "Single-line form control height"
         },
         "radius": {
-          "$value": "{radius.field}",
-          "$type": "dimension",
-          "$description": "Form control radius"
+          "$value": "{radius.control}",
+          "$type": "dimension"
         },
         "paddingInline": {
           "$value": "{space.4}",
@@ -533,8 +574,7 @@
       "card": {
         "radius": {
           "$value": "{radius.card}",
-          "$type": "dimension",
-          "$description": "Default content card radius"
+          "$type": "dimension"
         },
         "paddingCompact": {
           "$value": "{space.4}",
@@ -545,6 +585,11 @@
           "$value": "{space.5}",
           "$type": "dimension",
           "$description": "Comfortable card padding"
+        },
+        "padding": {
+          "$value": "{space.5}",
+          "$type": "dimension",
+          "$description": "Content-card padding per window class"
         }
       },
       "navigation": {
@@ -565,8 +610,7 @@
         },
         "radius": {
           "$value": "{radius.chrome}",
-          "$type": "dimension",
-          "$description": "Floating navigation container radius"
+          "$type": "dimension"
         }
       },
       "dialog": {
@@ -610,14 +654,43 @@
       },
       "focusRing": {
         "width": {
-          "$value": "2px",
+          "$value": "3px",
           "$type": "dimension",
-          "$description": "Focus ring stroke width"
+          "$description": "One ring on every focusable element; 3:1 against every surface it lands on"
         },
         "offset": {
           "$value": "3px",
           "$type": "dimension",
           "$description": "Focus ring offset from component"
+        },
+        "insetOffset": {
+          "$value": "-3px",
+          "$type": "dimension",
+          "$description": "Ring drawn inside items clipped by their container (bottom bar, list options)"
+        }
+      },
+      "panel": {
+        "padding": {
+          "$value": "{space.8}",
+          "$type": "dimension",
+          "$description": "Panel padding per window class"
+        }
+      },
+      "icon": {
+        "sm": {
+          "$value": "20px",
+          "$type": "dimension",
+          "$description": "Icon inside a button or row"
+        },
+        "md": {
+          "$value": "40px",
+          "$type": "dimension",
+          "$description": "Icon tile in a list row"
+        },
+        "lg": {
+          "$value": "64px",
+          "$type": "dimension",
+          "$description": "Empty-state and feature icon"
         }
       }
     }
@@ -626,12 +699,12 @@
     "typography": {
       "fontFamily": {
         "fa": {
-          "$value": "Vazirmatn, Tahoma, Arial, sans-serif",
+          "$value": "Vazirmatn, Tahoma, Segoe UI, Arial, sans-serif",
           "$type": "fontFamily",
           "$description": "Persian interface font stack"
         },
         "en": {
-          "$value": "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif",
+          "$value": "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif",
           "$type": "fontFamily",
           "$description": "English platform interface font stack"
         },
@@ -639,6 +712,16 @@
           "$value": "ui-monospace, SFMono-Regular, Consolas, monospace",
           "$type": "fontFamily",
           "$description": "Machine identifiers and diagnostic values only"
+        },
+        "digits": {
+          "$value": "Vazirmatn Digits",
+          "$type": "fontFamily",
+          "$description": "Vazirmatn limited to digits, percent and separators by unicode-range; prefixed to every stack so numbers always render in Vazirmatn"
+        },
+        "numeric": {
+          "$value": "Vazirmatn, Tahoma, sans-serif",
+          "$type": "fontFamily",
+          "$description": "Metric values and tabular numbers"
         }
       },
       "weight": {
@@ -651,7 +734,7 @@
           "$type": "fontWeight"
         },
         "semibold": {
-          "$value": 650,
+          "$value": 600,
           "$type": "fontWeight"
         },
         "bold": {
@@ -661,6 +744,11 @@
         "heavy": {
           "$value": 800,
           "$type": "fontWeight"
+        },
+        "black": {
+          "$value": 900,
+          "$type": "fontWeight",
+          "$description": "Boot splash wordmark only"
         }
       },
       "role": {
@@ -674,7 +762,7 @@
               "letterSpacing": "0px",
               "lineHeight": "52px"
             },
-            "$description": "Landing hero display — FA"
+            "$description": "Landing hero only; marketing pages may scale it fluidly with clamp() — FA"
           },
           "title1": {
             "$type": "typography",
@@ -685,18 +773,29 @@
               "letterSpacing": "0px",
               "lineHeight": "44px"
             },
-            "$description": "Major page title — FA"
+            "$description": "Page title, once per page — FA"
+          },
+          "metric": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "28px",
+              "fontWeight": "{typography.weight.bold}",
+              "letterSpacing": "0px",
+              "lineHeight": "34px"
+            },
+            "$description": "Primary numeric metric — FA"
           },
           "title2": {
             "$type": "typography",
             "$value": {
               "fontFamily": "{typography.fontFamily.fa}",
               "fontSize": "24px",
-              "fontWeight": 750,
+              "fontWeight": "{typography.weight.bold}",
               "letterSpacing": "0px",
               "lineHeight": "34px"
             },
-            "$description": "Section and modal title — FA"
+            "$description": "Section and sheet titles — FA"
           },
           "title3": {
             "$type": "typography",
@@ -707,7 +806,18 @@
               "letterSpacing": "0px",
               "lineHeight": "30px"
             },
-            "$description": "Card group title — FA"
+            "$description": "Card group titles — FA"
+          },
+          "headline": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "18px",
+              "fontWeight": "{typography.weight.semibold}",
+              "letterSpacing": "0px",
+              "lineHeight": "28px"
+            },
+            "$description": "Card titles and emphasised rows — FA"
           },
           "body": {
             "$type": "typography",
@@ -729,7 +839,7 @@
               "letterSpacing": "0px",
               "lineHeight": "26px"
             },
-            "$description": "Emphasized body text — FA"
+            "$description": "Emphasised body text — FA"
           },
           "label": {
             "$type": "typography",
@@ -740,7 +850,18 @@
               "letterSpacing": "0px",
               "lineHeight": "20px"
             },
-            "$description": "Controls, tabs, and field labels — FA"
+            "$description": "Controls, tabs, field values — FA"
+          },
+          "footnote": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.fa}",
+              "fontSize": "13px",
+              "fontWeight": "{typography.weight.medium}",
+              "letterSpacing": "0px",
+              "lineHeight": "20px"
+            },
+            "$description": "Field labels, legend rows, secondary lines — FA"
           },
           "caption": {
             "$type": "typography",
@@ -751,18 +872,7 @@
               "letterSpacing": "0px",
               "lineHeight": "18px"
             },
-            "$description": "Nonessential metadata — FA"
-          },
-          "metric": {
-            "$type": "typography",
-            "$value": {
-              "fontFamily": "{typography.fontFamily.fa}",
-              "fontSize": "28px",
-              "fontWeight": 750,
-              "letterSpacing": "0px",
-              "lineHeight": "34px"
-            },
-            "$description": "Primary numeric metric — FA"
+            "$description": "Smallest text: pills, hints, timestamps. Nothing smaller exists — FA"
           }
         },
         "en": {
@@ -775,7 +885,7 @@
               "letterSpacing": "0px",
               "lineHeight": "52px"
             },
-            "$description": "Landing hero display — EN"
+            "$description": "Landing hero only; marketing pages may scale it fluidly with clamp() — EN"
           },
           "title1": {
             "$type": "typography",
@@ -786,18 +896,29 @@
               "letterSpacing": "0px",
               "lineHeight": "44px"
             },
-            "$description": "Major page title — EN"
+            "$description": "Page title, once per page — EN"
+          },
+          "metric": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "28px",
+              "fontWeight": "{typography.weight.bold}",
+              "letterSpacing": "0px",
+              "lineHeight": "34px"
+            },
+            "$description": "Primary numeric metric — EN"
           },
           "title2": {
             "$type": "typography",
             "$value": {
               "fontFamily": "{typography.fontFamily.en}",
               "fontSize": "24px",
-              "fontWeight": 750,
+              "fontWeight": "{typography.weight.bold}",
               "letterSpacing": "0px",
               "lineHeight": "34px"
             },
-            "$description": "Section and modal title — EN"
+            "$description": "Section and sheet titles — EN"
           },
           "title3": {
             "$type": "typography",
@@ -808,7 +929,18 @@
               "letterSpacing": "0px",
               "lineHeight": "30px"
             },
-            "$description": "Card group title — EN"
+            "$description": "Card group titles — EN"
+          },
+          "headline": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "18px",
+              "fontWeight": "{typography.weight.semibold}",
+              "letterSpacing": "0px",
+              "lineHeight": "28px"
+            },
+            "$description": "Card titles and emphasised rows — EN"
           },
           "body": {
             "$type": "typography",
@@ -830,7 +962,7 @@
               "letterSpacing": "0px",
               "lineHeight": "26px"
             },
-            "$description": "Emphasized body text — EN"
+            "$description": "Emphasised body text — EN"
           },
           "label": {
             "$type": "typography",
@@ -841,7 +973,18 @@
               "letterSpacing": "0px",
               "lineHeight": "20px"
             },
-            "$description": "Controls, tabs, and field labels — EN"
+            "$description": "Controls, tabs, field values — EN"
+          },
+          "footnote": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "{typography.fontFamily.en}",
+              "fontSize": "13px",
+              "fontWeight": "{typography.weight.medium}",
+              "letterSpacing": "0px",
+              "lineHeight": "20px"
+            },
+            "$description": "Field labels, legend rows, secondary lines — EN"
           },
           "caption": {
             "$type": "typography",
@@ -852,18 +995,7 @@
               "letterSpacing": "0px",
               "lineHeight": "18px"
             },
-            "$description": "Nonessential metadata — EN"
-          },
-          "metric": {
-            "$type": "typography",
-            "$value": {
-              "fontFamily": "{typography.fontFamily.en}",
-              "fontSize": "28px",
-              "fontWeight": 750,
-              "letterSpacing": "0px",
-              "lineHeight": "34px"
-            },
-            "$description": "Primary numeric metric — EN"
+            "$description": "Smallest text: pills, hints, timestamps. Nothing smaller exists — EN"
           }
         }
       }
@@ -878,31 +1010,38 @@
         },
         "fast": {
           "$value": "160ms",
-          "$type": "duration"
+          "$type": "duration",
+          "$description": "Color, border and halo changes"
         },
         "standard": {
-          "$value": "240ms",
-          "$type": "duration"
+          "$value": "260ms",
+          "$type": "duration",
+          "$description": "Highlights, sheets, arc changes"
         },
         "emphasis": {
           "$value": "400ms",
-          "$type": "duration"
+          "$type": "duration",
+          "$description": "Emphasised arrivals"
         },
         "slow": {
           "$value": "600ms",
-          "$type": "duration"
+          "$type": "duration",
+          "$description": "Draw-on of the brand mark"
         },
         "glassPress": {
-          "$value": "140ms",
-          "$type": "duration"
+          "$value": "80ms",
+          "$type": "duration",
+          "$description": "Press-in to scale .985"
         },
         "glassRelease": {
-          "$value": "320ms",
-          "$type": "duration"
+          "$value": "260ms",
+          "$type": "duration",
+          "$description": "Release back to scale 1"
         },
         "glassMorph": {
-          "$value": "420ms",
-          "$type": "duration"
+          "$value": "320ms",
+          "$type": "duration",
+          "$description": "Menus opening, chevrons, glass shape changes"
         }
       },
       "easing": {
@@ -932,6 +1071,16 @@
             1
           ],
           "$type": "cubicBezier"
+        },
+        "easeOut": {
+          "$value": [
+            0.22,
+            0.78,
+            0.24,
+            1
+          ],
+          "$type": "cubicBezier",
+          "$description": "Every press, release and morph"
         }
       },
       "spring": {
@@ -977,6 +1126,11 @@
             "$value": "#D9592A0D",
             "$type": "color",
             "$description": "Noninformational coral environment aura; never carries state"
+          },
+          "splashGlow": {
+            "$value": "#E0901F14",
+            "$type": "color",
+            "$description": "Glow behind the boot splash mark; never carries state"
           }
         },
         "surface": {
@@ -1006,9 +1160,9 @@
             "$description": "More separated translucent tint for prominent functional Liquid Glass"
           },
           "glassClear": {
-            "$value": "#FFFFFF52",
+            "$value": "#FFFFFF4D",
             "$type": "color",
-            "$description": "Minimal-tint Clear glass for a bounded media or aura backdrop with an explicit local legibility treatment"
+            "$description": "Clear Liquid Glass tint (30%, as on Android): the tab bar, segmented controls, stepper buttons, chrome bars and notices. Content behind stays visible."
           },
           "glassInteractionPrimary": {
             "$value": "#1C1A171F",
@@ -1029,6 +1183,46 @@
             "$value": "#1C1A1799",
             "$type": "color",
             "$description": "Background dimming behind modal content"
+          },
+          "hover": {
+            "$value": "#EFECE6",
+            "$type": "color",
+            "$description": "Pointer hover fill for secondary, ghost and row controls"
+          },
+          "glassHighlight": {
+            "$value": "#FFFFFFB3",
+            "$type": "color",
+            "$description": "Specular top-left highlight of Liquid Glass"
+          },
+          "glassLowlight": {
+            "$value": "#1C1A170F",
+            "$type": "color",
+            "$description": "Bottom inner shade of Liquid Glass"
+          },
+          "glassCore": {
+            "$value": "{color.semantic.surface.glassRegular}",
+            "$type": "color",
+            "$description": "Core fill of Liquid Glass materials"
+          },
+          "glassTint": {
+            "$value": "#00000000",
+            "$type": "color",
+            "$description": "Optional colored sheen inside glass gradients; transparent by default"
+          },
+          "glassFrost": {
+            "$value": "#FFFFFF99",
+            "$type": "color",
+            "$description": "Denser glass (60%) for menus and popovers that open over text, so their own labels stay legible."
+          },
+          "glassSelection": {
+            "$value": "#A35E0024",
+            "$type": "color",
+            "$description": "Saffron tint of the selection lens in a LiquidSelector (14% light, 22% dark, as on Android)."
+          },
+          "glassHalo": {
+            "$value": "#FFFFFFE6",
+            "$type": "color",
+            "$description": "Light halo behind text and icons on clear glass in light theme, so labels stay legible over busy content without thickening the glass; none in dark"
           }
         },
         "text": {
@@ -1060,24 +1254,24 @@
         },
         "action": {
           "primary": {
-            "$value": "#1C1A17",
+            "$value": "{color.primitive.saffron.700}",
             "$type": "color",
-            "$description": "Ink fill for the one primary action per view"
+            "$description": "Saffron fill of the one primary action per view, as on Android. Coral is never a CTA."
           },
           "primaryHover": {
-            "$value": "#3A3631",
+            "$value": "{color.primitive.saffron.800}",
             "$type": "color",
             "$description": "Pointer hover fill for the primary action"
           },
           "primaryPressed": {
-            "$value": "#000000",
+            "$value": "{color.primitive.saffron.900}",
             "$type": "color",
             "$description": "Pressed fill for the primary action"
           },
           "onPrimary": {
             "$value": "{color.primitive.neutral.0}",
             "$type": "color",
-            "$description": "Foreground over all primary action states"
+            "$description": "Label and icon on the saffron primary action (white light, deep brown dark, as on Android)"
           },
           "secondary": {
             "$value": "{color.primitive.saffron.100}",
@@ -1120,6 +1314,16 @@
             "$value": "{color.primitive.saffron.100}",
             "$type": "color",
             "$description": "Low-emphasis monthly plan context background"
+          },
+          "strong": {
+            "$value": "{color.primitive.saffron.800}",
+            "$type": "color",
+            "$description": "Hover and pressed saffron for links and selected states"
+          },
+          "onPrimary": {
+            "$value": "{color.primitive.neutral.0}",
+            "$type": "color",
+            "$description": "Text on a solid saffron fill"
           }
         },
         "energy": {
@@ -1265,6 +1469,139 @@
             "$value": "{color.primitive.neutral.600}",
             "$type": "color",
             "$description": "Labeled chart reference or target line"
+          },
+          "target": {
+            "$value": "{color.primitive.saffron.700}",
+            "$type": "color",
+            "$description": "Goal or target reference line (dashed)"
+          },
+          "unknown": {
+            "$value": "{color.primitive.neutral.500}",
+            "$type": "color",
+            "$description": "Missing or unknown data: dashed outline, never a zero-height bar"
+          }
+        },
+        "domain": {
+          "food": {
+            "$value": "{color.semantic.plan.primary}",
+            "$type": "color",
+            "$description": "Meals: rings, legend dots, meal series"
+          },
+          "foodSoft": {
+            "$value": "{color.semantic.plan.soft}",
+            "$type": "color",
+            "$description": "Meal context background"
+          },
+          "training": {
+            "$value": "{color.semantic.energy.primary}",
+            "$type": "color",
+            "$description": "Workouts: rings, legend dots, training series"
+          },
+          "trainingSoft": {
+            "$value": "{color.semantic.energy.soft}",
+            "$type": "color",
+            "$description": "Training context background"
+          },
+          "water": {
+            "$value": "#1D6B9A",
+            "$type": "color",
+            "$description": "Water: ring, legend dot and water card only"
+          }
+        },
+        "selection": {
+          "background": {
+            "$value": "{color.primitive.saffron.200}",
+            "$type": "color",
+            "$description": "Text selection background"
+          },
+          "foreground": {
+            "$value": "#1C1A17",
+            "$type": "color",
+            "$description": "Text selection foreground"
+          }
+        },
+        "logo": {
+          "backgroundStart": {
+            "$value": "#FFFFFF",
+            "$type": "color",
+            "$description": "Mark tile gradient, top"
+          },
+          "backgroundEnd": {
+            "$value": "#F1EEE9",
+            "$type": "color",
+            "$description": "Mark tile gradient, bottom"
+          },
+          "border": {
+            "$value": "#E3DFD7",
+            "$type": "color",
+            "$description": "Mark tile edge"
+          },
+          "orbitTrack": {
+            "$value": "#E3DFD7",
+            "$type": "color",
+            "$description": "Faint orbit track inside the mark"
+          },
+          "accentStart": {
+            "$value": "#E0901F",
+            "$type": "color",
+            "$description": "Orbit path gradient start"
+          },
+          "accentEnd": {
+            "$value": "#A35E00",
+            "$type": "color",
+            "$description": "Orbit path gradient end"
+          },
+          "letter": {
+            "$value": "#1C1A17",
+            "$type": "color",
+            "$description": "The M monogram"
+          },
+          "dotStart": {
+            "$value": "#FF9D76",
+            "$type": "color",
+            "$description": "Satellite gradient start"
+          },
+          "dotEnd": {
+            "$value": "#D9592A",
+            "$type": "color",
+            "$description": "Satellite gradient end"
+          },
+          "dotHalo": {
+            "$value": "#D9592A14",
+            "$type": "color",
+            "$description": "Halo around the satellite"
+          },
+          "surface": {
+            "$value": "#FFFFFF",
+            "$type": "color",
+            "$description": "Surface the inline OrbitMark tile is filled with"
+          }
+        },
+        "print": {
+          "background": {
+            "$value": "#FFFFFF",
+            "$type": "color",
+            "$description": "Printed report page"
+          },
+          "text": {
+            "$value": "#111111",
+            "$type": "color",
+            "$description": "Printed report body text"
+          },
+          "textSecondary": {
+            "$value": "#333333",
+            "$type": "color",
+            "$description": "Printed report supporting text"
+          },
+          "textMuted": {
+            "$value": "#555555",
+            "$type": "color",
+            "$description": "Printed report metadata"
+          },
+          "border": {
+            "$value": "#D3D3D3",
+            "$type": "color",
+            "$description": "Printed report rules and table borders"
           }
         }
       }
@@ -1293,6 +1630,11 @@
             "$value": "#FF8A5C0D",
             "$type": "color",
             "$description": "Noninformational coral environment aura; never carries state"
+          },
+          "splashGlow": {
+            "$value": "#F0A93B14",
+            "$type": "color",
+            "$description": "Glow behind the boot splash mark; never carries state"
           }
         },
         "surface": {
@@ -1307,7 +1649,7 @@
             "$description": "Selected or elevated opaque content surface"
           },
           "sunken": {
-            "$value": "{color.primitive.neutral.950}",
+            "$value": "{color.primitive.neutral.925}",
             "$type": "color",
             "$description": "Input well and chart plotting surface"
           },
@@ -1322,9 +1664,9 @@
             "$description": "More separated translucent tint for prominent functional Liquid Glass"
           },
           "glassClear": {
-            "$value": "#FFFFFF1A",
+            "$value": "#1D1B184D",
             "$type": "color",
-            "$description": "Minimal-tint Clear glass for a bounded media or aura backdrop with an explicit local legibility treatment"
+            "$description": "Clear Liquid Glass tint (30%, as on Android): the tab bar, segmented controls, stepper buttons, chrome bars and notices. Content behind stays visible."
           },
           "glassInteractionPrimary": {
             "$value": "#F4F1EA29",
@@ -1345,6 +1687,46 @@
             "$value": "#000000B8",
             "$type": "color",
             "$description": "Background dimming behind modal content"
+          },
+          "hover": {
+            "$value": "{color.primitive.neutral.800}",
+            "$type": "color",
+            "$description": "Pointer hover fill for secondary, ghost and row controls"
+          },
+          "glassHighlight": {
+            "$value": "#FFFFFF1A",
+            "$type": "color",
+            "$description": "Specular top-left highlight of Liquid Glass"
+          },
+          "glassLowlight": {
+            "$value": "#00000052",
+            "$type": "color",
+            "$description": "Bottom inner shade of Liquid Glass"
+          },
+          "glassCore": {
+            "$value": "{color.semantic.surface.glassRegular}",
+            "$type": "color",
+            "$description": "Core fill of Liquid Glass materials"
+          },
+          "glassTint": {
+            "$value": "#00000000",
+            "$type": "color",
+            "$description": "Optional colored sheen inside glass gradients; transparent by default"
+          },
+          "glassFrost": {
+            "$value": "#1D1B1899",
+            "$type": "color",
+            "$description": "Denser glass (60%) for menus and popovers that open over text, so their own labels stay legible."
+          },
+          "glassSelection": {
+            "$value": "#F0A93B38",
+            "$type": "color",
+            "$description": "Saffron tint of the selection lens in a LiquidSelector (14% light, 22% dark, as on Android)."
+          },
+          "glassHalo": {
+            "$value": "#00000000",
+            "$type": "color",
+            "$description": "Light halo behind text and icons on clear glass in light theme, so labels stay legible over busy content without thickening the glass; none in dark"
           }
         },
         "text": {
@@ -1376,24 +1758,24 @@
         },
         "action": {
           "primary": {
-            "$value": "#F4F1EA",
+            "$value": "{color.primitive.saffron.400}",
             "$type": "color",
-            "$description": "Ink fill for the one primary action per view"
+            "$description": "Saffron fill of the one primary action per view, as on Android. Coral is never a CTA."
           },
           "primaryHover": {
-            "$value": "#FFFFFF",
+            "$value": "{color.primitive.saffron.300}",
             "$type": "color",
             "$description": "Pointer hover fill for the primary action"
           },
           "primaryPressed": {
-            "$value": "#E3DFD7",
+            "$value": "{color.primitive.saffron.500}",
             "$type": "color",
             "$description": "Pressed fill for the primary action"
           },
           "onPrimary": {
-            "$value": "#1C1A17",
+            "$value": "#2A1A00",
             "$type": "color",
-            "$description": "Foreground over all primary action states"
+            "$description": "Label and icon on the saffron primary action (white light, deep brown dark, as on Android)"
           },
           "secondary": {
             "$value": "{color.primitive.saffron.950}",
@@ -1436,6 +1818,16 @@
             "$value": "{color.primitive.saffron.950}",
             "$type": "color",
             "$description": "Low-emphasis monthly plan context background"
+          },
+          "strong": {
+            "$value": "{color.primitive.saffron.300}",
+            "$type": "color",
+            "$description": "Hover and pressed saffron for links and selected states"
+          },
+          "onPrimary": {
+            "$value": "#1C1A17",
+            "$type": "color",
+            "$description": "Text on a solid saffron fill"
           }
         },
         "energy": {
@@ -1581,6 +1973,139 @@
             "$value": "{color.primitive.neutral.400}",
             "$type": "color",
             "$description": "Labeled chart reference or target line"
+          },
+          "target": {
+            "$value": "{color.primitive.saffron.400}",
+            "$type": "color",
+            "$description": "Goal or target reference line (dashed)"
+          },
+          "unknown": {
+            "$value": "{color.primitive.neutral.500}",
+            "$type": "color",
+            "$description": "Missing or unknown data: dashed outline, never a zero-height bar"
+          }
+        },
+        "domain": {
+          "food": {
+            "$value": "{color.semantic.plan.primary}",
+            "$type": "color",
+            "$description": "Meals: rings, legend dots, meal series"
+          },
+          "foodSoft": {
+            "$value": "{color.semantic.plan.soft}",
+            "$type": "color",
+            "$description": "Meal context background"
+          },
+          "training": {
+            "$value": "{color.semantic.energy.primary}",
+            "$type": "color",
+            "$description": "Workouts: rings, legend dots, training series"
+          },
+          "trainingSoft": {
+            "$value": "{color.semantic.energy.soft}",
+            "$type": "color",
+            "$description": "Training context background"
+          },
+          "water": {
+            "$value": "#6CB6E8",
+            "$type": "color",
+            "$description": "Water: ring, legend dot and water card only"
+          }
+        },
+        "selection": {
+          "background": {
+            "$value": "{color.primitive.saffron.400}",
+            "$type": "color",
+            "$description": "Text selection background"
+          },
+          "foreground": {
+            "$value": "#1C1A17",
+            "$type": "color",
+            "$description": "Text selection foreground"
+          }
+        },
+        "logo": {
+          "backgroundStart": {
+            "$value": "#24221F",
+            "$type": "color",
+            "$description": "Mark tile gradient, top"
+          },
+          "backgroundEnd": {
+            "$value": "#0E0D0B",
+            "$type": "color",
+            "$description": "Mark tile gradient, bottom"
+          },
+          "border": {
+            "$value": "#FFFFFF2E",
+            "$type": "color",
+            "$description": "Mark tile edge"
+          },
+          "orbitTrack": {
+            "$value": "#FFFFFF1A",
+            "$type": "color",
+            "$description": "Faint orbit track inside the mark"
+          },
+          "accentStart": {
+            "$value": "#F6C26D",
+            "$type": "color",
+            "$description": "Orbit path gradient start"
+          },
+          "accentEnd": {
+            "$value": "#E0901F",
+            "$type": "color",
+            "$description": "Orbit path gradient end"
+          },
+          "letter": {
+            "$value": "#F4F1EA",
+            "$type": "color",
+            "$description": "The M monogram"
+          },
+          "dotStart": {
+            "$value": "#FF9D76",
+            "$type": "color",
+            "$description": "Satellite gradient start"
+          },
+          "dotEnd": {
+            "$value": "#D9592A",
+            "$type": "color",
+            "$description": "Satellite gradient end"
+          },
+          "dotHalo": {
+            "$value": "#FF8A5C1A",
+            "$type": "color",
+            "$description": "Halo around the satellite"
+          },
+          "surface": {
+            "$value": "#1A1916",
+            "$type": "color",
+            "$description": "Surface the inline OrbitMark tile is filled with"
+          }
+        },
+        "print": {
+          "background": {
+            "$value": "#FFFFFF",
+            "$type": "color",
+            "$description": "Printed report page"
+          },
+          "text": {
+            "$value": "#111111",
+            "$type": "color",
+            "$description": "Printed report body text"
+          },
+          "textSecondary": {
+            "$value": "#333333",
+            "$type": "color",
+            "$description": "Printed report supporting text"
+          },
+          "textMuted": {
+            "$value": "#555555",
+            "$type": "color",
+            "$description": "Printed report metadata"
+          },
+          "border": {
+            "$value": "#D3D3D3",
+            "$type": "color",
+            "$description": "Printed report rules and table borders"
           }
         }
       }
@@ -2189,6 +2714,6 @@
       "Core/Motion"
     ],
     "source": "docs/design/tokens.json",
-    "sourceSchemaVersion": "3.1.0"
+    "sourceSchemaVersion": "4.0.0"
   }
 }

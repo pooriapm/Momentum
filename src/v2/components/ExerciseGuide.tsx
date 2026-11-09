@@ -9,6 +9,7 @@ import {
 } from '../data/exercise-library'
 import type { WorkoutExerciseDetail } from '../data/types'
 import { formatNumber } from '../lib/format'
+import { Button } from '../ui/primitives'
 import './ExerciseGuide.css'
 
 const DAY_MS = 86_400_000
@@ -65,7 +66,7 @@ export function ExerciseGuide({ exercise, locale }: { exercise: WorkoutExerciseD
     return (
       <div className="exercise-guide" role="alert">
         {fa ? 'راهنما بارگیری نشد. اتصال را بررسی کن.' : 'The guide could not be loaded. Check your connection.'}
-        <button className="exercise-guide__retry" onClick={() => { void library.refetch(); void english.refetch() }} type="button">{fa ? 'دوباره' : 'Retry'}</button>
+        <Button className="exercise-guide__retry" onClick={() => { void library.refetch(); void english.refetch() }} type="button" variant="ghost">{fa ? 'دوباره' : 'Retry'}</Button>
       </div>
     )
   }

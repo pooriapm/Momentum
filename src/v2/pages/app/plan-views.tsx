@@ -1,5 +1,4 @@
 import {
-  AlertTriangle,
   Check,
   CheckCircle2,
   Clock3,
@@ -7,6 +6,7 @@ import {
   Eye,
   ListChecks,
   RefreshCw,
+  TriangleAlert,
   Utensils,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
@@ -25,17 +25,17 @@ import {
   weekdayLabels,
   weekIsoDates,
 } from './plan-state'
+import { Page, PageHeader } from '../../ui/layout'
+import { Notice } from '../../ui/feedback'
 
 export function PlanLoadingSkeleton({ locale }: { locale: AppLocale }) {
   const fa = locale === 'fa'
   return (
-    <main aria-busy="true" aria-label={fa ? 'در حال بارگذاری برنامه' : 'Loading plan'} className="app-page plan-page plan-page--loading screen-enter" data-inventory="PLAN-08">
-      <section className="page-heading">
-        <div>
-          <p className="orbit-eyebrow">{fa ? 'در حال بارگذاری' : 'Loading'}</p>
-          <h1>{fa ? 'برنامه در حال آماده‌شدن برای نمایش است' : 'Loading your plan'}</h1>
-        </div>
-      </section>
+    <Page name="plan" busyLabel={fa ? 'در حال بارگذاری برنامه' : 'Loading plan'} className="plan-page--loading" data-inventory="PLAN-08">
+      <PageHeader
+        eyebrow={fa ? 'در حال بارگذاری' : 'Loading'}
+        title={fa ? 'برنامه در حال آماده‌شدن برای نمایش است' : 'Loading your plan'}
+      />
       <div className="plan-skeleton-tabs" />
       <div className="plan-week">{Array.from({ length: 7 }, (_, index) => <span className="plan-week__day plan-skeleton-day" key={index} />)}</div>
       <div className="plan-skeleton-grid">
@@ -43,7 +43,7 @@ export function PlanLoadingSkeleton({ locale }: { locale: AppLocale }) {
         <div className="plan-skeleton-card" />
       </div>
       <p className="plan-skeleton-note">{fa ? 'در حال بارگذاری برنامه هفته…' : 'Loading your week…'}</p>
-    </main>
+    </Page>
   )
 }
 
@@ -60,24 +60,24 @@ export function PlanErrorState({
 }) {
   const fa = locale === 'fa'
   return (
-    <main className="app-page plan-page screen-enter" data-inventory="PLAN-10">
+    <Page name="plan" data-inventory="PLAN-10">
       <ContentCard className="plan-status-card">
-        <span className="plan-status-card__icon is-warning"><AlertTriangle size={28} /></span>
+        <span className="plan-status-card__icon is-warning"><TriangleAlert size={28} /></span>
         <p className="orbit-eyebrow">{fa ? 'وضعیت برنامه' : 'Plan status'}</p>
         <h1>{fa ? 'نسخه تازه دریافت نشد' : 'The latest plan could not be loaded'}</h1>
         <p>{fa ? 'آخرین نسخه ذخیره‌شده سالم است. می‌توانی آن را ببینی یا دوباره برای به‌روزرسانی تلاش کنی.' : 'Your last saved version is safe. View it or retry the update.'}</p>
         {lastSyncedAt ? (
-          <div className="inline-notice" role="status">
+          <Notice>
             <CheckCircle2 size={16} />
             {fa ? `نسخه ذخیره‌شده همچنان در دسترس است · آخرین همگام‌سازی ${lastSyncedAt}` : `Your cached version remains available · last synced ${lastSyncedAt}`}
-          </div>
+          </Notice>
         ) : null}
         <div className="plan-status-actions">
           <Button onClick={() => (onRetry ? onRetry() : window.location.reload())}><RefreshCw size={16} />{fa ? 'تلاش دوباره' : 'Try again'}</Button>
           {onViewCached ? <Button onClick={onViewCached} variant="secondary">{fa ? 'بازکردن نسخه ذخیره‌شده' : 'Open cached plan'}</Button> : null}
         </div>
       </ContentCard>
-    </main>
+    </Page>
   )
 }
 
@@ -256,7 +256,7 @@ export function PlanNutritionView({
   return (
     <div className="plan-stack" data-inventory="PLAN-02">
       <PlanDayStrip days={days} locale={locale} onSelectDate={onSelectDate} selectedDay={selectedDay} today={today} />
-      {!isToday ? <p className="inline-notice">{fa ? 'این پیش‌نمایش روز آینده است؛ انتخاب و ثبت وعده در همان روز فعال می‌شود.' : 'This is a future-day preview. Selection and completion unlock on that day.'}</p> : null}
+      {!isToday ? <Notice live={false}>{fa ? 'این پیش‌نمایش روز آینده است؛ انتخاب و ثبت وعده در همان روز فعال می‌شود.' : 'This is a future-day preview. Selection and completion unlock on that day.'}</Notice> : null}
       <div className="plan-meal-list">
         {selectedDay.meals.map((meal) => {
           const selectedOptionId = selectedMeals[meal.id] ?? meal.selectedOptionId ?? meal.options[0]?.id
@@ -416,10 +416,10 @@ export function PlanVersionView({ locale, version, onOpenHistory }: { locale: Ap
   return (
     <div className="plan-overview-grid" data-inventory="PLAN-06">
       <ContentCard className="plan-overview-card">
-        <div className="inline-notice" role="status">
+        <Notice>
           <CheckCircle2 size={16} />
           {fa ? 'این برنامه فعلی توست. ترجیحات جدید برای دوره بعد ذخیره می‌شوند.' : 'This is your current plan. New preferences are saved for your next cycle.'}
-        </div>
+        </Notice>
         <ul className="plan-pattern-list">
           {version.changes.map((change) => (
             <li key={change.label.en}><Check size={16} /><div><strong>{localize(change.label, locale)}</strong><small>{localize(change.detail, locale)}</small></div></li>

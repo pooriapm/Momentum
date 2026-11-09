@@ -66,12 +66,12 @@ describe('PlanPage inventory states', () => {
 
   it('PLAN-04 shows what to buy this week and ticks a purchase', async () => {
     renderPlan({ initialSegment: 'grocery' })
-    expect(screen.getByRole('button', { name: 'This week' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('tab', { name: 'This week' })).toHaveAttribute('aria-selected', 'true')
     const chicken = screen.getByRole('button', { name: /chicken breast/i })
     expect(chicken).toHaveTextContent('1,120 g')
     fireEvent.click(chicken)
     expect(await screen.findByRole('button', { name: /chicken breast.*enough until/i })).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(screen.getByRole('button', { name: 'Whole plan' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Whole plan' }))
     expect(screen.getByRole('button', { name: /chicken breast/i })).toHaveTextContent('3,680 g')
   })
 

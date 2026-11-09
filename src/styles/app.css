@@ -1,5 +1,5 @@
+@import "./tokens.css";
 @import "./orbit.css";
-@import "./theme.css";
 @import "./workout.css";
 
 @font-face {
@@ -22,6 +22,15 @@
 
 * {
   box-sizing: border-box;
+}
+
+:where(h1, h2, h3, button, input, select, textarea) {
+  font-optical-sizing: auto;
+}
+
+[lang="fa"] :is(h1, h2, h3, .orbit-eyebrow),
+[dir="rtl"] :is(h1, h2, h3, .orbit-eyebrow) {
+  letter-spacing: 0;
 }
 
 html {
@@ -52,13 +61,10 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 3px;
+/* The one focus ring. Items clipped by their container use --focus-ring-inset-offset. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
 }
 
 ::selection {
@@ -68,7 +74,7 @@ select:focus-visible {
 
 .boot-splash {
   position: fixed;
-  z-index: 1000;
+  z-index: var(--z-splash);
   inset: 0;
   display: grid;
   place-items: center;
@@ -87,8 +93,8 @@ select:focus-visible {
   display: grid;
   justify-items: center;
   width: min(100%, 24rem);
-  padding: 2rem;
-  animation: orbit-page-enter 500ms cubic-bezier(.22, 1, .36, 1) both;
+  padding: var(--space-8);
+  animation: orbit-page-enter var(--motion-emphasis) var(--motion-ease-enter) both;
 }
 
 .boot-splash__logo {
@@ -99,26 +105,26 @@ select:focus-visible {
 }
 
 .boot-splash__name {
-  margin: 1.25rem 0 0;
+  margin: var(--space-5) 0 0;
   color: var(--color-text);
-  font: 900 .75rem/1.4 var(--font-latin);
+  font: var(--weight-black) var(--text-caption)/1.4 var(--font-latin);
   letter-spacing: .28em;
 }
 
 .boot-splash__tagline {
-  margin: .45rem 0 0;
+  margin: var(--space-2) 0 0;
   direction: rtl;
   color: var(--color-text-secondary);
-  font-size: .75rem;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
 }
 
 .boot-splash__progress {
   width: 7rem;
   height: .2rem;
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-border);
 }
 
@@ -134,7 +140,7 @@ select:focus-visible {
 
 .boot-splash--exit {
   pointer-events: none;
-  animation: boot-splash-exit 320ms cubic-bezier(.4, 0, 1, 1) both;
+  animation: boot-splash-exit var(--motion-glass-morph) cubic-bezier(.4, 0, 1, 1) both;
 }
 
 @keyframes splash-progress {

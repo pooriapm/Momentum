@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
 import {
   AlertOctagon,
-  AlertTriangle,
   CalendarClock,
   CalendarDays,
   Check,
@@ -14,6 +13,7 @@ import {
   RefreshCw,
   Salad,
   ShoppingBasket,
+  TriangleAlert,
   Utensils,
   WifiOff,
 } from 'lucide-react'
@@ -86,7 +86,7 @@ function TodayStatus({ locale, state }: { locale: SpecLocale; state: Exclude<Tod
       eyebrow: tx(locale, 'داده قدیمی', 'Update needed'),
       title: tx(locale, 'این نسخه ممکن است تازه نباشد', 'This copy may be out of date'),
       body: tx(locale, 'برنامه روی دستگاه مربوط به ۲ روز پیش است. قبل از ثبت تمرین، اتصال را بررسی کن.', 'The on-device plan is two days old. Reconnect before logging a workout.'),
-      note: <SpecCallout icon={<AlertTriangle />} title={tx(locale, 'ثبت تمرین موقتاً غیرفعال است', 'Workout logging is temporarily disabled')} tone="warning" />,
+      note: <SpecCallout icon={<TriangleAlert />} title={tx(locale, 'ثبت تمرین موقتاً غیرفعال است', 'Workout logging is temporarily disabled')} tone="warning" />,
       action: tx(locale, 'به‌روزرسانی برنامه', 'Refresh plan'),
     },
     completed: {
@@ -106,7 +106,7 @@ function TodayStatus({ locale, state }: { locale: SpecLocale; state: Exclude<Tod
       action: tx(locale, 'دیدن راهنمای ایمنی', 'View safety guidance'),
     },
     'load-error': {
-      icon: <AlertTriangle />, tone: 'danger' as const,
+      icon: <TriangleAlert />, tone: 'danger' as const,
       eyebrow: tx(locale, 'خطای قابل بازیابی', 'Recoverable error'),
       title: tx(locale, 'برنامه امروز دریافت نشد', 'Today’s plan could not be loaded'),
       body: tx(locale, 'نسخه فعال روی دستگاه حذف یا جایگزین نشده است. می‌توانی برنامه ذخیره‌شده را بخوانی و بعداً برای تازه‌سازی دوباره تلاش کنی.', 'The active on-device plan was not deleted or replaced. You can read the saved plan and retry the refresh later.'),
@@ -187,7 +187,7 @@ function PlanOperational({ locale, state }: { locale: SpecLocale; state: PlanOpe
     const data = {
       empty: { tone: 'neutral' as const, icon: <CalendarClock />, title: tx(locale, 'برنامه فعالی نداری', 'No active plan'), body: tx(locale, 'راه‌اندازی یا دسترسی را کامل کن تا یک برنامه برای دوره ساخته شود.', 'Complete setup or access requirements to create a plan for the period.'), action: tx(locale, 'دیدن وضعیت برنامه', 'View plan status') },
       offline: { tone: 'neutral' as const, icon: <WifiOff />, title: tx(locale, 'نسخه ذخیره‌شده برنامه', 'Saved plan copy'), body: tx(locale, 'نسخه مربوط به امروز ساعت ۰۸:۴۲ است و تا برگشت اتصال فقط‌خواندنی می‌ماند.', 'This copy was synced today at 08:42 and remains read-only until connection returns.'), action: tx(locale, 'دیدن نسخه ذخیره‌شده', 'View saved copy') },
-      error: { tone: 'danger' as const, icon: <AlertTriangle />, title: tx(locale, 'نسخه تازه دریافت نشد', 'The latest plan could not be loaded'), body: tx(locale, 'آخرین نسخه ذخیره‌شده سالم است. می‌توانی آن را ببینی یا دوباره برای به‌روزرسانی تلاش کنی.', 'Your last saved version is safe. View it or retry the update.'), action: tx(locale, 'تلاش دوباره', 'Try again') },
+      error: { tone: 'danger' as const, icon: <TriangleAlert />, title: tx(locale, 'نسخه تازه دریافت نشد', 'The latest plan could not be loaded'), body: tx(locale, 'آخرین نسخه ذخیره‌شده سالم است. می‌توانی آن را ببینی یا دوباره برای به‌روزرسانی تلاش کنی.', 'Your last saved version is safe. View it or retry the update.'), action: tx(locale, 'تلاش دوباره', 'Try again') },
     }[state]
     return <ProductFrame active="plan" locale={locale} title={routeTitle}><SpecHeader eyebrow={tx(locale, 'وضعیت برنامه', 'Plan status')} title={data.title} body={data.body} /><SpecCard className="mo-spec__state-card"><span className={`mo-spec__state-icon mo-spec__state-icon--${data.tone}`}>{data.icon}</span>{state === 'error' ? <SpecCallout icon={<CheckCircle2 />} title={tx(locale, 'نسخه ذخیره‌شده همچنان در دسترس است', 'Your cached version remains available')} tone="success">{tx(locale, 'آخرین همگام‌سازی: امروز ۰۸:۴۲ · فقط‌خواندنی', 'Last synced today at 08:42 · read-only')}</SpecCallout> : null}<div className="mo-spec__actions"><SpecButton>{state === 'error' ? <RefreshCw /> : null}{data.action}</SpecButton>{state === 'error' ? <SpecButton kind="secondary">{tx(locale, 'بازکردن نسخه ذخیره‌شده', 'Open cached plan')}</SpecButton> : null}</div></SpecCard></ProductFrame>
   }

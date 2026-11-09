@@ -26,3 +26,8 @@ export function formatReps(reps: string, locale: AppLocale) {
 export function directionFor(locale: AppLocale) {
   return locale === 'fa' ? 'rtl' : 'ltr'
 }
+
+/** A 0–100 value as a percentage in the locale's own sign: ۸۲٪ in Persian, 82% in English. */
+export function formatPercent(value: number, locale: AppLocale, options?: Intl.NumberFormatOptions) {
+  return new Intl.NumberFormat(locale === 'fa' ? 'fa-IR' : 'en-US', { style: 'percent', maximumFractionDigits: 0, ...options }).format(value / 100)
+}

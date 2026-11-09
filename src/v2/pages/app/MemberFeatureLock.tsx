@@ -1,4 +1,4 @@
-import { ArrowRight, LineChart, Repeat, ShoppingBasket } from 'lucide-react'
+import { ArrowRight, ChartLine, Repeat, ShoppingBasket } from 'lucide-react'
 import { Link } from 'wouter'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import type { MemberFeature } from '../../entitlement'
@@ -18,7 +18,7 @@ const copy: Record<MemberFeature, { icon: typeof Repeat; fa: [string, string]; e
     en: ['The shopping list comes with membership', 'Members get every ingredient for the week’s meals, gathered and ready to shop.'],
   },
   'progress-trends': {
-    icon: LineChart,
+    icon: ChartLine,
     fa: ['روند و مقایسه‌ها با عضویت', 'با عضویت، هفته‌ها کنار هم دیده می‌شوند و برنامه ماه بعد از همین روند ساخته می‌شود. ثبت روزانه و چک‌این‌ها رایگان می‌مانند.'],
     en: ['Trends and comparisons come with membership', 'Members see weeks side by side, and next month’s plan is built from that trend. Daily logging and check-ins stay free.'],
   },

@@ -1,10 +1,11 @@
-import { AlertTriangle, BookOpen, Clock3, Database, Flame, X } from 'lucide-react'
+import { BookOpen, Clock3, Database, Flame, TriangleAlert, X } from 'lucide-react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import type { MealChoice } from '../data/types'
 import { formatNumber } from '../lib/format'
 import { Button, StatusPill } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
 import { useModalDismiss } from './use-modal-dismiss'
+import { Notice } from '../ui/feedback'
 
 function nutritionConfidencePill(choice: MealChoice, locale: AppLocale) {
   const labels = {
@@ -67,11 +68,11 @@ export function MealDetailSheet({
           </div>
           <StatusPill tone={choice.confidence === 'estimated' ? 'neutral' : 'success'}>{nutritionConfidencePill(choice, locale)}</StatusPill>
         </div>
-        <div className="inline-notice" role="note">
+        <Notice role="note">
           {fa
             ? `منبع و قیود: برنامه فعال · ${choice.nutritionSource === 'catalog_reference' ? 'کاتالوگ' : choice.nutritionSource === 'verified_database' ? 'پایگاه داده تأییدشده' : choice.nutritionSource === 'food_label' ? 'برچسب غذا' : 'برآورد مدل'}. محدودیت‌های ثبت‌شده حفظ می‌شوند.`
             : `Provenance: active plan · ${choice.nutritionSource === 'catalog_reference' ? 'catalog' : choice.nutritionSource === 'verified_database' ? 'verified database' : choice.nutritionSource === 'food_label' ? 'food label' : 'model estimate'}. Confirmed constraints stay in force.`}
-        </div>
+        </Notice>
         {choice.ingredients?.length ? (
           <section><h3>{fa ? 'مواد لازم' : 'Ingredients'}</h3><ul className="meal-detail-sheet__ingredients">{choice.ingredients.map((item, index) => <li key={`${item.name.en}-${index}`}><span>{item.name[locale]}</span><strong>{formatNumber(item.amount, locale)} {item.unit}</strong></li>)}</ul></section>
         ) : null}
@@ -81,7 +82,7 @@ export function MealDetailSheet({
         {others.length ? (
           <section>
             <h3>{fa ? 'جایگزین‌های هم‌ارزش' : 'Equivalent alternatives'}</h3>
-            <div className="inline-notice">{fa ? 'فقط همین وعده تغییر می‌کند؛ برنامه ماهانه بازتولید نمی‌شود.' : 'Only this meal changes; the monthly plan is not regenerated.'}</div>
+            <Notice live={false}>{fa ? 'فقط همین وعده تغییر می‌کند؛ برنامه ماهانه بازتولید نمی‌شود.' : 'Only this meal changes; the monthly plan is not regenerated.'}</Notice>
             <ul className="meal-detail-sheet__ingredients">
               {others.map((option) => (
                 <li key={option.id}>
@@ -94,7 +95,7 @@ export function MealDetailSheet({
             </ul>
           </section>
         ) : null}
-        {choice.warnings?.length ? <div className="inline-notice inline-notice--warning"><AlertTriangle size={18} /><div>{choice.warnings.map((warning) => <p key={warning.en}>{warning[locale]}</p>)}</div></div> : null}
+        {choice.warnings?.length ? <Notice live={false} tone="warning"><TriangleAlert size={18} /><div>{choice.warnings.map((warning) => <p key={warning.en}>{warning[locale]}</p>)}</div></Notice> : null}
         <Button block onClick={onClose} variant="secondary">{fa ? 'بستن' : 'Close'}</Button>
       </section>
     </ModalShell>

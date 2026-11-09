@@ -107,12 +107,12 @@ export function membershipCopy(status: MembershipStatus, locale: AppLocale) {
   if (status === 'none') {
     return {
       label: fa ? 'بدون عضویت' : 'No membership',
-      detail: fa ? 'یک اشتراک Momentum' : 'One Momentum membership',
+      detail: fa ? 'یک عضویت Momentum' : 'One Momentum membership',
     }
   }
   return {
     label: fa ? 'عضویت Momentum' : 'Momentum membership',
-    detail: fa ? 'یک اشتراک ماهانه · یک برنامه کامل در هر چرخه' : 'One monthly subscription · one complete plan each cycle',
+    detail: fa ? 'یک عضویت ماهانه · یک برنامه کامل در هر چرخه' : 'One monthly subscription · one complete plan each cycle',
   }
 }
 

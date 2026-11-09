@@ -1,4 +1,14 @@
-import { AlertTriangle, CalendarCheck2, CalendarDays, Check, LineChart, Scale, TrendingDown, TrendingUp, Minus } from 'lucide-react'
+import {
+  BatteryMedium,
+  CalendarCheck2,
+  CalendarDays,
+  Check,
+  Minus,
+  Scale,
+  TrendingDown,
+  TrendingUp,
+  TriangleAlert,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'wouter'
@@ -8,7 +18,7 @@ import { currentWeekStart, saveWeeklyCheckIn } from '../../checkins/repository'
 import { eventContext, trackProductEvent } from '../../analytics/events'
 import { LazyOverlay, WeeklyCheckInSheet } from '../../components/LazyOverlay'
 import { localize, type MomentumPlanView } from '../../data/types'
-import { formatNumber } from '../../lib/format'
+import { formatNumber, formatPercent } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
 import { Button, ContentCard, StatusPill } from '../../ui/primitives'
 import { Textarea } from '../../ui/FormControls'
@@ -31,6 +41,9 @@ import {
   type ProgressChartView,
   type ProgressSurface,
 } from './progress-state'
+import { Page, PageHeader, SectionHeader } from '../../ui/layout'
+import { SegmentedControl } from '../../ui/SegmentedControl'
+import { Notice } from '../../ui/feedback'
 import '../../../styles/me.css'
 
 export function ProgressPage({
@@ -111,27 +124,25 @@ export function ProgressPage({
 
   if (view === 'load-error' && !plan) {
     return (
-      <main className="app-page progress-page screen-enter">
+      <Page name="progress">
         <ContentCard className="progress-status-card">
-          <p className="orbit-eyebrow"><AlertTriangle size={15} />{fa ? 'خطای قابل بازیابی' : 'Recoverable error'}</p>
+          <p className="orbit-eyebrow"><TriangleAlert size={15} />{fa ? 'خطای قابل بازیابی' : 'Recoverable error'}</p>
           <h1>{fa ? 'پیشرفت دریافت نشد' : 'Progress could not be loaded'}</h1>
           <p>{fa ? 'داده ذخیره‌شده حذف نشده است. اتصال را بررسی و دوباره تلاش کن.' : 'Saved data was not deleted. Check your connection and try again.'}</p>
           <Button onClick={() => (onRetry ? onRetry() : window.location.reload())}>{fa ? 'تلاش دوباره' : 'Try again'}</Button>
         </ContentCard>
-      </main>
+      </Page>
     )
   }
 
   if (view === 'empty') {
     return (
-      <main className="app-page progress-page screen-enter">
-        <section className="page-heading">
-          <div>
-            <p className="orbit-eyebrow">{fa ? 'شروع مسیر' : 'Getting started'}</p>
-            <h1>{fa ? 'هنوز داده‌ای ثبت نشده' : 'No progress data yet'}</h1>
-            <p>{fa ? 'روندها بعد از چند روز ثبت تمرین یا وعده دیده می‌شوند. این یک نمره نیست.' : 'Trends appear after a few logged workouts or meals. This is not a grade.'}</p>
-          </div>
-        </section>
+      <Page name="progress">
+        <PageHeader
+          eyebrow={fa ? 'شروع مسیر' : 'Getting started'}
+          title={fa ? 'هنوز داده‌ای ثبت نشده' : 'No progress data yet'}
+          description={fa ? 'روندها بعد از چند روز ثبت وعده یا تمرین دیده می‌شوند.' : 'Trends appear after a few days of logged meals or workouts.'}
+        />
         <ContentCard className="progress-weekly-cta">
           <StatusPill>{fa ? 'گزارش هفته' : 'Weekly report'}</StatusPill>
           <h2>{fa ? 'اولین گزارش هفتگی را ثبت کن' : 'Save your first weekly report'}</h2>
@@ -139,7 +150,7 @@ export function ProgressPage({
           <Button disabled={writesLocked} onClick={() => setWeeklyOpen(true)}><CalendarCheck2 size={17} />{fa ? 'شروع گزارش هفتگی' : 'Start weekly report'}</Button>
         </ContentCard>
         {weeklyOpen ? <LazyOverlay><WeeklySheet locale={locale} onClose={() => setWeeklyOpen(false)} onOutcome={setWeeklyOutcome} onSaved={() => setWeeklySaved(true)} plan={plan} preview={preview} /></LazyOverlay> : null}
-      </main>
+      </Page>
     )
   }
 
@@ -153,29 +164,22 @@ export function ProgressPage({
   const weightUnit = usesUsCustomary ? (fa ? 'پوند' : 'lb') : (fa ? 'کیلوگرم' : 'kg')
 
   return (
-    <main className="app-page progress-page screen-enter">
+    <Page name="progress">
       {view === 'offline' || view === 'stale' || (view === 'load-error' && plan) ? (
-        <div className={`inline-notice ${view === 'load-error' ? 'inline-notice--error' : 'inline-notice--warning'} progress-banner`} role="status">
+        <Notice className="progress-banner" tone="warning">
           {view === 'load-error'
             ? (fa ? 'به‌روزرسانی انجام نشد؛ خلاصه ذخیره‌شده نمایش داده می‌شود.' : 'Refresh failed; showing the saved summary.')
             : view === 'offline'
               ? (fa ? `نسخه ذخیره‌شده · آخرین همگام‌سازی ${formatLastSync(syncedAt, locale)}` : `Saved summary · last synced ${formatLastSync(syncedAt, locale)}`)
               : (fa ? 'این خلاصه ممکن است کامل نباشد و تا اتصال دوباره فقط‌خواندنی است.' : 'This summary may be incomplete and stays read-only until reconnection.')}
-        </div>
+        </Notice>
       ) : null}
-      <section className="page-heading">
-        <div>
-          <p className="orbit-eyebrow">{fa ? 'دوره جاری' : 'Current period'}</p>
-          <h1>{t('app.progressTitle')}</h1>
-          <p>{fa ? 'اینجا حرکت همین ماه را می‌بینی: وعده‌ها، تمرین، انرژی و وزن. نمره نیست. هر هفته را با هفته قبلش مقایسه می‌کنیم.' : 'This is the motion of the month: meals, training, energy, and weight. It is not a grade. Each week is compared with the one before it.'}</p>
-        </div>
-        <div className="progress-heading-actions">
-          <StatusPill tone="success">{fa ? `هفته ${formatNumber(weekIndex + 1, locale)} از ${formatNumber(totalWeeks, locale)}` : `Week ${weekIndex + 1} of ${totalWeeks}`}</StatusPill>
-          <Button disabled={writesLocked} onClick={() => setWeeklyOpen(true)} variant="secondary">
-            <CalendarCheck2 size={17} />{weeklySaved ? (fa ? 'گزارش هفته ثبت شد' : 'Weekly report saved') : (fa ? 'گزارش هفتگی' : 'Weekly report')}
-          </Button>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow={fa ? 'دوره جاری' : 'Current period'}
+        title={t('app.progressTitle')}
+        description={fa ? 'وعده‌ها، تمرین، انرژی و وزن این ماه؛ هر هفته کنار هفته قبلش.' : 'Meals, workouts, energy and weight this month, each week next to the one before.'}
+        actions={<><StatusPill tone="success">{fa ? `هفته ${formatNumber(weekIndex + 1, locale)} از ${formatNumber(totalWeeks, locale)}` : `Week ${weekIndex + 1} of ${totalWeeks}`}</StatusPill><Button disabled={writesLocked} onClick={() => setWeeklyOpen(true)} variant="secondary"><CalendarCheck2 size={17} />{weeklySaved ? (fa ? 'گزارش هفته ثبت شد' : 'Weekly report saved') : (fa ? 'گزارش هفتگی' : 'Weekly report')}</Button></>}
+      />
       <ContentCard className="progress-weekly-cta">
         <StatusPill>{fa ? 'گزارش هفته' : 'Weekly report'}</StatusPill>
         <h2>{weeklySaved ? (fa ? 'گزارش این هفته ذخیره شد. برنامه ماه عوض نشد.' : 'This week’s report is saved. This month’s plan is unchanged.') : (fa ? 'گزارش این هفته آماده است' : 'This week’s report is ready')}</h2>
@@ -196,7 +200,7 @@ export function ProgressPage({
             value={cycleNote}
           />
           <span className="me-char-count">{cycleNote.length >= NEXT_CYCLE_NOTE_SOFT ? `${cycleNote.length}/${NEXT_CYCLE_NOTE_MAX}` : null}</span>
-          {noteError ? <div className="inline-notice inline-notice--error" role="alert">{fa ? 'یادداشت ذخیره نشد. متن روی صفحه مانده است.' : 'The note was not saved. Your text remains on this page.'}</div> : null}
+          {noteError ? <Notice tone="error">{fa ? 'یادداشت ذخیره نشد. متن روی صفحه مانده است.' : 'The note was not saved. Your text remains on this page.'}</Notice> : null}
           <div className="progress-next-cycle__actions">
             <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/pricing')}>{fa ? 'شروع عضویت' : 'Start membership'}</Link>
             <Button disabled={writesLocked} loading={noteSaving} onClick={() => void persistNextCycleNote()} variant="secondary">{noteSaved ? (fa ? 'یادداشت ذخیره شد' : 'Note saved') : (fa ? 'ذخیره یادداشت' : 'Save note')}</Button>
@@ -206,9 +210,9 @@ export function ProgressPage({
       {plan ? (
         <div className="progress-metrics-grid">
           <ContentCard><span><Scale size={19} /></span><small>{fa ? 'وزن فعلی' : 'Current weight'}</small><strong>{formatNumber(currentWeight, locale)} {weightUnit}</strong><em>{change < 0 ? <TrendingDown size={15} /> : change > 0 ? <TrendingUp size={15} /> : <Minus size={15} />}<span>{change === 0 ? (fa ? 'بدون تغییر' : 'No change') : `${formatNumber(weightChange, locale)} ${weightUnit} ${change < 0 ? (fa ? 'کاهش' : 'down') : (fa ? 'افزایش' : 'up')}`}</span></em></ContentCard>
-          <ContentCard><span><Check size={19} /></span><small>{t('app.consistency')}</small><strong>{formatNumber(plan.progress.weeklyAdherence, locale)}%</strong><em>{fa ? 'میانگین ۷ روز اخیر' : 'Last 7-day average'}</em></ContentCard>
+          <ContentCard><span><Check size={19} /></span><small>{t('app.consistency')}</small><strong>{formatPercent(plan.progress.weeklyAdherence, locale)}</strong><em>{fa ? 'میانگین ۷ روز اخیر' : 'Last 7-day average'}</em></ContentCard>
           <ContentCard><span><CalendarDays size={19} /></span><small>{t('app.recovery')}</small><strong><RecoveryValue locale={locale} score={plan.progress.recoveryScore} /></strong><em>{plan.progress.recoveryScore == null ? (fa ? 'از چک‌این روزانه' : 'From the daily check-in') : (fa ? 'امتیاز امروز' : 'Today’s score')}</em></ContentCard>
-          <ContentCard><span><LineChart size={19} /></span><small>{fa ? 'انرژی' : 'Energy'}</small><strong>{formatNumber(plan.progress.energyScore, locale)}</strong><em>{fa ? 'بدون فشار روند متوالی' : 'No streak pressure'}</em></ContentCard>
+          <ContentCard><span><BatteryMedium size={19} /></span><small>{fa ? 'انرژی' : 'Energy'}</small><strong>{formatNumber(plan.progress.energyScore, locale)}</strong><em>{fa ? 'بدون فشار روند متوالی' : 'No streak pressure'}</em></ContentCard>
         </div>
       ) : null}
       {showTrends ? (
@@ -216,21 +220,26 @@ export function ProgressPage({
           {plan && series.length > 0 ? <WeekComparisonStrip locale={locale} series={series} /> : null}
           <div className="progress-chart-grid">
           <ContentCard className="trend-card">
-            <div className="section-title-row">
-              <div>
-                <p className="orbit-eyebrow">{fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence'}</p>
-                <h2>{chartView === 'text' ? (fa ? 'خلاصه متنی' : 'Text summary') : chartView === 'table' ? (fa ? 'جدول داده' : 'Data table') : (fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence')}</h2>
-              </div>
-            </div>
-            <div className="progress-chart-content" key={chartView}>
+            <SectionHeader
+              eyebrow={fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence'}
+              title={chartView === 'text' ? (fa ? 'خلاصه متنی' : 'Text summary') : chartView === 'table' ? (fa ? 'جدول داده' : 'Data table') : (fa ? 'پایبندی برنامه ماهانه' : 'Monthly-plan adherence')}
+            />
+            <SegmentedControl
+              className="progress-chart-switch"
+              idPrefix="progress-chart"
+              items={[
+                { value: 'chart', label: fa ? 'نمودار' : 'Chart' },
+                { value: 'text', label: fa ? 'خلاصه متنی' : 'Text summary' },
+                { value: 'table', label: fa ? 'جدول' : 'Table' },
+              ]}
+              label={fa ? 'نمایش داده' : 'Show data as'}
+              onChange={setChartView}
+              value={chartView}
+            />
+            <div aria-labelledby={`progress-chart-tab-${chartView}`} className="progress-chart-content" id={`progress-chart-panel-${chartView}`} key={chartView} role="tabpanel">
               {chartView === 'chart' ? <WeekBars locale={locale} series={series} /> : null}
               {chartView === 'text' ? <p className="progress-text-alt">{textSummary(series, locale)}</p> : null}
               {chartView === 'table' ? <ProgressTable locale={locale} series={series} /> : null}
-            </div>
-            <div className="progress-chart-actions">
-              <Button aria-pressed={chartView === 'chart'} onClick={() => setChartView('chart')} variant={chartView === 'chart' ? 'primary' : 'secondary'}>{fa ? 'نمودار' : 'Chart'}</Button>
-              <Button aria-pressed={chartView === 'text'} onClick={() => setChartView('text')} variant={chartView === 'text' ? 'primary' : 'secondary'}>{fa ? 'خلاصه متنی نمودار' : 'Text chart summary'}</Button>
-              <Button aria-pressed={chartView === 'table'} onClick={() => setChartView('table')} variant={chartView === 'table' ? 'primary' : 'secondary'}>{fa ? 'نمایش جدول' : 'View data table'}</Button>
             </div>
           </ContentCard>
           {plan && series.length > 0 ? (
@@ -257,12 +266,12 @@ export function ProgressPage({
       ) : plan ? <MemberFeatureLock feature="progress-trends" locale={locale} /> : null}
       {plan ? (
         <ContentCard className="checkin-history-card">
-          <div className="section-title-row"><h2>{fa ? 'چک‌این‌های اخیر' : 'Recent check-ins'}</h2><CalendarDays size={18} /></div>
-          <ul>{plan.progress.recentCheckIns.map((checkIn) => <li key={`${checkIn.date.en}-${checkIn.score}`}><span><strong>{localize(checkIn.date, locale)}</strong><small>{localize(checkIn.note, locale)}</small></span><em>{formatNumber(checkIn.score, locale)}%</em></li>)}</ul>
+          <SectionHeader meta={<CalendarDays size={18} />} title={fa ? 'چک‌این‌های اخیر' : 'Recent check-ins'} />
+          <ul>{plan.progress.recentCheckIns.map((checkIn) => <li key={`${checkIn.date.en}-${checkIn.score}`}><span><strong>{localize(checkIn.date, locale)}</strong><small>{localize(checkIn.note, locale)}</small></span><em>{formatPercent(checkIn.score, locale)}</em></li>)}</ul>
         </ContentCard>
       ) : null}
       {weeklyOpen ? <LazyOverlay><WeeklySheet locale={locale} onClose={() => setWeeklyOpen(false)} onOutcome={setWeeklyOutcome} onSaved={() => setWeeklySaved(true)} plan={plan} preview={preview} /></LazyOverlay> : null}
-    </main>
+    </Page>
   )
 }
 
@@ -339,10 +348,7 @@ function WeeklyOutcomeCard({ locale, outcome }: { locale: AppLocale; outcome: 'n
     },
   }[outcome]
   return (
-    <div className={`inline-notice ${outcome === 'normal' ? 'inline-notice--success' : 'inline-notice--warning'}`} role="status">
-      <strong>{copy.title}</strong>
-      <span> {copy.body}</span>
-    </div>
+    <Notice title={copy.title} tone={outcome === 'normal' ? 'success' : 'warning'}>{copy.body}</Notice>
   )
 }
 
@@ -351,10 +357,10 @@ function WeekBars({ locale, series }: { locale: AppLocale; series: ReturnType<ty
   return (
     <div className="progress-week-bars">
       {series.map((item) => (
-        <div className="progress-week-bars__row" key={item.week}>
+        <div className={`progress-week-bars__row${item.partial ? ' is-partial' : ''}`} key={item.week}>
           <small>{item.partial ? (fa ? `هفته ${formatNumber(item.week, locale)} · ناقص` : `Week ${item.week} · partial`) : (fa ? `هفته ${formatNumber(item.week, locale)}` : `Week ${item.week}`)}</small>
           <span className="progress-week-bars__track"><i className="progress-week-bars__fill" style={{ width: `${Math.min(100, item.adherence)}%` }} /></span>
-          <strong>{formatNumber(item.adherence, locale)}%</strong>
+          <strong>{formatPercent(item.adherence, locale)}</strong>
         </div>
       ))}
     </div>
@@ -382,7 +388,7 @@ function ProgressTable({ locale, series }: { locale: AppLocale; series: ReturnTy
             <td>{`${formatNumber(item.workoutsCompleted, locale)} / ${formatNumber(item.workoutsPlanned, locale)}`}</td>
             <td>{`${formatNumber(item.mealsCompleted, locale)} / ${formatNumber(item.mealsPlanned, locale)}`}</td>
             <td>{formatNumber(item.energy, locale, { maximumFractionDigits: 1 })}</td>
-            <td>{formatNumber(item.adherence, locale)}%</td>
+            <td>{formatPercent(item.adherence, locale)}</td>
           </tr>
         ))}
       </tbody>
@@ -402,7 +408,7 @@ function textSummary(series: ReturnType<typeof resolveWeeklySeries>, locale: App
 function ProgressLoadingSkeleton({ locale }: { locale: AppLocale }) {
   const fa = locale === 'fa'
   return (
-    <main aria-busy="true" aria-label={fa ? 'در حال بارگذاری پیشرفت' : 'Loading progress'} className="app-page progress-page progress-skeleton screen-enter">
+    <Page name="progress" busyLabel={fa ? 'در حال بارگذاری پیشرفت' : 'Loading progress'} className="progress-skeleton">
       <div className="progress-skeleton__heading">
         <div className="progress-skeleton__block progress-skeleton__line progress-skeleton__line--short" />
         <div className="progress-skeleton__block progress-skeleton__line progress-skeleton__line--title" />
@@ -416,6 +422,6 @@ function ProgressLoadingSkeleton({ locale }: { locale: AppLocale }) {
         <div className="progress-skeleton__block progress-skeleton__chart progress-skeleton__chart--side" />
       </div>
       <p className="progress-skeleton__note">{fa ? 'در حال چیدن پیشرفت ماه…' : 'Setting up this month’s progress…'}</p>
-    </main>
+    </Page>
   )
 }

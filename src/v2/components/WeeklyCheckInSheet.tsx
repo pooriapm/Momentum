@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, Check, X } from 'lucide-react'
+import { ChartLine, Check, TriangleAlert, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
 import {
@@ -7,11 +7,12 @@ import {
   type WeeklyCheckInResult,
 } from '../checkins/contracts'
 import { formatNumber } from '../lib/format'
-import { RequiredMark, Select, Textarea } from '../ui/FormControls'
+import { Checkbox, RequiredMark, Select, Textarea } from '../ui/FormControls'
 import { FieldReveal } from '../ui/FieldReveal'
 import { Button } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
 import { useModalDismiss } from './use-modal-dismiss'
+import { Notice } from '../ui/feedback'
 
 const scoreOptions = [1, 2, 3, 4, 5]
 const redFlagOptions = [
@@ -90,7 +91,7 @@ export function WeeklyCheckInSheet({
     return (
       <ModalShell className="check-in-sheet weekly-check-in-sheet" labelId="weekly-result-title" material="content" onClose={onDismiss} ref={modalRef}>
         <header>
-          <div><p className="orbit-eyebrow"><BarChart3 size={15} />{fa ? 'مقایسه هفتگی' : 'Weekly comparison'}</p><h2 id="weekly-result-title">{fa ? 'چک‌این هفتگی ذخیره شد' : 'Weekly check-in saved'}</h2></div>
+          <div><p className="orbit-eyebrow"><ChartLine size={15} />{fa ? 'مقایسه هفتگی' : 'Weekly comparison'}</p><h2 id="weekly-result-title">{fa ? 'چک‌این هفتگی ذخیره شد' : 'Weekly check-in saved'}</h2></div>
           <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
         </header>
         <div className="weekly-trend-summary">
@@ -102,7 +103,7 @@ export function WeeklyCheckInSheet({
         <p className="weekly-trend-summary__coverage">{fa
           ? `${formatNumber(trend.current_daily_count, locale)} ثبت روزانه این هفته با ${formatNumber(trend.previous_daily_count, locale)} ثبت هفته قبل مقایسه شد.`
           : `${trend.current_daily_count} daily logs this week were compared with ${trend.previous_daily_count} from the prior week.`}</p>
-        {referral ? <div className="check-in-safety-result check-in-safety-result--caution" role="status"><AlertTriangle size={25} /><div><strong>{fa ? 'پیش از ادامه با یک متخصص صحبت کن.' : 'Talk with a qualified professional before continuing.'}</strong><p>{fa ? 'این تشخیص یا وضعیت فوری نیست. برنامه ماه بازتولید نمی‌شود.' : 'This is not a diagnosis or emergency. The monthly plan is not regenerated.'}</p></div></div> : urgent || caution ? <div className={`check-in-safety-result check-in-safety-result--${result.safety.level}`} role="alert"><AlertTriangle size={25} /><div><strong>{urgent ? (fa ? 'فعلاً فعالیت را متوقف کن.' : 'Stop activity for now.') : (fa ? 'این هفته با احتیاط پیش برو.' : 'Take extra care this week.')}</strong><p>{urgent ? (fa ? 'اگر علائم شدید، ناگهانی یا ادامه‌دار هستند همین حالا با اورژانس محلی یا متخصص واجد شرایط تماس بگیر. Momentum سرویس اورژانسی نیست.' : 'If symptoms are severe, sudden, or ongoing, contact local emergency services or a qualified clinician now. Momentum is not an emergency service.') : (fa ? 'با بدترشدن درد یا شرایط، تمرین را متوقف کن و با متخصص واجد شرایط گفتگو کن.' : 'If pain or symptoms worsen, stop training and speak with a qualified clinician.')}</p></div></div> : null}
+        {referral ? <div className="check-in-safety-result check-in-safety-result--caution" role="status"><TriangleAlert size={25} /><div><strong>{fa ? 'پیش از ادامه با یک متخصص صحبت کن.' : 'Talk with a qualified professional before continuing.'}</strong><p>{fa ? 'این تشخیص یا وضعیت فوری نیست. برنامه ماه بازتولید نمی‌شود.' : 'This is not a diagnosis or emergency. The monthly plan is not regenerated.'}</p></div></div> : urgent || caution ? <div className={`check-in-safety-result check-in-safety-result--${result.safety.level}`} role="alert"><TriangleAlert size={25} /><div><strong>{urgent ? (fa ? 'فعلاً فعالیت را متوقف کن.' : 'Stop activity for now.') : (fa ? 'این هفته با احتیاط پیش برو.' : 'Take extra care this week.')}</strong><p>{urgent ? (fa ? 'اگر علائم شدید، ناگهانی یا ادامه‌دار هستند همین حالا با اورژانس محلی یا متخصص واجد شرایط تماس بگیر. Momentum سرویس اورژانسی نیست.' : 'If symptoms are severe, sudden, or ongoing, contact local emergency services or a qualified clinician now. Momentum is not an emergency service.') : (fa ? 'با بدترشدن درد یا شرایط، تمرین را متوقف کن و با متخصص واجد شرایط گفتگو کن.' : 'If pain or symptoms worsen, stop training and speak with a qualified clinician.')}</p></div></div> : null}
         <Button block onClick={onClose} type="button"><Check size={18} />{fa ? 'تمام' : 'Done'}</Button>
       </ModalShell>
     )
@@ -122,17 +123,17 @@ export function WeeklyCheckInSheet({
           <Select label={fa ? 'روند درد یا ناراحتی' : 'Pain or discomfort trend'} onChange={(event) => setPainTrend(event.target.value as WeeklyCheckInInput['painTrend'])} required value={painTrend}><option value="no_pain">{fa ? 'درد نداشتم' : 'No pain'}</option><option value="improved">{fa ? 'بهتر شد' : 'Improved'}</option><option value="stable">{fa ? 'بدون تغییر' : 'Stable'}</option><option value="worse">{fa ? 'بدتر شد' : 'Worse'}</option></Select>
           <Select label={fa ? 'تغییر وضعیت سلامتی' : 'Health condition change'} onChange={(event) => setConditionChange(event.target.value as WeeklyCheckInInput['conditionChange'])} required value={conditionChange}><option value="none">{fa ? 'بدون تغییر' : 'No change'}</option><option value="new_condition">{fa ? 'شرایط یا تشخیص جدید' : 'New condition or diagnosis'}</option><option value="medication_change">{fa ? 'تغییر دارو' : 'Medication change'}</option><option value="injury_or_worsening_pain">{fa ? 'آسیب یا درد رو به بدترشدن' : 'Injury or worsening pain'}</option><option value="other">{fa ? 'تغییر دیگر' : 'Other change'}</option></Select>
         </div>
-        <label className="weekly-change-toggle"><input checked={circumstancesChanged} onChange={(event) => setCircumstancesChanged(event.target.checked)} type="checkbox" /><span><strong>{fa ? 'شرایط زندگی یا برنامه‌ام تغییر کرده' : 'My circumstances or schedule changed'}</strong><small>{fa ? 'مثل سفر، شیفت کاری، استرس یا دسترسی به غذا و باشگاه' : 'For example travel, work shifts, stress, or access to food and training'}</small></span></label>
+        <Checkbox checked={circumstancesChanged} description={fa ? 'مثل سفر، شیفت کاری، استرس یا دسترسی به غذا و باشگاه' : 'For example travel, work shifts, stress, or access to food and training'} label={fa ? 'شرایط زندگی یا برنامه‌ام تغییر کرده' : 'My circumstances or schedule changed'} onChange={(event) => setCircumstancesChanged(event.target.checked)} />
         <FieldReveal open={circumstancesChanged || conditionChange !== 'none'}>
           <Textarea label={fa ? 'چه چیزی تغییر کرده؟' : 'What changed?'} maxLength={2000} onChange={(event) => setChangeNotes(event.target.value)} required rows={3} value={changeNotes} />
         </FieldReveal>
         <fieldset className="check-in-red-flags">
           <legend>{fa ? 'آیا همین حالا یکی از این علائم را داری؟' : 'Are you experiencing any of these symptoms now?'}</legend>
           <p>{fa ? 'اگر بله، تمرین را شروع نکن یا ادامه نده.' : 'If yes, do not start or continue training.'}</p>
-          <div>{redFlagOptions.map((option) => <label key={option.key}><input checked={redFlags.includes(option.key)} onChange={() => toggleRedFlag(option.key)} type="checkbox" /><span>{fa ? option.fa : option.en}</span></label>)}</div>
+          <div>{redFlagOptions.map((option) => <Checkbox checked={redFlags.includes(option.key)} key={option.key} label={fa ? option.fa : option.en} onChange={() => toggleRedFlag(option.key)} />)}</div>
         </fieldset>
         <Textarea label={fa ? 'یادداشت هفتگی (اختیاری)' : 'Weekly notes (optional)'} maxLength={2000} onChange={(event) => setNotes(event.target.value)} rows={3} value={notes} />
-        {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
+        {error ? <Notice tone="error">{error}</Notice> : null}
         <Button block loading={saving} type="submit"><Check size={18} />{fa ? 'ثبت و محاسبه روند' : 'Save and calculate trend'}</Button>
       </form>
     </ModalShell>

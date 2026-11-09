@@ -1090,7 +1090,7 @@
 }
 
 .mo-spec__weekly-cta {
-  border-color: color-mix(in srgb, var(--spec-brand) 55%, var(--spec-line));
+  border-color: color-mix(in srgb, var(--spec-brand) 55%, var(--spec-border));
   box-shadow: 0 12px 32px color-mix(in srgb, var(--spec-brand) 16%, transparent);
 }
 

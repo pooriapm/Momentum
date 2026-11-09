@@ -3,7 +3,7 @@
   display: flex;
   justify-content: center;
   min-height: 70vh;
-  padding: 2rem;
+  padding: var(--space-8);
   text-align: center;
 }
 
@@ -11,16 +11,16 @@
   align-items: stretch;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: var(--space-3);
   max-width: 36rem;
-  padding: 2rem;
+  padding: var(--space-8);
   text-align: start;
 }
 
 .entitlement-gate__icon {
   align-items: center;
   background: var(--color-brand-soft);
-  border-radius: 1.1rem;
+  border-radius: var(--radius-inset);
   color: var(--color-brand);
   display: flex;
   height: 4rem;
@@ -29,7 +29,7 @@
 }
 
 .entitlement-gate h1 {
-  font-size: 1.5rem;
+  font-size: var(--text-title2);
   margin: 0;
 }
 
@@ -41,8 +41,8 @@
 
 .entitlement-gate__actions {
   display: grid;
-  gap: 0.6rem;
-  margin-top: 0.4rem;
+  gap: var(--space-2);
+  margin-top: var(--space-1_5);
 }
 
 .pricing-card.is-exhausted {
@@ -53,12 +53,12 @@
 .member-lock {
   align-items: start;
   display: grid;
-  gap: .7rem;
+  gap: var(--space-3);
   justify-items: start;
-  padding: 1.5rem;
+  padding: var(--space-6);
 }
 
-.member-lock h2 { font-size: 1.2rem; margin: 0; }
+.member-lock h2 { font-size: var(--text-title3); margin: 0; }
 .member-lock p { color: var(--color-text-secondary); line-height: 1.75; margin: 0; max-width: 34rem; }
 
 .member-lock--compact {
@@ -69,11 +69,11 @@
   color: var(--color-text-secondary);
   display: flex;
   flex-wrap: wrap;
-  font-size: .85rem;
-  gap: .45rem .6rem;
-  margin-top: .6rem;
-  padding: .6rem .8rem;
+  font-size: var(--text-label);
+  gap: var(--space-2) var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
 }
 
 .member-lock--compact svg { color: var(--color-brand); flex: none; }
-.member-lock--compact a { color: var(--color-text); font-weight: 700; margin-inline-start: auto; text-decoration: underline; text-underline-offset: .2em; }
+.member-lock--compact a { color: var(--color-text); font-weight: var(--weight-bold); margin-inline-start: auto; text-decoration: underline; text-underline-offset: .2em; }

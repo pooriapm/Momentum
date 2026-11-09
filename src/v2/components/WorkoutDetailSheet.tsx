@@ -7,6 +7,7 @@ import { Button, StatusPill } from '../ui/primitives'
 import { ExerciseGuide } from './ExerciseGuide'
 import { ModalShell } from './ModalShell'
 import { useModalDismiss } from './use-modal-dismiss'
+import { Notice } from '../ui/feedback'
 
 export function WorkoutDetailSheet({
   locale,
@@ -77,11 +78,11 @@ export function WorkoutDetailSheet({
             </li>
           ))}
         </ul>
-        <div className="inline-notice" role="note">
+        <Notice role="note">
           {fa
             ? 'جایگزین از کاتالوگ همان الگوی حرکتی است. اثر انتخاب قبل از ذخیره دیده می‌شود و برنامه ماهانه بازتولید نمی‌شود.'
             : 'Catalog substitutes keep the same movement pattern. The consequence is shown before saving and the monthly plan is not regenerated.'}
-        </div>
+        </Notice>
         <Button block onClick={onClose} variant="secondary">{fa ? 'بستن' : 'Close'}</Button>
       </section>
     </ModalShell>
@@ -115,7 +116,7 @@ export function PlanSubstitutionSheet({
           </div>
           <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
         </header>
-        <div className="inline-notice" role="status">{consequence}</div>
+        <Notice>{consequence}</Notice>
         <ul className="meal-detail-sheet__ingredients">
           {options.map((option) => (
             <li key={option}>

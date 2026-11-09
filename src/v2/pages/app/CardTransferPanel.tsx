@@ -10,6 +10,7 @@ import {
 } from '../../data/payments'
 import { formatNumber } from '../../lib/format'
 import { Button } from '../../ui/primitives'
+import { Notice } from '../../ui/feedback'
 import './card-transfer.css'
 
 function groupCard(cardNumber: string, locale: AppLocale) {
@@ -105,7 +106,7 @@ export function CardTransferPanel({
   }
 
   if (loadFailed) {
-    return <div className="inline-notice inline-notice--error" role="alert">{fa ? 'پرداخت کارت به کارت الان در دسترس نیست. بعداً دوباره سر بزن.' : 'Card transfer is not available right now. Please check back later.'}</div>
+    return <Notice tone="error">{fa ? 'پرداخت کارت به کارت الان در دسترس نیست. بعداً دوباره سر بزن.' : 'Card transfer is not available right now. Please check back later.'}</Notice>
   }
   if (!details) return <div aria-busy="true" className="card-transfer card-transfer--loading" />
 
@@ -144,7 +145,7 @@ export function CardTransferPanel({
           <input accept="image/jpeg,image/png,image/webp" disabled={uploading || preview} onChange={(event) => void chooseFile(event.target.files?.[0])} ref={fileInput} type="file" />
         </label>
       )}
-      {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
+      {error ? <Notice tone="error">{error}</Notice> : null}
       <div className="card-transfer__actions">
         <Button onClick={onCancel} variant="secondary">{fa ? 'انصراف' : 'Cancel'}</Button>
         <Button disabled={!receipt || preview} loading={submitting} onClick={() => void submit()}>{fa ? 'ثبت رسید پرداخت' : 'Submit receipt'}</Button>

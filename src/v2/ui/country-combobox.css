@@ -4,6 +4,6 @@
 }
 
 .country-combobox__option.is-active {
-  outline: 2px solid color-mix(in srgb, var(--color-brand) 55%, transparent);
-  outline-offset: -2px;
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-inset-offset);
 }

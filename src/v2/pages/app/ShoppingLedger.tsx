@@ -18,6 +18,8 @@ import {
 } from '../../data/shopping'
 import { localize, type MomentumPlanView } from '../../data/types'
 import { Button, ContentCard } from '../../ui/primitives'
+import { Notice } from '../../ui/feedback'
+import { SegmentedControl } from '../../ui/SegmentedControl'
 
 const SHOPPING_PURCHASES_QUERY = ['shopping-purchases'] as const
 
@@ -130,22 +132,26 @@ export function ShoppingLedger({
     <div className="plan-grocery shopping-ledger" data-inventory="PLAN-04">
       <ContentCard className="plan-grocery__list">
         <div className="shopping-ledger__head">
-          <div aria-label={fa ? 'بازه خرید' : 'Shopping window'} className="shopping-ledger__scope" role="group">
-            <button aria-pressed={scope === 'week'} onClick={() => setScope('week')} type="button">{fa ? 'این هفته' : 'This week'}</button>
-            <button aria-pressed={scope === 'plan'} onClick={() => setScope('plan')} type="button">{fa ? 'کل برنامه' : 'Whole plan'}</button>
-          </div>
+          <SegmentedControl
+            className="shopping-ledger__scope"
+            idPrefix="shopping-scope"
+            items={[{ value: 'week', label: fa ? 'این هفته' : 'This week' }, { value: 'plan', label: fa ? 'کل برنامه' : 'Whole plan' }]}
+            label={fa ? 'بازه خرید' : 'Shopping window'}
+            onChange={setScope}
+            value={scope}
+          />
           <p>{fa
             ? `${formatNumber(range.days, locale)} روز، تا ${shortDate(range.end, locale)} · ${formatNumber(remaining, locale)} قلم مانده`
             : `${range.days} days, until ${shortDate(range.end, locale)} · ${remaining} left to buy`}</p>
         </div>
         {loadFailed ? (
-          <div className="inline-notice" role="alert">
+          <Notice>
             {fa ? 'خریدهای قبلی بارگیری نشد.' : 'Your earlier purchases could not be loaded.'}
             <Button onClick={() => void purchasesQuery.refetch()} variant="secondary">{fa ? 'دوباره' : 'Retry'}</Button>
-          </div>
+          </Notice>
         ) : null}
-        {error ? <div className="inline-notice" role="alert">{error}</div> : null}
-        <ul aria-busy={loading} className="shopping-ledger__list">
+        {error ? <Notice>{error}</Notice> : null}
+        <ul aria-busy={loading} aria-labelledby={`shopping-scope-tab-${scope}`} className="shopping-ledger__list" id={`shopping-scope-panel-${scope}`} role="tabpanel">
           {lines.map((line) => {
             const tickable = line.covered ? Boolean(lastPurchaseFor(line, purchases)) : PURCHASABLE_UNITS.has(line.unit)
             return (

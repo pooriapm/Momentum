@@ -5,6 +5,7 @@ import type { AppLocale } from '../../../platform/i18n/catalog'
 import { localizedPath } from '../../router/route-utils'
 import { ContentCard, StatusPill } from '../../ui/primitives'
 import { PAYMENTS_LIVE, paywallInventoryId, type EntitlementSnapshot } from '../../entitlement'
+import { Notice } from '../../ui/feedback'
 import '../../entitlement/entitlement.css'
 
 export function EntitlementGate({ locale, snapshot }: { locale: AppLocale; snapshot: EntitlementSnapshot }) {
@@ -28,9 +29,9 @@ export function EntitlementGate({ locale, snapshot }: { locale: AppLocale; snaps
         <StatusPill tone={copy.tone}>{copy.eyebrow}</StatusPill>
         <h1>{copy.title}</h1>
         <p>{copy.body}</p>
-        <div className="inline-notice" role="status">{t('entitlement.oneSku')} {t('entitlement.notTrial')}</div>
-        <div className="inline-notice" role="note">{t('entitlement.generationBlocked')}</div>
-        {!PAYMENTS_LIVE ? <div className="inline-notice" role="note">{t('entitlement.paymentsNotLive')}</div> : null}
+        <Notice>{t('entitlement.oneSku')} {t('entitlement.notTrial')}</Notice>
+        <Notice role="note">{t('entitlement.generationBlocked')}</Notice>
+        {!PAYMENTS_LIVE ? <Notice role="note">{t('entitlement.paymentsNotLive')}</Notice> : null}
         <div className="entitlement-gate__actions">
           <Link className="orbit-button orbit-button--primary" href={primaryHref}>{primaryLabel}</Link>
           <Link className="orbit-button orbit-button--secondary" href={pricingHref}>{t('entitlement.viewPricing')}</Link>

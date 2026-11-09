@@ -2,13 +2,13 @@
   display: grid;
   grid-template-rows: 1fr;
   opacity: 1;
-  animation: field-reveal-open 320ms ease both;
+  animation: field-reveal-open var(--motion-glass-morph) ease both;
 }
 
 .field-reveal__clip {
   min-height: 0;
   overflow: visible;
-  animation: field-reveal-clip 320ms step-end both;
+  animation: field-reveal-clip var(--motion-glass-morph) step-end both;
 }
 
 .field-reveal__content {

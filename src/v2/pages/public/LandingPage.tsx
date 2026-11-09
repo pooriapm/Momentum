@@ -2,14 +2,15 @@ import {
   ArrowRight,
   ArrowUp,
   CalendarDays,
+  ChartLine,
   Check,
   ChevronDown,
   Dumbbell,
-  LineChart,
   Repeat,
   ShieldCheck,
   ShoppingBasket,
   Sun,
+  UtensilsCrossed,
   type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -19,6 +20,7 @@ import { formatNumber } from '../../lib/format'
 import { localizedPath } from '../../router/route-utils'
 import { PublicFooter, PublicHeader } from '../../components/PublicChrome'
 import { GlassChrome } from '../../ui/primitives'
+import { MonthDial } from '../../ui/MonthDial'
 import { OrbitMark } from '../../ui/OrbitMark'
 import { Reveal } from '../../ui/Reveal'
 import './landing.css'
@@ -32,6 +34,7 @@ const copy = {
     start: 'برنامه‌ام را بساز',
     sample: 'دیدن نمونه',
     trust: ['غذا و تمرین در یک برنامه', 'فارسی و انگلیسی', 'داده سلامت برای تبلیغ فروخته نمی‌شود'],
+    legend: { food: 'روزهای گذشته', training: 'روز تمرین', today: 'امروز' },
     preview: {
       label: 'نمونه صفحه امروز در Momentum',
       day: 'روز ۱۲ از ۳۰',
@@ -48,6 +51,17 @@ const copy = {
       startWorkout: 'شروع تمرین',
       streak: 'هفته ۳ · ۸۴٪ پایبندی',
     },
+    dayEyebrow: 'یک روز از ماه',
+    dayTitle: 'هر روز، از قبل چیده شده.',
+    dayBody: 'صبح که برنامه را باز کنی، روز جلویت است: چه بخوری، کی تمرین کنی، و بعدش چه. لازم نیست هر روز از نو تصمیم بگیری.',
+    dayLabel: 'نمونه یک روز در برنامه',
+    ribbon: [
+      { time: '۰۷:۳۰', kind: 'food', title: 'صبحانه', body: 'املت سبزیجات و نان سنگک' },
+      { time: '۱۰:۳۰', kind: 'food', title: 'میان‌وعده', body: 'ماست یونانی و گردو' },
+      { time: '۱۳:۰۰', kind: 'food', title: 'ناهار', body: 'مرغ زعفرانی و سالاد شیرازی' },
+      { time: '۱۸:۰۰', kind: 'training', title: 'تمرین', body: 'قدرتی پایین‌تنه · ۴۸ دقیقه' },
+      { time: '۲۰:۳۰', kind: 'food', title: 'شام', body: 'عدس‌پلو با ماست' },
+    ],
     howEyebrow: 'چطور کار می‌کند',
     howTitle: 'سه قدم تا یک ماه منظم',
     steps: [
@@ -60,13 +74,13 @@ const copy = {
       {
         title: 'برنامه سی‌روزه‌ات را بگیر',
         body: 'همه وعده‌ها، همه تمرین‌ها و فهرست خرید، برای کل ماه و در یک جا.',
-        image: '/landing/training.jpg',
+        image: '/landing/training.webp',
         alt: 'تمرین قدرتی با دمبل، در نور پنجره خانه',
       },
       {
         title: 'هر روز دنبالش کن',
         body: 'امروز را باز کن و وعده و تمرین بعدی را ببین. یک روز جا ماند؟ بقیه ماه سر جایش است.',
-        image: '/landing/continue.jpg',
+        image: '/landing/continue.webp',
         alt: 'ادامه راه در نور صبح',
       },
     ],
@@ -80,6 +94,8 @@ const copy = {
       ['روند پیشرفت', 'وزن، پایبندی، ریکاوری و گزارش هفتگی، هفته به هفته.'],
       ['ماه بعد', 'وقتی دوره تمام شد، برنامه بعدی از همین ماه ساخته می‌شود؛ نه از صفر.'],
     ],
+    setLog: { set: 'ست', kg: 'کیلو', reps: 'تکرار' },
+    shopping: ['برنج ایرانی', 'سینه مرغ', 'زعفران', 'خیار و گوجه'],
     faqEyebrow: 'پرسش‌های رایج',
     faqTitle: 'پیش از شروع بدان',
     faq: [
@@ -92,6 +108,7 @@ const copy = {
     pricingLink: 'دیدن قیمت‌ها',
     safety: 'Momentum پزشک یا متخصص تغذیه نیست و جای اورژانس را نمی‌گیرد. این برنامه برای سلامت عمومی بزرگسالان است.',
     safetyLink: 'مرز ایمنی',
+    finalKicker: 'سی روز',
     finalTitle: 'این ماه را با یک برنامه شروع کن.',
     finalBody: 'چند سؤال درباره خودت، و برنامه غذا و تمرین سی‌روزه‌ات آماده می‌شود.',
     top: 'بازگشت به بالا',
@@ -104,6 +121,7 @@ const copy = {
     start: 'Build my plan',
     sample: 'See a sample',
     trust: ['Meals and workouts in one plan', 'Persian and English', 'Health data never sold for ads'],
+    legend: { food: 'Days behind you', training: 'Training day', today: 'Today' },
     preview: {
       label: 'Sample of the Momentum Today screen',
       day: 'Day 12 of 30',
@@ -120,6 +138,17 @@ const copy = {
       startWorkout: 'Start workout',
       streak: 'Week 3 · 84% consistency',
     },
+    dayEyebrow: 'One day of the month',
+    dayTitle: 'Every day, already laid out.',
+    dayBody: 'Open the plan in the morning and the day is there: what to eat, when to train, what comes next. No deciding from scratch.',
+    dayLabel: 'A sample day in the plan',
+    ribbon: [
+      { time: '07:30', kind: 'food', title: 'Breakfast', body: 'Herb omelette, sangak bread' },
+      { time: '10:30', kind: 'food', title: 'Snack', body: 'Greek yoghurt and walnuts' },
+      { time: '13:00', kind: 'food', title: 'Lunch', body: 'Saffron chicken, Shirazi salad' },
+      { time: '18:00', kind: 'training', title: 'Training', body: 'Lower-body strength · 48 min' },
+      { time: '20:30', kind: 'food', title: 'Dinner', body: 'Lentil rice with yoghurt' },
+    ],
     howEyebrow: 'How it works',
     howTitle: 'Three steps to a steady month',
     steps: [
@@ -132,13 +161,13 @@ const copy = {
       {
         title: 'Get your thirty-day plan',
         body: 'Every meal, every workout, and the shopping list for the whole month, in one place.',
-        image: '/landing/training.jpg',
+        image: '/landing/training.webp',
         alt: 'A strength session with a dumbbell, in window light at home',
       },
       {
         title: 'Follow it day by day',
         body: 'Open Today for the next meal and session. Missed a day? The rest of the month is still there.',
-        image: '/landing/continue.jpg',
+        image: '/landing/continue.webp',
         alt: 'Walking on into the morning light',
       },
     ],
@@ -152,6 +181,8 @@ const copy = {
       ['Progress', 'Weight, consistency, recovery, and a weekly report, week by week.'],
       ['Next month', 'When the period ends, the next plan builds on this one, not a blank page.'],
     ],
+    setLog: { set: 'Set', kg: 'kg', reps: 'Reps' },
+    shopping: ['Basmati rice', 'Chicken breast', 'Saffron', 'Cucumber, tomato'],
     faqEyebrow: 'FAQ',
     faqTitle: 'Know before you start',
     faq: [
@@ -164,13 +195,18 @@ const copy = {
     pricingLink: 'See pricing',
     safety: 'Momentum is not a doctor or a dietitian, and it is not an emergency service. The plan is for adult general wellness.',
     safetyLink: 'Safety boundary',
+    finalKicker: 'Thirty days',
     finalTitle: 'Start this month with a plan.',
     finalBody: 'A few questions about you, and your thirty-day food and training plan is ready.',
     top: 'Back to top',
   },
 } as const
 
-const featureIcons: readonly LucideIcon[] = [Sun, CalendarDays, Dumbbell, ShoppingBasket, LineChart, Repeat]
+/** Three sessions a week, the sample month the hero and the calendar tile share. */
+const SAMPLE_TRAINING_DAYS = [2, 4, 6, 9, 11, 13, 16, 18, 20, 23, 25, 27, 30] as const
+const SAMPLE_DAY = 12
+
+const featureIcons: readonly LucideIcon[] = [Sun, CalendarDays, Dumbbell, ShoppingBasket, ChartLine, Repeat]
 
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
@@ -181,13 +217,10 @@ function TodayPreview({ locale }: { locale: AppLocale }) {
   const number = (value: number) => formatNumber(value, locale)
   return (
     <div aria-label={text.label} className="land-device" role="img">
-      <GlassChrome className="land-device__chip land-device__chip--day">
-        <CalendarDays aria-hidden="true" size={15} />
-        <span>{text.day}</span>
-      </GlassChrome>
       <div aria-hidden="true" className="land-device__screen">
         <div className="land-device__top">
-          <OrbitMark size={26} />
+          <OrbitMark size={24} />
+          <span className="land-device__day">{text.day}</span>
           <span className="land-device__avatar">{locale === 'fa' ? 'آ' : 'A'}</span>
         </div>
         <p className="land-device__greeting">{text.greeting}</p>
@@ -224,12 +257,84 @@ function TodayPreview({ locale }: { locale: AppLocale }) {
           <span className="land-device__cta">{text.startWorkout}</span>
         </div>
       </div>
-      <GlassChrome className="land-device__chip land-device__chip--streak">
+      <GlassChrome className="land-device__chip">
         <Check aria-hidden="true" size={15} />
         <span>{text.streak}</span>
       </GlassChrome>
     </div>
   )
+}
+
+/** The day as a line through time: food stops in saffron, the session in ember. */
+function DayRibbon({ locale }: { locale: AppLocale }) {
+  const text = copy[locale]
+  return (
+    <ol aria-label={text.dayLabel} className="land-ribbon">
+      {text.ribbon.map((stop, index) => (
+        <Reveal
+          as="li"
+          className={`land-ribbon__stop land-ribbon__stop--${stop.kind}`}
+          delay={index * 70}
+          key={stop.time}
+        >
+          <time>{stop.time}</time>
+          <span aria-hidden="true" className="land-ribbon__node">
+            {stop.kind === 'training' ? <Dumbbell size={16} /> : <UtensilsCrossed size={16} />}
+          </span>
+          <strong>{stop.title}</strong>
+          <span>{stop.body}</span>
+        </Reveal>
+      ))}
+    </ol>
+  )
+}
+
+/** A tile's own small illustration, drawn from the sample month. */
+function FeatureVisual({ index, locale }: { index: number; locale: AppLocale }) {
+  const text = copy[locale]
+  const number = (value: number) => formatNumber(value, locale)
+  if (index === 1) {
+    return (
+      <div aria-hidden="true" className="land-mini-cal">
+        {Array.from({ length: 30 }, (_, day) => {
+          const n = day + 1
+          const training = (SAMPLE_TRAINING_DAYS as readonly number[]).includes(n)
+          const state = n < SAMPLE_DAY ? ' is-past' : n === SAMPLE_DAY ? ' is-today' : ''
+          return <i className={`${training ? 'is-training' : ''}${state}`} key={n} />
+        })}
+      </div>
+    )
+  }
+  if (index === 2) {
+    return (
+      <table aria-hidden="true" className="land-mini-log">
+        <thead><tr><th>{text.setLog.set}</th><th>{text.setLog.kg}</th><th>{text.setLog.reps}</th></tr></thead>
+        <tbody>
+          {[[1, 40, 10], [2, 45, 8], [3, 45, 8]].map(([set, kg, reps]) => (
+            <tr className={set === 3 ? 'is-live' : undefined} key={set}>
+              <td>{number(set)}</td><td>{number(kg)}</td><td>{number(reps)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+  if (index === 3) {
+    return (
+      <ul aria-hidden="true" className="land-mini-list">
+        {text.shopping.map((item, row) => <li className={row < 2 ? 'is-done' : undefined} key={item}><i />{item}</li>)}
+      </ul>
+    )
+  }
+  if (index === 4) {
+    return (
+      <svg aria-hidden="true" className="land-mini-chart" preserveAspectRatio="none" viewBox="0 0 120 40">
+        <polyline points="0,30 20,26 40,28 60,20 80,17 100,12 120,9" />
+        <circle cx="120" cy="9" r="3" />
+      </svg>
+    )
+  }
+  return null
 }
 
 export function LandingPage({ locale }: { locale: AppLocale }) {
@@ -258,9 +363,8 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
       <PublicHeader locale={locale} />
       <main>
         <section className="land-hero">
-          <div aria-hidden="true" className="land-hero__glow" />
           <div className="land-hero__copy">
-            <p className="land-badge">{text.badge}</p>
+            <p className="land-badge"><span aria-hidden="true" />{text.badge}</p>
             <h1>{text.title} <em>{text.accent}</em></h1>
             <p className="land-lead">{text.subtitle}</p>
             <div className="land-actions">
@@ -278,30 +382,50 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
               ))}
             </ul>
           </div>
-          <TodayPreview locale={locale} />
+
+          <div className="land-stage">
+            <MonthDial animated className="land-stage__dial" day={SAMPLE_DAY} trainingDays={SAMPLE_TRAINING_DAYS} />
+            <TodayPreview locale={locale} />
+            <ul aria-hidden="true" className="land-stage__legend">
+              <li className="is-food">{text.legend.food}</li>
+              <li className="is-training">{text.legend.training}</li>
+              <li className="is-today">{text.legend.today}</li>
+            </ul>
+          </div>
         </section>
 
-        <section aria-labelledby="land-how" className="land-section">
+        <section aria-labelledby="land-day" className="land-day">
+          <header className="land-day__head">
+            <p className="land-eyebrow">{text.dayEyebrow}</p>
+            <h2 id="land-day">{text.dayTitle}</h2>
+            <p>{text.dayBody}</p>
+          </header>
+          <DayRibbon locale={locale} />
+        </section>
+
+        <section aria-labelledby="land-how" className="land-section land-how">
           <header className="land-section__head">
             <p className="land-eyebrow">{text.howEyebrow}</p>
             <h2 id="land-how">{text.howTitle}</h2>
           </header>
           <ol className="land-steps">
             {text.steps.map((step, index) => (
-              <Reveal as="li" className="land-step" delay={index * 80} key={step.image}>
+              <Reveal as="li" className="land-step" key={step.image}>
+                <span aria-hidden="true" className="land-step__num">{stepNumber(index)}</span>
                 <figure className="land-step__photo">
                   <img alt={step.alt} decoding="async" loading="lazy" src={step.image} />
-                  <span className="land-step__num">{stepNumber(index)}</span>
                 </figure>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
+                <div className="land-step__text">
+                  <h3>{step.title}</h3>
+                  <p>{step.body}</p>
+                </div>
               </Reveal>
             ))}
           </ol>
         </section>
 
         <section aria-labelledby="land-features" className="land-section">
-          <header className="land-section__head">
+          <header className="land-section__head land-section__head--split">
             <p className="land-eyebrow">{text.featuresEyebrow}</p>
             <h2 id="land-features">{text.featuresTitle}</h2>
           </header>
@@ -309,12 +433,18 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
             {text.features.map(([title, body], index) => {
               const Icon = featureIcons[index] ?? Check
               return (
-                <Reveal as="li" className="land-feature" delay={(index % 3) * 70} key={title}>
-                  <span aria-hidden="true" className={`land-feature__icon land-feature__icon--${index % 3}`}>
+                <Reveal
+                  as="li"
+                  className={`land-feature land-feature--${index}`}
+                  delay={(index % 3) * 70}
+                  key={title}
+                >
+                  <span aria-hidden="true" className="land-feature__icon">
                     <Icon size={20} />
                   </span>
                   <h3>{title}</h3>
                   <p>{body}</p>
+                  <FeatureVisual index={index} locale={locale} />
                 </Reveal>
               )
             })}
@@ -325,6 +455,9 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
           <header className="land-section__head">
             <p className="land-eyebrow">{text.faqEyebrow}</p>
             <h2 id="land-faq">{text.faqTitle}</h2>
+            <p className="land-faq__more">
+              <Link href={localizedPath(locale, '/pricing')}>{text.pricingLink} <ArrowRight aria-hidden="true" className="directional-icon" size={16} /></Link>
+            </p>
           </header>
           <div className="land-faq__list">
             {text.faq.map(([question, answer]) => (
@@ -337,29 +470,29 @@ export function LandingPage({ locale }: { locale: AppLocale }) {
               </details>
             ))}
           </div>
-          <p className="land-faq__more">
-            <Link href={localizedPath(locale, '/pricing')}>{text.pricingLink} <ArrowRight aria-hidden="true" className="directional-icon" size={16} /></Link>
-          </p>
         </section>
 
-        <section className="land-close">
-          <GlassChrome className="land-close__panel">
-            <OrbitMark size={54} />
-            <h2>{text.finalTitle}</h2>
-            <p>{text.finalBody}</p>
-            <div className="land-actions">
-              <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-up')}>
-                <span>{text.start}</span>
-                <ArrowRight aria-hidden="true" className="directional-icon" size={18} />
-              </Link>
-              <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today?preview=1')}>
-                <span>{text.sample}</span>
-              </Link>
+        <section aria-labelledby="land-close" className="land-close">
+          <div className="land-close__band">
+            <span aria-hidden="true" className="land-close__numeral">{formatNumber(30, locale)}</span>
+            <div className="land-close__copy">
+              <p className="land-eyebrow">{text.finalKicker}</p>
+              <h2 id="land-close">{text.finalTitle}</h2>
+              <p>{text.finalBody}</p>
+              <div className="land-actions">
+                <Link className="orbit-button orbit-button--primary" href={localizedPath(locale, '/auth/sign-up')}>
+                  <span>{text.start}</span>
+                  <ArrowRight aria-hidden="true" className="directional-icon" size={18} />
+                </Link>
+                <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/today?preview=1')}>
+                  <span>{text.sample}</span>
+                </Link>
+              </div>
             </div>
-          </GlassChrome>
+          </div>
           <p className="land-safety">
             <ShieldCheck aria-hidden="true" size={17} />
-            {text.safety}
+            <span>{text.safety}</span>
             <Link href={localizedPath(locale, '/safety')}>{text.safetyLink}</Link>
           </p>
         </section>

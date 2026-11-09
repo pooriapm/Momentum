@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
+  TriangleAlert,
   Bell,
   Check,
   ChevronLeft,
@@ -35,7 +35,7 @@ import {
 } from "../../settings/measurement-system";
 import { countryName } from "../../onboarding/countries";
 import { localizedPath } from "../../router/route-utils";
-import { Input, Select, Textarea } from "../../ui/FormControls";
+import { Input, Select, Switch, Textarea } from "../../ui/FormControls";
 import { FieldReveal } from "../../ui/FieldReveal";
 import { LocalizedTimePicker } from "../../ui/LocalizedTimePicker";
 import { Button, ContentCard, StatusPill } from "../../ui/primitives";
@@ -46,6 +46,8 @@ import {
   writeMePreferences,
   type MePreferences,
 } from "./me-state";
+import { Page, PageHeader, SectionHeader } from "../../ui/layout";
+import { Notice } from "../../ui/feedback";
 import "../../../styles/me.css";
 
 const weekdays = [
@@ -194,7 +196,7 @@ export function AccountSettingsPage({
 
   if (!settings) {
     return (
-      <main className="app-page account-settings-page screen-enter">
+      <Page name="account-settings">
         <p>
           {query.isError
             ? fa
@@ -204,7 +206,7 @@ export function AccountSettingsPage({
               ? "در حال دریافت تنظیمات…"
               : "Loading settings…"}
         </p>
-      </main>
+      </Page>
     );
   }
   const activeForm = form ?? initialForm(settings);
@@ -383,42 +385,29 @@ export function AccountSettingsPage({
   }
 
   return (
-    <main className="app-page account-settings-page screen-enter">
-      <section className="page-heading">
-        <div>
-          <p className="orbit-eyebrow">
-            <Sparkles size={15} />
-            {fa ? "کنترل حساب" : "Account controls"}
-          </p>
-          <h1>{fa ? "پروفایل و ترجیحات" : "Profile and preferences"}</h1>
-          <p>
-            {fa
-              ? "تغییرات اثرگذار روی برنامه قبل از استفاده دوباره بازبینی می‌شوند."
-              : "Changes that affect plan content are marked for review before reuse."}
-          </p>
-        </div>
-        <Link
-          className="orbit-button orbit-button--secondary"
-          href={`${localizedPath(locale, "/app/me")}${preview ? "?preview=1" : ""}`}
-        >
-          <ChevronLeft className="directional-icon" size={17} />
-          {fa ? "حساب من" : "Back to Me"}
-        </Link>
-      </section>
+    <Page name="account-settings">
+      <PageHeader
+        eyebrow={<><Sparkles size={15} />{fa ? "کنترل حساب" : "Account controls"}</>}
+        title={fa ? "پروفایل و ترجیحات" : "Profile and preferences"}
+        description={fa ? "تغییرات اثرگذار روی برنامه قبل از استفاده دوباره بازبینی می‌شوند." : "Changes that affect plan content are marked for review before reuse."}
+        actions={<><Link className="orbit-button orbit-button--secondary" href={`${localizedPath(locale, "/app/me")}${preview ? "?preview=1" : ""}`}><ChevronLeft className="directional-icon" size={17} />{fa ? "حساب من" : "Back to Me"}</Link></>}
+      />
       <form className="account-settings-form" onSubmit={submit}>
-        <div className="inline-notice" role="note">
+        <Notice role="note">
           {fa
             ? "تغییر پروفایل، غذا و تمرین برای چرخه بعد ذخیره می‌شود. برنامه جاری بازتولید نمی‌شود و فراخوانی هوش مصنوعی ساخته نمی‌شود."
             : "Profile, food, and training changes are saved for the next cycle. The current plan is not regenerated and no AI call is created."}
-        </div>
+        </Notice>
         <ContentCard className="account-settings-section">
-          <div className="section-title-row">
-            <h2>{fa ? "پروفایل" : "Profile"}</h2>
-            <StatusPill tone="neutral">
-              <LockKeyhole size={13} />
-              {fa ? "کشور و سن محافظت‌شده" : "Country and age protected"}
-            </StatusPill>
-          </div>
+          <SectionHeader
+            meta={
+              <StatusPill tone="neutral">
+                <LockKeyhole size={13} />
+                {fa ? "کشور و سن محافظت‌شده" : "Country and age protected"}
+              </StatusPill>
+            }
+            title={fa ? "پروفایل" : "Profile"}
+          />
           <div className="account-settings-grid">
             <Input
               label={fa ? "نام نمایشی" : "Display name"}
@@ -845,126 +834,69 @@ export function AccountSettingsPage({
         <ContentCard className="account-settings-section">
           <h2>{fa ? "اعلان‌ها" : "Notifications"}</h2>
           {permission === "denied" ? (
-            <div className="inline-notice inline-notice--warning" role="status">
+            <Notice tone="warning">
               <Bell size={18} />
               {fa
                 ? "اجازه اعلان در مرورگر رد شده است. انتخاب کانال‌ها حفظ شده، اما اعلان دستگاه تا فعال‌کردن مجوز ارسال نمی‌شود."
                 : "Browser notification permission is denied. Channel choices are preserved, but device notifications cannot be delivered until permission is enabled."}
-            </div>
+            </Notice>
           ) : null}
           {permission === "unsupported" ? (
-            <div className="inline-notice" role="status">
+            <Notice>
               {fa
                 ? "این محیط از اعلان دستگاه پشتیبانی نمی‌کند. انتخاب کانال‌ها ذخیره می‌شود."
                 : "This environment does not support device notifications. Channel choices are still saved."}
-            </div>
+            </Notice>
           ) : null}
           <div className="me-prefs-stack">
-            <label className="weekly-change-toggle">
-              <input
-                checked={prefs.notifications.planReady}
-                onChange={(e) =>
-                  updatePrefs({
-                    notifications: {
-                      ...prefs.notifications,
-                      planReady: e.target.checked,
-                    },
-                  })
-                }
-                type="checkbox"
-              />
-              <span>
-                <strong>{fa ? "آماده‌شدن برنامه" : "Plan ready"}</strong>
-                <small>
-                  {fa
-                    ? "پس از ورود موفق برنامه"
-                    : "After successful plan import"}
-                </small>
-              </span>
-            </label>
-            <label className="weekly-change-toggle">
-              <input
-                checked={prefs.notifications.weeklyReport}
-                onChange={(e) =>
-                  updatePrefs({
-                    notifications: {
-                      ...prefs.notifications,
-                      weeklyReport: e.target.checked,
-                    },
-                  })
-                }
-                type="checkbox"
-              />
-              <span>
-                <strong>{fa ? "گزارش هفتگی" : "Weekly report"}</strong>
-                <small>{fa ? "پایان هر هفته" : "End of each week"}</small>
-              </span>
-            </label>
-            <label className="weekly-change-toggle">
-              <input
-                checked={prefs.notifications.workoutReminder}
-                onChange={(e) =>
-                  updatePrefs({
-                    notifications: {
-                      ...prefs.notifications,
-                      workoutReminder: e.target.checked,
-                    },
-                  })
-                }
-                type="checkbox"
-              />
-              <span>
-                <strong>{fa ? "یادآوری تمرین" : "Workout reminder"}</strong>
-                <small>
-                  {fa
-                    ? "۲ ساعت پیش از زمان انتخابی"
-                    : "2 hours before the selected time"}
-                </small>
-              </span>
-            </label>
-            <label className="weekly-change-toggle">
-              <input
-                checked={prefs.notifications.dailyCheckIn}
-                onChange={(e) =>
-                  updatePrefs({
-                    notifications: {
-                      ...prefs.notifications,
-                      dailyCheckIn: e.target.checked,
-                    },
-                  })
-                }
-                type="checkbox"
-              />
-              <span>
-                <strong>{fa ? "بررسی روزانه" : "Daily check-in"}</strong>
-                <small>{fa ? "اختیاری" : "Optional"}</small>
-              </span>
-            </label>
+            <Switch
+              checked={prefs.notifications.planReady}
+              description={fa ? "پس از ورود موفق برنامه" : "After successful plan import"}
+              label={fa ? "آماده‌شدن برنامه" : "Plan ready"}
+              onChange={(e) =>
+                updatePrefs({ notifications: { ...prefs.notifications, planReady: e.target.checked } })
+              }
+            />
+            <Switch
+              checked={prefs.notifications.weeklyReport}
+              description={fa ? "پایان هر هفته" : "End of each week"}
+              label={fa ? "گزارش هفتگی" : "Weekly report"}
+              onChange={(e) =>
+                updatePrefs({ notifications: { ...prefs.notifications, weeklyReport: e.target.checked } })
+              }
+            />
+            <Switch
+              checked={prefs.notifications.workoutReminder}
+              description={fa ? "۲ ساعت پیش از زمان انتخابی" : "2 hours before the selected time"}
+              label={fa ? "یادآوری تمرین" : "Workout reminder"}
+              onChange={(e) =>
+                updatePrefs({ notifications: { ...prefs.notifications, workoutReminder: e.target.checked } })
+              }
+            />
+            <Switch
+              checked={prefs.notifications.dailyCheckIn}
+              description={fa ? "اختیاری" : "Optional"}
+              label={fa ? "چک‌این روزانه" : "Daily check-in"}
+              onChange={(e) =>
+                updatePrefs({ notifications: { ...prefs.notifications, dailyCheckIn: e.target.checked } })
+              }
+            />
           </div>
         </ContentCard>
 
         <ContentCard className="account-settings-section">
           <h2>{fa ? "تحلیل اختیاری محصول" : "Optional product analytics"}</h2>
-          <label className="weekly-change-toggle">
-            <input
-              checked={analyticsEnabled}
-              disabled={analyticsSaving || (!preview && !online)}
-              onChange={(event) => void toggleAnalytics(event.target.checked)}
-              type="checkbox"
-            />
-            <span>
-              <strong>
-                {fa
-                  ? "کمک به بهبود فعال‌سازی و پایبندی"
-                  : "Help improve activation and adherence"}
-              </strong>
-              <small>
-                {fa
+          <Switch
+            checked={analyticsEnabled}
+            description={fa
                   ? "فقط رویدادهای دسته‌بندی‌شده ثبت می‌شوند؛ نه مقادیر خام سلامت، متن آزاد، ایمیل یا شناسه حساب. این گزینه پیش‌فرض خاموش است و هر زمان می‌توانی غیرفعالش کنی."
                   : "Only categorical events are recorded—never raw health values, free text, email, or account identifiers. This is off by default and can be disabled at any time."}
-              </small>
-            </span>
-          </label>
+            disabled={analyticsSaving || (!preview && !online)}
+            label={fa
+                  ? "کمک به بهبود فعال‌سازی و پایبندی"
+                  : "Help improve activation and adherence"}
+            onChange={(event) => void toggleAnalytics(event.target.checked)}
+          />
           <p>
             {fa
               ? "ثبت‌های ضروری عملیاتی و امنیتی مستقل از این انتخاب باقی می‌مانند."
@@ -1010,16 +942,16 @@ export function AccountSettingsPage({
         </ContentCard>
 
         {notice ? (
-          <div className="inline-notice inline-notice--success" role="status">
+          <Notice tone="success">
             <Check size={18} />
             {notice}
-          </div>
+          </Notice>
         ) : null}
         {error ? (
-          <div className="inline-notice inline-notice--error" role="alert">
-            <AlertTriangle size={18} />
+          <Notice tone="error">
+            <TriangleAlert size={18} />
             {error}
-          </div>
+          </Notice>
         ) : null}
         <Button disabled={!preview && !online} loading={saving} type="submit">
           <Save size={18} />
@@ -1090,6 +1022,6 @@ export function AccountSettingsPage({
           )}
         </ContentCard>
       </form>
-    </main>
+    </Page>
   );
 }

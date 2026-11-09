@@ -1,10 +1,11 @@
-import { Droplet, GlassWater, Minus, Plus, Utensils } from 'lucide-react'
+import { GlassWater, Minus, Plus, Utensils } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { saveWater } from '../../checkins/repository'
 import { localize, type MomentumPlanView } from '../../data/types'
 import { formatNumber } from '../../lib/format'
 import { Button, ContentCard } from '../../ui/primitives'
+import { Notice } from '../../ui/feedback'
 
 const GLASS_ML = 250
 const MAX_WATER_ML = 6000
@@ -64,7 +65,7 @@ export function WaterCard({
   return (
     <ContentCard className={`water-card${reached ? ' is-reached' : ''}`}>
       <div className="section-title-row">
-        <span className="water-card__icon"><Droplet aria-hidden="true" size={20} /></span>
+        <span className="water-card__icon"><GlassWater aria-hidden="true" size={20} /></span>
         <small>{fa ? 'آب امروز' : 'Water today'}</small>
       </div>
       <h3>
@@ -80,8 +81,8 @@ export function WaterCard({
           <GlassWater className={index < glasses ? 'is-full' : ''} key={index} size={18} />
         ))}
       </div>
-      {reached ? <p className="water-card__done" role="status">{fa ? 'هدف آب امروز کامل شد. آفرین!' : 'Today’s water goal is done. Nice work!'}</p> : null}
-      {failed ? <div className="inline-notice inline-notice--error" role="alert">{fa ? 'آب ذخیره نشد؛ دوباره امتحان کن.' : 'Water was not saved. Try again.'}</div> : null}
+      {reached ? <p className="water-card__done" role="status">{fa ? 'هدف آب امروز کامل شد.' : 'Today’s water goal is done.'}</p> : null}
+      {failed ? <Notice tone="error">{fa ? 'آب ذخیره نشد؛ دوباره امتحان کن.' : 'Water was not saved. Try again.'}</Notice> : null}
       <div className="water-card__actions">
         <Button aria-label={fa ? 'یک لیوان کمتر' : 'One glass less'} disabled={locked || ml === 0} onClick={() => change(-1)} variant="secondary"><Minus size={16} /></Button>
         <Button disabled={locked || ml >= MAX_WATER_ML} onClick={() => change(1)}><Plus size={16} />{fa ? 'یک لیوان' : 'One glass'}</Button>

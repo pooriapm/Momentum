@@ -1,4 +1,4 @@
-import { Clock } from 'lucide-react'
+import { Clock3 } from 'lucide-react'
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { AppLocale } from '../../platform/i18n/catalog'
@@ -130,7 +130,7 @@ export function LocalizedTimePicker({ error, label, locale, onChange, required, 
         role="combobox"
         type="button"
       >
-        <span><Clock size={19} /></span>
+        <span><Clock3 size={19} /></span>
         <strong>{value ? `${displayDigits(parsed.hour, locale)}:${displayDigits(parsed.minute, locale)}` : (fa ? 'انتخاب ساعت' : 'Choose a time')}</strong>
         <small>{fa ? '۲۴ ساعته' : '24-hour'}</small>
       </button>

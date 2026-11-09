@@ -2,6 +2,7 @@ import type { AppLocale } from '../../../platform/i18n/catalog'
 import { ContentCard } from '../../ui/primitives'
 import { formatNumber } from '../../lib/format'
 import type { OrbitRing } from './orbit-rings'
+import '../../../styles/today.css'
 
 const SIZE = 132
 const STROKE = 10
@@ -101,7 +102,7 @@ export function TodayOrbit({
       </dl>
       <p className="today-orbit__intake">
         <span>{fa ? 'ثبت‌شده' : 'Logged'}</span>
-        <bdi dir="ltr">{formatNumber(calories.logged, locale)} / {formatNumber(calories.target, locale)} kcal</bdi>
+        <bdi dir={fa ? 'rtl' : 'ltr'}>{formatNumber(calories.logged, locale)} / {formatNumber(calories.target, locale)} {fa ? 'کالری' : 'kcal'}</bdi>
       </p>
     </ContentCard>
   )

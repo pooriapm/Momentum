@@ -1,15 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-  CircleUserRound,
-  House,
-  LineChart,
-  Salad,
-  Sparkles,
-  WifiOff,
-} from 'lucide-react'
+import { Sparkles, WifiOff } from 'lucide-react'
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearch } from 'wouter'
+import { Link, useLocation, useSearch } from 'wouter'
 import { evaluateConsentMigration } from '../../config/consent-migration'
 import { FALLBACK_LEGAL_DOCUMENT_VERSIONS, loadLegalDocumentVersions } from '../../config/legal'
 import type { AppLocale } from '../../platform/i18n/catalog'
@@ -19,11 +12,14 @@ import { loadAccountDashboard } from '../data/repository'
 import { localize, type MomentumPlanView } from '../data/types'
 import { localizedPath } from '../router/route-utils'
 import { BrandLockup } from '../ui/OrbitMark'
-import { GlassChrome, PageSkeleton } from '../ui/primitives'
+import { conceptIcons } from '../ui/icons'
+import { LiquidSelector } from '../ui/LiquidSelector'
+import { Button, GlassChrome, PageSkeleton } from '../ui/primitives'
 import { appContentSurface, isMembershipRequiredTab, type EntitlementSnapshot } from '../entitlement'
 import { EntitlementGate } from '../pages/app/EntitlementGate'
 import { PrePlanState } from '../pages/app/PrePlanState'
 import { useOfflineBanner } from './useOfflineBanner'
+import { Notice } from '../ui/feedback'
 
 export type AppTab = 'today' | 'plan' | 'progress' | 'me'
 
@@ -43,10 +39,10 @@ interface AppFrameProps {
 }
 
 const navItems = [
-  { key: 'today', icon: House },
-  { key: 'plan', icon: Salad },
-  { key: 'progress', icon: LineChart },
-  { key: 'me', icon: CircleUserRound },
+  { key: 'today', icon: conceptIcons.today },
+  { key: 'plan', icon: conceptIcons.plan },
+  { key: 'progress', icon: conceptIcons.progress },
+  { key: 'me', icon: conceptIcons.account },
 ] as const
 
 function lastSyncedAtFromDashboard(account: unknown) {
@@ -110,6 +106,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
   const { t } = useTranslation()
   const { status, user } = useAuth()
   const search = useSearch()
+  const [, navigate] = useLocation()
   const preview = new URLSearchParams(search).get('preview') === '1'
   const planQuery = useQuery({
     queryKey: ['active-plan', user?.id, locale],
@@ -207,13 +204,13 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
       </aside>
       <div className="app-workspace">
         {offlineBanner.showBanner ? (
-          <div className="app-offline-banner inline-notice" role="status">
+          <Notice className="app-offline-banner">
             <WifiOff size={16} />
             <span>{locale === 'fa' ? 'Momentum آفلاین اجرا می‌شود' : 'Momentum is running offline'}</span>
-          </div>
+          </Notice>
         ) : null}
         {consentMigration?.required ? (
-          <div className="app-consent-banner inline-notice inline-notice--warning" role="status">
+          <Notice tone="warning" className="app-consent-banner">
             <span>
               {locale === 'fa'
                 ? 'نسخهٔ جدید اسناد حقوقی فعال است. برای ادامهٔ شخصی‌سازی خودکار، رضایت‌ها را دوباره تأیید کن.'
@@ -222,7 +219,7 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
             <Link className="orbit-button orbit-button--secondary" href={localizedPath(locale, '/app/settings')}>
               {locale === 'fa' ? 'باز کردن تنظیمات' : 'Open settings'}
             </Link>
-          </div>
+          </Notice>
         ) : null}
         {preview ? <GlassChrome className="preview-notice"><Sparkles size={16} /><span>{t('app.previewNotice')}</span></GlassChrome> : null}
         {planQuery.isError && planQuery.data ? <div className="app-error-banner">{locale === 'fa' ? 'به‌روزرسانی برنامه انجام نشد؛ آخرین اطلاعات موجود نمایش داده می‌شود.' : 'The plan could not refresh. Showing the latest available data.'}</div> : null}
@@ -230,20 +227,29 @@ export function AppFrame({ locale, tab, children }: AppFrameProps) {
         <div className="app-content">{pageOwnsPlanQuery
           ? children(pageContext)
           : !preview && planQuery.isError && !planQuery.data
-          ? <div className="app-load-error" role="alert"><strong>{locale === 'fa' ? 'برنامه دریافت نشد' : 'Your plan could not be loaded'}</strong><p>{locale === 'fa' ? 'اتصال را بررسی کن و دوباره تلاش کن. اطلاعات حسابت حذف نشده است.' : 'Check your connection and try again. Your account data is safe.'}</p><button className="orbit-button orbit-button--primary" onClick={() => void planQuery.refetch()} type="button">{locale === 'fa' ? 'تلاش دوباره' : 'Try again'}</button></div>
+          ? <div className="app-load-error" role="alert"><strong>{locale === 'fa' ? 'برنامه دریافت نشد' : 'Your plan could not be loaded'}</strong><p>{locale === 'fa' ? 'اتصال را بررسی کن و دوباره تلاش کن. اطلاعات حسابت حذف نشده است.' : 'Check your connection and try again. Your account data is safe.'}</p><Button onClick={() => void planQuery.refetch()} type="button">{locale === 'fa' ? 'تلاش دوباره' : 'Try again'}</Button></div>
           : contentSurface === 'entitlement'
             ? <EntitlementGate locale={locale} snapshot={entitlement} />
             : contentSurface === 'preplan' && account
               ? <PrePlanState account={account} locale={locale} />
               : children(pageContext)}</div>
       </div>
-      <GlassChrome aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Primary navigation'} className={`app-bottom-nav${chromeMinimized ? ' is-minimized' : ''}`} role="navigation">
-        {navItems.map(({ key, icon: Icon }) => (
-          <Link aria-current={key === tab ? 'page' : undefined} className={key === tab ? 'is-active' : ''} href={`${localizedPath(locale, `/app/${key}`)}${navQuery}`} key={key}>
-            <Icon size={20} /><span>{t(`nav.${key}`)}</span>
-          </Link>
-        ))}
-      </GlassChrome>
+      <LiquidSelector
+        aria-label={locale === 'fa' ? 'ناوبری اصلی' : 'Primary navigation'}
+        as="nav"
+        className={`app-bottom-nav${chromeMinimized ? ' is-minimized' : ''}`}
+        count={navItems.length}
+        onSelect={(index) => navigate(`${localizedPath(locale, `/app/${navItems[index].key}`)}${navQuery}`)}
+        renderItem={(index, active) => {
+          const { key, icon: Icon } = navItems[index]
+          return (
+            <Link aria-current={active ? 'page' : undefined} className={active ? 'is-active' : ''} href={`${localizedPath(locale, `/app/${key}`)}${navQuery}`} key={key}>
+              <Icon size={20} /><span>{t(`nav.${key}`)}</span>
+            </Link>
+          )
+        }}
+        selected={navItems.findIndex(({ key }) => key === tab)}
+      />
     </div>
   )
 }

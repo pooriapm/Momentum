@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, ShieldAlert, X } from 'lucide-react'
+import { Check, ShieldAlert, TriangleAlert, X } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { sanitizeLocalizedNumberInput } from '../../lib/numbers/localized-number'
 import type { AppLocale } from '../../platform/i18n/catalog'
@@ -7,11 +7,12 @@ import {
   type CheckInSafety,
   type DailyCheckInInput,
 } from '../checkins/contracts'
-import { Input, RequiredMark, Select, Textarea } from '../ui/FormControls'
+import { Checkbox, Input, RequiredMark, Select, Textarea } from '../ui/FormControls'
 import { FieldReveal } from '../ui/FieldReveal'
 import { Button } from '../ui/primitives'
 import { ModalShell } from './ModalShell'
 import { useModalDismiss } from './use-modal-dismiss'
+import { Notice } from '../ui/feedback'
 
 const scoreOptions = [1, 2, 3, 4, 5]
 const redFlagOptions = [
@@ -112,7 +113,7 @@ export function CheckInSheet({
           <button aria-label={fa ? 'بستن' : 'Close'} onClick={onClose} type="button"><X size={20} /></button>
         </header>
         <div className={`check-in-safety-result check-in-safety-result--${safety.level}`} role="alert">
-          <AlertTriangle size={28} />
+          <TriangleAlert size={28} />
           <div>
             <strong>{urgent ? (fa ? 'این علائم نیازمند بررسی فوری هستند.' : 'These symptoms need prompt attention.') : (fa ? 'شدت تمرین را کم کن یا استراحت کن.' : 'Reduce training intensity or rest.')}</strong>
             <p>{urgent
@@ -154,10 +155,10 @@ export function CheckInSheet({
         <fieldset className="check-in-red-flags">
           <legend>{fa ? 'آیا همین حالا یکی از این علائم را داری؟' : 'Are you experiencing any of these symptoms now?'}</legend>
           <p>{fa ? 'اگر بله، تمرین را شروع نکن یا ادامه نده.' : 'If yes, do not start or continue training.'}</p>
-          <div>{redFlagOptions.map((option) => <label key={option.key}><input checked={redFlags.includes(option.key)} onChange={() => toggleRedFlag(option.key)} type="checkbox" /><span>{fa ? option.fa : option.en}</span></label>)}</div>
+          <div>{redFlagOptions.map((option) => <Checkbox checked={redFlags.includes(option.key)} key={option.key} label={fa ? option.fa : option.en} onChange={() => toggleRedFlag(option.key)} />)}</div>
         </fieldset>
         <Textarea label={fa ? 'یادداشت امروز (اختیاری)' : 'Today’s notes (optional)'} maxLength={2000} onChange={(event) => setNotes(event.target.value)} rows={3} value={notes} />
-        {error ? <div className="inline-notice inline-notice--error" role="alert">{error}</div> : null}
+        {error ? <Notice tone="error">{error}</Notice> : null}
         <Button block loading={saving} type="submit"><Check size={18} />{fa ? 'ثبت چک‌این' : 'Save check-in'}</Button>
       </form>
     </ModalShell>

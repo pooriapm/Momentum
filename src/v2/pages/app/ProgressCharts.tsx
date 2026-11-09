@@ -1,8 +1,9 @@
 import type { AppLocale } from '../../../platform/i18n/catalog'
 import { localize, type MomentumPlanView, type WeeklyProgressPoint } from '../../data/types'
-import { formatNumber } from '../../lib/format'
+import { formatNumber, formatPercent } from '../../lib/format'
 import { kilogramsToPounds, roundMeasurement } from '../../settings/measurement-system'
 import { compareWeeks, completionRate, type WeekComparison } from './progress-state'
+import { SectionHeader } from '../../ui/layout'
 
 function formatDelta(value: number | null, locale: AppLocale, unit = '') {
   if (value === null) return '—'
@@ -36,12 +37,10 @@ export function WeekComparisonStrip({ locale, series }: { locale: AppLocale; ser
   ]
   return (
     <section className="progress-compare-card">
-      <div className="section-title-row">
-        <div>
-          <p className="orbit-eyebrow">{fa ? 'این هفته در برابر هفته قبل' : 'This week against last week'}</p>
-          <h2>{previous ? (fa ? `هفته ${formatNumber(current.week, locale)} کنار هفته ${formatNumber(previous.week, locale)}` : `Week ${current.week} next to week ${previous.week}`) : (fa ? 'اولین هفته این دوره' : 'The first week of this period')}</h2>
-        </div>
-      </div>
+      <SectionHeader
+        eyebrow={fa ? 'این هفته در برابر هفته قبل' : 'This week against last week'}
+        title={previous ? (fa ? `هفته ${formatNumber(current.week, locale)} کنار هفته ${formatNumber(previous.week, locale)}` : `Week ${current.week} next to week ${previous.week}`) : (fa ? 'اولین هفته این دوره' : 'The first week of this period')}
+      />
       <div className="progress-compare">
         {tiles.map((tile, index) => (
           <article className="progress-compare__tile" key={tile.label} style={{ animationDelay: `${index * 70}ms` }}>
@@ -189,7 +188,7 @@ function ComparisonRow({
       <td>{`${formatNumber(row.workoutsCompleted, locale)} / ${formatNumber(row.workoutsPlanned, locale)}`}</td>
       <td>{formatNumber(row.energy, locale, { maximumFractionDigits: 1 })}</td>
       {showWeight ? <td>{typeof weightKg === 'number' ? formatNumber(weightKg, locale, { maximumFractionDigits: 1 }) : '—'}</td> : null}
-      <td>{formatNumber(row.adherence, locale)}%</td>
+      <td>{formatPercent(row.adherence, locale)}</td>
     </tr>
   )
 }
